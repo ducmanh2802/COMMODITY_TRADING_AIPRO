@@ -1,5 +1,6 @@
 import {
   Activity,
+  AreaChart,
   BarChart3,
   BookOpen,
   Bot,
@@ -17,6 +18,7 @@ import {
   SlidersHorizontal,
   TrendingUp,
   Upload,
+  Users,
   X,
 } from 'lucide-react';
 import type { AppModuleId } from '../../shared/types/risk';
@@ -54,6 +56,8 @@ const SECONDARY_ENGINE_ITEMS: NavItem[] = [
   { id: 'explorer', label: 'Contracts', phase: 2, Icon: Compass },
   { id: 'term-structure', label: 'Term Structure', phase: 2, Icon: TrendingUp },
   { id: 'technical', label: 'Technical', phase: 3, Icon: BarChart3 },
+  { id: 'analysis', label: 'Analysis', phase: 3, Icon: AreaChart },
+  { id: 'cot', label: 'COT', phase: 10, Icon: Users },
   { id: 'signals', label: 'Strategies', phase: 4, Icon: SlidersHorizontal },
   { id: 'fundamental', label: 'Macro Data', phase: 10, Icon: Cpu },
 ];
@@ -71,7 +75,6 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
       {items.map((item) => {
         const Icon = item.Icon;
         const isActive = activeModule === item.id;
-        const isOperational = item.phase <= 1;
 
         return (
           <li key={item.id}>
@@ -92,11 +95,6 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                 />
                 <span className="truncate">{item.label}</span>
               </span>
-              {!isOperational && (
-                <span className="font-mono text-[11px] text-[#E5E7EB]/40 tabular-nums shrink-0">
-                  P{item.phase}
-                </span>
-              )}
             </button>
           </li>
         );
@@ -150,8 +148,8 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
 
         <div className="p-4 border-t border-[#263244] text-xs text-[#E5E7EB]/55 space-y-1">
           <div className="flex items-center justify-between font-mono tabular-nums">
-            <span>Build Stage</span>
-            <span className="text-[#E5E7EB]">Phase 1</span>
+            <span>Architecture</span>
+            <span className="text-[#E5E7EB]">{PRIMARY_NAV_ITEMS.length + SECONDARY_ENGINE_ITEMS.length} Modules</span>
           </div>
           <div className="flex items-center justify-between font-mono">
             <span>Execution</span>

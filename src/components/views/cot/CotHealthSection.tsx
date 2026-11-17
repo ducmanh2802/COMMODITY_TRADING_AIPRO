@@ -29,7 +29,9 @@ export function CotHealthSection() {
     void load();
   }, [load]);
 
-  const rows = (health?.markets ?? []).flatMap((m) =>
+  type Market = NonNullable<typeof health>['markets'][number];
+  type Row = { m: Market; r: Market['reports'][number] | null };
+  const rows: Row[] = (health?.markets ?? []).flatMap((m): Row[] =>
     m.status === 'NOT_REPORTED' || m.reports.length === 0
       ? [{ m, r: null }]
       : m.reports.map((r) => ({ m, r }))

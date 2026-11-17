@@ -115,7 +115,8 @@ const clBar = (timestamp: string, open: number, high: number, low: number, close
 const clSeries = [
   clBar('2020-04-17T00:00:00Z', 19.8, 20.4, 17.31, 18.27),
   clBar('2020-04-20T00:00:00Z', 17.73, 17.85, -40.32, -37.63),
-  clBar('2020-04-21T00:00:00Z', -14, 1, -16.74, 10.01),
+  // high raised to 10.01 so the bar is OHLC-consistent (WIP fixture had high 1 < close 10.01).
+  clBar('2020-04-21T00:00:00Z', -14, 10.01, -16.74, 10.01),
 ];
 
 test('validateCandleSeries rejects non-positive prices by default (CL 2020-04-20 style bar)', () => {

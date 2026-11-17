@@ -46,6 +46,32 @@ export interface MvxInstrumentMapping {
   notes: string;
 }
 
+export interface CommodityAnalysisProfile {
+  vietnameseName: string;
+  contractMonths: string[];
+  contractCycleSummary: string;
+  deliveryGrade: string;
+  vietnamTradingSessionsIct: string;
+  vietnamMarketRelevance: string;
+  correlationGroup: string;
+  fundamentalDrivers: string[];
+  seasonalPattern: string;
+  fxSensitivity: string;
+  riskNotes: string;
+}
+
+export interface ProviderSymbolMapping {
+  alphaVantageFunction?: string;
+  alphaVantageNote?: string;
+  twelveDataSymbol?: string;
+  twelveDataNote?: string;
+  fmpSymbol?: string;
+  commoditiesApiSymbol?: string;
+  eiaSeriesType?: 'WTI' | 'BRENT' | 'NATURAL_GAS';
+  usdaCommodity?: 'SOYBEANS' | 'CORN' | 'WHEAT' | 'COTTON' | 'RICE';
+  mxvCode?: string | null;
+}
+
 export interface InstrumentDefinition {
   id: string;
   productName: string;
@@ -57,5 +83,7 @@ export interface InstrumentDefinition {
   isMvxListed: boolean;
   specification: ContractSpecification;
   mxvMapping: MvxInstrumentMapping | null;
+  commodityProfile?: CommodityAnalysisProfile;
+  providerMappings?: ProviderSymbolMapping;
   enabled: boolean;
 }

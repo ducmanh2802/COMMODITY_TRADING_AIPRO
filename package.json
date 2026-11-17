@@ -17,7 +17,7 @@
     "test": "tsx --test \"server/**/*.test.ts\" \"src/**/*.test.ts\" \"*.test.ts\""
   },
   "dependencies": {
-    "@google/genai": "^2.4.0",
+    "@google/genai": "^3.4.0",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "firebase": "^13.4.0",

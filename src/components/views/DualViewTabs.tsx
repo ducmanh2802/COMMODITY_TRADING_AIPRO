@@ -1,0 +1,42 @@
+import { useState, type ReactNode } from 'react';
+
+export interface DualViewTab {
+  id: string;
+  label: string;
+  note: string;
+  render: () => ReactNode;
+}
+
+/**
+ * One module, two implementations (merge of agent work + origin/main e7a6c70). The first tab is the
+ * primary implementation; the second keeps the alternative reachable without a duplicate nav item.
+ */
+export function DualViewTabs({ tabs }: { tabs: DualViewTab[] }) {
+  const [active, setActive] = useState(tabs[0]?.id);
+  const current = tabs.find((t) => t.id === active) ?? tabs[0];
+  return (
+    <div className="space-y-4">
+      <div role="tablist" className="flex flex-wrap gap-2 border-b border-white/10 pb-2">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={tab.id === current?.id}
+            onClick={() => setActive(tab.id)}
+            title={tab.note}
+            className={`px-3 py-1.5 text-xs rounded-md border ${
+              tab.id === current?.id
+                ? 'border-[#3B82F6] bg-[#3B82F6]/15 text-white'
+                : 'border-white/10 text-[#E5E7EB]/70 hover:text-white'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      {current && <p className="text-[11px] text-[#E5E7EB]/50">{current.note}</p>}
+      {current?.render()}
+    </div>
+  );
+}

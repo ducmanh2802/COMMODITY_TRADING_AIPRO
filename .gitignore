@@ -2,7 +2,8 @@ node_modules/
 build/
 dist/
 coverage/
-data/
+# Root runtime data (SQLite market.db). Anchored so server/data and src/components/views/data source dirs are tracked.
+/data/
 .DS_Store
 *.log
 .env*

@@ -65,7 +65,7 @@ function harness(): Harness {
 }
 
 const zipResponse = (entryName: string, text: string, method: 0 | 8 = 8) => () =>
-  new Response(buildZip([{ name: entryName, data: text, method }]), { status: 200 });
+  new Response(new Uint8Array(buildZip([{ name: entryName, data: text, method }])), { status: 200 });
 
 test('downloads each year sequentially, extracts f_year.txt, filters by market code and from-date', async () => {
   const h = harness();
@@ -195,7 +195,7 @@ test('rejects non-zip bodies, corrupted zips and archives without the expected t
     h.routes.set(url, [() => new Response(bad, { status: 200 })]);
     await assert.rejects(h.source(new Date('2026-11-20T00:00:00Z')).fetchReports(req), (e: unknown) => e instanceof CftcFetchError && /Corrupt zip/.test(e.message));
 
-    h.routes.set(url, [() => new Response(buildZip([{ name: 'a.txt', data: 'x', method: 0 }, { name: 'b.txt', data: 'y', method: 0 }]), { status: 200 })]);
+    h.routes.set(url, [() => new Response(new Uint8Array(buildZip([{ name: 'a.txt', data: 'x', method: 0 }, { name: 'b.txt', data: 'y', method: 0 }])), { status: 200 })]);
     await assert.rejects(h.source(new Date('2026-11-22T00:00:00Z')).fetchReports(req), /expected annual\.txt/);
 
     // Download refresh fails with 5xx but a valid (stale) cache exists → stale copy used, with a note.

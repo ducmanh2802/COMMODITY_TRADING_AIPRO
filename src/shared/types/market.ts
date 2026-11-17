@@ -13,6 +13,12 @@ export type ProviderId =
   | 'CME_GROUP'
   | 'ICE_FUTURES'
   | 'NYMEX_ENERGY'
+  | 'TWELVE_DATA'
+  | 'FMP_COMMODITIES'
+  | 'COMMODITIES_API'
+  | 'ALPHA_VANTAGE'
+  | 'EIA_ENERGY'
+  | 'USDA_QUICKSTATS'
   | 'THIRD_PARTY_FEED'
   | 'CSV_HISTORICAL';
 
@@ -70,6 +76,9 @@ export interface ProviderHealth {
   lastCheckedAt: string;
   lastSuccessfulSyncAt: string | null;
   message: string;
+  requiredEnvVars?: string[];
+  supportedScopes?: string[];
+  lastError?: string | null;
 }
 
 export interface MarketDataProvider {

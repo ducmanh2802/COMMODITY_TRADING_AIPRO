@@ -81,6 +81,8 @@ export type AppModuleId =
   | 'term-structure'
   | 'charts'
   | 'technical'
+  | 'analysis'
+  | 'cot'
   | 'fundamental'
   | 'ai-analyst'
   | 'scanner'

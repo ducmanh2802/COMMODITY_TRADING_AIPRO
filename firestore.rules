@@ -120,6 +120,180 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    function isValidPortfolioPosition(data) {
+      return data.keys().hasAll([
+        'userId',
+        'instrumentId',
+        'productName',
+        'category',
+        'exchange',
+        'direction',
+        'contracts',
+        'entryPrice',
+        'stopLoss',
+        'takeProfit',
+        'estimatedMargin',
+        'marginVerified',
+        'status',
+        'notes',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.keys().hasOnly([
+        'userId',
+        'instrumentId',
+        'productName',
+        'category',
+        'exchange',
+        'direction',
+        'contracts',
+        'entryPrice',
+        'stopLoss',
+        'takeProfit',
+        'estimatedMargin',
+        'marginVerified',
+        'status',
+        'notes',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.userId is string
+        && data.userId.size() >= 1
+        && data.userId.size() <= 128
+        && data.userId == request.auth.uid
+        && data.instrumentId is string
+        && data.instrumentId.size() >= 1
+        && data.instrumentId.size() <= 32
+        && data.productName is string
+        && data.productName.size() >= 1
+        && data.productName.size() <= 80
+        && data.category is string
+        && data.category.size() <= 24
+        && data.category in ['AGRICULTURE', 'SOFT_COMMODITIES', 'METALS', 'ENERGY']
+        && data.exchange is string
+        && data.exchange.size() <= 16
+        && data.exchange in ['MXV', 'CBOT', 'CME', 'COMEX', 'NYMEX', 'ICE']
+        && data.direction is string
+        && data.direction.size() <= 8
+        && data.direction in ['LONG', 'SHORT']
+        && data.contracts is int
+        && data.contracts >= 1
+        && data.contracts <= 1000
+        && data.entryPrice is number
+        && data.entryPrice > 0
+        && data.stopLoss is number
+        && data.stopLoss > 0
+        && data.takeProfit is number
+        && data.takeProfit > 0
+        && data.estimatedMargin is number
+        && data.estimatedMargin >= 0
+        && data.marginVerified is bool
+        && data.status is string
+        && data.status.size() <= 12
+        && data.status in ['OPEN', 'CLOSED']
+        && data.notes is string
+        && data.notes.size() <= 500
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTradeJournalEntry(data) {
+      return data.keys().hasAll([
+        'userId',
+        'instrument',
+        'exchange',
+        'direction',
+        'strategy',
+        'timeframe',
+        'entryPrice',
+        'stopLoss',
+        'takeProfit',
+        'positionSize',
+        'entryTimestamp',
+        'exitTimestamp',
+        'exitPrice',
+        'realizedPnl',
+        'tradingCosts',
+        'resultInR',
+        'rationale',
+        'notes',
+        'status',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.keys().hasOnly([
+        'userId',
+        'instrument',
+        'exchange',
+        'direction',
+        'strategy',
+        'timeframe',
+        'entryPrice',
+        'stopLoss',
+        'takeProfit',
+        'positionSize',
+        'entryTimestamp',
+        'exitTimestamp',
+        'exitPrice',
+        'realizedPnl',
+        'tradingCosts',
+        'resultInR',
+        'rationale',
+        'notes',
+        'status',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.userId is string
+        && data.userId.size() >= 1
+        && data.userId.size() <= 128
+        && data.userId == request.auth.uid
+        && data.instrument is string
+        && data.instrument.size() >= 1
+        && data.instrument.size() <= 32
+        && data.exchange is string
+        && data.exchange.size() <= 16
+        && data.exchange in ['MXV', 'CBOT', 'CME', 'COMEX', 'NYMEX', 'ICE']
+        && data.direction is string
+        && data.direction.size() <= 8
+        && data.direction in ['LONG', 'SHORT']
+        && data.strategy is string
+        && data.strategy.size() >= 1
+        && data.strategy.size() <= 64
+        && data.timeframe is string
+        && data.timeframe.size() <= 8
+        && data.timeframe in ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1']
+        && data.entryPrice is number
+        && data.entryPrice > 0
+        && data.stopLoss is number
+        && data.stopLoss > 0
+        && data.takeProfit is number
+        && data.takeProfit > 0
+        && data.positionSize is int
+        && data.positionSize >= 1
+        && data.positionSize <= 1000
+        && data.entryTimestamp is string
+        && data.entryTimestamp.size() >= 1
+        && data.entryTimestamp.size() <= 64
+        && data.exitTimestamp is string
+        && data.exitTimestamp.size() <= 64
+        && data.exitPrice is number
+        && data.exitPrice >= 0
+        && data.realizedPnl is number
+        && data.tradingCosts is number
+        && data.tradingCosts >= 0
+        && data.resultInR is number
+        && data.rationale is string
+        && data.rationale.size() <= 1000
+        && data.notes is string
+        && data.notes.size() <= 1000
+        && data.status is string
+        && data.status.size() <= 12
+        && data.status in ['OPEN', 'CLOSED']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
     function isValidAuditLog(data) {
       return data.keys().hasAll(['userId', 'action', 'resource', 'createdAt'])
         && data.keys().hasOnly(['userId', 'action', 'resource', 'createdAt'])
@@ -155,7 +329,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // UserSettings collection (private terminal & risk configuration)
+    // UserSettings collection
     match /userSettings/{userId} {
       allow get: if isValidId(userId) && isVerifiedOwner(userId);
       allow list: if false;
@@ -202,6 +376,55 @@ service cloud.firestore {
           ])
         );
       allow delete: if false;
+    }
+
+    // Manual portfolio positions (owner-isolated; terminal state locking when CLOSED)
+    match /positions/{positionId} {
+      allow get: if isValidId(positionId) && isVerifiedUser() && existing().userId == request.auth.uid;
+      allow list: if isVerifiedUser() && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(positionId)
+        && isVerifiedUser()
+        && isValidPortfolioPosition(incoming())
+        && incoming().status == 'OPEN'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(positionId)
+        && isVerifiedUser()
+        && isValidPortfolioPosition(incoming())
+        && existing().userId == request.auth.uid
+        && existing().status != 'CLOSED'
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['stopLoss', 'takeProfit', 'notes', 'updatedAt']) ||
+          (incoming().status == 'CLOSED' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'updatedAt']))
+        );
+      allow delete: if isValidId(positionId) && isVerifiedUser() && existing().userId == request.auth.uid;
+    }
+
+    // Private trade journal entries (owner-isolated; terminal state locking when CLOSED)
+    match /tradeJournal/{entryId} {
+      allow get: if isValidId(entryId) && isVerifiedUser() && existing().userId == request.auth.uid;
+      allow list: if isVerifiedUser() && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(entryId)
+        && isVerifiedUser()
+        && isValidTradeJournalEntry(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(entryId)
+        && isVerifiedUser()
+        && isValidTradeJournalEntry(incoming())
+        && existing().userId == request.auth.uid
+        && existing().status != 'CLOSED'
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['notes', 'rationale', 'stopLoss', 'takeProfit', 'updatedAt']) ||
+          (incoming().status == 'CLOSED' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'exitTimestamp', 'exitPrice', 'realizedPnl', 'tradingCosts', 'resultInR', 'notes', 'updatedAt']))
+        );
+      allow delete: if isValidId(entryId) && isVerifiedUser() && existing().userId == request.auth.uid;
     }
 
     // Append-only AuditLogs collection
