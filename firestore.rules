@@ -1,0 +1,219 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1 / Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reusable hardened primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isVerifiedOwner(ownerId) {
+      return isVerifiedUser() && request.auth.uid == ownerId;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'createdAt', 'updatedAt'])
+        && data.uid is string
+        && data.uid.size() >= 1
+        && data.uid.size() <= 128
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && data.email is string
+        && data.email.size() >= 3
+        && data.email.size() <= 254
+        && data.displayName is string
+        && data.displayName.size() >= 1
+        && data.displayName.size() <= 120
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserSettings(data, userId) {
+      return data.keys().hasAll([
+        'userId',
+        'accountEquity',
+        'accountCurrency',
+        'riskPercentagePerTrade',
+        'dailyLossLimitPct',
+        'maxOpenPositions',
+        'maxPortfolioRiskPct',
+        'maxContractsPerInstrument',
+        'defaultTradingStyle',
+        'defaultTimeframe',
+        'displayTimezone',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.keys().hasOnly([
+        'userId',
+        'accountEquity',
+        'accountCurrency',
+        'riskPercentagePerTrade',
+        'dailyLossLimitPct',
+        'maxOpenPositions',
+        'maxPortfolioRiskPct',
+        'maxContractsPerInstrument',
+        'defaultTradingStyle',
+        'defaultTimeframe',
+        'displayTimezone',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.userId is string
+        && data.userId.size() >= 1
+        && data.userId.size() <= 128
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.accountEquity is number
+        && data.accountEquity >= 0
+        && data.accountEquity <= 1000000000000
+        && data.accountCurrency is string
+        && data.accountCurrency.size() >= 3
+        && data.accountCurrency.size() <= 8
+        && data.accountCurrency in ['USD', 'VND']
+        && data.riskPercentagePerTrade is number
+        && data.riskPercentagePerTrade >= 0.05
+        && data.riskPercentagePerTrade <= 10
+        && data.dailyLossLimitPct is number
+        && data.dailyLossLimitPct >= 0.5
+        && data.dailyLossLimitPct <= 25
+        && data.maxOpenPositions is int
+        && data.maxOpenPositions >= 1
+        && data.maxOpenPositions <= 50
+        && data.maxPortfolioRiskPct is number
+        && data.maxPortfolioRiskPct >= 0.5
+        && data.maxPortfolioRiskPct <= 50
+        && data.maxContractsPerInstrument is int
+        && data.maxContractsPerInstrument >= 1
+        && data.maxContractsPerInstrument <= 100
+        && data.defaultTradingStyle is string
+        && data.defaultTradingStyle.size() <= 16
+        && data.defaultTradingStyle in ['SCALPING', 'INTRADAY', 'SWING', 'POSITION']
+        && data.defaultTimeframe is string
+        && data.defaultTimeframe.size() <= 8
+        && data.defaultTimeframe in ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1']
+        && data.displayTimezone is string
+        && data.displayTimezone.size() <= 32
+        && data.displayTimezone in ['Asia/Ho_Chi_Minh', 'UTC', 'America/Chicago', 'Europe/London']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll(['userId', 'action', 'resource', 'createdAt'])
+        && data.keys().hasOnly(['userId', 'action', 'resource', 'createdAt'])
+        && data.userId is string
+        && data.userId.size() >= 1
+        && data.userId.size() <= 128
+        && data.userId == request.auth.uid
+        && data.action is string
+        && data.action.size() >= 1
+        && data.action.size() <= 80
+        && data.resource is string
+        && data.resource.size() >= 1
+        && data.resource.size() <= 120
+        && data.createdAt is timestamp;
+    }
+
+    // Users collection (PII isolated to verified owner only; list completely disabled)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isVerifiedOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // UserSettings collection (private terminal & risk configuration)
+    match /userSettings/{userId} {
+      allow get: if isValidId(userId) && isVerifiedOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserSettings(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserSettings(incoming(), userId)
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'accountEquity',
+            'accountCurrency',
+            'riskPercentagePerTrade',
+            'dailyLossLimitPct',
+            'maxOpenPositions',
+            'maxPortfolioRiskPct',
+            'maxContractsPerInstrument',
+            'updatedAt'
+          ]) ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'defaultTradingStyle',
+            'defaultTimeframe',
+            'displayTimezone',
+            'updatedAt'
+          ]) ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'accountEquity',
+            'accountCurrency',
+            'riskPercentagePerTrade',
+            'dailyLossLimitPct',
+            'maxOpenPositions',
+            'maxPortfolioRiskPct',
+            'maxContractsPerInstrument',
+            'defaultTradingStyle',
+            'defaultTimeframe',
+            'displayTimezone',
+            'updatedAt'
+          ])
+        );
+      allow delete: if false;
+    }
+
+    // Append-only AuditLogs collection
+    match /auditLogs/{logId} {
+      allow get: if isValidId(logId) && isVerifiedUser() && existing().userId == request.auth.uid;
+      allow list: if isVerifiedUser() && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(logId)
+        && isVerifiedUser()
+        && isValidAuditLog(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

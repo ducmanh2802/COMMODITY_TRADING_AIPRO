@@ -1,0 +1,170 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user account profile isolated by owner UID.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the profile owner."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 254,
+          "description": "Verified email address of the user."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Display name shown in the terminal header."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was last updated."
+        }
+      },
+      "required": ["uid", "email", "displayName", "createdAt", "updatedAt"]
+    },
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "Private terminal preferences and risk engine configuration for a user.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "accountEquity": {
+          "type": "number",
+          "description": "Account equity in accountCurrency."
+        },
+        "accountCurrency": {
+          "type": "string",
+          "enum": ["USD", "VND"],
+          "maxLength": 8
+        },
+        "riskPercentagePerTrade": {
+          "type": "number",
+          "description": "Maximum risk percentage per trade (0.05 to 10)."
+        },
+        "dailyLossLimitPct": {
+          "type": "number",
+          "description": "Daily loss limit percentage (0.5 to 25)."
+        },
+        "maxOpenPositions": {
+          "type": "integer",
+          "description": "Maximum concurrent open positions (1 to 50)."
+        },
+        "maxPortfolioRiskPct": {
+          "type": "number",
+          "description": "Maximum total portfolio risk percentage (0.5 to 50)."
+        },
+        "maxContractsPerInstrument": {
+          "type": "integer",
+          "description": "Maximum contracts allowed per instrument (1 to 100)."
+        },
+        "defaultTradingStyle": {
+          "type": "string",
+          "enum": ["SCALPING", "INTRADAY", "SWING", "POSITION"],
+          "maxLength": 16
+        },
+        "defaultTimeframe": {
+          "type": "string",
+          "enum": ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1"],
+          "maxLength": 8
+        },
+        "displayTimezone": {
+          "type": "string",
+          "enum": ["Asia/Ho_Chi_Minh", "UTC", "America/Chicago", "Europe/London"],
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "accountEquity",
+        "accountCurrency",
+        "riskPercentagePerTrade",
+        "dailyLossLimitPct",
+        "maxOpenPositions",
+        "maxPortfolioRiskPct",
+        "maxContractsPerInstrument",
+        "defaultTradingStyle",
+        "defaultTimeframe",
+        "displayTimezone",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable client/server audit event record scoped to a user.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "resource": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["userId", "action", "resource", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Private user profile document keyed by Firebase Auth UID."
+    },
+    "/userSettings/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserSettings"
+      },
+      "description": "Private risk management and terminal display preferences keyed by Firebase Auth UID."
+    },
+    "/auditLogs/{logId}": {
+      "schema": {
+        "$ref": "#/entities/AuditLog"
+      },
+      "description": "Append-only audit trail for sensitive user configuration actions."
+    }
+  }
+}

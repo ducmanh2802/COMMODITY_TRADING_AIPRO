@@ -1,0 +1,6 @@
+{
+  "name": "COMMODITY TRADING AI PRO",
+  "description": "Production-oriented multi-market commodity futures analysis platform supporting Vietnam MXV and international exchanges with deterministic risk and technical engines.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
