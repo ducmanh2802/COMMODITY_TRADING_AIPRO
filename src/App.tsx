@@ -7,6 +7,8 @@ import { MarketWatchView } from './components/views/MarketWatchView';
 import { OverviewDashboard } from './components/views/OverviewDashboard';
 import { PhaseModulePlaceholder } from './components/views/PhaseModulePlaceholder';
 import { SettingsView } from './components/views/SettingsView';
+import { LazyChartsView, LazyDataImportView } from './components/views/data/LazyViews';
+import { LazyContractExplorerView, LazyTermStructureView } from './components/views/explorer/LazyExplorerViews';
 import { AuthProvider } from './contexts/AuthContext';
 import { TerminalProvider, useTerminal } from './contexts/TerminalContext';
 
@@ -22,6 +24,14 @@ function TerminalWorkspace() {
         return <MarketWatchView />;
       case 'data-health':
         return <DataHealthView />;
+      case 'data-import':
+        return <LazyDataImportView />;
+      case 'explorer':
+        return <LazyContractExplorerView />;
+      case 'term-structure':
+        return <LazyTermStructureView />;
+      case 'charts':
+        return <LazyChartsView />;
       case 'settings':
         return <SettingsView />;
       default:

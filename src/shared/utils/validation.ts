@@ -45,6 +45,18 @@ export const MarketCandleSchema = z.object({
   status: DataQualityStatusSchema,
 });
 
+/**
+ * Same as MarketCandleSchema but OHLC may be any finite number (zero/negative allowed).
+ * Real-world valid data needs this: WTI CL settled at −37.63 on 2020-04-20, and back-adjusted
+ * continuous series or spread series can legitimately be ≤ 0. Volume/OI must still be ≥ 0.
+ */
+export const MarketCandleAnyPriceSchema = MarketCandleSchema.extend({
+  open: z.number(),
+  high: z.number(),
+  low: z.number(),
+  close: z.number(),
+});
+
 export function createUnavailableQuote(params: {
   symbol: string;
   exchange: string;
@@ -119,29 +131,57 @@ export interface CandleSeriesValidationResult {
   valid: boolean;
   status: DataQualityStatus;
   errors: string[];
+  /** Non-fatal findings, e.g. one `Candle[i] non-positive price …` entry per accepted bar with a price ≤ 0. */
+  warnings: string[];
   validCandles: MarketCandle[];
 }
 
-export function validateCandleSeries(candles: MarketCandle[]): CandleSeriesValidationResult {
+export interface CandleSeriesValidationOptions {
+  /**
+   * Accept zero/negative OHLC (any finite number). Default false: prices must be > 0, which is right
+   * for quotes and normal outright contracts. Set true only for series that can legitimately be ≤ 0
+   * (back-adjusted continuous, spreads, events such as CL 2020-04-20). Each such bar still yields a
+   * warning; OHLC relationship checks and volume/OI ≥ 0 still apply.
+   */
+  allowNonPositivePrices?: boolean;
+}
+
+export function validateCandleSeries(
+  candles: MarketCandle[],
+  options: CandleSeriesValidationOptions = {}
+): CandleSeriesValidationResult {
   if (candles.length === 0) {
     return {
       valid: false,
       status: 'UNAVAILABLE',
       errors: ['No candles provided.'],
+      warnings: [],
       validCandles: [],
     };
   }
 
+  const allowNonPositive = options.allowNonPositivePrices === true;
+  const schema = allowNonPositive ? MarketCandleAnyPriceSchema : MarketCandleSchema;
   const errors: string[] = [];
+  const warnings: string[] = [];
   const seenTimestamps = new Set<number>();
   let previousTs = -Infinity;
   const validCandles: MarketCandle[] = [];
 
   for (let i = 0; i < candles.length; i++) {
     const candle = candles[i];
-    const schemaRes = MarketCandleSchema.safeParse(candle);
+    const schemaRes = schema.safeParse(candle);
     if (!schemaRes.success) {
-      errors.push(`Candle[${i}] failed schema validation.`);
+      const nonPositive =
+        !allowNonPositive &&
+        schemaRes.error.issues.some(
+          (issue) => issue.code === 'too_small' && ['open', 'high', 'low', 'close'].includes(String(issue.path[0]))
+        );
+      errors.push(
+        nonPositive
+          ? `Candle[${i}] failed schema validation: non-positive price (pass allowNonPositivePrices for series that can be ≤ 0).`
+          : `Candle[${i}] failed schema validation.`
+      );
       continue;
     }
 
@@ -174,6 +214,12 @@ export function validateCandleSeries(candles: MarketCandle[]): CandleSeriesValid
       continue;
     }
 
+    if (candle.open <= 0 || candle.high <= 0 || candle.low <= 0 || candle.close <= 0) {
+      warnings.push(
+        `Candle[${i}] non-positive price at ${candle.timestamp} (O=${candle.open} H=${candle.high} L=${candle.low} C=${candle.close}); returns/log-return analytics are undefined for this bar.`
+      );
+    }
+
     validCandles.push(candle);
   }
 
@@ -182,6 +228,7 @@ export function validateCandleSeries(candles: MarketCandle[]): CandleSeriesValid
       valid: false,
       status: 'INVALID',
       errors,
+      warnings,
       validCandles: [],
     };
   }
@@ -190,6 +237,7 @@ export function validateCandleSeries(candles: MarketCandle[]): CandleSeriesValid
     valid: true,
     status: validCandles[validCandles.length - 1].status,
     errors: [],
+    warnings,
     validCandles,
   };
 }

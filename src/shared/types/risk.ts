@@ -78,6 +78,7 @@ export type AppModuleId =
   | 'overview'
   | 'markets'
   | 'explorer'
+  | 'term-structure'
   | 'charts'
   | 'technical'
   | 'fundamental'
@@ -90,6 +91,7 @@ export type AppModuleId =
   | 'journal'
   | 'news'
   | 'data-health'
+  | 'data-import'
   | 'settings';
 
 export interface PhaseModuleDescriptor {

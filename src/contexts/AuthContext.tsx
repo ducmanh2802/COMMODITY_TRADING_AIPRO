@@ -6,12 +6,14 @@ import {
   type User,
 } from 'firebase/auth';
 import {
+  collection,
   doc,
   getDoc,
   onSnapshot,
   serverTimestamp,
   setDoc,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import {
   auth,
@@ -22,7 +24,8 @@ import {
   testFirestoreConnection,
   type FirestoreConnectionState,
 } from '../firebase';
-import type { UserRiskSettings } from '../shared/types/risk';
+import type { Timeframe, TradingStyle } from '../shared/types/instrument';
+import type { AccountCurrency, DisplayTimezone, UserRiskSettings } from '../shared/types/risk';
 
 export const DEFAULT_USER_SETTINGS: Omit<UserRiskSettings, 'userId'> = {
   accountEquity: 10000,
@@ -37,6 +40,26 @@ export const DEFAULT_USER_SETTINGS: Omit<UserRiskSettings, 'userId'> = {
   displayTimezone: 'Asia/Ho_Chi_Minh',
 };
 
+// Allowed enum values — must stay in sync with firestore.rules (isValidUserSettings).
+const TRADING_STYLES: readonly TradingStyle[] = ['SCALPING', 'INTRADAY', 'SWING', 'POSITION'];
+const TIMEFRAMES: readonly Timeframe[] = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'];
+const DISPLAY_TIMEZONES: readonly DisplayTimezone[] = [
+  'Asia/Ho_Chi_Minh',
+  'UTC',
+  'America/Chicago',
+  'Europe/London',
+];
+const ACCOUNT_CURRENCIES: readonly AccountCurrency[] = ['USD', 'VND'];
+
+function isOneOf<T extends string>(allowed: readonly T[], value: unknown): value is T {
+  return typeof value === 'string' && (allowed as readonly string[]).includes(value);
+}
+
+function finiteOr(value: unknown, fallback: number): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 interface AuthContextValue {
   user: User | null;
   authReady: boolean;
@@ -44,6 +67,7 @@ interface AuthContextValue {
   settings: UserRiskSettings;
   settingsLoaded: boolean;
   authError: string | null;
+  settingsError: string | null;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   saveSettings: (updates: Partial<Omit<UserRiskSettings, 'userId'>>) => Promise<void>;
@@ -61,19 +85,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  // uid of the verified user whose profile/settings bootstrap has finished (success or failure).
+  // The settings listener is attached only after this, avoiding a race with doc creation.
+  const [bootstrappedUid, setBootstrappedUid] = useState<string | null>(null);
 
   useEffect(() => {
-    void testFirestoreConnection().then(setFirestoreStatus);
+    let cancelled = false;
+    testFirestoreConnection()
+      .then((state) => {
+        if (!cancelled) setFirestoreStatus(state);
+      })
+      .catch(() => {
+        if (!cancelled) setFirestoreStatus('ERROR');
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
       setAuthReady(true);
       setAuthError(null);
+      setSettingsError(null);
+      setBootstrappedUid(null);
+      setSettings({ userId: nextUser?.uid ?? 'anonymous', ...DEFAULT_USER_SETTINGS });
 
       if (!nextUser) {
-        setSettings({ userId: 'anonymous', ...DEFAULT_USER_SETTINGS });
         setSettingsLoaded(true);
         return;
       }
@@ -84,12 +124,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      setSettingsLoaded(false);
+      void bootstrapUserDocs(nextUser);
+    });
+
+    // Ensures profile + settings docs exist. Never throws; errors become UI state.
+    async function bootstrapUserDocs(nextUser: User): Promise<void> {
+      const isCurrent = () => auth.currentUser?.uid === nextUser.uid;
+      const email = nextUser.email ?? '';
+
       const userPath = `users/${nextUser.uid}`;
       try {
         const userRef = doc(db, 'users', nextUser.uid);
         const userSnap = await getDoc(userRef);
-        const safeName = (nextUser.displayName || nextUser.email.split('@')[0] || 'Trader').slice(0, 120);
-        const safeEmail = nextUser.email.slice(0, 254);
+        const safeName = (nextUser.displayName || email.split('@')[0] || 'Trader').slice(0, 120);
+        const safeEmail = email.slice(0, 254);
 
         if (!userSnap.exists()) {
           await setDoc(userRef, {
@@ -107,7 +156,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         }
       } catch (err) {
-        handleFirestoreError(err, OperationType.WRITE, userPath);
+        const info = handleFirestoreError(err, OperationType.WRITE, userPath);
+        if (isCurrent()) setAuthError(`Could not sync user profile: ${info.userMessage}`);
       }
 
       const settingsPath = `userSettings/${nextUser.uid}`;
@@ -123,60 +173,77 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         }
       } catch (err) {
-        handleFirestoreError(err, OperationType.WRITE, settingsPath);
+        const info = handleFirestoreError(err, OperationType.WRITE, settingsPath);
+        if (isCurrent()) setSettingsError(`Could not initialize settings: ${info.userMessage}`);
+      } finally {
+        // Always hand off to the listener (which also marks settingsLoaded on any outcome).
+        if (isCurrent()) setBootstrappedUid(nextUser.uid);
       }
-    });
+    }
 
     return () => unsubscribe();
   }, []);
 
-  // Attach onSnapshot listener strictly when auth is ready and user is authenticated & verified
+  // Attach onSnapshot listener only for a verified user whose bootstrap has completed.
   useEffect(() => {
-    if (!authReady || !user || !user.emailVerified) {
+    if (!authReady || !user || !user.emailVerified || !user.email) {
+      return;
+    }
+    if (bootstrappedUid !== user.uid) {
       return;
     }
 
-    const settingsPath = `userSettings/${user.uid}`;
-    const settingsRef = doc(db, 'userSettings', user.uid);
+    const uid = user.uid;
+    const settingsPath = `userSettings/${uid}`;
+    const settingsRef = doc(db, 'userSettings', uid);
     const unsubSettings = onSnapshot(
       settingsRef,
       (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.data();
           setSettings({
-            userId: user.uid,
-            accountEquity: Number(data.accountEquity ?? DEFAULT_USER_SETTINGS.accountEquity),
-            accountCurrency: data.accountCurrency === 'VND' ? 'VND' : 'USD',
-            riskPercentagePerTrade: Number(
-              data.riskPercentagePerTrade ?? DEFAULT_USER_SETTINGS.riskPercentagePerTrade
+            userId: uid,
+            accountEquity: finiteOr(data.accountEquity, DEFAULT_USER_SETTINGS.accountEquity),
+            accountCurrency: isOneOf(ACCOUNT_CURRENCIES, data.accountCurrency)
+              ? data.accountCurrency
+              : DEFAULT_USER_SETTINGS.accountCurrency,
+            riskPercentagePerTrade: finiteOr(
+              data.riskPercentagePerTrade,
+              DEFAULT_USER_SETTINGS.riskPercentagePerTrade
             ),
-            dailyLossLimitPct: Number(
-              data.dailyLossLimitPct ?? DEFAULT_USER_SETTINGS.dailyLossLimitPct
-            ),
+            dailyLossLimitPct: finiteOr(data.dailyLossLimitPct, DEFAULT_USER_SETTINGS.dailyLossLimitPct),
             maxOpenPositions: Math.trunc(
-              Number(data.maxOpenPositions ?? DEFAULT_USER_SETTINGS.maxOpenPositions)
+              finiteOr(data.maxOpenPositions, DEFAULT_USER_SETTINGS.maxOpenPositions)
             ),
-            maxPortfolioRiskPct: Number(
-              data.maxPortfolioRiskPct ?? DEFAULT_USER_SETTINGS.maxPortfolioRiskPct
+            maxPortfolioRiskPct: finiteOr(
+              data.maxPortfolioRiskPct,
+              DEFAULT_USER_SETTINGS.maxPortfolioRiskPct
             ),
             maxContractsPerInstrument: Math.trunc(
-              Number(data.maxContractsPerInstrument ?? DEFAULT_USER_SETTINGS.maxContractsPerInstrument)
+              finiteOr(data.maxContractsPerInstrument, DEFAULT_USER_SETTINGS.maxContractsPerInstrument)
             ),
-            defaultTradingStyle:
-              data.defaultTradingStyle ?? DEFAULT_USER_SETTINGS.defaultTradingStyle,
-            defaultTimeframe: data.defaultTimeframe ?? DEFAULT_USER_SETTINGS.defaultTimeframe,
-            displayTimezone: data.displayTimezone ?? DEFAULT_USER_SETTINGS.displayTimezone,
+            defaultTradingStyle: isOneOf(TRADING_STYLES, data.defaultTradingStyle)
+              ? data.defaultTradingStyle
+              : DEFAULT_USER_SETTINGS.defaultTradingStyle,
+            defaultTimeframe: isOneOf(TIMEFRAMES, data.defaultTimeframe)
+              ? data.defaultTimeframe
+              : DEFAULT_USER_SETTINGS.defaultTimeframe,
+            displayTimezone: isOneOf(DISPLAY_TIMEZONES, data.displayTimezone)
+              ? data.displayTimezone
+              : DEFAULT_USER_SETTINGS.displayTimezone,
           });
         }
         setSettingsLoaded(true);
       },
       (err) => {
-        handleFirestoreError(err, OperationType.GET, settingsPath);
+        const info = handleFirestoreError(err, OperationType.GET, settingsPath);
+        setSettingsError(`Could not load settings: ${info.userMessage}`);
+        setSettingsLoaded(true);
       }
     );
 
     return () => unsubSettings();
-  }, [authReady, user]);
+  }, [authReady, user, bootstrappedUid]);
 
   const signInWithGoogle = useCallback(async () => {
     setAuthError(null);
@@ -190,7 +257,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     setAuthError(null);
-    await signOut(auth);
+    try {
+      await signOut(auth);
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : 'Sign out failed.');
+    }
   }, []);
 
   const saveSettings = useCallback(
@@ -199,63 +270,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Authentication with verified email is required to save settings.');
       }
 
-      // Clamp and validate payload strictly matching firebase-blueprint.json & firestore.rules
+      const accountCurrency = updates.accountCurrency ?? settings.accountCurrency;
+      const defaultTradingStyle = updates.defaultTradingStyle ?? settings.defaultTradingStyle;
+      const defaultTimeframe = updates.defaultTimeframe ?? settings.defaultTimeframe;
+      const displayTimezone = updates.displayTimezone ?? settings.displayTimezone;
+
+      if (!isOneOf(ACCOUNT_CURRENCIES, accountCurrency)) {
+        throw new Error(`Invalid account currency. Allowed: ${ACCOUNT_CURRENCIES.join(', ')}.`);
+      }
+      if (!isOneOf(TRADING_STYLES, defaultTradingStyle)) {
+        throw new Error(`Invalid trading style. Allowed: ${TRADING_STYLES.join(', ')}.`);
+      }
+      if (!isOneOf(TIMEFRAMES, defaultTimeframe)) {
+        throw new Error(`Invalid timeframe. Allowed: ${TIMEFRAMES.join(', ')}.`);
+      }
+      if (!isOneOf(DISPLAY_TIMEZONES, displayTimezone)) {
+        throw new Error(`Invalid display timezone. Allowed: ${DISPLAY_TIMEZONES.join(', ')}.`);
+      }
+
+      const numeric = {
+        accountEquity: Number(updates.accountEquity ?? settings.accountEquity),
+        riskPercentagePerTrade: Number(updates.riskPercentagePerTrade ?? settings.riskPercentagePerTrade),
+        dailyLossLimitPct: Number(updates.dailyLossLimitPct ?? settings.dailyLossLimitPct),
+        maxOpenPositions: Number(updates.maxOpenPositions ?? settings.maxOpenPositions),
+        maxPortfolioRiskPct: Number(updates.maxPortfolioRiskPct ?? settings.maxPortfolioRiskPct),
+        maxContractsPerInstrument: Number(
+          updates.maxContractsPerInstrument ?? settings.maxContractsPerInstrument
+        ),
+      };
+      const nonFinite = Object.entries(numeric).find(([, v]) => !Number.isFinite(v));
+      if (nonFinite) {
+        throw new Error(`Invalid numeric value for ${nonFinite[0]}.`);
+      }
+
+      // Clamp to the bounds enforced by firestore.rules (isValidUserSettings).
       const sanitized = {
-        accountEquity: Math.max(
-          0,
-          Math.min(1_000_000_000_000, Number(updates.accountEquity ?? settings.accountEquity))
-        ),
-        accountCurrency: (updates.accountCurrency ?? settings.accountCurrency) === 'VND' ? 'VND' : 'USD',
-        riskPercentagePerTrade: Math.max(
-          0.05,
-          Math.min(10, Number(updates.riskPercentagePerTrade ?? settings.riskPercentagePerTrade))
-        ),
-        dailyLossLimitPct: Math.max(
-          0.5,
-          Math.min(25, Number(updates.dailyLossLimitPct ?? settings.dailyLossLimitPct))
-        ),
-        maxOpenPositions: Math.max(
-          1,
-          Math.min(50, Math.trunc(Number(updates.maxOpenPositions ?? settings.maxOpenPositions)))
-        ),
-        maxPortfolioRiskPct: Math.max(
-          0.5,
-          Math.min(50, Number(updates.maxPortfolioRiskPct ?? settings.maxPortfolioRiskPct))
-        ),
+        accountEquity: Math.max(0, Math.min(1_000_000_000_000, numeric.accountEquity)),
+        accountCurrency,
+        riskPercentagePerTrade: Math.max(0.05, Math.min(10, numeric.riskPercentagePerTrade)),
+        dailyLossLimitPct: Math.max(0.5, Math.min(25, numeric.dailyLossLimitPct)),
+        maxOpenPositions: Math.max(1, Math.min(50, Math.trunc(numeric.maxOpenPositions))),
+        maxPortfolioRiskPct: Math.max(0.5, Math.min(50, numeric.maxPortfolioRiskPct)),
         maxContractsPerInstrument: Math.max(
           1,
-          Math.min(
-            100,
-            Math.trunc(Number(updates.maxContractsPerInstrument ?? settings.maxContractsPerInstrument))
-          )
+          Math.min(100, Math.trunc(numeric.maxContractsPerInstrument))
         ),
-        defaultTradingStyle: updates.defaultTradingStyle ?? settings.defaultTradingStyle,
-        defaultTimeframe: updates.defaultTimeframe ?? settings.defaultTimeframe,
-        displayTimezone: updates.displayTimezone ?? settings.displayTimezone,
+        defaultTradingStyle,
+        defaultTimeframe,
+        displayTimezone,
       };
 
       const settingsPath = `userSettings/${user.uid}`;
-      try {
-        await updateDoc(doc(db, 'userSettings', user.uid), {
-          ...sanitized,
-          updatedAt: serverTimestamp(),
-        });
-      } catch (err) {
-        handleFirestoreError(err, OperationType.UPDATE, settingsPath);
-      }
+      // Firestore auto-id: 20 alphanumeric chars, satisfies isValidId in firestore.rules.
+      const logRef = doc(collection(db, 'auditLogs'));
 
-      const logId = `settings_${Date.now()}`;
-      const logPath = `auditLogs/${logId}`;
+      // Settings update + audit log are committed atomically.
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'userSettings', user.uid), {
+        ...sanitized,
+        updatedAt: serverTimestamp(),
+      });
+      // Fields must exactly match isValidAuditLog: userId, action, resource, createdAt.
+      batch.set(logRef, {
+        userId: user.uid,
+        action: 'UPDATE_USER_SETTINGS',
+        resource: settingsPath,
+        createdAt: serverTimestamp(),
+      });
+
       try {
-        await setDoc(doc(db, 'auditLogs', logId), {
-          userId: user.uid,
-          action: 'UPDATE_USER_SETTINGS',
-          resource: settingsPath,
-          createdAt: serverTimestamp(),
-        });
+        await batch.commit();
       } catch (err) {
-        handleFirestoreError(err, OperationType.CREATE, logPath);
+        const info = handleFirestoreError(err, OperationType.WRITE, settingsPath);
+        throw new Error(`Failed to save settings: ${info.userMessage}`);
       }
+      setSettingsError(null);
     },
     [user, settings]
   );
@@ -269,6 +358,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         settings,
         settingsLoaded,
         authError,
+        settingsError,
         signInWithGoogle,
         logout,
         saveSettings,

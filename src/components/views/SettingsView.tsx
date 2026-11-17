@@ -10,6 +10,7 @@ export function SettingsView() {
     firestoreStatus,
     settings,
     authError,
+    settingsError,
     signInWithGoogle,
     logout,
     saveSettings,
@@ -156,6 +157,12 @@ export function SettingsView() {
         {authError && (
           <div className="text-xs text-[#EF4444] bg-[#0B0E14] border border-[#EF4444]/40 rounded p-3">
             {authError}
+          </div>
+        )}
+
+        {settingsError && (
+          <div className="text-xs text-[#EF4444] bg-[#0B0E14] border border-[#EF4444]/40 rounded p-3">
+            {settingsError}
           </div>
         )}
       </section>

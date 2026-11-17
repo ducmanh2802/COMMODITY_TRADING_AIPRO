@@ -1,0 +1,365 @@
+/**
+ * Shared building blocks for the Analysis module tabs.
+ *
+ * Display rules (fail-closed, mirrors `src/shared/analytics/core.ts`):
+ * - Every analytics result is shown with its `status`, `reason` and full `warnings` list.
+ * - Numbers are shown only when `status === 'OK'`; otherwise the status panel replaces them.
+ * - A series containing a non-positive price (e.g. a back-adjusted continuous series) gets an explicit
+ *   warning that return-based metrics are invalid for it (the library also rejects it as INVALID_INPUT).
+ */
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react';
+import {
+  type CandlesResponse,
+  type SeriesOption,
+  fetchCandles,
+  fetchSeriesOptions,
+} from '../../../api/analysisApi';
+import type { AnalyticsStatus, OhlcBar, SeriesPoint } from '../../../shared/analytics';
+
+// ------------------------------------------------------------------------------------------------
+// Formatting
+// ------------------------------------------------------------------------------------------------
+
+export function fmtPct(x: number | null | undefined, digits = 2): string {
+  return x === null || x === undefined || !Number.isFinite(x) ? 'â€”' : `${(x * 100).toFixed(digits)}%`;
+}
+
+export function fmtNum(x: number | null | undefined, digits = 4): string {
+  return x === null || x === undefined || !Number.isFinite(x) ? 'â€”' : x.toFixed(digits);
+}
+
+export function fmtDate(t: string | null | undefined): string {
+  if (!t) return 'â€”';
+  return t.length >= 10 ? t.slice(0, 10) : t;
+}
+
+/** Latest non-null value of an index-aligned series, with its timestamp. */
+export function latestValue(timestamps: string[], values: (number | null)[]): { t: string; v: number } | null {
+  for (let i = values.length - 1; i >= 0; i--) {
+    const v = values[i];
+    if (v !== null && Number.isFinite(v)) return { t: timestamps[i], v };
+  }
+  return null;
+}
+
+// ------------------------------------------------------------------------------------------------
+// UI primitives (terminal dark style)
+// ------------------------------------------------------------------------------------------------
+
+export const panelClass = 'bg-[#111622] border border-[#263244] rounded-lg';
+export const inputClass =
+  'bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-[#E5E7EB] focus:outline-none focus:border-[#6366F1] disabled:opacity-50';
+export const labelClass = 'block text-[11px] text-[#E5E7EB]/60 mb-1';
+
+export function Panel({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+  return (
+    <section aria-label={title} className={`${panelClass} overflow-hidden`}>
+      <div className="px-4 py-3 border-b border-[#263244]">
+        <h2 className="text-sm font-semibold text-white">{title}</h2>
+        {subtitle && <p className="text-xs text-[#E5E7EB]/55 mt-0.5">{subtitle}</p>}
+      </div>
+      <div className="p-4 space-y-3">{children}</div>
+    </section>
+  );
+}
+
+const STATUS_STYLE: Record<string, { cls: string; Icon: typeof CheckCircle2 }> = {
+  OK: { cls: 'text-[#22C55E] border-[#22C55E]/40 bg-[#22C55E]/10', Icon: CheckCircle2 },
+  INSUFFICIENT_DATA: { cls: 'text-[#F59E0B] border-[#F59E0B]/40 bg-[#F59E0B]/10', Icon: AlertTriangle },
+  INVALID_INPUT: { cls: 'text-[#EF4444] border-[#EF4444]/40 bg-[#EF4444]/10', Icon: XCircle },
+};
+
+export function StatusChip({ status }: { status: AnalyticsStatus | string }) {
+  const s = STATUS_STYLE[status] ?? STATUS_STYLE.INVALID_INPUT;
+  const Icon = s.Icon;
+  return (
+    <span className={`inline-flex items-center gap-1.5 border rounded px-2 py-0.5 font-mono text-[11px] font-medium ${s.cls}`}>
+      <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+      {status}
+    </span>
+  );
+}
+
+/** Status + reason + warnings for one analytics result. */
+export function StatusBlock({
+  label,
+  status,
+  reason,
+  warnings,
+}: {
+  label: string;
+  status: AnalyticsStatus | string;
+  reason?: string;
+  warnings: string[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? warnings : warnings.slice(0, 5);
+  return (
+    <div className="text-xs space-y-1" data-testid={`status-${label}`}>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[#E5E7EB]/80 font-medium">{label}</span>
+        <StatusChip status={status} />
+      </div>
+      {status !== 'OK' && reason && <p className="font-mono text-[11px] text-[#E5E7EB]/75">Reason: {reason}</p>}
+      {warnings.length > 0 && (
+        <ul className="list-disc pl-5 text-[11px] text-[#F59E0B]/90 space-y-0.5">
+          {shown.map((w, i) => (
+            <li key={i}>{w}</li>
+          ))}
+          {warnings.length > 5 && (
+            <li className="list-none -ml-5">
+              <button type="button" className="underline text-[#E5E7EB]/60" onClick={() => setExpanded((e) => !e)}>
+                {expanded ? 'Show fewer' : `Show all ${warnings.length} warnings`}
+              </button>
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function Notice({ tone, children }: { tone: 'warn' | 'error' | 'info'; children: ReactNode }) {
+  const cls =
+    tone === 'error'
+      ? 'border-[#EF4444]/50 bg-[#EF4444]/10 text-[#FCA5A5]'
+      : tone === 'warn'
+        ? 'border-[#F59E0B]/50 bg-[#F59E0B]/10 text-[#FCD34D]'
+        : 'border-[#6366F1]/40 bg-[#6366F1]/10 text-[#C7D2FE]';
+  const Icon = tone === 'info' ? Info : AlertTriangle;
+  return (
+    <div role={tone === 'info' ? 'note' : 'alert'} className={`flex gap-2 border rounded-md px-3 py-2 text-xs ${cls}`}>
+      <Icon className="w-4 h-4 shrink-0 mt-px" aria-hidden="true" />
+      <div className="space-y-1">{children}</div>
+    </div>
+  );
+}
+
+export function NumberField({
+  id,
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+  hint,
+}: {
+  id: string;
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  hint?: string;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className={labelClass}>
+        {label}
+      </label>
+      <input
+        id={id}
+        type="number"
+        className={`${inputClass} w-28 font-mono`}
+        value={Number.isFinite(value) ? value : ''}
+        min={min}
+        max={max}
+        step={step}
+        onChange={(e) => onChange(e.target.value === '' ? NaN : Number(e.target.value))}
+      />
+      {hint && <p className="text-[10px] text-[#E5E7EB]/45 mt-0.5">{hint}</p>}
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------------------------------------
+// Data hooks
+// ------------------------------------------------------------------------------------------------
+
+export interface LoadedSeries {
+  option: SeriesOption;
+  response: CandlesResponse;
+  /** Complete candles only (incomplete candles are excluded; the count is reported). */
+  bars: OhlcBar[];
+  closes: SeriesPoint[];
+  excludedIncomplete: number;
+  /** Number of candles with any O/H/L/C <= 0 (e.g. back-adjusted continuous series). */
+  nonPositiveCount: number;
+}
+
+const candleCache = new Map<string, Promise<LoadedSeries>>();
+
+function loadSeries(option: SeriesOption): Promise<LoadedSeries> {
+  const cached = candleCache.get(option.key);
+  if (cached) return cached;
+  const p = fetchCandles({ instrumentId: option.instrumentId, contractCode: option.contractCode, timeframe: option.timeframe }).then(
+    (response) => {
+      const complete = response.candles.filter((c) => c.isComplete !== false);
+      const bars: OhlcBar[] = complete.map((c) => ({
+        timestamp: c.timestamp,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
+        volume: c.volume,
+      }));
+      return {
+        option,
+        response,
+        bars,
+        closes: complete.map((c) => ({ t: c.timestamp, v: c.close })),
+        excludedIncomplete: response.candles.length - complete.length,
+        nonPositiveCount: complete.filter((c) => c.open <= 0 || c.high <= 0 || c.low <= 0 || c.close <= 0).length,
+      };
+    }
+  );
+  candleCache.set(option.key, p);
+  p.catch(() => candleCache.delete(option.key));
+  return p;
+}
+
+/** Clears cached candles (used by the Reload button). */
+export function clearCandleCache(): void {
+  candleCache.clear();
+}
+
+export function useSeriesOptions(reloadToken: number) {
+  const [options, setOptions] = useState<SeriesOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const ac = new AbortController();
+    setLoading(true);
+    setError(null);
+    fetchSeriesOptions(ac.signal)
+      .then((o) => setOptions(o))
+      .catch((e: unknown) => {
+        if (!ac.signal.aborted) setError(e instanceof Error ? e.message : 'Failed to load datasets.');
+      })
+      .finally(() => {
+        if (!ac.signal.aborted) setLoading(false);
+      });
+    return () => ac.abort();
+  }, [reloadToken]);
+  return { options, loading, error };
+}
+
+/** Loads candles for every selected series (cached per series key). */
+export function useLoadedSeries(selected: SeriesOption[]) {
+  const [state, setState] = useState<{ data: LoadedSeries[]; loading: boolean; error: string | null }>({
+    data: [],
+    loading: false,
+    error: null,
+  });
+  const keys = selected.map((s) => s.key).join(',');
+  useEffect(() => {
+    let cancelled = false;
+    if (selected.length === 0) {
+      setState({ data: [], loading: false, error: null });
+      return;
+    }
+    setState((s) => ({ ...s, loading: true, error: null }));
+    Promise.all(selected.map(loadSeries))
+      .then((data) => {
+        if (!cancelled) setState({ data, loading: false, error: null });
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setState({ data: [], loading: false, error: e instanceof Error ? e.message : 'Failed to load candles.' });
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keys]);
+  return state;
+}
+
+/** Default bars-per-year for annualization; null when it cannot be inferred safely (intraday). */
+export function defaultAnnualization(timeframe: string): number | null {
+  if (timeframe === 'D1') return 252;
+  if (timeframe === 'W1') return 52;
+  return null;
+}
+
+// ------------------------------------------------------------------------------------------------
+// Series picker & integrity notices
+// ------------------------------------------------------------------------------------------------
+
+export function SeriesSelect({
+  id,
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  options: SeriesOption[];
+  value: string;
+  onChange: (key: string) => void;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className={labelClass}>
+        {label}
+      </label>
+      <select id={id} className={`${inputClass} min-w-[240px] font-mono`} value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">â€” select series â€”</option>
+        {options.map((o) => (
+          <option key={o.key} value={o.key}>
+            {o.label} ({o.priceUnit})
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+/** Data-integrity notices for one loaded series (shown above any computed numbers). */
+export function SeriesIntegrity({ s, returnBased = true }: { s: LoadedSeries; returnBased?: boolean }) {
+  const r = s.response;
+  const prov = r.provenance;
+  return (
+    <div className="space-y-2">
+      {r.status === 'UNAVAILABLE' && <Notice tone="warn">{r.reason ?? 'DATA_UNAVAILABLE â€” no imported candles for this series.'}</Notice>}
+      {s.nonPositiveCount > 0 && (
+        <Notice tone="error">
+          <p className="font-semibold">
+            {s.option.label}: {s.nonPositiveCount} candle(s) have a price â‰¤ 0.
+          </p>
+          {returnBased && (
+            <p>
+              Return-based metrics (returns, volatility, correlation, seasonality, drawdown) are INVALID for this series. This is typical
+              of back-adjusted continuous series; use an unadjusted or ratio-adjusted series instead.
+            </p>
+          )}
+        </Notice>
+      )}
+      {s.option.continuousAdjustment === 'BACK_ADJUSTED' && s.nonPositiveCount === 0 && returnBased && (
+        <Notice tone="warn">
+          {s.option.label} is BACK_ADJUSTED: absolute levels are shifted, so percentage returns differ from the traded contracts.
+        </Notice>
+      )}
+      {r.truncated && (
+        <Notice tone="warn">
+          Only {r.count} of {r.totalInRange} candles were returned (server limit); results cover a truncated range.
+        </Notice>
+      )}
+      {s.excludedIncomplete > 0 && <Notice tone="info">{s.excludedIncomplete} incomplete candle(s) excluded.</Notice>}
+      {prov.length > 0 && (
+        <p className="text-[11px] text-[#E5E7EB]/50 font-mono">
+          {s.option.label}: {r.count} candles Â· unit {r.priceUnit ?? 'â€”'} Â· adj {r.continuousAdjustment ?? 'â€”'} Â· source{' '}
+          {prov.map((p) => `${p.sourceLabel} [${p.sourceQuality}]`).join('; ')}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Convenience: map series key â†’ option. */
+export function useOptionMap(options: SeriesOption[]) {
+  return useMemo(() => new Map(options.map((o) => [o.key, o])), [options]);
+}

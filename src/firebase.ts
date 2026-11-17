@@ -17,61 +17,98 @@ export enum OperationType {
   WRITE = 'write',
 }
 
+/**
+ * Normalized, PII-free description of a failed Firestore operation.
+ * Only uid, operation, path and the Firebase error code are retained — never
+ * emails, display names or provider data.
+ */
 export interface FirestoreErrorInfo {
-  error: string;
+  /** Firebase error code (e.g. 'permission-denied', 'unavailable') or 'unknown'. */
+  code: string;
   operationType: OperationType;
   path: string | null;
-  authInfo: {
-    userId?: string | null;
-    email?: string | null;
-    emailVerified?: boolean | null;
-    isAnonymous?: boolean | null;
-    tenantId?: string | null;
-    providerInfo?: {
-      providerId?: string | null;
-      email?: string | null;
-    }[];
-  };
+  userId: string | null;
+  /** Safe, user-facing message suitable for display in the UI. */
+  userMessage: string;
 }
 
+function extractErrorCode(error: unknown): string {
+  if (error && typeof error === 'object' && 'code' in error) {
+    const code = (error as { code?: unknown }).code;
+    if (typeof code === 'string' && code.length > 0) {
+      // Firebase codes may be prefixed, e.g. 'firestore/permission-denied'.
+      return code.includes('/') ? code.slice(code.lastIndexOf('/') + 1) : code;
+    }
+  }
+  return 'unknown';
+}
+
+function userMessageForCode(code: string, operationType: OperationType): string {
+  switch (code) {
+    case 'permission-denied':
+      return 'Permission denied by Firestore security rules. Ensure you are signed in with a verified email.';
+    case 'unauthenticated':
+      return 'Your session has expired. Please sign in again.';
+    case 'unavailable':
+    case 'deadline-exceeded':
+      return 'Cloud Firestore is currently unreachable. Check your connection and try again.';
+    case 'not-found':
+      return 'The requested record was not found in Cloud Firestore.';
+    case 'invalid-argument':
+    case 'failed-precondition':
+      return 'Cloud Firestore rejected the request because the data was invalid.';
+    case 'resource-exhausted':
+      return 'Cloud Firestore quota exceeded. Please try again later.';
+    default:
+      return `Cloud Firestore ${operationType} operation failed.`;
+  }
+}
+
+/**
+ * Normalizes and logs a Firestore error, returning a typed error object.
+ * Never throws — callers decide whether to surface it as UI state or reject.
+ */
 export function handleFirestoreError(
   error: unknown,
   operationType: OperationType,
   path: string | null
-): never {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo:
-        auth.currentUser?.providerData?.map((provider) => ({
-          providerId: provider.providerId,
-          email: provider.email,
-        })) ?? [],
-    },
+): FirestoreErrorInfo {
+  const code = extractErrorCode(error);
+  const info: FirestoreErrorInfo = {
+    code,
     operationType,
     path,
+    userId: auth.currentUser?.uid ?? null,
+    userMessage: userMessageForCode(code, operationType),
   };
-  console.error('Firestore Error:', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.error('Firestore Error:', {
+    code: info.code,
+    operationType: info.operationType,
+    path: info.path,
+    userId: info.userId,
+  });
+  return info;
 }
 
-export type FirestoreConnectionState = 'CHECKING' | 'ONLINE' | 'OFFLINE_OR_MISCONFIGURED';
+export type FirestoreConnectionState = 'CHECKING' | 'ONLINE' | 'OFFLINE_OR_MISCONFIGURED' | 'ERROR';
 
 export async function testFirestoreConnection(): Promise<FirestoreConnectionState> {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
     return 'ONLINE';
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error('Please check your Firebase configuration: Firestore client is offline.');
+    const code = extractErrorCode(error);
+    // Permission denied on /test/connection is expected: the server answered,
+    // so the backend is reachable and correctly configured.
+    if (code === 'permission-denied') {
+      return 'ONLINE';
+    }
+    const message = error instanceof Error ? error.message : '';
+    if (code === 'unavailable' || message.includes('client is offline')) {
+      console.error('Firestore unreachable: client is offline or Firebase configuration is invalid.');
       return 'OFFLINE_OR_MISCONFIGURED';
     }
-    // Permission denied on nonexistent /test/connection confirms live server reachability
-    return 'ONLINE';
+    console.error('Firestore connectivity check failed:', { code });
+    return 'ERROR';
   }
 }

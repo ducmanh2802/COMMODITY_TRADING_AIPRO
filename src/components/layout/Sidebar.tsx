@@ -15,6 +15,8 @@ import {
   Settings,
   ShieldCheck,
   SlidersHorizontal,
+  TrendingUp,
+  Upload,
   X,
 } from 'lucide-react';
 import type { AppModuleId } from '../../shared/types/risk';
@@ -44,11 +46,13 @@ const PRIMARY_NAV_ITEMS: NavItem[] = [
   { id: 'journal', label: 'Journal', phase: 9, Icon: BookOpen },
   { id: 'news', label: 'News', phase: 10, Icon: Newspaper },
   { id: 'data-health', label: 'Data Health', phase: 1, Icon: Activity },
+  { id: 'data-import', label: 'Data Import', phase: 2, Icon: Upload },
   { id: 'settings', label: 'Settings', phase: 1, Icon: Settings },
 ];
 
 const SECONDARY_ENGINE_ITEMS: NavItem[] = [
   { id: 'explorer', label: 'Contracts', phase: 2, Icon: Compass },
+  { id: 'term-structure', label: 'Term Structure', phase: 2, Icon: TrendingUp },
   { id: 'technical', label: 'Technical', phase: 3, Icon: BarChart3 },
   { id: 'signals', label: 'Strategies', phase: 4, Icon: SlidersHorizontal },
   { id: 'fundamental', label: 'Macro Data', phase: 10, Icon: Cpu },

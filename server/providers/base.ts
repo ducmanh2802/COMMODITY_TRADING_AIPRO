@@ -31,7 +31,17 @@ export class FailClosedProviderAdapter implements MarketDataProvider {
   constructor(config: UnconfiguredProviderConfig) {
     this.providerId = config.providerId;
     this.providerName = config.providerName;
-    this.config = config;
+    // Defensive copy so shared/default config objects cannot be mutated through an adapter.
+    this.config = {
+      ...config,
+      exchanges: [...config.exchanges],
+      envKeyNames: [...config.envKeyNames],
+    };
+  }
+
+  /** Exchanges this adapter declares support for (copy). */
+  get exchanges(): string[] {
+    return [...this.config.exchanges];
   }
 
   private hasCredentials(): boolean {
@@ -99,7 +109,7 @@ export class FailClosedProviderAdapter implements MarketDataProvider {
     return {
       providerId: this.providerId,
       name: this.providerName,
-      exchanges: this.config.exchanges,
+      exchanges: [...this.config.exchanges],
       connectionState: credentialsConfigured ? 'UNAVAILABLE' : 'UNCONFIGURED',
       dataStatus: 'UNAVAILABLE',
       credentialsConfigured,

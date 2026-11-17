@@ -1,0 +1,194 @@
+/**
+ * Seasonality tab: monthly return statistics and the average-year path for one DAILY series.
+ * Conventions (minYears, final-month exclusion, leap-calendar path) are in
+ * `src/shared/analytics/seasonality.ts`. Statistics are shown only when status is OK; per-year
+ * coverage counts are always shown so the user can see why minYears is not met.
+ */
+import { useMemo, useState } from 'react';
+import type { SeriesOption } from '../../../api/analysisApi';
+import { type PathPoint, seasonality } from '../../../shared/analytics';
+import {
+  Notice,
+  NumberField,
+  Panel,
+  SeriesIntegrity,
+  SeriesSelect,
+  StatusBlock,
+  fmtPct,
+  inputClass,
+  labelClass,
+  useLoadedSeries,
+  useOptionMap,
+} from './shared';
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_START_IDX = [1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336];
+
+function PathChart({ path }: { path: PathPoint[] }) {
+  const pts = path.filter((p) => p.mean !== null) as (PathPoint & { mean: number })[];
+  if (pts.length < 2) return <p className="text-xs text-[#E5E7EB]/55">Not enough path points to draw.</p>;
+  const W = 800;
+  const H = 240;
+  const pad = { l: 44, r: 10, t: 10, b: 24 };
+  const ys = pts.map((p) => p.mean);
+  const yMin = Math.min(...ys, 100);
+  const yMax = Math.max(...ys, 100);
+  const span = yMax - yMin || 1;
+  const x = (d: number) => pad.l + ((d - 1) / 365) * (W - pad.l - pad.r);
+  const y = (v: number) => pad.t + (1 - (v - yMin) / span) * (H - pad.t - pad.b);
+  // Break the line where a day has no contributing year (no interpolation across missing days).
+  let d = '';
+  let prev: number | null = null;
+  for (const p of pts) {
+    d += `${prev !== null && p.dayIndex === prev + 1 ? 'L' : 'M'}${x(p.dayIndex).toFixed(1)},${y(p.mean).toFixed(1)} `;
+    prev = p.dayIndex;
+  }
+  // Isolated days (weekends break daily continuity) — also draw as dots so sparse paths stay visible.
+  const ticks = [yMin, (yMin + yMax) / 2, yMax];
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Average seasonal path chart">
+      {ticks.map((t) => (
+        <g key={t}>
+          <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke="#263244" strokeWidth={1} />
+          <text x={pad.l - 4} y={y(t) + 3} fontSize={10} textAnchor="end" fill="#E5E7EB99">
+            {t.toFixed(1)}
+          </text>
+        </g>
+      ))}
+      <line x1={pad.l} x2={W - pad.r} y1={y(100)} y2={y(100)} stroke="#E5E7EB55" strokeDasharray="4 3" />
+      {MONTH_START_IDX.map((idx, i) => (
+        <text key={idx} x={x(idx)} y={H - 6} fontSize={10} fill="#E5E7EB99">
+          {MONTHS[i]}
+        </text>
+      ))}
+      <path d={d} fill="none" stroke="#6366F1" strokeWidth={1.5} />
+      {pts.map((p) => (
+        <circle key={p.dayIndex} cx={x(p.dayIndex)} cy={y(p.mean)} r={1.2} fill="#6366F1" />
+      ))}
+    </svg>
+  );
+}
+
+export function SeasonalityTab({ options }: { options: SeriesOption[] }) {
+  const byKey = useOptionMap(options);
+  const [key, setKey] = useState('');
+  const [minYears, setMinYears] = useState(5);
+  const [includeFinalMonth, setIncludeFinalMonth] = useState(false);
+  const [pathFill, setPathFill] = useState<'none' | 'carryForward'>('none');
+  const option = byKey.get(key);
+  const selected = useMemo(() => (option ? [option] : []), [option]);
+  const { data, loading, error } = useLoadedSeries(selected);
+  const s = data[0];
+
+  const res = useMemo(() => (s ? seasonality(s.closes, { minYears, includeFinalMonth, pathFill }) : null), [s, minYears, includeFinalMonth, pathFill]);
+
+  return (
+    <div className="space-y-4">
+      <Panel
+        title="Seasonality"
+        subtitle="Monthly return = month-end close / previous month-end close − 1 (UTC calendar). Requires daily data and ≥ minYears years with monthly returns."
+      >
+        <div className="flex flex-wrap items-end gap-4">
+          <SeriesSelect id="seas-series" label="Series (daily)" options={options} value={key} onChange={setKey} />
+          <NumberField id="seas-minyears" label="minYears" value={minYears} onChange={setMinYears} min={1} />
+          <div>
+            <label htmlFor="seas-fill" className={labelClass}>
+              Path fill
+            </label>
+            <select id="seas-fill" className={inputClass} value={pathFill} onChange={(e) => setPathFill(e.target.value as 'none' | 'carryForward')}>
+              <option value="none">none (exact dates only)</option>
+              <option value="carryForward">carry forward (explicit)</option>
+            </select>
+          </div>
+          <label className="inline-flex items-center gap-2 text-xs text-[#E5E7EB]/80 pb-1.5">
+            <input type="checkbox" className="accent-[#6366F1]" checked={includeFinalMonth} onChange={(e) => setIncludeFinalMonth(e.target.checked)} />
+            Include final (possibly partial) month
+          </label>
+        </div>
+        {option && option.timeframe !== 'D1' && <Notice tone="warn">Seasonality expects daily (D1) data; {option.timeframe} will be rejected or flagged.</Notice>}
+        {loading && <p className="text-xs text-[#E5E7EB]/55">Loading candles…</p>}
+        {error && <Notice tone="error">{error}</Notice>}
+        {s && <SeriesIntegrity s={s} />}
+      </Panel>
+
+      {res && (
+        <>
+          <Panel title="Coverage" subtitle={`Requirement: ≥ ${Number.isFinite(minYears) ? minYears : '—'} calendar years with at least one monthly return`}>
+            <StatusBlock label="Seasonality" status={res.status} reason={res.reason} warnings={res.warnings} />
+            {res.status !== 'INVALID_INPUT' && (
+              <>
+                <p className="text-xs font-mono text-[#E5E7EB]/80">
+                  Years covered: <span className="text-white">{res.yearsCovered}</span> / required {Number.isFinite(minYears) ? minYears : '—'}
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="text-xs font-mono min-w-[420px]">
+                    <thead>
+                      <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
+                        <th className="py-1.5 pr-4 text-left font-medium">Year</th>
+                        <th className="py-1.5 px-3 text-right font-medium">Observations</th>
+                        <th className="py-1.5 px-3 text-right font-medium">Monthly returns</th>
+                        <th className="py-1.5 px-3 text-left font-medium">In avg path</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#263244]/70">
+                      {res.years.map((y) => (
+                        <tr key={y.year}>
+                          <td className="py-1.5 pr-4 text-white">{y.year}</td>
+                          <td className="py-1.5 px-3 text-right tabular-nums">{y.observations}</td>
+                          <td className="py-1.5 px-3 text-right tabular-nums">{y.monthlyReturns}</td>
+                          <td className="py-1.5 px-3">{y.includedInPath ? 'yes' : 'no (needs Jan & Dec)'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </Panel>
+
+          {res.status === 'OK' && (
+            <>
+              <Panel title="Monthly return statistics">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs font-mono min-w-[640px]">
+                    <thead>
+                      <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
+                        <th className="py-1.5 pr-3 text-left font-medium">Month</th>
+                        <th className="py-1.5 px-3 text-right font-medium">n</th>
+                        <th className="py-1.5 px-3 text-right font-medium">Mean</th>
+                        <th className="py-1.5 px-3 text-right font-medium">Median</th>
+                        <th className="py-1.5 px-3 text-right font-medium">% positive</th>
+                        <th className="py-1.5 px-3 text-right font-medium">Min</th>
+                        <th className="py-1.5 px-3 text-right font-medium">Max</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#263244]/70">
+                      {res.months.map((m) => (
+                        <tr key={m.month} className={m.count < minYears ? 'text-[#E5E7EB]/45' : 'text-[#E5E7EB]/90'}>
+                          <td className="py-1.5 pr-3">
+                            {MONTHS[m.month - 1]}
+                            {m.count < minYears && <span className="text-[#F59E0B] ml-1" title="fewer samples than minYears">*</span>}
+                          </td>
+                          <td className="py-1.5 px-3 text-right tabular-nums">{m.count}</td>
+                          <td className={`py-1.5 px-3 text-right tabular-nums ${m.mean !== null && m.mean < 0 ? 'text-[#EF4444]' : ''}`}>{fmtPct(m.mean)}</td>
+                          <td className="py-1.5 px-3 text-right tabular-nums">{fmtPct(m.median)}</td>
+                          <td className="py-1.5 px-3 text-right tabular-nums">{fmtPct(m.pctPositive, 0)}</td>
+                          <td className="py-1.5 px-3 text-right tabular-nums">{fmtPct(m.min)}</td>
+                          <td className="py-1.5 px-3 text-right tabular-nums">{fmtPct(m.max)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="text-[10px] text-[#E5E7EB]/45 mt-1">* fewer yearly samples than minYears — treat with caution.</p>
+                </div>
+              </Panel>
+              <Panel title="Average year path" subtitle="Each included year normalized to 100 at its first observation; mean per calendar day over contributing years.">
+                <PathChart path={res.path} />
+              </Panel>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
