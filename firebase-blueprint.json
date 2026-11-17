@@ -9,32 +9,21 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 128,
-          "pattern": "^[a-zA-Z0-9_\\-]+$",
-          "description": "Firebase Auth UID of the profile owner."
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
         },
         "email": {
           "type": "string",
           "format": "email",
           "minLength": 3,
-          "maxLength": 254,
-          "description": "Verified email address of the user."
+          "maxLength": 254
         },
         "displayName": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 120,
-          "description": "Display name shown in the terminal header."
+          "maxLength": 120
         },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Server timestamp when profile was created."
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Server timestamp when profile was last updated."
-        }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email", "displayName", "createdAt", "updatedAt"]
     },
@@ -49,35 +38,13 @@
           "maxLength": 128,
           "pattern": "^[a-zA-Z0-9_\\-]+$"
         },
-        "accountEquity": {
-          "type": "number",
-          "description": "Account equity in accountCurrency."
-        },
-        "accountCurrency": {
-          "type": "string",
-          "enum": ["USD", "VND"],
-          "maxLength": 8
-        },
-        "riskPercentagePerTrade": {
-          "type": "number",
-          "description": "Maximum risk percentage per trade (0.05 to 10)."
-        },
-        "dailyLossLimitPct": {
-          "type": "number",
-          "description": "Daily loss limit percentage (0.5 to 25)."
-        },
-        "maxOpenPositions": {
-          "type": "integer",
-          "description": "Maximum concurrent open positions (1 to 50)."
-        },
-        "maxPortfolioRiskPct": {
-          "type": "number",
-          "description": "Maximum total portfolio risk percentage (0.5 to 50)."
-        },
-        "maxContractsPerInstrument": {
-          "type": "integer",
-          "description": "Maximum contracts allowed per instrument (1 to 100)."
-        },
+        "accountEquity": { "type": "number" },
+        "accountCurrency": { "type": "string", "enum": ["USD", "VND"], "maxLength": 8 },
+        "riskPercentagePerTrade": { "type": "number" },
+        "dailyLossLimitPct": { "type": "number" },
+        "maxOpenPositions": { "type": "integer" },
+        "maxPortfolioRiskPct": { "type": "number" },
+        "maxContractsPerInstrument": { "type": "integer" },
         "defaultTradingStyle": {
           "type": "string",
           "enum": ["SCALPING", "INTRADAY", "SWING", "POSITION"],
@@ -93,14 +60,8 @@
           "enum": ["Asia/Ho_Chi_Minh", "UTC", "America/Chicago", "Europe/London"],
           "maxLength": 32
         },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": [
         "userId",
@@ -118,6 +79,98 @@
         "updatedAt"
       ]
     },
+    "PortfolioPosition": {
+      "title": "PortfolioPosition",
+      "description": "Manual commodity futures position tracked by an authenticated user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "instrumentId": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "productName": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "category": { "type": "string", "enum": ["AGRICULTURE", "SOFT_COMMODITIES", "METALS", "ENERGY"], "maxLength": 24 },
+        "exchange": { "type": "string", "enum": ["MXV", "CBOT", "CME", "COMEX", "NYMEX", "ICE"], "maxLength": 16 },
+        "direction": { "type": "string", "enum": ["LONG", "SHORT"], "maxLength": 8 },
+        "contracts": { "type": "integer" },
+        "entryPrice": { "type": "number" },
+        "stopLoss": { "type": "number" },
+        "takeProfit": { "type": "number" },
+        "estimatedMargin": { "type": "number" },
+        "marginVerified": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["OPEN", "CLOSED"], "maxLength": 12 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "instrumentId",
+        "productName",
+        "category",
+        "exchange",
+        "direction",
+        "contracts",
+        "entryPrice",
+        "stopLoss",
+        "takeProfit",
+        "estimatedMargin",
+        "marginVerified",
+        "status",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "TradeJournalEntry": {
+      "title": "TradeJournalEntry",
+      "description": "Private authenticated trade journal record with R-multiple and cost accounting.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "instrument": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "exchange": { "type": "string", "enum": ["MXV", "CBOT", "CME", "COMEX", "NYMEX", "ICE"], "maxLength": 16 },
+        "direction": { "type": "string", "enum": ["LONG", "SHORT"], "maxLength": 8 },
+        "strategy": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "timeframe": { "type": "string", "enum": ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1"], "maxLength": 8 },
+        "entryPrice": { "type": "number" },
+        "stopLoss": { "type": "number" },
+        "takeProfit": { "type": "number" },
+        "positionSize": { "type": "integer" },
+        "entryTimestamp": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "exitTimestamp": { "type": "string", "maxLength": 64 },
+        "exitPrice": { "type": "number" },
+        "realizedPnl": { "type": "number" },
+        "tradingCosts": { "type": "number" },
+        "resultInR": { "type": "number" },
+        "rationale": { "type": "string", "maxLength": 1000 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["OPEN", "CLOSED"], "maxLength": 12 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "instrument",
+        "exchange",
+        "direction",
+        "strategy",
+        "timeframe",
+        "entryPrice",
+        "stopLoss",
+        "takeProfit",
+        "positionSize",
+        "entryTimestamp",
+        "exitTimestamp",
+        "exitPrice",
+        "realizedPnl",
+        "tradingCosts",
+        "resultInR",
+        "rationale",
+        "notes",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
     "AuditLog": {
       "title": "AuditLog",
       "description": "Immutable client/server audit event record scoped to a user.",
@@ -129,41 +182,32 @@
           "maxLength": 128,
           "pattern": "^[a-zA-Z0-9_\\-]+$"
         },
-        "action": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 80
-        },
-        "resource": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 120
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        }
+        "action": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "resource": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "action", "resource", "createdAt"]
     }
   },
   "firestore": {
     "/users/{userId}": {
-      "schema": {
-        "$ref": "#/entities/UserProfile"
-      },
+      "schema": { "$ref": "#/entities/UserProfile" },
       "description": "Private user profile document keyed by Firebase Auth UID."
     },
     "/userSettings/{userId}": {
-      "schema": {
-        "$ref": "#/entities/UserSettings"
-      },
+      "schema": { "$ref": "#/entities/UserSettings" },
       "description": "Private risk management and terminal display preferences keyed by Firebase Auth UID."
     },
+    "/positions/{positionId}": {
+      "schema": { "$ref": "#/entities/PortfolioPosition" },
+      "description": "Private manual portfolio positions scoped to owner userId."
+    },
+    "/tradeJournal/{entryId}": {
+      "schema": { "$ref": "#/entities/TradeJournalEntry" },
+      "description": "Private trade journal entries scoped to owner userId."
+    },
     "/auditLogs/{logId}": {
-      "schema": {
-        "$ref": "#/entities/AuditLog"
-      },
+      "schema": { "$ref": "#/entities/AuditLog" },
       "description": "Append-only audit trail for sensitive user configuration actions."
     }
   }

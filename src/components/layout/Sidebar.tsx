@@ -67,7 +67,6 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
       {items.map((item) => {
         const Icon = item.Icon;
         const isActive = activeModule === item.id;
-        const isOperational = item.phase <= 1;
 
         return (
           <li key={item.id}>
@@ -88,11 +87,6 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                 />
                 <span className="truncate">{item.label}</span>
               </span>
-              {!isOperational && (
-                <span className="font-mono text-[11px] text-[#E5E7EB]/40 tabular-nums shrink-0">
-                  P{item.phase}
-                </span>
-              )}
             </button>
           </li>
         );
@@ -146,8 +140,8 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
 
         <div className="p-4 border-t border-[#263244] text-xs text-[#E5E7EB]/55 space-y-1">
           <div className="flex items-center justify-between font-mono tabular-nums">
-            <span>Build Stage</span>
-            <span className="text-[#E5E7EB]">Phase 1</span>
+            <span>Architecture</span>
+            <span className="text-[#E5E7EB]">16 Modules</span>
           </div>
           <div className="flex items-center justify-between font-mono">
             <span>Execution</span>

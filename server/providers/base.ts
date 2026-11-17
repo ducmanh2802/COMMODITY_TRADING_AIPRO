@@ -107,8 +107,10 @@ export class FailClosedProviderAdapter implements MarketDataProvider {
       supportsHistorical: this.config.supportsHistorical,
       lastCheckedAt: new Date().toISOString(),
       lastSuccessfulSyncAt: null,
+      requiredEnvVars: this.config.envKeyNames,
+      lastError: null,
       message: credentialsConfigured
-        ? 'Credentials detected in server environment; live provider integration scheduled in Phase 2.'
+        ? 'Credentials detected in server environment; live provider integration pending authorized endpoint URL.'
         : this.config.unconfiguredMessage,
     };
   }

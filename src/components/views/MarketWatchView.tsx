@@ -14,8 +14,15 @@ const CATEGORIES: Array<'ALL' | ProductCategory> = [
 ];
 
 export function MarketWatchView() {
-  const { instruments, quotesBySymbol, marketScope, searchQuery, setSearchQuery, loading } =
-    useTerminal();
+  const {
+    instruments,
+    quotesBySymbol,
+    marketScope,
+    searchQuery,
+    setSearchQuery,
+    openInstrumentIn,
+    loading,
+  } = useTerminal();
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | ProductCategory>('ALL');
 
   const filtered = useMemo(() => {
@@ -25,7 +32,7 @@ export function MarketWatchView() {
       if (marketScope === 'INTERNATIONAL' && inst.exchange === 'MXV') return false;
       if (categoryFilter !== 'ALL' && inst.category !== categoryFilter) return false;
       if (q) {
-        const hay = `${inst.productName} ${inst.exchangeSymbol} ${inst.exchange} ${
+        const hay = `${inst.productName} ${inst.commodityProfile?.vietnameseName ?? ''} ${inst.exchangeSymbol} ${inst.exchange} ${
           inst.mxvMapping?.mxvSymbol ?? ''
         }`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -40,7 +47,7 @@ export function MarketWatchView() {
         <div>
           <h1 className="text-xl font-semibold text-white tracking-tight">Market Watch</h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Instrument registry and live quote integrity across MXV and international futures exchanges.
+            Instrument registry and live quote integrity across Vietnam MXV and international futures exchanges.
           </p>
         </div>
 
@@ -57,7 +64,7 @@ export function MarketWatchView() {
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filter by symbol, product, or MXV code..."
+            placeholder="Filter by symbol, VN name, or MXV code..."
             className="w-full bg-[#111622] border border-[#263244] rounded-md pl-9 pr-3 py-2 text-xs text-[#E5E7EB] placeholder:text-[#E5E7EB]/40 focus:outline-none focus:border-[#6366F1]"
           />
         </div>
@@ -97,19 +104,20 @@ export function MarketWatchView() {
                 <th className="py-3 px-3 font-medium text-right">Volume</th>
                 <th className="py-3 px-3 font-medium text-right">Open Interest</th>
                 <th className="py-3 px-3 font-medium">Timestamp (ICT)</th>
-                <th className="py-3 px-4 font-medium text-right">Quality</th>
+                <th className="py-3 px-3 font-medium text-right">Quality</th>
+                <th className="py-3 px-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#263244]/70 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={11} className="py-10 px-4 text-center text-[#E5E7EB]/55">
+                  <td colSpan={12} className="py-10 px-4 text-center text-[#E5E7EB]/55">
                     Loading market watch records...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="py-10 px-4 text-center text-[#E5E7EB]/55">
+                  <td colSpan={12} className="py-10 px-4 text-center text-[#E5E7EB]/55">
                     No instruments match the selected filters.
                   </td>
                 </tr>
@@ -118,8 +126,16 @@ export function MarketWatchView() {
                   const quote = quotesBySymbol[inst.exchangeSymbol];
                   return (
                     <tr key={inst.id} className="hover:bg-[#172033]/40 transition-colors">
-                      <td className="py-2.5 px-4 font-medium text-white whitespace-nowrap">
-                        {inst.productName}
+                      <td className="py-2.5 px-4 whitespace-nowrap">
+                        <div className="font-medium text-white">
+                          {inst.commodityProfile?.vietnameseName ?? inst.productName}
+                        </div>
+                        <div className="text-[11px] font-mono text-[#E5E7EB]/50">
+                          {inst.productName}
+                          {inst.commodityProfile?.contractMonths
+                            ? ` · Tháng: ${inst.commodityProfile.contractMonths}`
+                            : ''}
+                        </div>
                       </td>
                       <td className="py-2.5 px-3 text-[#E5E7EB]/70 whitespace-nowrap">
                         {inst.category}
@@ -163,9 +179,27 @@ export function MarketWatchView() {
                           ? formatTimestampInZone(quote.timestamp, 'Asia/Ho_Chi_Minh')
                           : 'NO_MARKET_TS'}
                       </td>
-                      <td className="py-2.5 px-4 text-right whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
                         <div className="inline-flex justify-end">
                           <DataStatusBadge status={quote?.status ?? 'UNAVAILABLE'} compact />
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-4 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openInstrumentIn(inst.exchangeSymbol, 'charts')}
+                            className="px-2 py-1 bg-[#172033] hover:bg-[#6366F1] border border-[#263244] rounded text-[11px] font-medium text-[#E5E7EB] hover:text-white transition-colors"
+                          >
+                            Chart
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openInstrumentIn(inst.exchangeSymbol, 'explorer')}
+                            className="px-2 py-1 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded text-[11px] font-medium text-[#E5E7EB]/80 hover:text-white transition-colors"
+                          >
+                            Spec
+                          </button>
                         </div>
                       </td>
                     </tr>
