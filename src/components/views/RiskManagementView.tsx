@@ -42,13 +42,14 @@ export function RiskManagementView() {
     String(settings.maxContractsPerInstrument)
   );
 
-  const [entryPrice, setEntryPrice] = useState('2350');
-  const [stopLossPrice, setStopLossPrice] = useState('2335');
-  const [takeProfitPrice, setTakeProfitPrice] = useState('2385');
-  const [commission, setCommission] = useState('2.5');
-  const [exchangeFee, setExchangeFee] = useState('1.5');
-  const [brokerageFee, setBrokerageFee] = useState('1.0');
-  const [slippageTicks, setSlippageTicks] = useState('1');
+  // No pre-filled prices or fees (fail-closed): the user enters every number (0 is a valid explicit fee).
+  const [entryPrice, setEntryPrice] = useState('');
+  const [stopLossPrice, setStopLossPrice] = useState('');
+  const [takeProfitPrice, setTakeProfitPrice] = useState('');
+  const [commission, setCommission] = useState('');
+  const [exchangeFee, setExchangeFee] = useState('');
+  const [brokerageFee, setBrokerageFee] = useState('');
+  const [slippageTicks, setSlippageTicks] = useState('');
   const [fxRate, setFxRate] = useState('');
 
   const [output, setOutput] = useState<RiskCalculationResponse | null>(null);
@@ -90,6 +91,21 @@ export function RiskManagementView() {
 
   const handleCalculate = async (e: React.FormEvent) => {
     e.preventDefault();
+    const missing = [
+      [entryPrice, 'entry price'],
+      [stopLossPrice, 'stop loss'],
+      [commission, 'commission'],
+      [exchangeFee, 'exchange fee'],
+      [brokerageFee, 'broker fee'],
+      [slippageTicks, 'slippage ticks'],
+    ]
+      .filter(([v]) => v.trim() === '' || !Number.isFinite(Number(v)))
+      .map(([, label]) => label);
+    if (missing.length > 0) {
+      setOutput(null);
+      setError(`Enter ${missing.join(', ')} (use 0 for no fee/slippage). Values are user-provided; none are assumed.`);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -106,10 +122,10 @@ export function RiskManagementView() {
         maxContractsPerInstrument: Math.trunc(Number(maxContractsPerInstrument)),
         entryPrice: Number(entryPrice),
         stopLossPrice: Number(stopLossPrice),
-        commissionPerContract: Number(commission) || 0,
-        exchangeFeePerContract: Number(exchangeFee) || 0,
-        brokerageFeePerContract: Number(brokerageFee) || 0,
-        slippageTicks: Number(slippageTicks) || 0,
+        commissionPerContract: Number(commission),
+        exchangeFeePerContract: Number(exchangeFee),
+        brokerageFeePerContract: Number(brokerageFee),
+        slippageTicks: Number(slippageTicks),
       };
       if (takeProfitPrice.trim() && Number(takeProfitPrice) > 0) {
         payload.takeProfitPrice = Number(takeProfitPrice);
@@ -239,6 +255,7 @@ export function RiskManagementView() {
                 id="risk-entry"
                 type="number"
                 step="any"
+                placeholder="Entry"
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -253,6 +270,7 @@ export function RiskManagementView() {
                 id="risk-sl"
                 type="number"
                 step="any"
+                placeholder="Stop"
                 value={stopLossPrice}
                 onChange={(e) => setStopLossPrice(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -267,6 +285,7 @@ export function RiskManagementView() {
                 id="risk-tp"
                 type="number"
                 step="any"
+                placeholder="Optional"
                 value={takeProfitPrice}
                 onChange={(e) => setTakeProfitPrice(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -283,6 +302,7 @@ export function RiskManagementView() {
                 id="risk-comm"
                 type="number"
                 step="any"
+                placeholder="Your broker, e.g. 0"
                 value={commission}
                 onChange={(e) => setCommission(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -296,6 +316,7 @@ export function RiskManagementView() {
                 id="risk-exfee"
                 type="number"
                 step="any"
+                placeholder="Exchange schedule"
                 value={exchangeFee}
                 onChange={(e) => setExchangeFee(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -309,6 +330,7 @@ export function RiskManagementView() {
                 id="risk-brkfee"
                 type="number"
                 step="any"
+                placeholder="Your broker"
                 value={brokerageFee}
                 onChange={(e) => setBrokerageFee(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -322,6 +344,7 @@ export function RiskManagementView() {
                 id="risk-slip"
                 type="number"
                 step="0.5"
+                placeholder="Ticks, e.g. 0"
                 value={slippageTicks}
                 onChange={(e) => setSlippageTicks(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"

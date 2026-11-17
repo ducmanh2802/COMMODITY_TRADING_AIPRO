@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ArrowRight, RefreshCw, ShieldAlert } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { ExchangeCode, ProductCategory } from '../../shared/types/instrument';
-import { DataStatusBadge } from '../common/DataStatusBadge';
+import { VerificationBadge } from './explorer/VerificationBadge';
 
 export function ContractExplorerView() {
   const {
@@ -368,20 +368,16 @@ export function ContractExplorerView() {
               <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-4 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
                   <p className="font-semibold text-white">Vietnam MXV Contract Mapping</p>
-                  <DataStatusBadge
-                    status={
-                      activeContract.mxvMapping?.mappingStatus === 'VERIFIED'
-                        ? 'CURRENT'
-                        : 'UNAVAILABLE'
-                    }
-                    compact
+                  {/* Mapping verification status (not a market-data freshness status). */}
+                  <VerificationBadge
+                    status={activeContract.mxvMapping?.mappingStatus ?? 'UNAVAILABLE'}
+                    title="MXV mapping verification status"
                   />
                 </div>
                 {activeContract.mxvMapping ? (
                   <div className="space-y-1">
                     <p className="font-mono text-[#E5E7EB]">
-                      MXV Symbol: {activeContract.mxvMapping.mxvSymbol ?? 'NONE'} · Status:{' '}
-                      <span className="text-[#F59E0B]">{activeContract.mxvMapping.mappingStatus}</span>
+                      MXV Symbol: {activeContract.mxvMapping.mxvSymbol ?? 'NONE'}
                     </p>
                     <p className="text-[#E5E7EB]/65">{activeContract.mxvMapping.notes}</p>
                   </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Info, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
 import {
   ApiError,
   fetchCandles,
@@ -433,13 +433,15 @@ export function ChartsView() {
       </div>
 
       {/* Indicator status: never draw a failed indicator */}
-      {computed.reports.some((r) => r.status !== 'OK' || r.warnings.length > 0) && (
+      {computed.reports.length > 0 && (
         <ul className="space-y-1" aria-label="Indicator status">
-          {computed.reports
-            .filter((r) => r.status !== 'OK' || r.warnings.length > 0)
-            .map((r) => (
+          {computed.reports.map((r) => (
               <li key={r.name} className="flex items-start gap-2 text-xs">
-                <AlertTriangle className="w-3.5 h-3.5 text-[#F59E0B] shrink-0 mt-px" aria-hidden="true" />
+                {r.status === 'OK' && r.warnings.length === 0 ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#22C55E] shrink-0 mt-px" aria-hidden="true" />
+                ) : (
+                  <AlertTriangle className="w-3.5 h-3.5 text-[#F59E0B] shrink-0 mt-px" aria-hidden="true" />
+                )}
                 <span className="font-mono text-white">{r.name}</span>
                 <span className={`font-mono ${r.status === 'OK' ? 'text-[#22C55E]' : 'text-[#F59E0B]'}`}>{r.status}</span>
                 <span className="text-[#E5E7EB]/70">

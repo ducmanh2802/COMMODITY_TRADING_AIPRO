@@ -22,15 +22,15 @@ import type { AnalyticsStatus, OhlcBar, SeriesPoint } from '../../../shared/anal
 // ------------------------------------------------------------------------------------------------
 
 export function fmtPct(x: number | null | undefined, digits = 2): string {
-  return x === null || x === undefined || !Number.isFinite(x) ? 'â€”' : `${(x * 100).toFixed(digits)}%`;
+  return x === null || x === undefined || !Number.isFinite(x) ? '—' : `${(x * 100).toFixed(digits)}%`;
 }
 
 export function fmtNum(x: number | null | undefined, digits = 4): string {
-  return x === null || x === undefined || !Number.isFinite(x) ? 'â€”' : x.toFixed(digits);
+  return x === null || x === undefined || !Number.isFinite(x) ? '—' : x.toFixed(digits);
 }
 
 export function fmtDate(t: string | null | undefined): string {
-  if (!t) return 'â€”';
+  if (!t) return '—';
   return t.length >= 10 ? t.slice(0, 10) : t;
 }
 
@@ -307,7 +307,7 @@ export function SeriesSelect({
         {label}
       </label>
       <select id={id} className={`${inputClass} min-w-[240px] font-mono`} value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">â€” select series â€”</option>
+        <option value="">— select series —</option>
         {options.map((o) => (
           <option key={o.key} value={o.key}>
             {o.label} ({o.priceUnit})
@@ -324,11 +324,11 @@ export function SeriesIntegrity({ s, returnBased = true }: { s: LoadedSeries; re
   const prov = r.provenance;
   return (
     <div className="space-y-2">
-      {r.status === 'UNAVAILABLE' && <Notice tone="warn">{r.reason ?? 'DATA_UNAVAILABLE â€” no imported candles for this series.'}</Notice>}
+      {r.status === 'UNAVAILABLE' && <Notice tone="warn">{r.reason ?? 'DATA_UNAVAILABLE — no imported candles for this series.'}</Notice>}
       {s.nonPositiveCount > 0 && (
         <Notice tone="error">
           <p className="font-semibold">
-            {s.option.label}: {s.nonPositiveCount} candle(s) have a price â‰¤ 0.
+            {s.option.label}: {s.nonPositiveCount} candle(s) have a price ≤ 0.
           </p>
           {returnBased && (
             <p>
@@ -351,7 +351,7 @@ export function SeriesIntegrity({ s, returnBased = true }: { s: LoadedSeries; re
       {s.excludedIncomplete > 0 && <Notice tone="info">{s.excludedIncomplete} incomplete candle(s) excluded.</Notice>}
       {prov.length > 0 && (
         <p className="text-[11px] text-[#E5E7EB]/50 font-mono">
-          {s.option.label}: {r.count} candles Â· unit {r.priceUnit ?? 'â€”'} Â· adj {r.continuousAdjustment ?? 'â€”'} Â· source{' '}
+          {s.option.label}: {r.count} candles · unit {r.priceUnit ?? '—'} · adj {r.continuousAdjustment ?? '—'} · source{' '}
           {prov.map((p) => `${p.sourceLabel} [${p.sourceQuality}]`).join('; ')}
         </p>
       )}
@@ -359,7 +359,7 @@ export function SeriesIntegrity({ s, returnBased = true }: { s: LoadedSeries; re
   );
 }
 
-/** Convenience: map series key â†’ option. */
+/** Convenience: map series key → option. */
 export function useOptionMap(options: SeriesOption[]) {
   return useMemo(() => new Map(options.map((o) => [o.key, o])), [options]);
 }

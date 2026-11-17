@@ -2,25 +2,27 @@ import { useState } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
-import { AiAnalystView } from './components/views/AiAnalystView';
-import { BacktestView } from './components/views/BacktestView';
-import { ChartsView } from './components/views/ChartsView';
-import { ContractExplorerView } from './components/views/ContractExplorerView';
-import { DataHealthView } from './components/views/DataHealthView';
-import { FundamentalNewsView } from './components/views/FundamentalNewsView';
-import { MarketWatchView } from './components/views/MarketWatchView';
 import { OverviewDashboard } from './components/views/OverviewDashboard';
-import { PortfolioView } from './components/views/PortfolioView';
-import { RiskManagementView } from './components/views/RiskManagementView';
-import { ScannerView } from './components/views/ScannerView';
-import { SettingsView } from './components/views/SettingsView';
 import { LazyAnalysisView, LazyChartsView, LazyCotView, LazyDataImportView } from './components/views/data/LazyViews';
 import { LazyContractExplorerView, LazyTermStructureView } from './components/views/explorer/LazyExplorerViews';
 import { LazyLearnView } from './components/views/learn/LazyLearnView';
-import { SignalsView } from './components/views/SignalsView';
-import { TechnicalAnalysisView } from './components/views/TechnicalAnalysisView';
-import { TradeJournalView } from './components/views/TradeJournalView';
 import { DualViewTabs } from './components/views/DualViewTabs';
+import {
+  LazyAiAnalystView,
+  LazyBacktestView,
+  LazyDataHealthView,
+  LazyFundamentalNewsView,
+  LazyMarketWatchView,
+  LazyOwnerChartsView,
+  LazyOwnerContractExplorerView,
+  LazyPortfolioView,
+  LazyRiskManagementView,
+  LazyScannerView,
+  LazySettingsView,
+  LazySignalsView,
+  LazyTechnicalAnalysisView,
+  LazyTradeJournalView,
+} from './components/views/LazyOwnerViews';
 import { AuthProvider } from './contexts/AuthContext';
 import { TerminalProvider, useTerminal } from './contexts/TerminalContext';
 
@@ -33,7 +35,7 @@ function TerminalWorkspace() {
       case 'overview':
         return <OverviewDashboard />;
       case 'markets':
-        return <MarketWatchView />;
+        return <LazyMarketWatchView />;
       case 'explorer':
         // Primary: agent-work explorer (verified specs, contract chain, calendar rules, fail-closed tick
         // calculator). Owner's explorer (commodity profiles, provider mappings) kept as second tab.
@@ -50,7 +52,7 @@ function TerminalWorkspace() {
                 id: 'profiles',
                 label: 'Commodity profiles & mappings',
                 note: 'Owner module: Vietnamese commodity profiles and external API symbol mappings (descriptive text, not verified market data).',
-                render: () => <ContractExplorerView />,
+                render: () => <LazyOwnerContractExplorerView />,
               },
             ]}
           />
@@ -71,33 +73,33 @@ function TerminalWorkspace() {
                 id: 'overlay',
                 label: 'Technical overlay (EMA)',
                 note: 'Owner module: GET /api/market/candles/:symbol with server-computed EMA 20/50/200 overlays.',
-                render: () => <ChartsView />,
+                render: () => <LazyOwnerChartsView />,
               },
             ]}
           />
         );
       case 'technical':
-        return <TechnicalAnalysisView />;
+        return <LazyTechnicalAnalysisView />;
       case 'signals':
-        return <SignalsView />;
+        return <LazySignalsView />;
       case 'ai-analyst':
-        return <AiAnalystView />;
+        return <LazyAiAnalystView />;
       case 'scanner':
-        return <ScannerView />;
+        return <LazyScannerView />;
       case 'risk':
-        return <RiskManagementView />;
+        return <LazyRiskManagementView />;
       case 'backtest':
-        return <BacktestView />;
+        return <LazyBacktestView />;
       case 'portfolio':
-        return <PortfolioView />;
+        return <LazyPortfolioView />;
       case 'journal':
-        return <TradeJournalView />;
+        return <LazyTradeJournalView />;
       case 'fundamental':
-        return <FundamentalNewsView mode="fundamental" />;
+        return <LazyFundamentalNewsView mode="fundamental" />;
       case 'news':
-        return <FundamentalNewsView mode="news" />;
+        return <LazyFundamentalNewsView mode="news" />;
       case 'data-health':
-        return <DataHealthView />;
+        return <LazyDataHealthView />;
       case 'data-import':
         return <LazyDataImportView />;
       case 'term-structure':
@@ -107,7 +109,7 @@ function TerminalWorkspace() {
       case 'cot':
         return <LazyCotView />;
       case 'settings':
-        return <SettingsView />;
+        return <LazySettingsView />;
       case 'learn':
         return <LazyLearnView />;
     }

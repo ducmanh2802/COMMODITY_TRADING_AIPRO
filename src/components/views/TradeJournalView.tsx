@@ -14,7 +14,8 @@ import { BookOpen, LogIn, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
-import type { ExchangeCode, Timeframe } from '../../shared/types/instrument';
+import type { ExchangeCode, InstrumentDefinition, Timeframe } from '../../shared/types/instrument';
+import { computeJournalExit, localDateTimeToIso, type JournalExitResult } from './journal/journalMath';
 
 interface JournalDoc {
   id: string;
@@ -37,6 +38,25 @@ interface JournalDoc {
   rationale: string;
   notes: string;
   status: 'OPEN' | 'CLOSED';
+}
+
+interface ClosingState {
+  id: string;
+  exitPrice: string;
+  exitTime: string;
+  tradingCosts: string;
+  notes: string;
+  busy: boolean;
+  error: string | null;
+}
+
+/** Journal docs store exchangeSymbol + exchange; resolve back to the Instrument Master entry. */
+function findJournalInstrument(
+  instruments: InstrumentDefinition[],
+  symbol: string,
+  exchange: ExchangeCode
+): InstrumentDefinition | undefined {
+  return instruments.find((i) => i.exchangeSymbol === symbol && i.exchange === exchange);
 }
 
 interface JournalAnalyticsResponse {
@@ -62,22 +82,41 @@ export function TradeJournalView() {
   const [entries, setEntries] = useState<JournalDoc[]>([]);
   const [analytics, setAnalytics] = useState<JournalAnalyticsResponse | null>(null);
 
-  const [instrument, setInstrument] = useState('GC');
+  // No pre-filled prices/costs: every number in a journal entry must come from the user (fail-closed).
+  const [instrumentId, setInstrumentId] = useState('');
   const [direction, setDirection] = useState<'LONG' | 'SHORT'>('LONG');
-  const [strategy, setStrategy] = useState('TREND_FOLLOWING');
+  const [strategy, setStrategy] = useState('');
   const [tf, setTf] = useState<Timeframe>(timeframe);
-  const [entryPrice, setEntryPrice] = useState('2350');
-  const [stopLoss, setStopLoss] = useState('2335');
-  const [takeProfit, setTakeProfit] = useState('2385');
+  const [entryPrice, setEntryPrice] = useState('');
+  const [stopLoss, setStopLoss] = useState('');
+  const [takeProfit, setTakeProfit] = useState('');
   const [positionSize, setPositionSize] = useState('1');
-  const [status, setStatus] = useState<'OPEN' | 'CLOSED'>('CLOSED');
-  const [exitPrice, setExitPrice] = useState('2380');
-  const [realizedPnl, setRealizedPnl] = useState('2995');
-  const [tradingCosts, setTradingCosts] = useState('5');
-  const [resultInR, setResultInR] = useState('2.0');
+  const [status, setStatus] = useState<'OPEN' | 'CLOSED'>('OPEN');
+  const [exitPrice, setExitPrice] = useState('');
+  const [exitTime, setExitTime] = useState('');
+  const [entryTime, setEntryTime] = useState('');
+  const [tradingCosts, setTradingCosts] = useState('');
   const [rationale, setRationale] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [closing, setClosing] = useState<ClosingState | null>(null);
+
+  const selectedInstrument = instruments.find((i) => i.id === instrumentId) ?? null;
+  const findSpecFor = (entry: Pick<JournalDoc, 'instrument' | 'exchange'>) =>
+    findJournalInstrument(instruments, entry.instrument, entry.exchange)?.specification ?? null;
+
+  // Live preview of the realized result for a CLOSED entry in the log form.
+  const formExit: JournalExitResult | null =
+    status === 'CLOSED' && selectedInstrument
+      ? computeJournalExit(selectedInstrument.specification, {
+          direction,
+          entryPrice: Number(entryPrice),
+          stopLoss: Number(stopLoss),
+          exitPrice: exitPrice === '' ? NaN : Number(exitPrice),
+          contracts: Math.trunc(Number(positionSize)),
+          tradingCosts: tradingCosts === '' ? 0 : Number(tradingCosts),
+        })
+      : null;
 
   useEffect(() => {
     if (!authReady || !user || !user.emailVerified) {
@@ -158,21 +197,53 @@ export function TradeJournalView() {
   const handleLogTrade = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !user.emailVerified) return;
-    const inst = instruments.find((i) => i.exchangeSymbol === instrument) ?? instruments[0];
-    if (!inst) return;
+    const inst = selectedInstrument;
+    if (!inst) {
+      setError('Select an instrument.');
+      return;
+    }
 
     const ep = Number(entryPrice);
     const sl = Number(stopLoss);
     const tp = Number(takeProfit);
     const qty = Math.trunc(Number(positionSize));
+    const costs = tradingCosts === '' ? 0 : Number(tradingCosts);
     if (!(ep > 0 && sl > 0 && tp > 0 && qty >= 1)) {
       setError('Entry, SL, TP must be positive and position size >= 1.');
       return;
     }
+    if (!(costs >= 0)) {
+      setError('Trading costs must be 0 or more.');
+      return;
+    }
+    // Entry time: user-entered; for an OPEN trade left blank it is the logging time.
+    const entryIso = localDateTimeToIso(entryTime) ?? (status === 'OPEN' ? new Date().toISOString() : null);
+    if (!entryIso) {
+      setError('Enter the entry time for a CLOSED trade.');
+      return;
+    }
+    let exitIso = '';
+    let closed: Extract<JournalExitResult, { ok: true }> | null = null;
+    if (status === 'CLOSED') {
+      const iso = localDateTimeToIso(exitTime);
+      if (!iso) {
+        setError('Enter the exit time for a CLOSED trade.');
+        return;
+      }
+      if (Date.parse(iso) < Date.parse(entryIso)) {
+        setError('Exit time is before entry time.');
+        return;
+      }
+      if (!formExit || !formExit.ok) {
+        setError(formExit && !formExit.ok ? formExit.reason : 'Enter the exit price.');
+        return;
+      }
+      exitIso = iso;
+      closed = formExit;
+    }
 
     setSaving(true);
     setError(null);
-    const nowIso = new Date().toISOString();
     const docId = `jrn_${Date.now()}`;
     const docPath = `tradeJournal/${docId}`;
 
@@ -188,12 +259,12 @@ export function TradeJournalView() {
         stopLoss: sl,
         takeProfit: tp,
         positionSize: qty,
-        entryTimestamp: nowIso,
-        exitTimestamp: status === 'CLOSED' ? nowIso : '',
-        exitPrice: status === 'CLOSED' ? Math.max(0, Number(exitPrice) || 0) : 0,
-        realizedPnl: status === 'CLOSED' ? Number(realizedPnl) || 0 : 0,
-        tradingCosts: Math.max(0, Number(tradingCosts) || 0),
-        resultInR: status === 'CLOSED' ? Number(resultInR) || 0 : 0,
+        entryTimestamp: entryIso,
+        exitTimestamp: closed ? exitIso : '',
+        exitPrice: closed ? Number(exitPrice) : 0,
+        realizedPnl: closed ? closed.realizedPnl : 0,
+        tradingCosts: costs,
+        resultInR: closed ? closed.resultInR : 0,
         rationale: rationale.trim().slice(0, 1000),
         notes: '',
         status,
@@ -201,6 +272,9 @@ export function TradeJournalView() {
         updatedAt: serverTimestamp(),
       });
       setRationale('');
+      setExitPrice('');
+      setExitTime('');
+      setEntryTime('');
     } catch (err) {
       try {
         handleFirestoreError(err, OperationType.CREATE, docPath);
@@ -212,22 +286,56 @@ export function TradeJournalView() {
     }
   };
 
-  const handleCloseEntry = async (entry: JournalDoc) => {
-    if (entry.status === 'CLOSED') return;
-    const docPath = `tradeJournal/${entry.id}`;
+  const closingEntry = closing ? entries.find((e) => e.id === closing.id) ?? null : null;
+  const closingExit: JournalExitResult | null =
+    closing && closingEntry
+      ? computeJournalExit(findSpecFor(closingEntry), {
+          direction: closingEntry.direction,
+          entryPrice: closingEntry.entryPrice,
+          stopLoss: closingEntry.stopLoss,
+          exitPrice: closing.exitPrice === '' ? NaN : Number(closing.exitPrice),
+          contracts: closingEntry.positionSize,
+          tradingCosts: closing.tradingCosts === '' ? 0 : Number(closing.tradingCosts),
+        })
+      : null;
+
+  // Close = record the actual exit. Fields written match the firestore.rules CLOSE transition:
+  // status, exitTimestamp, exitPrice, realizedPnl, tradingCosts, resultInR, notes, updatedAt.
+  const handleCloseEntry = async () => {
+    if (!closing || !closingEntry || closingEntry.status === 'CLOSED') return;
+    const exitIso = localDateTimeToIso(closing.exitTime);
+    if (!exitIso) {
+      setClosing({ ...closing, error: 'Enter the exit time.' });
+      return;
+    }
+    if (Date.parse(exitIso) < Date.parse(closingEntry.entryTimestamp)) {
+      setClosing({ ...closing, error: 'Exit time is before the entry time.' });
+      return;
+    }
+    if (!closingExit || !closingExit.ok) {
+      setClosing({ ...closing, error: closingExit && !closingExit.ok ? closingExit.reason : 'Enter the exit price.' });
+      return;
+    }
+    const docPath = `tradeJournal/${closingEntry.id}`;
+    setClosing({ ...closing, busy: true, error: null });
     try {
-      await updateDoc(doc(db, 'tradeJournal', entry.id), {
+      await updateDoc(doc(db, 'tradeJournal', closingEntry.id), {
         status: 'CLOSED',
-        exitTimestamp: new Date().toISOString(),
-        exitPrice: entry.takeProfit,
-        realizedPnl: 0,
-        tradingCosts: entry.tradingCosts,
-        resultInR: 0,
-        notes: entry.notes,
+        exitTimestamp: exitIso,
+        exitPrice: Number(closing.exitPrice),
+        realizedPnl: closingExit.realizedPnl,
+        tradingCosts: closing.tradingCosts === '' ? 0 : Number(closing.tradingCosts),
+        resultInR: closingExit.resultInR,
+        notes: closing.notes.trim().slice(0, 1000),
         updatedAt: serverTimestamp(),
       });
+      setClosing(null);
     } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, docPath);
+      try {
+        handleFirestoreError(err, OperationType.UPDATE, docPath);
+      } catch (wrapped) {
+        setClosing((c) => (c ? { ...c, busy: false, error: wrapped instanceof Error ? wrapped.message : 'Failed to close entry.' } : c));
+      }
     }
   };
 
@@ -333,13 +441,14 @@ export function TradeJournalView() {
             </label>
             <select
               id="jrn-sym"
-              value={instrument}
-              onChange={(e) => setInstrument(e.target.value)}
+              value={instrumentId}
+              onChange={(e) => setInstrumentId(e.target.value)}
               className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
             >
+              <option value="">Select…</option>
               {instruments.map((i) => (
-                <option key={i.id} value={i.exchangeSymbol}>
-                  {i.exchangeSymbol} · {i.productName}
+                <option key={i.id} value={i.id}>
+                  {i.exchange}:{i.exchangeSymbol} · {i.productName} ({i.specification.verificationStatus})
                 </option>
               ))}
             </select>
@@ -378,6 +487,7 @@ export function TradeJournalView() {
               id="jrn-strat"
               type="text"
               value={strategy}
+              placeholder="e.g. TREND_FOLLOWING"
               onChange={(e) => setStrategy(e.target.value)}
               className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
             />
@@ -391,6 +501,7 @@ export function TradeJournalView() {
                 id="jrn-entry"
                 type="number"
                 step="any"
+                placeholder="Entry"
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
                 className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-1.5 py-2 text-xs font-mono text-white"
@@ -399,6 +510,7 @@ export function TradeJournalView() {
                 aria-label="Stop loss"
                 type="number"
                 step="any"
+                placeholder="SL"
                 value={stopLoss}
                 onChange={(e) => setStopLoss(e.target.value)}
                 className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-1.5 py-2 text-xs font-mono text-white"
@@ -407,6 +519,7 @@ export function TradeJournalView() {
                 aria-label="Take profit"
                 type="number"
                 step="any"
+                placeholder="TP"
                 value={takeProfit}
                 onChange={(e) => setTakeProfit(e.target.value)}
                 className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-1.5 py-2 text-xs font-mono text-white"
@@ -432,39 +545,32 @@ export function TradeJournalView() {
                 onChange={(e) => setStatus(e.target.value as 'OPEN' | 'CLOSED')}
                 className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded px-2 py-2 text-xs font-mono text-white"
               >
-                <option value="CLOSED">CLOSED</option>
                 <option value="OPEN">OPEN</option>
+                <option value="CLOSED">CLOSED</option>
               </select>
             </div>
           </div>
           <div>
-            <label htmlFor="jrn-pnl" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Net PnL ($) / R
-            </label>
-            <div className="flex gap-1.5">
-              <input
-                id="jrn-pnl"
-                type="number"
-                step="any"
-                disabled={status === 'OPEN'}
-                value={realizedPnl}
-                onChange={(e) => setRealizedPnl(e.target.value)}
-                className="w-2/3 bg-[#0B0E14] border border-[#263244] rounded px-2 py-2 text-xs font-mono text-white disabled:opacity-40"
-              />
-              <input
-                aria-label="Result in R"
-                type="number"
-                step="0.1"
-                disabled={status === 'OPEN'}
-                value={resultInR}
-                onChange={(e) => setResultInR(e.target.value)}
-                className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-2 py-2 text-xs font-mono text-white disabled:opacity-40"
-              />
+            <span className="block text-xs text-[#E5E7EB]/65 mb-1">Net PnL / R (computed)</span>
+            <div className="text-xs font-mono py-2 text-[#E5E7EB]/80" aria-live="polite">
+              {status === 'OPEN'
+                ? '— (open trade)'
+                : formExit?.ok
+                  ? `${formExit.realizedPnl.toFixed(2)} ${formExit.currency} · ${formExit.resultInR.toFixed(2)}R`
+                  : 'Needs exit price & verified spec'}
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 items-center">
+          <input
+            type="datetime-local"
+            aria-label="Entry time (local)"
+            title="Entry time (local). Blank for an OPEN trade = now."
+            value={entryTime}
+            onChange={(e) => setEntryTime(e.target.value)}
+            className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs font-mono text-white"
+          />
           <input
             type="number"
             step="any"
@@ -474,6 +580,14 @@ export function TradeJournalView() {
             disabled={status === 'OPEN'}
             value={exitPrice}
             onChange={(e) => setExitPrice(e.target.value)}
+            className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs font-mono text-white disabled:opacity-40"
+          />
+          <input
+            type="datetime-local"
+            aria-label="Exit time (local)"
+            disabled={status === 'OPEN'}
+            value={exitTime}
+            onChange={(e) => setExitTime(e.target.value)}
             className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs font-mono text-white disabled:opacity-40"
           />
           <input
@@ -496,6 +610,20 @@ export function TradeJournalView() {
           />
         </div>
 
+        {status === 'CLOSED' && formExit && !formExit.ok && (
+          <p className="text-xs font-mono text-[#F59E0B]">{formExit.reason}</p>
+        )}
+        {status === 'CLOSED' &&
+          formExit?.ok &&
+          formExit.warnings.map((w) => (
+            <p key={w} className="text-xs font-mono text-[#F59E0B]">
+              {w}
+            </p>
+          ))}
+        <p className="text-[11px] text-[#E5E7EB]/45">
+          Realized PnL = ticks x tick value x contracts - costs, from the Instrument Master spec (refused when the spec is not
+          VERIFIED). R = signed move / |entry - stop|.
+        </p>
         {error && <p className="text-xs font-mono text-[#EF4444]">{error}</p>}
 
         <div className="flex justify-end">
@@ -550,7 +678,17 @@ export function TradeJournalView() {
                       {e.status === 'OPEN' && (
                         <button
                           type="button"
-                          onClick={() => void handleCloseEntry(e)}
+                          onClick={() =>
+                            setClosing({
+                              id: e.id,
+                              exitPrice: '',
+                              exitTime: '',
+                              tradingCosts: String(e.tradingCosts),
+                              notes: e.notes,
+                              busy: false,
+                              error: null,
+                            })
+                          }
                           className="px-2 py-1 bg-[#172033] border border-[#263244] rounded text-[11px] text-white"
                         >
                           Close
@@ -572,6 +710,84 @@ export function TradeJournalView() {
           </div>
         )}
       </section>
+
+      {closing && closingEntry && (
+        <section aria-label="Close journal entry" className="bg-[#111622] border border-[#6366F1]/50 rounded-lg p-4 space-y-3">
+          <h2 className="text-sm font-semibold text-white">
+            Close {closingEntry.instrument} {closingEntry.direction} x{closingEntry.positionSize} (entry {closingEntry.entryPrice}, stop{' '}
+            {closingEntry.stopLoss})
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <input
+              type="number"
+              step="any"
+              min="0"
+              aria-label="Close exit price"
+              placeholder="Exit price"
+              value={closing.exitPrice}
+              onChange={(ev) => setClosing({ ...closing, exitPrice: ev.target.value, error: null })}
+              className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs font-mono text-white"
+            />
+            <input
+              type="datetime-local"
+              aria-label="Close exit time (local)"
+              value={closing.exitTime}
+              onChange={(ev) => setClosing({ ...closing, exitTime: ev.target.value, error: null })}
+              className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs font-mono text-white"
+            />
+            <input
+              type="number"
+              step="any"
+              min="0"
+              aria-label="Close trading costs"
+              placeholder="Trading costs"
+              value={closing.tradingCosts}
+              onChange={(ev) => setClosing({ ...closing, tradingCosts: ev.target.value, error: null })}
+              className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs font-mono text-white"
+            />
+            <input
+              type="text"
+              aria-label="Close notes"
+              placeholder="Post-trade notes"
+              maxLength={1000}
+              value={closing.notes}
+              onChange={(ev) => setClosing({ ...closing, notes: ev.target.value })}
+              className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs text-white"
+            />
+          </div>
+          <p className="text-xs font-mono text-[#E5E7EB]/80" aria-live="polite">
+            {closingExit?.ok
+              ? `Realized: ${closingExit.realizedPnl.toFixed(2)} ${closingExit.currency} (gross ${closingExit.grossPnl.toFixed(2)}) · ${closingExit.resultInR.toFixed(2)}R`
+              : closingExit && closing.exitPrice !== ''
+                ? closingExit.reason
+                : 'Enter the exit price and time.'}
+          </p>
+          {closingExit?.ok &&
+            closingExit.warnings.map((w) => (
+              <p key={w} className="text-xs font-mono text-[#F59E0B]">
+                {w}
+              </p>
+            ))}
+          {closing.error && <p className="text-xs font-mono text-[#EF4444]">{closing.error}</p>}
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setClosing(null)}
+              className="px-3 py-1.5 border border-[#263244] rounded-md text-xs text-[#E5E7EB]/80"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={closing.busy || !closingExit?.ok || !closing.exitTime}
+              onClick={() => void handleCloseEntry()}
+              className="px-3 py-1.5 bg-[#6366F1] rounded-md text-xs text-white disabled:opacity-40"
+            >
+              {closing.busy ? 'Saving…' : 'Record exit'}
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

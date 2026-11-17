@@ -53,13 +53,24 @@ export function PortfolioView() {
 
   const [positions, setPositions] = useState<PositionRecord[]>([]);
   const [analysis, setAnalysis] = useState<PortfolioAnalysisResponse | null>(null);
-  const [selectedInstId, setSelectedInstId] = useState('COMEX:GC');
+  // No pre-filled prices or margin (fail-closed): the user enters every number.
+  const [selectedInstId, setSelectedInstId] = useState('');
   const [direction, setDirection] = useState<'LONG' | 'SHORT'>('LONG');
   const [contracts, setContracts] = useState('1');
-  const [entryPrice, setEntryPrice] = useState('2350');
-  const [stopLoss, setStopLoss] = useState('2335');
-  const [takeProfit, setTakeProfit] = useState('2385');
-  const [estimatedMargin, setEstimatedMargin] = useState('11000');
+  const [entryPrice, setEntryPrice] = useState('');
+  const [stopLoss, setStopLoss] = useState('');
+  const [takeProfit, setTakeProfit] = useState('');
+  const [estimatedMargin, setEstimatedMargin] = useState('');
+
+  const selectedInst = instruments.find((i) => i.id === selectedInstId) ?? null;
+  // Per-contract margin from the Instrument Master only when the spec is VERIFIED and in USD.
+  const verifiedMarginPerContract =
+    selectedInst &&
+    selectedInst.specification.verificationStatus === 'VERIFIED' &&
+    selectedInst.specification.marginRequirement !== null &&
+    selectedInst.specification.marginCurrency === 'USD'
+      ? selectedInst.specification.marginRequirement
+      : null;
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,18 +155,35 @@ export function PortfolioView() {
   const handleAddPosition = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !user.emailVerified) return;
-    const inst = instruments.find((i) => i.id === selectedInstId) ?? instruments[0];
-    if (!inst) return;
+    const inst = selectedInst;
+    if (!inst) {
+      setError('Select an instrument.');
+      return;
+    }
 
     const entry = Number(entryPrice);
     const sl = Number(stopLoss);
     const tp = Number(takeProfit);
     const qty = Math.trunc(Number(contracts));
-    const margin = Math.max(0, Number(estimatedMargin) || 0);
 
     if (!(entry > 0 && sl > 0 && tp > 0 && qty >= 1)) {
       setError('Contracts >= 1 and positive Entry / SL / TP prices are required.');
       return;
+    }
+    // Margin: verified spec x contracts, otherwise the user's own figure (stored marginVerified=false).
+    let margin: number;
+    let marginVerified: boolean;
+    if (verifiedMarginPerContract !== null) {
+      margin = verifiedMarginPerContract * qty;
+      marginVerified = true;
+    } else {
+      const userMargin = Number(estimatedMargin);
+      if (estimatedMargin.trim() === '' || !(userMargin >= 0)) {
+        setError('No verified margin for this instrument — enter your broker margin (USD, total for the position).');
+        return;
+      }
+      margin = userMargin;
+      marginVerified = false;
     }
 
     setSaving(true);
@@ -175,7 +203,7 @@ export function PortfolioView() {
         stopLoss: sl,
         takeProfit: tp,
         estimatedMargin: margin,
-        marginVerified: inst.specification.marginRequirement !== null,
+        marginVerified,
         status: 'OPEN',
         notes: notes.trim().slice(0, 500),
         createdAt: serverTimestamp(),
@@ -310,6 +338,7 @@ export function PortfolioView() {
               onChange={(e) => setSelectedInstId(e.target.value)}
               className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
             >
+              <option value="">Select instrument…</option>
               {instruments.map((i) => (
                 <option key={i.id} value={i.id}>
                   {i.id} · {i.productName}
@@ -353,6 +382,7 @@ export function PortfolioView() {
                 id="pos-entry"
                 type="number"
                 step="any"
+                placeholder="Entry"
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
                 className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-1.5 py-2 text-xs font-mono text-white"
@@ -361,6 +391,7 @@ export function PortfolioView() {
                 aria-label="Stop Loss"
                 type="number"
                 step="any"
+                placeholder="SL"
                 value={stopLoss}
                 onChange={(e) => setStopLoss(e.target.value)}
                 className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-1.5 py-2 text-xs font-mono text-white"
@@ -369,6 +400,7 @@ export function PortfolioView() {
                 aria-label="Take Profit"
                 type="number"
                 step="any"
+                placeholder="TP"
                 value={takeProfit}
                 onChange={(e) => setTakeProfit(e.target.value)}
                 className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-1.5 py-2 text-xs font-mono text-white"
@@ -377,16 +409,25 @@ export function PortfolioView() {
           </div>
           <div>
             <label htmlFor="pos-margin" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Est. Margin (USD)
+              {verifiedMarginPerContract !== null ? 'Margin (VERIFIED spec)' : 'Margin USD (user-provided)'}
             </label>
-            <input
-              id="pos-margin"
-              type="number"
-              min="0"
-              value={estimatedMargin}
-              onChange={(e) => setEstimatedMargin(e.target.value)}
-              className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
-            />
+            {verifiedMarginPerContract !== null ? (
+              <p id="pos-margin" className="py-2 text-xs font-mono text-[#22C55E]">
+                {verifiedMarginPerContract} USD x contracts
+              </p>
+            ) : (
+              <input
+                id="pos-margin"
+                type="number"
+                min="0"
+                step="any"
+                placeholder="Your broker margin"
+                title="No verified margin in the Instrument Master — value is stored as user-provided (marginVerified=false)."
+                value={estimatedMargin}
+                onChange={(e) => setEstimatedMargin(e.target.value)}
+                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
+              />
+            )}
           </div>
           <button
             type="submit"
@@ -444,7 +485,7 @@ export function PortfolioView() {
                       {pos.entryPrice} / {pos.stopLoss} / {pos.takeProfit}
                     </td>
                     <td className="py-2.5 px-3 text-right text-[#F59E0B]">
-                      ${pos.estimatedMargin.toFixed(0)} ({pos.marginVerified ? 'VERIFIED' : 'EST'})
+                      ${pos.estimatedMargin.toFixed(0)} ({pos.marginVerified ? 'VERIFIED' : 'USER_PROVIDED'})
                     </td>
                     <td className="py-2.5 px-3 text-[#E5E7EB]">{pos.status}</td>
                     <td className="py-2.5 px-4 text-right space-x-2">

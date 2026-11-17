@@ -4,6 +4,7 @@ import { useTerminal } from '../../contexts/TerminalContext';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { CsvImportPanel } from '../common/CsvImportPanel';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { CotHealthSection } from './cot/CotHealthSection';
 
 interface ApiSecretSpec {
   provider: string;
@@ -384,6 +385,8 @@ export function DataHealthView() {
           </table>
         </div>
       </section>
+
+      <CotHealthSection />
     </div>
   );
 }

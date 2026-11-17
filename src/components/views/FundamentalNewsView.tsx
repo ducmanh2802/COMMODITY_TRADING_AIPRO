@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CloudDownload, Newspaper, Plus } from 'lucide-react';
+import { getAdminToken } from '../../api/dataApi';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { FundamentalMacroRecord, MarketDirection } from '../../shared/types/analysis';
 import type { DataQualityStatus } from '../../shared/types/market';
@@ -21,6 +22,16 @@ interface FundamentalNewsViewProps {
   mode: 'fundamental' | 'news';
 }
 
+/**
+ * Per-record status from its publication timestamp: a published release is HISTORICAL data; a missing,
+ * unparseable or future timestamp is INVALID. (Never 'CURRENT' — manual records are not live feeds.)
+ */
+function recordStatusFromPublication(ts: string): DataQualityStatus {
+  const ms = Date.parse(ts);
+  if (Number.isNaN(ms) || ms > Date.now() + 60_000) return 'INVALID';
+  return 'HISTORICAL';
+}
+
 export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
   const { syncProviderFeeds, syncing, timeframe } = useTerminal();
   const [records, setRecords] = useState<FundamentalMacroRecord[]>([]);
@@ -30,13 +41,16 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   const [kind, setKind] = useState<'MACRO' | 'NEWS'>(mode === 'news' ? 'NEWS' : 'MACRO');
-  const [dataset, setDataset] = useState('USDA_WASDE');
+  // No pre-filled dataset/time/unit: a manual record must state its own provenance.
+  const [dataset, setDataset] = useState('');
   const [source, setSource] = useState('');
-  const [pubTs, setPubTs] = useState(new Date().toISOString().slice(0, 16));
+  const [pubTs, setPubTs] = useState('');
+  const [revisionStatus, setRevisionStatus] = useState<FundamentalMacroRecord['revisionStatus'] | ''>('');
+  const [dataPeriod, setDataPeriod] = useState('');
   const [actualVal, setActualVal] = useState('');
   const [previousVal, setPreviousVal] = useState('');
   const [forecastVal, setForecastVal] = useState('');
-  const [unit, setUnit] = useState('MMT');
+  const [unit, setUnit] = useState('');
   const [impact, setImpact] = useState<MarketDirection>('UNCERTAIN');
   const [headline, setHeadline] = useState('');
   const [summary, setSummary] = useState('');
@@ -69,6 +83,23 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
       setError('Official source and publication timestamp are strictly required.');
       return;
     }
+    const pubMs = new Date(pubTs).getTime();
+    if (Number.isNaN(pubMs)) {
+      setError('Publication timestamp is invalid.');
+      return;
+    }
+    if (pubMs > Date.now() + 60_000) {
+      setError('Publication timestamp is in the future — a record can only be stored after it is published.');
+      return;
+    }
+    if (kind === 'MACRO' && !revisionStatus) {
+      setError('Choose the revision status (PRELIMINARY / FINAL / REVISED) stated by the source.');
+      return;
+    }
+    if (kind === 'MACRO' && !dataset.trim()) {
+      setError('Dataset / topic is required.');
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -76,18 +107,23 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
       const isoTs = new Date(pubTs).toISOString();
       const res = await fetch('/api/fundamental/records', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        // Admin-guarded endpoint: send the session admin token (Data Import view) when one is set.
+        headers: {
+          'Content-Type': 'application/json',
+          ...(getAdminToken().trim() ? { Authorization: `Bearer ${getAdminToken().trim()}` } : {}),
+        },
         body: JSON.stringify({
           kind,
           dataset: dataset.trim() || 'MACRO_RELEASE',
           source: source.trim(),
           publicationTimestamp: isoTs,
-          dataPeriod: 'CURRENT',
+          // Reference period as stated by the source; otherwise flagged as user-provided (never 'CURRENT').
+          dataPeriod: dataPeriod.trim() || 'USER_PROVIDED',
           actualValue: actualVal.trim() ? Number(actualVal) || actualVal.trim() : null,
           previousValue: previousVal.trim() ? Number(previousVal) || previousVal.trim() : null,
           forecastValue: forecastVal.trim() ? Number(forecastVal) || forecastVal.trim() : null,
-          unit: unit.trim() || 'INDEX',
-          revisionStatus: 'FINAL',
+          unit: unit.trim() || 'UNSPECIFIED',
+          revisionStatus: revisionStatus || 'PRELIMINARY',
           impactAssessment: impact,
           headline: headline.trim() || undefined,
           summary: summary.trim() || undefined,
@@ -98,6 +134,9 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
       setSource('');
       setHeadline('');
       setSummary('');
+      setPubTs('');
+      setRevisionStatus('');
+      setDataPeriod('');
       await fetchAll();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to store sourced record.');
@@ -203,6 +242,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
             <input
               id="fund-dataset"
               type="text"
+              placeholder="e.g. USDA_WASDE"
               value={dataset}
               onChange={(e) => setDataset(e.target.value)}
               className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
@@ -255,6 +295,26 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
               className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
+            />
+            <select
+              aria-label="Revision status (required)"
+              value={revisionStatus}
+              onChange={(e) => setRevisionStatus(e.target.value as FundamentalMacroRecord['revisionStatus'] | '')}
+              className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
+            >
+              <option value="">Revision status (required)…</option>
+              <option value="PRELIMINARY">PRELIMINARY</option>
+              <option value="FINAL">FINAL</option>
+              <option value="REVISED">REVISED</option>
+            </select>
+            <input
+              type="text"
+              aria-label="Reference period"
+              placeholder="Reference period, e.g. 2026/27 or Oct-2026 (blank = USER_PROVIDED)"
+              maxLength={40}
+              value={dataPeriod}
+              onChange={(e) => setDataPeriod(e.target.value)}
+              className="col-span-2 bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
             />
           </div>
         ) : (
@@ -312,6 +372,11 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
                   </div>
                   <p className="font-mono text-[#E5E7EB]/75">
                     Actual: {r.actualValue ?? 'N/A'} {r.unit} · Prev: {r.previousValue ?? 'N/A'} · Fcst: {r.forecastValue ?? 'N/A'}
+                  </p>
+                  <p className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-[#E5E7EB]/60">
+                    <DataStatusBadge status={recordStatusFromPublication(r.publicationTimestamp)} compact />
+                    <span>{r.revisionStatus}</span>
+                    <span>· Period: {r.dataPeriod}</span>
                   </p>
                   <p className="text-[11px] font-mono text-[#E5E7EB]/50">
                     Source: {r.source} · {formatTimestampInZone(r.publicationTimestamp, 'Asia/Ho_Chi_Minh')}
