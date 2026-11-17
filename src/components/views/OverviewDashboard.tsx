@@ -150,7 +150,9 @@ export function OverviewDashboard() {
                 ? 'DATA_UNAVAILABLE — No verified market data available.'
                 : overallStatus === 'CURRENT'
                   ? `LIVE_FEED_ACTIVE — ${connectedProviderCount} provider adapter(s) connected & ${datasets.length} OHLCV series loaded.`
-                  : `HISTORICAL_MODE — ${datasets.length} validated OHLCV series loaded (not live tick quotes).`}
+                  : overallStatus === 'DELAYED'
+                    ? `DELAYED_FEED_ACTIVE — ${connectedProviderCount} provider adapter(s) connected (delayed quotes) & ${datasets.length} OHLCV series loaded.`
+                    : `HISTORICAL_MODE — ${datasets.length} validated OHLCV series loaded (not live tick quotes).`}
             </p>
             <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">
               {overallStatus === 'UNAVAILABLE'

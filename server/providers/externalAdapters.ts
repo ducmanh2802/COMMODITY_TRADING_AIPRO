@@ -18,6 +18,7 @@ import {
 import { historicalCandleStore } from '../services/candleStore.ts';
 import { fundamentalStore, sanitizeExternalText } from '../services/fundamentalService.ts';
 import { instrumentRepository } from '../services/instrumentRegistry.ts';
+import { isYahooEnabled, type YahooFinanceAdapter } from './yahooAdapter.ts';
 
 export type FetchLike = typeof fetch;
 
@@ -1674,6 +1675,8 @@ export async function syncConfiguredProviders(options: {
   usda: UsdaQuickStatsAdapter;
   mxvRest: ConfigurableRestFeedAdapter;
   thirdPartyRest: ConfigurableRestFeedAdapter;
+  /** Yahoo UNOFFICIAL adapter (T30); only syncs when YAHOO_ENABLED=true. */
+  yahoo?: YahooFinanceAdapter;
   /** Persist synced candles to the SQLite data layer (server/providers/syncPersistence.ts). */
   persistCandles?: PersistProviderCandles;
 }): Promise<{
@@ -1703,6 +1706,7 @@ export async function syncConfiguredProviders(options: {
     EIA_ENERGY: options.eia.providerName,
     MXV_OFFICIAL: options.mxvRest.providerName,
     THIRD_PARTY_FEED: options.thirdPartyRest.providerName,
+    YAHOO_UNOFFICIAL: options.yahoo?.providerName,
   };
   /** Owner's in-memory store (engines' fallback) + persistent SQLite dataset with provenance. */
   const store = async (
@@ -1710,7 +1714,8 @@ export async function syncConfiguredProviders(options: {
     inst: InstrumentDefinition,
     timeframe: Timeframe,
     candles: MarketCandle[],
-    warnings: string[] = []
+    warnings: string[] = [],
+    verifiedPriceUnit?: string
   ): Promise<void> => {
     historicalCandleStore.save(inst.exchangeSymbol, timeframe, candles, warnings);
     if (options.persistCandles) {
@@ -1721,6 +1726,7 @@ export async function syncConfiguredProviders(options: {
           instrument: inst,
           timeframe,
           candles,
+          verifiedPriceUnit,
         })
       );
     }
@@ -1959,6 +1965,48 @@ export async function syncConfiguredProviders(options: {
       symbolsUpdated: updated,
       message: `Synced ${updated.length} dataset(s) from custom REST feed.`,
     });
+  }
+
+  // 8. Yahoo Finance UNOFFICIAL daily candles (opt-in, lowest priority; separate VENDOR_YAHOO series)
+  if (options.yahoo) {
+    if (isYahooEnabled()) {
+      const targets = instruments.filter((i) => options.yahoo!.supports(i));
+      const updated: string[] = [];
+      let lastErr: string | undefined;
+      for (const inst of targets) {
+        const res = await options.yahoo.getCandles(inst.exchangeSymbol, 'D1');
+        if (res.candles.length > 0) {
+          await store('YAHOO_UNOFFICIAL', inst, 'D1', res.candles, res.reason ? [res.reason] : [], inst.specification.quotationUnit);
+          updated.push(inst.exchangeSymbol);
+          totalCandlesDatasetsAdded += 1;
+        } else if (res.reason) {
+          lastErr = `${inst.exchangeSymbol}: ${res.reason}`;
+        }
+      }
+      outcomes.push({
+        providerId: 'YAHOO_UNOFFICIAL',
+        providerName: options.yahoo.providerName,
+        status: updated.length > 0 ? 'CONNECTED' : 'DEGRADED',
+        candlesSynced: updated.length,
+        macroSynced: 0,
+        symbolsUpdated: updated,
+        message:
+          updated.length > 0
+            ? `Synced ${updated.length} UNOFFICIAL D1 continuous series (2y) from Yahoo Finance (personal use only).`
+            : lastErr ?? 'No Yahoo candles returned for supported symbols.',
+        error: updated.length === 0 ? lastErr : undefined,
+      });
+    } else {
+      outcomes.push({
+        providerId: 'YAHOO_UNOFFICIAL',
+        providerName: options.yahoo.providerName,
+        status: 'UNCONFIGURED',
+        candlesSynced: 0,
+        macroSynced: 0,
+        symbolsUpdated: [],
+        message: 'Yahoo adapter disabled (set YAHOO_ENABLED=true; UNOFFICIAL, personal use only).',
+      });
+    }
   }
 
   return {

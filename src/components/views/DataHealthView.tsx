@@ -72,6 +72,14 @@ const SERVER_API_SECRETS: ApiSecretSpec[] = [
     officialDoc: 'mxv.com.vn',
     providerId: 'MXV_OFFICIAL',
   },
+  {
+    provider: 'Yahoo Finance (UNOFFICIAL)',
+    secretName: 'YAHOO_ENABLED=true',
+    latencyAndTier: 'Delayed: CBOT ~10 min; ICE US / COMEX / NYMEX ~30 min. Free, no account; personal use only',
+    commodityCoverage: 'Continuous front month: ZC ZS ZM ZL ZW ZR KC SB CC HG GC SI PL CL NG (no RC, BRN, TIO, JRU, CT)',
+    officialDoc: 'finance.yahoo.com',
+    providerId: 'YAHOO_UNOFFICIAL',
+  },
 ];
 
 export function DataHealthView() {
@@ -365,7 +373,10 @@ export function DataHealthView() {
                     {p.exchanges.join(', ')}
                   </td>
                   <td className="py-3 px-3">
-                    <DataStatusBadge status={p.dataStatus} compact />
+                    <DataStatusBadge status={p.dataStatus} compact sourceQuality={p.sourceQuality} />
+                    {p.delayNote && (
+                      <div className="font-mono text-[10px] text-[#E5E7EB]/50 mt-0.5">{p.delayNote}</div>
+                    )}
                   </td>
                   <td className="py-3 px-3 font-mono text-[#E5E7EB]/75">
                     {p.credentialsConfigured ? 'CONFIGURED' : 'NOT_SET'}

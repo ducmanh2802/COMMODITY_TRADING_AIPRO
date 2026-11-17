@@ -161,7 +161,7 @@ export function MarketWatchView() {
                       </td>
                       <td className="py-2.5 px-3 font-mono text-right tabular-nums text-[#E5E7EB]/60 whitespace-nowrap">
                         {quote?.price !== null && quote?.price !== undefined
-                          ? `${quote.price.toFixed(2)} ${quote.currency}`
+                          ? `${quote.price.toFixed(2)} ${quote.unit && quote.unit !== 'UNSPECIFIED' ? quote.unit : quote.currency}`
                           : 'DATA_UNAVAILABLE'}
                       </td>
                       <td className="py-2.5 px-3 font-mono text-right tabular-nums text-[#E5E7EB]/55 whitespace-nowrap">
@@ -181,7 +181,12 @@ export function MarketWatchView() {
                       </td>
                       <td className="py-2.5 px-3 text-right whitespace-nowrap">
                         <div className="inline-flex justify-end">
-                          <DataStatusBadge status={quote?.status ?? 'UNAVAILABLE'} compact />
+                          <DataStatusBadge
+                            status={quote?.status ?? 'UNAVAILABLE'}
+                            compact
+                            sourceQuality={quote?.sourceQuality}
+                            delayMinutes={quote?.delayMinutes}
+                          />
                         </div>
                       </td>
                       <td className="py-2.5 px-4 text-right whitespace-nowrap">

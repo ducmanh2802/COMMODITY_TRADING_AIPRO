@@ -20,7 +20,8 @@ export type ProviderId =
   | 'EIA_ENERGY'
   | 'USDA_QUICKSTATS'
   | 'THIRD_PARTY_FEED'
-  | 'CSV_HISTORICAL';
+  | 'CSV_HISTORICAL'
+  | 'YAHOO_UNOFFICIAL';
 
 export type ProviderConnectionState =
   | 'CONNECTED'
@@ -45,7 +46,17 @@ export interface MarketQuote {
   retrievedAt: string; // Retrieval timestamp in UTC ISO-8601
   status: DataQualityStatus;
   statusReason?: string;
+  /** Provenance (optional): declared exchange delay of the source, in minutes. */
+  delayMinutes?: number | null;
+  /** Provenance (optional): source quality, e.g. 'UNOFFICIAL' for Yahoo. */
+  sourceQuality?: SourceQualityLabel;
+  /** Provenance (optional): which contract the price refers to, e.g. a continuous front month. */
+  contract?: string;
+  /** Provider's current regular trading period (epoch seconds), when reported. */
+  tradingPeriod?: { start: number | null; end: number | null } | null;
 }
+
+export type SourceQualityLabel = 'OFFICIAL' | 'LICENSED_VENDOR' | 'UNOFFICIAL';
 
 export interface MarketCandle {
   symbol: string;
@@ -79,6 +90,10 @@ export interface ProviderHealth {
   requiredEnvVars?: string[];
   supportedScopes?: string[];
   lastError?: string | null;
+  /** Source quality label shown in Data Health (e.g. 'UNOFFICIAL'). */
+  sourceQuality?: SourceQualityLabel;
+  /** Human-readable delay declaration, e.g. 'CBOT ~10 min'. */
+  delayNote?: string;
 }
 
 export interface MarketDataProvider {

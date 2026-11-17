@@ -6,7 +6,8 @@
  * apart from CONTINUOUS / contract series on purpose: several providers return spot or proxy prices
  * (e.g. XAU/USD), not exchange futures settlements, so they must never be mixed into futures series
  * the engines read. Mode is `append` (new timestamps only; conflicting bars are reported, never
- * overwritten). The provider's price unit is not verified, so priceUnit is recorded as such.
+ * overwritten). The provider's price unit is not verified, so priceUnit is recorded as such, unless the
+ * adapter verified it (verifiedPriceUnit, e.g. Yahoo currency USX/USD checked against quotationUnit).
  */
 import { createHash, randomUUID } from 'node:crypto';
 import type { InstrumentDefinition, Timeframe } from '../../src/shared/types/instrument.ts';
@@ -21,9 +22,15 @@ export const PROVIDER_SOURCE_QUALITY: Partial<Record<ProviderId, SourceQuality>>
   FMP_COMMODITIES: 'UNOFFICIAL',
   ALPHA_VANTAGE: 'UNOFFICIAL',
   EIA_ENERGY: 'OFFICIAL', // U.S. government spot series (not futures settlements)
+  YAHOO_UNOFFICIAL: 'UNOFFICIAL', // Yahoo continuous front month, delayed, personal use only (T30)
 };
 
 export const VENDOR_CONTRACT_PREFIX = 'VENDOR_';
+
+/** Contract code overrides for provider series (default `VENDOR_<PROVIDER_ID>`). */
+export const PROVIDER_CONTRACT_CODE: Partial<Record<ProviderId, string>> = {
+  YAHOO_UNOFFICIAL: `${VENDOR_CONTRACT_PREFIX}YAHOO`,
+};
 export const UNVERIFIED_PROVIDER_UNIT = 'UNVERIFIED_PROVIDER_UNIT';
 
 export interface PersistOutcome {
@@ -44,14 +51,16 @@ export type PersistProviderCandles = (args: {
   instrument: InstrumentDefinition;
   timeframe: Timeframe;
   candles: MarketCandle[];
+  /** Price unit verified by the adapter (e.g. Yahoo currency checked against quotationUnit). */
+  verifiedPriceUnit?: string;
 }) => Promise<PersistOutcome>;
 
 export function createProviderCandlePersister(
   repository: ICandleRepository,
   now: () => Date = () => new Date()
 ): PersistProviderCandles {
-  return async ({ providerId, providerName, instrument, timeframe, candles }) => {
-    const contractCode = `${VENDOR_CONTRACT_PREFIX}${providerId}`;
+  return async ({ providerId, providerName, instrument, timeframe, candles, verifiedPriceUnit }) => {
+    const contractCode = PROVIDER_CONTRACT_CODE[providerId] ?? `${VENDOR_CONTRACT_PREFIX}${providerId}`;
     const base = { providerId, instrumentId: instrument.id, contractCode, timeframe };
     const quality = PROVIDER_SOURCE_QUALITY[providerId];
     if (!quality) {
@@ -94,7 +103,7 @@ export function createProviderCandlePersister(
       lastTimestamp: new Date(unique[unique.length - 1].timestampMs).toISOString(),
       timezone: 'UTC',
       dateFormat: 'ISO-8601 (provider API)',
-      priceUnit: UNVERIFIED_PROVIDER_UNIT,
+      priceUnit: verifiedPriceUnit?.trim() || UNVERIFIED_PROVIDER_UNIT,
       priceUnitDeclared: true,
       checksum,
       importMode: 'append',

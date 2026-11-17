@@ -249,7 +249,10 @@ function summarizeProviders(providers: ProviderHealth[]) {
   const connected = providers.filter((p) => p.connectionState === 'CONNECTED');
   const live = connected.filter((p) => p.dataStatus === 'CURRENT' || p.dataStatus === 'DELAYED');
   const historical = connected.filter((p) => p.dataStatus === 'HISTORICAL');
-  const overallStatus = live.length > 0 ? 'CURRENT' : historical.length > 0 ? 'HISTORICAL' : 'UNAVAILABLE';
+  // Delayed-only sources (e.g. Yahoo UNOFFICIAL) report DELAYED, never CURRENT.
+  const anyCurrent = live.some((p) => p.dataStatus === 'CURRENT');
+  const overallStatus =
+    live.length > 0 ? (anyCurrent ? 'CURRENT' : 'DELAYED') : historical.length > 0 ? 'HISTORICAL' : 'UNAVAILABLE';
   return { connected: connected.length, live: live.length, historical: historical.length, overallStatus };
 }
 
@@ -452,11 +455,24 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
 
       const hasHistorical = quotes.some((q) => q.status === 'HISTORICAL');
       const hasCurrent = quotes.some((q) => q.status === 'CURRENT' || q.status === 'DELAYED');
+      const hasLive = quotes.some((q) => q.status === 'CURRENT');
+      const hasUnofficial = quotes.some((q) => q.sourceQuality === 'UNOFFICIAL' && q.price !== null);
+      const hasStale = quotes.some((q) => q.status === 'STALE' && q.price !== null);
 
       res.json({
         retrievedAt: new Date().toISOString(),
-        overallStatus: hasCurrent ? 'CURRENT' : hasHistorical ? 'HISTORICAL' : 'UNAVAILABLE',
-        notice: hasCurrent
+        overallStatus: hasLive
+          ? 'CURRENT'
+          : hasCurrent
+            ? 'DELAYED'
+            : hasHistorical
+              ? 'HISTORICAL'
+              : hasStale
+                ? 'STALE'
+                : 'UNAVAILABLE',
+        notice: hasUnofficial
+          ? 'Includes UNOFFICIAL delayed Yahoo Finance quotes (continuous front month; CBOT ~10 min, ICE US/COMEX/NYMEX ~30 min; personal use only).'
+          : hasCurrent
           ? 'Authorized feed active.'
           : hasHistorical
             ? 'Showing last close from imported historical CSV datasets (not live quotes).'

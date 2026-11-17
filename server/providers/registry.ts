@@ -21,6 +21,7 @@ import {
   TwelveDataAdapter,
   UsdaQuickStatsAdapter,
 } from './externalAdapters.ts';
+import { isYahooEnabled, YahooFinanceAdapter, type YahooAdapterOptions } from './yahooAdapter.ts';
 
 function hasEnv(name: string): boolean {
   const val = process.env[name];
@@ -122,6 +123,8 @@ export interface ProviderRegistryOptions {
    * USDA). They only fetch when their API key env var is set. Default true.
    */
   externalAdapters?: boolean;
+  /** Options for the Yahoo UNOFFICIAL adapter (tests inject fetch/sleep). Active only with YAHOO_ENABLED=true. */
+  yahoo?: YahooAdapterOptions;
 }
 
 export class ProviderRegistry {
@@ -131,6 +134,7 @@ export class ProviderRegistry {
   private readonly alphaVantage: AlphaVantageAdapter;
   private readonly eia: EiaEnergyAdapter;
   private readonly usda: UsdaQuickStatsAdapter;
+  private readonly yahoo: YahooFinanceAdapter;
   private readonly restFeeds = new Map<ProviderId, ConfigurableRestFeedAdapter>();
   private readonly providers: MarketDataProvider[];
   private readonly providersById: Map<ProviderId, MarketDataProvider>;
@@ -152,6 +156,7 @@ export class ProviderRegistry {
     this.alphaVantage = new AlphaVantageAdapter();
     this.eia = new EiaEnergyAdapter();
     this.usda = new UsdaQuickStatsAdapter();
+    this.yahoo = new YahooFinanceAdapter(options.yahoo);
 
     this.providers = [];
     this.providersById = new Map();
@@ -191,7 +196,7 @@ export class ProviderRegistry {
     }
 
     if (options.externalAdapters !== false) {
-      for (const adapter of [this.twelveData, this.fmp, this.commoditiesApi, this.alphaVantage, this.eia, this.usda]) {
+      for (const adapter of [this.twelveData, this.fmp, this.commoditiesApi, this.alphaVantage, this.eia, this.usda, this.yahoo]) {
         register(adapter);
       }
     }
@@ -243,16 +248,23 @@ export class ProviderRegistry {
     return this.exchangeRouting.get(exchange.trim().toUpperCase()) ?? null;
   }
 
-  private async tryFetchLiveQuote(instrument: InstrumentDefinition): Promise<MarketQuote | null> {
+  /**
+   * Live-quote chain: licensed/official providers first, Yahoo UNOFFICIAL last. Returns the first
+   * CURRENT/DELAYED quote; a Yahoo STALE quote with a price (market closed / beyond delay margin) is
+   * returned separately as `staleFallback`, competing with stored history by timestamp.
+   */
+  private async tryFetchLiveQuote(
+    instrument: InstrumentDefinition
+  ): Promise<{ quote: MarketQuote | null; staleFallback: MarketQuote | null }> {
     const cached = this.liveQuoteCache.get(instrument.exchangeSymbol);
     if (cached && cached.expiresAtMs > Date.now()) {
-      return cached.quote;
+      return { quote: cached.quote, staleFallback: null };
     }
 
     const mxvRest = this.restFeeds.get('MXV_OFFICIAL');
     const thirdPartyRest = this.restFeeds.get('THIRD_PARTY_FEED');
     const external = this.providersById.has('TWELVE_DATA');
-    const candidates: Array<{ enabled: boolean; fn: () => Promise<MarketQuote> }> = [
+    const candidates: Array<{ enabled: boolean; fn: () => Promise<MarketQuote>; unofficial?: boolean }> = [
       {
         enabled: Boolean(mxvRest) && instrument.isMvxListed && hasEnv('MXV_API_URL') && hasEnv('MXV_API_KEY'),
         fn: () => mxvRest!.getQuote(instrument.exchangeSymbol),
@@ -274,8 +286,15 @@ export class ProviderRegistry {
         enabled: Boolean(thirdPartyRest) && hasEnv('MARKET_DATA_PROVIDER_URL') && hasEnv('MARKET_DATA_PROVIDER_KEY'),
         fn: () => thirdPartyRest!.getQuote(instrument.exchangeSymbol),
       },
+      {
+        // T30: lowest priority, UNOFFICIAL delayed quotes; opt-in via YAHOO_ENABLED=true.
+        enabled: this.providersById.has('YAHOO_UNOFFICIAL') && isYahooEnabled() && this.yahoo.supports(instrument),
+        fn: () => this.yahoo.getQuoteForInstrument(instrument),
+        unofficial: true,
+      },
     ];
 
+    let staleFallback: MarketQuote | null = null;
     for (const candidate of candidates) {
       if (!candidate.enabled) continue;
       const q = await candidate.fn();
@@ -284,16 +303,19 @@ export class ProviderRegistry {
           quote: q,
           expiresAtMs: Date.now() + this.quoteTtlMs,
         });
-        return q;
+        return { quote: q, staleFallback: null };
+      }
+      if (candidate.unofficial && q.price !== null && q.status === 'STALE' && q.timestamp) {
+        staleFallback = q;
       }
     }
 
-    return null;
+    return { quote: null, staleFallback };
   }
 
   async getQuoteForInstrument(instrument: InstrumentDefinition): Promise<MarketQuote> {
     // 1. Verified live/delayed API quote when server-side credentials are configured.
-    const liveQuote = await this.tryFetchLiveQuote(instrument);
+    const { quote: liveQuote, staleFallback } = await this.tryFetchLiveQuote(instrument);
     if (liveQuote) {
       return {
         ...liveQuote,
@@ -314,6 +336,8 @@ export class ProviderRegistry {
     const candidates = [memoryQuote, sqliteQuote].filter(
       (q): q is MarketQuote => q !== null && q.status === 'HISTORICAL' && q.price !== null
     );
+    // A STALE Yahoo last price (with its market timestamp) competes with stored history; newest wins.
+    if (staleFallback) candidates.push({ ...staleFallback, exchange: instrument.exchange });
     if (candidates.length > 0) {
       candidates.sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''));
       return candidates[0];
@@ -334,8 +358,13 @@ export class ProviderRegistry {
     }
 
     const quote = await provider.getQuote(instrument.exchangeSymbol);
+    const yahooNote =
+      isYahooEnabled() && !this.yahoo.supports(instrument)
+        ? ` | Yahoo (UNOFFICIAL): UNSUPPORTED — ${YahooFinanceAdapter.unsupportedReason(instrument.exchangeSymbol)}`
+        : '';
     return {
       ...quote,
+      ...(yahooNote ? { statusReason: `${quote.statusReason ?? 'DATA_UNAVAILABLE'}${yahooNote}` } : {}),
       exchange: instrument.exchange,
       contractMonth: instrument.contractMonth,
       currency: instrument.specification.tradingCurrency,
@@ -426,6 +455,7 @@ export class ProviderRegistry {
       thirdPartyRest:
         this.restFeeds.get('THIRD_PARTY_FEED') ??
         fallbackRest('THIRD_PARTY_FEED', 'Third-party REST', 'MARKET_DATA_PROVIDER_URL', 'MARKET_DATA_PROVIDER_KEY'),
+      yahoo: this.providersById.has('YAHOO_UNOFFICIAL') ? this.yahoo : undefined,
       persistCandles: this.persistCandles,
     });
   }
