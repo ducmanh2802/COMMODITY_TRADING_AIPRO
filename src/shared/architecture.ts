@@ -181,6 +181,15 @@ export const PLATFORM_MODULES: PhaseModuleDescriptor[] = [
     dependencies: ['Firebase Auth', 'Cloud Firestore', '/api/health'],
     failClosedBehavior: 'Blocks Firestore persistence when unauthenticated and never exposes server API secrets.',
   },
+  {
+    id: 'learn',
+    label: 'Học',
+    phase: 1,
+    status: 'OPERATIONAL',
+    summary: 'Vietnamese 5-level learning path (docs/LEARNING_PATH.md) with local progress tracking and exercises on verified contract specs: tick P&L, margin/leverage, position sizing, contango/backwardation quiz.',
+    dependencies: ['/api/instruments'],
+    failClosedBehavior: 'Exercises refuse with an explanation when the contract specification is not VERIFIED or tick fields are missing; margins are user-provided and labelled as such; the curve quiz is labelled illustrative, not real prices.',
+  },
 ];
 
 export interface RoadmapPhase {

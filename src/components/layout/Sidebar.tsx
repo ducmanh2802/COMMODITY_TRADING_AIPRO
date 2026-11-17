@@ -9,6 +9,7 @@ import {
   Compass,
   Cpu,
   Globe,
+  GraduationCap,
   History,
   LayoutDashboard,
   Newspaper,
@@ -38,6 +39,7 @@ interface NavItem {
 
 const PRIMARY_NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: 'Overview', phase: 1, Icon: LayoutDashboard },
+  { id: 'learn', label: 'Học', phase: 1, Icon: GraduationCap },
   { id: 'markets', label: 'Markets', phase: 1, Icon: Globe },
   { id: 'charts', label: 'Charts', phase: 3, Icon: CandlestickChart },
   { id: 'ai-analyst', label: 'AI Analyst', phase: 5, Icon: Bot },

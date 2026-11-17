@@ -16,6 +16,7 @@ import { ScannerView } from './components/views/ScannerView';
 import { SettingsView } from './components/views/SettingsView';
 import { LazyAnalysisView, LazyChartsView, LazyCotView, LazyDataImportView } from './components/views/data/LazyViews';
 import { LazyContractExplorerView, LazyTermStructureView } from './components/views/explorer/LazyExplorerViews';
+import { LazyLearnView } from './components/views/learn/LazyLearnView';
 import { SignalsView } from './components/views/SignalsView';
 import { TechnicalAnalysisView } from './components/views/TechnicalAnalysisView';
 import { TradeJournalView } from './components/views/TradeJournalView';
@@ -107,6 +108,8 @@ function TerminalWorkspace() {
         return <LazyCotView />;
       case 'settings':
         return <SettingsView />;
+      case 'learn':
+        return <LazyLearnView />;
     }
   };
 

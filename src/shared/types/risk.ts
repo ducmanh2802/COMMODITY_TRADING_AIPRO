@@ -94,7 +94,8 @@ export type AppModuleId =
   | 'news'
   | 'data-health'
   | 'data-import'
-  | 'settings';
+  | 'settings'
+  | 'learn';
 
 export interface PhaseModuleDescriptor {
   id: AppModuleId;
