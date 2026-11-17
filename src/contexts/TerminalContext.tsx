@@ -113,40 +113,53 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setLoadError(null);
     try {
-      const [healthRes, provRes, instRes, quotesRes, archRes, dsRes] = await Promise.all([
-        fetch('/api/health'),
-        fetch('/api/providers/health'),
-        fetch('/api/instruments'),
-        fetch('/api/market/quotes'),
-        fetch('/api/architecture'),
-        fetch('/api/market/datasets'),
-      ]);
+      // Each endpoint is loaded independently so one failing endpoint does not
+      // blank the whole terminal; failures are reported by path + HTTP status.
+      const endpoints = [
+        '/api/health',
+        '/api/providers/health',
+        '/api/instruments',
+        '/api/market/quotes',
+        '/api/architecture',
+        '/api/market/datasets',
+      ] as const;
+      const failures: string[] = [];
+      const results = await Promise.all(
+        endpoints.map(async (path) => {
+          try {
+            const res = await fetch(path);
+            if (!res.ok) {
+              failures.push(`${path} → HTTP ${res.status}`);
+              return null;
+            }
+            return await res.json();
+          } catch (err) {
+            failures.push(`${path} → ${err instanceof Error ? err.message : 'network error'}`);
+            return null;
+          }
+        })
+      );
+      const [healthJson, provJson, instJson, quotesJson, archJson, dsJson] = results;
 
-      if (!healthRes.ok || !provRes.ok || !instRes.ok || !quotesRes.ok || !archRes.ok || !dsRes.ok) {
-        throw new Error('Backend API returned non-200 status during terminal synchronization.');
+      if (healthJson) setHealth(healthJson);
+      if (provJson) setProviders(provJson.providers ?? []);
+      if (instJson) setInstruments(instJson.instruments ?? []);
+      if (quotesJson) {
+        const quoteMap: Record<string, MarketQuote> = {};
+        for (const q of (quotesJson.quotes ?? []) as MarketQuote[]) {
+          quoteMap[q.symbol] = q;
+        }
+        setQuotesBySymbol(quoteMap);
+      }
+      if (dsJson) setDatasets(dsJson.datasets ?? []);
+      if (archJson) {
+        setModules(archJson.modules ?? []);
+        setRoadmap(archJson.roadmap ?? []);
       }
 
-      const [healthJson, provJson, instJson, quotesJson, archJson, dsJson] = await Promise.all([
-        healthRes.json(),
-        provRes.json(),
-        instRes.json(),
-        quotesRes.json(),
-        archRes.json(),
-        dsRes.json(),
-      ]);
-
-      setHealth(healthJson);
-      setProviders(provJson.providers ?? []);
-      setInstruments(instJson.instruments ?? []);
-
-      const quoteMap: Record<string, MarketQuote> = {};
-      for (const q of (quotesJson.quotes ?? []) as MarketQuote[]) {
-        quoteMap[q.symbol] = q;
+      if (failures.length > 0) {
+        throw new Error(`Backend sync partially failed: ${failures.join('; ')}`);
       }
-      setQuotesBySymbol(quoteMap);
-      setDatasets(dsJson.datasets ?? []);
-      setModules(archJson.modules ?? []);
-      setRoadmap(archJson.roadmap ?? []);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Failed to connect to backend API.');
     } finally {
