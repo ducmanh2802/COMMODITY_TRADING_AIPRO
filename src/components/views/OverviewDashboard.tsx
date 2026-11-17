@@ -488,20 +488,20 @@ export function OverviewDashboard() {
 
         <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Macro & News Calendar</h2>
+            <h2 className="text-sm font-semibold text-white">Vietnam Session Calendar &amp; Macro</h2>
             <button
               type="button"
-              onClick={() => setActiveModule('fundamental')}
+              onClick={() => setActiveModule('news')}
               className="text-xs text-[#6366F1] hover:underline"
             >
-              Open
+              Open Calendar
             </button>
           </div>
           <DataStatusBadge status={macroCount > 0 || newsCount > 0 ? 'HISTORICAL' : 'UNAVAILABLE'} />
           <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">
             {macroCount + newsCount > 0
-              ? `${macroCount} sourced macro record(s) and ${newsCount} news record(s) available.`
-              : 'No sourced USDA, EIA, or macro releases synced yet. Zero unsourced headlines displayed.'}
+              ? `${macroCount} sourced macro record(s) and ${newsCount} news record(s) available alongside live Vietnam ICT sessions & holidays.`
+              : 'Live Vietnam ICT trading sessions & 2026–2027 MXV/US/UK holiday calendar ready; sync EIA/USDA for macro actuals.'}
           </p>
         </section>
       </div>

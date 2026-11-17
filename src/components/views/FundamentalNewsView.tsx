@@ -6,6 +6,7 @@ import type { FundamentalMacroRecord, MarketDirection } from '../../shared/types
 import type { DataQualityStatus } from '../../shared/types/market';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { VietnamEconomicCalendar } from '../common/VietnamEconomicCalendar';
 
 interface NewsRecord {
   id: string;
@@ -165,18 +166,20 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-white tracking-tight">
-            {mode === 'news' ? 'News & Economic Calendar' : 'Fundamental & Macro Data'}
+            {mode === 'news'
+              ? 'Vietnam Commodity Economic Calendar & News'
+              : 'Fundamental, Macro Releases & Vietnam Session Calendar'}
           </h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Strictly sourced USDA, EIA, USD/VND, and central bank records. Zero fabricated headlines or estimates.
+            Strictly sourced USDA, EIA, USD/VND, Vietnam ICT session schedules, and major market holidays. Zero fabricated forecasts or headlines.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
           <button
             type="button"
             onClick={() => void handleSyncOfficialMacro()}
             disabled={syncing}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50 whitespace-nowrap shrink-0"
           >
             <CloudDownload className={`w-3.5 h-3.5 ${syncing ? 'animate-pulse' : ''}`} aria-hidden="true" />
             <span>{syncing ? 'Syncing...' : 'Sync Official Macro (EIA / USDA)'}</span>
@@ -190,6 +193,9 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
           {syncMessage}
         </div>
       )}
+
+      {/* Vietnam-Focused Commodity Session & Holiday Economic Calendar */}
+      <VietnamEconomicCalendar macroRecords={records} />
 
       {/* Add Sourced Record Form */}
       <form
