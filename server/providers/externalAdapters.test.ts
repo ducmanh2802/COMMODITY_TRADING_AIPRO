@@ -282,3 +282,50 @@ test('ConfigurableRestFeedAdapter requires both URL and KEY and fails closed whe
     assert.equal(status.credentialsConfigured, false);
   });
 });
+
+test('ConfigurableRestFeedAdapter health is never CURRENT without a successful fetch, and goes STALE with age', async () => {
+  await withEnv({ MARKET_DATA_PROVIDER_URL: 'https://feed.invalid', MARKET_DATA_PROVIDER_KEY: 'k' }, async () => {
+    let nowMs = Date.now();
+    let ok = true;
+    const fetchFn = (async () =>
+      new Response(JSON.stringify(ok ? { price: 1234.5, timestamp: new Date(nowMs).toISOString() } : {}), {
+        status: ok ? 200 : 502,
+      })) as unknown as typeof fetch;
+    const adapter = new ConfigurableRestFeedAdapter({
+      providerId: 'THIRD_PARTY_FEED',
+      providerName: 'REST Test',
+      urlEnv: 'MARKET_DATA_PROVIDER_URL',
+      keyEnv: 'MARKET_DATA_PROVIDER_KEY',
+      exchanges: ['CBOT'],
+      unconfiguredMessage: 'n/a',
+      fetchFn,
+      freshnessMs: 60_000,
+      now: () => nowMs,
+    });
+    // Configured but never fetched: not CONNECTED, not CURRENT.
+    let status = await adapter.getProviderStatus();
+    assert.equal(status.credentialsConfigured, true);
+    assert.notEqual(status.connectionState, 'CONNECTED');
+    assert.equal(status.dataStatus, 'UNAVAILABLE');
+    assert.equal(status.lastSuccessfulSyncAt, null);
+
+    const q = await adapter.getQuote('ZC');
+    assert.ok(q.price !== null);
+    status = await adapter.getProviderStatus();
+    assert.equal(status.connectionState, 'CONNECTED');
+    assert.ok(status.lastSuccessfulSyncAt);
+    assert.notEqual(status.dataStatus, 'UNAVAILABLE');
+
+    // Older than the freshness window -> STALE, never CURRENT.
+    nowMs = Date.parse(status.lastSuccessfulSyncAt!) + 10 * 60_000;
+    status = await adapter.getProviderStatus();
+    assert.ok(status.dataStatus === 'STALE' || status.dataStatus === 'HISTORICAL', status.dataStatus);
+
+    // A failed fetch degrades health.
+    ok = false;
+    await adapter.getQuote('ZC');
+    status = await adapter.getProviderStatus();
+    assert.equal(status.connectionState, 'DEGRADED');
+    assert.equal(status.dataStatus, 'UNAVAILABLE');
+  });
+});

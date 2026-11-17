@@ -9,6 +9,7 @@ import type {
   ProviderId,
 } from '../../src/shared/types/market.ts';
 import { evaluateDataFreshness } from '../../src/shared/utils/time.ts';
+import type { PersistOutcome, PersistProviderCandles } from './syncPersistence.ts';
 import {
   createUnavailableQuote,
   validateCandleSeries,
@@ -1430,7 +1431,11 @@ export class ConfigurableRestFeedAdapter implements MarketDataProvider {
   private readonly exchanges: string[];
   private readonly unconfiguredMessage: string;
   private readonly fetchFn: FetchLike;
+  private readonly freshnessMs: number;
+  private readonly nowFn: () => number;
   private lastSyncAt: string | null = null;
+  /** Data status of the last successful fetch: quote freshness (CURRENT/DELAYED/STALE) or HISTORICAL for candles. */
+  private lastDataStatus: DataQualityStatus | null = null;
   private lastError: string | null = null;
 
   constructor(params: {
@@ -1441,6 +1446,9 @@ export class ConfigurableRestFeedAdapter implements MarketDataProvider {
     exchanges: string[];
     unconfiguredMessage: string;
     fetchFn?: FetchLike;
+    /** Health reports CURRENT/DELAYED only within this window after the last successful quote (default 15 min). */
+    freshnessMs?: number;
+    now?: () => number;
   }) {
     this.providerId = params.providerId;
     this.providerName = params.providerName;
@@ -1449,6 +1457,8 @@ export class ConfigurableRestFeedAdapter implements MarketDataProvider {
     this.exchanges = params.exchanges;
     this.unconfiguredMessage = params.unconfiguredMessage;
     this.fetchFn = params.fetchFn ?? globalThis.fetch;
+    this.freshnessMs = params.freshnessMs ?? 15 * 60_000;
+    this.nowFn = params.now ?? Date.now;
   }
 
   private isConfigured(): boolean {
@@ -1516,6 +1526,7 @@ export class ConfigurableRestFeedAdapter implements MarketDataProvider {
         status: evaluateDataFreshness(ts),
       };
       this.lastSyncAt = quote.retrievedAt;
+      this.lastDataStatus = quote.status;
       this.lastError = null;
       return quote;
     } catch (err) {
@@ -1583,6 +1594,7 @@ export class ConfigurableRestFeedAdapter implements MarketDataProvider {
         return { candles: [], status: 'INVALID', reason: this.lastError };
       }
       this.lastSyncAt = retrievedAt;
+      this.lastDataStatus = 'HISTORICAL';
       this.lastError = null;
       return { candles: validation.validCandles, status: 'HISTORICAL' };
     } catch (err) {
@@ -1605,12 +1617,29 @@ export class ConfigurableRestFeedAdapter implements MarketDataProvider {
     const keySet = envPresent(this.keyEnv);
     const urlSet = envPresent(this.urlEnv);
     const ready = keySet && urlSet;
+    // Never report CURRENT from configuration alone: health reflects the last SUCCESSFUL fetch and its age.
+    const syncedMs = this.lastSyncAt ? Date.parse(this.lastSyncAt) : NaN;
+    const ageMs = Number.isNaN(syncedMs) ? null : this.nowFn() - syncedMs;
+    let dataStatus: DataQualityStatus = 'UNAVAILABLE';
+    if (ready && !this.lastError && this.lastDataStatus && ageMs !== null) {
+      dataStatus =
+        (this.lastDataStatus === 'CURRENT' || this.lastDataStatus === 'DELAYED') && ageMs > this.freshnessMs
+          ? 'STALE'
+          : this.lastDataStatus;
+    }
+    const connectionState = !ready
+      ? 'UNCONFIGURED'
+      : this.lastError
+        ? 'DEGRADED'
+        : this.lastSyncAt
+          ? 'CONNECTED'
+          : 'UNAVAILABLE';
     return {
       providerId: this.providerId,
       name: this.providerName,
       exchanges: this.exchanges,
-      connectionState: !ready ? 'UNCONFIGURED' : this.lastError ? 'DEGRADED' : 'CONNECTED',
-      dataStatus: ready && !this.lastError ? 'CURRENT' : 'UNAVAILABLE',
+      connectionState,
+      dataStatus,
       credentialsConfigured: ready,
       supportsRealtime: true,
       supportsHistorical: true,
@@ -1621,7 +1650,9 @@ export class ConfigurableRestFeedAdapter implements MarketDataProvider {
       message: ready
         ? this.lastError
           ? `Last sync issue: ${this.lastError}`
-          : `${this.urlEnv} and ${this.keyEnv} configured on server.`
+          : this.lastSyncAt
+            ? `Last successful fetch ${this.lastSyncAt} (${dataStatus}; freshness window ${Math.round(this.freshnessMs / 60_000)} min).`
+            : `${this.urlEnv} and ${this.keyEnv} configured on server; no successful sync yet.`
         : keySet && !urlSet
           ? `${this.keyEnv} detected, waiting for ${this.urlEnv} endpoint URL in Secrets.`
           : this.unconfiguredMessage,
@@ -1643,11 +1674,16 @@ export async function syncConfiguredProviders(options: {
   usda: UsdaQuickStatsAdapter;
   mxvRest: ConfigurableRestFeedAdapter;
   thirdPartyRest: ConfigurableRestFeedAdapter;
+  /** Persist synced candles to the SQLite data layer (server/providers/syncPersistence.ts). */
+  persistCandles?: PersistProviderCandles;
 }): Promise<{
   syncedAt: string;
   totalCandlesDatasetsAdded: number;
   totalMacroAdded: number;
   outcomes: SyncProviderOutcome[];
+  /** One entry per persisted series; empty when no persister is configured. */
+  persistence: PersistOutcome[];
+  persistenceEnabled: boolean;
 }> {
   const tf: Timeframe = options.timeframe ?? 'D1';
   const instruments: InstrumentDefinition[] = options.symbol
@@ -1657,8 +1693,38 @@ export async function syncConfiguredProviders(options: {
     : await instrumentRepository.list({ marketScope: 'MXV' });
 
   const outcomes: SyncProviderOutcome[] = [];
+  const persistence: PersistOutcome[] = [];
   let totalCandlesDatasetsAdded = 0;
   let totalMacroAdded = 0;
+  const providerNames: Partial<Record<ProviderId, string>> = {
+    TWELVE_DATA: options.twelveData.providerName,
+    FMP_COMMODITIES: options.fmp.providerName,
+    ALPHA_VANTAGE: options.alphaVantage.providerName,
+    EIA_ENERGY: options.eia.providerName,
+    MXV_OFFICIAL: options.mxvRest.providerName,
+    THIRD_PARTY_FEED: options.thirdPartyRest.providerName,
+  };
+  /** Owner's in-memory store (engines' fallback) + persistent SQLite dataset with provenance. */
+  const store = async (
+    providerId: ProviderId,
+    inst: InstrumentDefinition,
+    timeframe: Timeframe,
+    candles: MarketCandle[],
+    warnings: string[] = []
+  ): Promise<void> => {
+    historicalCandleStore.save(inst.exchangeSymbol, timeframe, candles, warnings);
+    if (options.persistCandles) {
+      persistence.push(
+        await options.persistCandles({
+          providerId,
+          providerName: providerNames[providerId] ?? providerId,
+          instrument: inst,
+          timeframe,
+          candles,
+        })
+      );
+    }
+  };
 
   // 1. Twelve Data sync (priority real-time/intraday OHLCV)
   if (envPresent('TWELVEDATA_API_KEY')) {
@@ -1668,12 +1734,7 @@ export async function syncConfiguredProviders(options: {
     for (const inst of targets) {
       const res = await options.twelveData.getCandles(inst.exchangeSymbol, tf);
       if (res.candles.length > 0) {
-        historicalCandleStore.save(
-          inst.exchangeSymbol,
-          tf,
-          res.candles,
-          res.reason ? [res.reason] : []
-        );
+        await store('TWELVE_DATA', inst, tf, res.candles, res.reason ? [res.reason] : []);
         updated.push(inst.exchangeSymbol);
         totalCandlesDatasetsAdded += 1;
       } else if (res.reason) {
@@ -1713,7 +1774,7 @@ export async function syncConfiguredProviders(options: {
     for (const inst of targets) {
       const res = await options.fmp.getCandles(inst.exchangeSymbol);
       if (res.candles.length > 0) {
-        historicalCandleStore.save(inst.exchangeSymbol, 'D1', res.candles);
+        await store('FMP_COMMODITIES', inst, 'D1', res.candles);
         updated.push(inst.exchangeSymbol);
         totalCandlesDatasetsAdded += 1;
       } else if (res.reason) {
@@ -1753,12 +1814,7 @@ export async function syncConfiguredProviders(options: {
     for (const inst of targets) {
       const res = await options.alphaVantage.getCandles(inst.exchangeSymbol);
       if (res.candles.length > 0) {
-        historicalCandleStore.save(
-          inst.exchangeSymbol,
-          'D1',
-          res.candles,
-          res.warnings ?? []
-        );
+        await store('ALPHA_VANTAGE', inst, 'D1', res.candles, res.warnings ?? []);
         updated.push(inst.exchangeSymbol);
         totalCandlesDatasetsAdded += 1;
       } else if (res.reason) {
@@ -1799,7 +1855,7 @@ export async function syncConfiguredProviders(options: {
     for (const inst of energyTargets) {
       const res = await options.eia.getCandles(inst.exchangeSymbol);
       if (res.candles.length > 0) {
-        historicalCandleStore.save(inst.exchangeSymbol, 'D1', res.candles, res.warnings ?? []);
+        await store('EIA_ENERGY', inst, 'D1', res.candles, res.warnings ?? []);
         updated.push(inst.exchangeSymbol);
         totalCandlesDatasetsAdded += 1;
       }
@@ -1867,7 +1923,7 @@ export async function syncConfiguredProviders(options: {
     for (const inst of instruments.filter((i) => i.isMvxListed).slice(0, 4)) {
       const res = await options.mxvRest.getCandles(inst.exchangeSymbol, tf);
       if (res.candles.length > 0) {
-        historicalCandleStore.save(inst.exchangeSymbol, tf, res.candles);
+        await store('MXV_OFFICIAL', inst, tf, res.candles);
         updated.push(inst.exchangeSymbol);
         totalCandlesDatasetsAdded += 1;
       }
@@ -1889,7 +1945,7 @@ export async function syncConfiguredProviders(options: {
     for (const inst of instruments.slice(0, 4)) {
       const res = await options.thirdPartyRest.getCandles(inst.exchangeSymbol, tf);
       if (res.candles.length > 0) {
-        historicalCandleStore.save(inst.exchangeSymbol, tf, res.candles);
+        await store('THIRD_PARTY_FEED', inst, tf, res.candles);
         updated.push(inst.exchangeSymbol);
         totalCandlesDatasetsAdded += 1;
       }
@@ -1910,5 +1966,7 @@ export async function syncConfiguredProviders(options: {
     totalCandlesDatasetsAdded,
     totalMacroAdded,
     outcomes,
+    persistence,
+    persistenceEnabled: Boolean(options.persistCandles),
   };
 }

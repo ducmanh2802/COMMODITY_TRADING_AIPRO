@@ -134,8 +134,8 @@ export function buildContractChain(input: ContractChainInput): ContractChainResu
     }
 
     const opts = { holidays: input.holidays };
-    const ltd = applyDateRule(spec.lastTradingDay, year, month, calendarStatus, opts);
-    const fnd = applyDateRule(spec.firstNoticeDay, year, month, calendarStatus, opts);
+    const ltd = applyDateRule(spec.lastTradingDay, year, month, calendarStatus, opts, spec.holidayCalendars);
+    const fnd = applyDateRule(spec.firstNoticeDay, year, month, calendarStatus, opts, spec.holidayCalendars);
     const entryWarnings: string[] = listing.warning ? [listing.warning] : [];
 
     if (ltd.status === 'COMPUTED') {

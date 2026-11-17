@@ -52,6 +52,8 @@ CSV là nguồn dữ liệu chuẩn của app. Dữ liệu lưu trong SQLite (`n
 
 `dryRun: true` → chỉ phân tích, kiểm tra, báo kế hoạch ghi; **không ghi gì**.
 
+**Giá ≤ 0** (vd. WTI CLK20 ngày 2020-04-20, chuỗi back-adjusted): mặc định bị từ chối (422). Gửi `allowNonPositivePrices: true` để chấp nhận; `CONTINUOUS` + `BACK_ADJUSTED` tự bật cờ này. Khi được chấp nhận, kết quả có cảnh báo `NON_POSITIVE_PRICE` (liệt kê các dòng) — log return, biến động và tương quan không xác định qua các nến đó; `PRICE_JUMP` không tính từ giá trước ≤ 0. Quan hệ OHLC sai và volume âm vẫn bị từ chối.
+
 ## 6. API
 
 - `POST /api/data/import` (body JSON tối đa ~10 MB): `{instrumentId, contractCode, timeframe, csv, timezone, sourceLabel, sourceQuality, dateFormat?, decimalSeparator?, delimiter?, priceUnit?, continuousAdjustment?, mode?, sort?, dryRun?, gapThresholdSessions?, jumpThresholdPct?}`. Mã trả về: 201 đã nhập, 200 dry-run/không thay đổi, 400 body sai, 404 không có instrument, 409 xung đột, 422 dữ liệu lỗi.
@@ -89,6 +91,12 @@ curl -s "http://localhost:3000/api/market/candles?instrumentId=ZC&contractCode=Z
 
 ## 8. Giới hạn hiện tại
 
-- Các endpoint ghi/xóa chưa có xác thực — chỉ chạy cục bộ hoặc sau lớp bảo vệ.
-- Giá ≤ 0 bị từ chối theo schema dùng chung.
-- Chưa có lịch nghỉ lễ theo sàn: cảnh báo `SESSION_GAP` chỉ đếm ngày thường.
+- Endpoint ghi/xóa (`POST /api/data/import`, `DELETE /api/data/datasets/:id`, `POST /api/cot/sync`, `POST /api/market/candles/import`, `DELETE /api/market/candles`, `POST /api/providers/sync`, `POST /api/fundamental/records`) được bảo vệ bởi `server/middleware/adminAuth.ts`: có `ADMIN_API_TOKEN` → bắt buộc header `Authorization: Bearer <token>` (401 nếu sai); không có token → chỉ nhận request trực tiếp từ localhost (403 nếu qua proxy/từ xa).
+- Giá ≤ 0 chỉ được nhận khi bật `allowNonPositivePrices` (xem §5).
+- Cảnh báo `SESSION_GAP` chỉ đếm ngày thường (lịch nghỉ lễ sàn trong `src/shared/contracts/holidays` hiện chỉ dùng cho ngày đáo hạn LTD/FND).
+
+## 9. COT (CFTC) — nguồn dữ liệu và kiểm thử rules
+
+- `COT_SOURCE=auto|socrata|files` (mặc định `auto`): `auto` gọi Socrata trước, lỗi upstream (403/429/5xx/mạng) thì chuyển sang file zip lịch sử của CFTC (`fut_disagg_txt_<YEAR>.zip`, `deacot<YEAR>.zip`). Mỗi dòng lưu kèm `sourceUrl` + `fetchedAt`; kết quả sync ghi `source` và `fallbackReason`.
+- Bộ đọc zip (`server/cot/zip.ts`) không phụ thuộc thư viện ngoài: chỉ stored/deflate, kiểm CRC-32 và kích thước, giới hạn 200 MB giải nén, từ chối zip64/mã hoá/nhiều đĩa. Cache trong `COT_CACHE_DIR` (mặc định `data/cache/cftc`) được kiểm SHA-256 mỗi lần dùng lại.
+- Kiểm thử Firestore rules bằng emulator: `npm run test:rules` (cần Java; `firebase-tools@13.35.1` chạy được với Java 17+, bản 14+ yêu cầu Java 21). Test nằm ở `tests/rules/`, không chạy trong `npm test`.

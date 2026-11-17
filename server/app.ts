@@ -834,6 +834,11 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
         slippageTicks: parsed.data.slippageTicks,
         rolloverIntervalBars: parsed.data.rolloverIntervalBars,
         rolloverCostPerContract: parsed.data.rolloverCostPerContract,
+        dataProvenance: {
+          origin: candleRes.origin,
+          source: candleRes.meta?.source ?? null,
+          warnings: [...(candleRes.meta?.warnings ?? []), ...(candleRes.reason ? [candleRes.reason] : [])],
+        },
       });
 
       res.json(result);

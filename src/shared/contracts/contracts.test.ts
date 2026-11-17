@@ -8,6 +8,8 @@ import {
   MONTH_CODES,
   NO_HOLIDAY_WARNING,
   CALLER_HOLIDAY_WARNING,
+  PROJECTED_HOLIDAY_WARNING,
+  UNCOVERED_YEAR_WARNING,
   annualizedRollYield,
   buildContinuousSeries,
   buildContractChain,
@@ -80,8 +82,7 @@ test('encoded calendar specs stay in sync with CONTRACT_CALENDAR_RULES in server
     assert.ok(spec, `encoded spec for ${inst.id}`);
     assert.equal(spec.listedMonthsText, rule.listedMonths, inst.id);
     assert.equal(spec.calendarStatus, rule.verificationStatus, inst.id);
-    if (spec.lastTradingDay.kind === 'ENCODED' && inst.id !== 'NYMEX:CL') {
-      // CL uses the fuller CME contract-spec text (instruments.ts only references rule 200102.F).
+    if (spec.lastTradingDay.kind === 'ENCODED') {
       assert.equal(spec.lastTradingDay.ruleText, rule.lastTradingDayRule, inst.id);
     }
     if (spec.listing.type === 'FIXED_MONTHS') {
@@ -107,14 +108,19 @@ test('business calendar basics', () => {
 // (cmegroup.com refuses connections). Expected dates below were cross-checked against the
 // published contract pages cited in each comment; the rule text is from the exchange.
 
-test('CBOT corn LTD: ZCH25 = 2025-03-14 and ZCZ24 = 2024-12-13', () => {
+test('CBOT corn LTD: ZCH25 = 2025-03-14 and ZCZ24 = 2024-12-13 (bundled CME_US calendar)', () => {
   // ZCH25: March 15 2025 is a Saturday -> business day prior = Fri 14 Mar 2025.
   // Cross-check: barchart.com/futures/quotes/ZCH25 (final trading session 2025-03-14).
   const h25 = computeLastTradingDay('CBOT:ZC', 2025, 3);
   assert.equal(computedDate(h25), '2025-03-14');
-  assert.equal(h25.status === 'COMPUTED' && h25.holidayAdjusted, false);
-  assert.ok(h25.status === 'COMPUTED' && h25.warnings.includes(NO_HOLIDAY_WARNING));
-  assert.ok(h25.status === 'COMPUTED' && h25.sourceUrl.startsWith('https://www.cmegroup.com/'));
+  assert.ok(h25.status === 'COMPUTED');
+  if (h25.status !== 'COMPUTED') return;
+  assert.equal(h25.holidayAdjusted, true);
+  assert.equal(h25.holidaySource, 'BUNDLED');
+  assert.deepEqual(h25.holidayCalendars, ['CME_US']);
+  assert.equal(h25.holidayDataStatus, 'PROJECTED');
+  assert.ok(h25.warnings.includes(PROJECTED_HOLIDAY_WARNING));
+  assert.ok(h25.sourceUrl.startsWith('https://www.cmegroup.com/'));
   // ZCZ24: Dec 15 2024 is a Sunday -> Fri 13 Dec 2024.
   assert.equal(computedDate(computeLastTradingDay('CBOT:ZC', 2024, 12)), '2024-12-13');
   // Grain FND has no sourced rule text -> UNAVAILABLE, never guessed.
@@ -122,39 +128,69 @@ test('CBOT corn LTD: ZCH25 = 2025-03-14 and ZCZ24 = 2024-12-13', () => {
   assert.equal(fnd.status, 'UNAVAILABLE');
 });
 
-test('NYMEX WTI LTD: CLZ24 = 2024-11-20; CLF25 is holiday-affected (warning, caller holidays fix it)', () => {
+test('NYMEX WTI LTD: CLZ24 = 2024-11-20; CLF25 = 2024-12-19 by default (Christmas from CME_US)', () => {
   // CLZ24: Nov 25 2024 (Mon) is a business day -> 3 business days prior = Wed 20 Nov 2024.
   // Cross-check: barchart.com/futures/quotes/CLZ24 (expiration 11/20/24).
   assert.equal(computedDate(computeLastTradingDay('NYMEX:CL', 2024, 12)), '2024-11-20');
 
-  // CLF25: the 25th is Christmas Day 2024 (Wed). Mon-Fri only treats it as a business day and gives
-  // 2024-12-20, which is NOT the exchange date; the result must say holidays were not applied.
-  const raw = computeLastTradingDay('NYMEX:CL', 2025, 1);
+  // CLF25: the 25th is Christmas Day 2024 (Wed) -> "3 business days prior to the business day
+  // preceding the 25th" = 3 before Tue 24 Dec = Thu 19 Dec 2024.
+  const def = computeLastTradingDay('NYMEX:CL', 2025, 1);
+  assert.equal(computedDate(def), '2024-12-19');
+  assert.ok(def.status === 'COMPUTED' && def.holidayAdjusted && def.holidaySource === 'BUNDLED');
+  if (def.status === 'COMPUTED') {
+    const xmas = def.holidaysInWindow.find((h) => h.date === '2024-12-25');
+    assert.ok(xmas, 'Christmas listed in holidaysInWindow');
+    assert.equal(xmas!.status, 'PROJECTED');
+    assert.equal(xmas!.sourceUrl, 'https://www.cmegroup.com/tools-information/holiday-calendar.html');
+  }
+
+  // Opt-out: Mon-Fri only treats Christmas as a business day and gives 2024-12-20 (NOT the exchange date).
+  const raw = computeLastTradingDay('NYMEX:CL', 2025, 1, { holidayCalendar: 'NONE' });
   assert.equal(computedDate(raw), '2024-12-20');
   assert.ok(raw.status === 'COMPUTED' && !raw.holidayAdjusted && raw.warnings.includes(NO_HOLIDAY_WARNING));
-  // With Christmas supplied as a holiday, the rule ("3 business days prior to the business day
-  // preceding the 25th") gives Thu 19 Dec 2024.
+  // A caller-supplied list replaces the bundled calendar.
   const adj = computeLastTradingDay('NYMEX:CL', 2025, 1, { holidays: ['2024-12-25'] });
   assert.equal(computedDate(adj), '2024-12-19');
-  assert.ok(adj.status === 'COMPUTED' && adj.holidayAdjusted && adj.warnings.includes(CALLER_HOLIDAY_WARNING));
+  assert.ok(adj.status === 'COMPUTED' && adj.holidaySource === 'CALLER' && adj.warnings.includes(CALLER_HOLIDAY_WARNING));
 });
 
 test('ICE Brent Feb-2025 expiry moves off the business day preceding New Year (2024-12-30)', () => {
   // Cross-check: S&P Global Platts subscriber note (17 Dec 2024): ICE Brent Feb-25 futures expire
   // Dec 30, "rather than the last business day of the month - Dec. 31".
-  assert.equal(computedDate(computeLastTradingDay('ICE:BRN', 2025, 2)), '2024-12-30');
+  const feb = computeLastTradingDay('ICE:BRN', 2025, 2);
+  assert.equal(computedDate(feb), '2024-12-30');
+  // ICE Europe energy holidays are not bundled -> explicit Mon-Fri warning, never UK bank holidays.
+  assert.ok(feb.status === 'COMPUTED' && !feb.holidayAdjusted && feb.warnings.includes(NO_HOLIDAY_WARNING));
   // Mar-2025: last business day of January 2025 = Fri 31 Jan (no adjustment).
   assert.equal(computedDate(computeLastTradingDay('ICE:BRN', 2025, 3)), '2025-01-31');
 });
 
-test('ICE cotton CTZ24: LTD and FND match published dates once US holidays are supplied', () => {
+test('ICE cotton CTZ24: LTD 2024-12-06 and FND 2024-11-22 by default (bundled ICE_US)', () => {
   // Cross-check (third party): barchart.com/futures/quotes/CTZ24 - expiration 12/06/24, FND 11/22/24.
-  const raw = computeLastTradingDay('ICE:CT', 2024, 12);
-  assert.equal(computedDate(raw), '2024-12-09'); // Mon-Fri only: Christmas counted as business day
-  assert.ok(raw.status === 'COMPUTED' && raw.warnings.includes(NO_HOLIDAY_WARNING));
-  assert.equal(computedDate(computeLastTradingDay('ICE:CT', 2024, 12, { holidays: ['2024-12-25'] })), '2024-12-06');
-  assert.equal(computedDate(computeFirstNoticeDay('ICE:CT', 2024, 12)), '2024-11-25');
-  assert.equal(computedDate(computeFirstNoticeDay('ICE:CT', 2024, 12, { holidays: ['2024-11-28'] })), '2024-11-22');
+  const ltd = computeLastTradingDay('ICE:CT', 2024, 12);
+  assert.equal(computedDate(ltd), '2024-12-06');
+  assert.ok(ltd.status === 'COMPUTED' && ltd.holidayCalendars.includes('ICE_US'));
+  assert.equal(computedDate(computeFirstNoticeDay('ICE:CT', 2024, 12)), '2024-11-22'); // Thanksgiving 11-28 skipped
+  // Mon-Fri only would be wrong on both:
+  assert.equal(computedDate(computeLastTradingDay('ICE:CT', 2024, 12, { holidayCalendar: 'NONE' })), '2024-12-09');
+  assert.equal(computedDate(computeFirstNoticeDay('ICE:CT', 2024, 12, { holidayCalendar: 'NONE' })), '2024-11-25');
+});
+
+test('robusta (London) uses PUBLISHED UK bank holidays; iron ore uses SG public holidays', () => {
+  // RC F25 FND: first business day of Jan 2025 = Thu 2 Jan (Jan 1 bank holiday); 4 business days
+  // before, skipping the 25/26 Dec bank holidays: 31, 30, 27, 24 -> Tue 24 Dec 2024.
+  const rc = computeFirstNoticeDay('ICE:RC', 2025, 1);
+  assert.equal(computedDate(rc), '2024-12-24');
+  assert.ok(rc.status === 'COMPUTED' && rc.holidayDataStatus === 'PUBLISHED');
+  assert.ok(rc.status === 'COMPUTED' && rc.holidaysInWindow.every((h) => h.sourceUrl === 'https://www.gov.uk/bank-holidays.json'));
+  // TIO Mar-2025: last business day of Mar 2025 = Mon 31 Mar = Hari Raya Puasa (SG) -> Fri 28 Mar.
+  assert.equal(computedDate(computeLastTradingDay('CME:TIO', 2025, 3)), '2025-03-28');
+});
+
+test('bundled calendar fails closed outside its coverage', () => {
+  const far = computeLastTradingDay('ICE:RC', 2035, 3);
+  assert.ok(far.status === 'COMPUTED' && !far.holidayAdjusted && far.warnings.includes(UNCOVERED_YEAR_WARNING));
 });
 
 test('other encoded rules: sugar, coffee, cocoa, metals, natural gas (rule arithmetic)', () => {

@@ -693,6 +693,7 @@ export const CONTRACT_CALENDAR_RULES: Record<string, ContractCalendarRule> = {
     lastTradingDayRule: 'Last business day of the month preceding the delivery month.',
     sourceUrl: 'https://www.ice.com/products/23/Sugar-No-11-Futures',
     verificationStatus: 'VERIFIED',
+    notes: 'First notice day: first business day after last trading day (i.e. the first business day of the delivery month - FND falls after LTD for Sugar No. 11).',
   },
   'ICE:CC': {
     listedMonths: 'H K N U Z (Mar, May, Jul, Sep, Dec)',
@@ -706,7 +707,8 @@ export const CONTRACT_CALENDAR_RULES: Record<string, ContractCalendarRule> = {
     lastTradingDayRule: 'Seventeen business days from end of spot month.',
     sourceUrl: 'https://www.ice.com/products/254/Cotton-No-2-Futures',
     verificationStatus: 'VERIFIED',
-    notes: 'First notice day: five business days before the first delivery day of the spot month.',
+    notes:
+      'First notice day: five business days before the first delivery day of the spot contract month, which is the first business day of that month (ICE Cotton No. 2 contract page).',
   },
   'COMEX:HG': {
     listedMonths:
@@ -752,11 +754,11 @@ export const CONTRACT_CALENDAR_RULES: Record<string, ContractCalendarRule> = {
   'NYMEX:CL': {
     listedMonths: 'All months (F-Z) consecutively for the current year plus the next five years',
     lastTradingDayRule:
-      'Trading terminates 3 business days before the 25th calendar day of the month prior to the contract month, adjusted when the 25th is a non-business day (see NYMEX rule 200102.F for the exact adjustment).',
-    sourceUrl: 'https://www.cmegroup.com/trading/files/WTI-Fact-Card.pdf',
+      'Trading terminates 3 business days before the 25th calendar day of the month prior to the contract month. If the 25th calendar day is not a business day, trading terminates 3 business days prior to the business day preceding the 25th calendar day.',
+    sourceUrl: 'https://www.cmegroup.com/markets/energy/crude-oil/light-sweet-crude.contractSpecs.html',
     verificationStatus: 'UNVERIFIED',
     notes:
-      'Some CME text also mentions additional Jun/Dec months further out; confirm listing horizon. T24: downgraded - listing came only from a fact-card search snippet and QuantConnect Lean FuturesExpiryFunctions says "current year and the next 10 calendar years and 2 additional contract months". LTD rule agrees with Lean.',
+      'LTD text is NYMEX rule 200102.F as published on the CME WTI contract-spec page (earlier entry cited the WTI fact card and only referenced 200102.F). Some CME text also mentions additional Jun/Dec months further out; confirm listing horizon. T24: downgraded - listing came only from a fact-card search snippet and QuantConnect Lean FuturesExpiryFunctions says "current year and the next 10 calendar years and 2 additional contract months". LTD rule agrees with Lean.',
   },
   'ICE:BRN': {
     listedMonths: 'All months (F-Z), up to 156 consecutive months',

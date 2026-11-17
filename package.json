@@ -14,7 +14,8 @@
     "clean": "node -e \"for (const p of ['dist','server.js']) require('node:fs').rmSync(p, { recursive: true, force: true })\"",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test \"server/**/*.test.ts\" \"src/**/*.test.ts\" \"*.test.ts\""
+    "test": "tsx --test \"server/**/*.test.ts\" \"src/**/*.test.ts\" \"*.test.ts\"",
+    "test:rules": "npx -y firebase-tools@13.35.1 emulators:exec --only firestore --project demo-commodity-aipro \"tsx --test tests/rules/*.test.ts\""
   },
   "dependencies": {
     "@google/genai": "^3.4.0",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@firebase/eslint-plugin-security-rules": "^0.0.2",
+    "@firebase/rules-unit-testing": "^6.0.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",

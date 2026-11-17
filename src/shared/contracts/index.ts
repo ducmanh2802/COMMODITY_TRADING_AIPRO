@@ -5,3 +5,4 @@ export * from './expiry.ts';
 export * from './chain.ts';
 export * from './continuous.ts';
 export * from './termStructure.ts';
+export * from './holidays/index.ts';

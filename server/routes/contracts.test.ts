@@ -23,11 +23,12 @@ test('GET /api/contracts/:id/chain returns computed contracts with sources and w
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.instrumentId, 'CBOT:ZC');
-    assert.equal(body.holidayAdjusted, false);
+    assert.equal(body.holidayAdjusted, true);
     assert.deepEqual(body.contracts.map((c: { code: string }) => c.code), ['ZCZ26', 'ZCH27', 'ZCK27']);
     assert.deepEqual(body.contracts.map((c: { mxvCode: string }) => c.mxvCode), ['ZCEZ26', 'ZCEH27', 'ZCEK27']);
     assert.equal(body.contracts[0].lastTradingDay.date, '2026-12-14');
-    assert.equal(body.contracts[0].lastTradingDay.holidayAdjusted, false);
+    assert.equal(body.contracts[0].lastTradingDay.holidayAdjusted, true);
+    assert.equal(body.contracts[0].lastTradingDay.holidayDataStatus, 'PROJECTED');
     assert.ok(body.contracts[0].lastTradingDay.warnings.length > 0);
     assert.equal(body.contracts[0].firstNoticeDay.status, 'UNAVAILABLE');
     assert.ok(body.sources.includes('https://www.cmegroup.com/rulebook/CBOT/I/10.pdf'));

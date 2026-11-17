@@ -7,7 +7,8 @@ import type {
 } from '../../src/shared/types/market.ts';
 import { FailClosedProviderAdapter, type UnconfiguredProviderConfig } from './base.ts';
 import { createUnavailableQuote } from '../../src/shared/utils/validation.ts';
-import type { ICandleRepository } from '../storage/candleRepository.ts';
+import { CONTINUOUS_CONTRACT_CODE, type DatasetRecord, type ICandleRepository } from '../storage/candleRepository.ts';
+import { createProviderCandlePersister, VENDOR_CONTRACT_PREFIX, type PersistProviderCandles } from './syncPersistence.ts';
 import { historicalCandleStore } from '../services/candleStore.ts';
 import { CsvHistoricalProvider } from './csvHistorical.ts';
 import {
@@ -136,10 +137,14 @@ export class ProviderRegistry {
   private readonly exchangeRouting: Map<string, MarketDataProvider>;
   private readonly liveQuoteCache = new Map<string, { quote: MarketQuote; expiresAtMs: number }>();
   private readonly quoteTtlMs = 60_000;
+  private readonly candleRepository: ICandleRepository | null;
+  private readonly persistCandles: PersistProviderCandles | undefined;
 
   constructor(options: ProviderRegistryOptions = {}) {
     const configs = options.configs ?? DEFAULT_PROVIDER_CONFIGS;
     const routing = options.routing ?? DEFAULT_EXCHANGE_ROUTING;
+    this.candleRepository = options.candles ?? null;
+    this.persistCandles = options.candles ? createProviderCandlePersister(options.candles) : undefined;
 
     this.twelveData = new TwelveDataAdapter();
     this.fmp = new FmpCommoditiesAdapter();
@@ -297,16 +302,21 @@ export class ProviderRegistry {
       };
     }
 
-    // 2. Last close from the owner's in-memory historical store, explicitly labelled HISTORICAL
-    //    (never CURRENT). The SQLite data layer (CsvHistoricalProvider) deliberately does not quote.
-    const historicalQuote = historicalCandleStore.getLatestHistoricalQuote(
+    // 2. Last close from stored history, explicitly labelled HISTORICAL with its bar date (never
+    //    CURRENT): the owner's in-memory store and the SQLite data layer; the more recent bar wins.
+    const memoryQuote = historicalCandleStore.getLatestHistoricalQuote(
       instrument.exchangeSymbol,
       instrument.specification.tradingCurrency,
       instrument.specification.quotationUnit,
       instrument.exchange
     );
-    if (historicalQuote.status === 'HISTORICAL') {
-      return historicalQuote;
+    const sqliteQuote = await this.getSqliteHistoricalQuote(instrument);
+    const candidates = [memoryQuote, sqliteQuote].filter(
+      (q): q is MarketQuote => q !== null && q.status === 'HISTORICAL' && q.price !== null
+    );
+    if (candidates.length > 0) {
+      candidates.sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''));
+      return candidates[0];
     }
 
     // 3. Fail closed via the explicitly routed provider.
@@ -330,6 +340,65 @@ export class ProviderRegistry {
       contractMonth: instrument.contractMonth,
       currency: instrument.specification.tradingCurrency,
       unit: instrument.specification.quotationUnit,
+    };
+  }
+
+  /**
+   * Last close from the SQLite data layer for an instrument. Only series whose prices are real traded
+   * prices are eligible: specific contracts and UNADJUSTED continuous series. Back/ratio-adjusted
+   * continuous series and provider (VENDOR_*) series are excluded. Returns null when nothing qualifies.
+   */
+  private async getSqliteHistoricalQuote(instrument: InstrumentDefinition): Promise<MarketQuote | null> {
+    if (!this.candleRepository) return null;
+    let datasets: DatasetRecord[];
+    try {
+      datasets = await this.candleRepository.listDatasets({ instrumentId: instrument.id });
+    } catch {
+      return null;
+    }
+    const eligible = datasets.filter(
+      (d) =>
+        !d.contractCode.startsWith(VENDOR_CONTRACT_PREFIX) &&
+        (d.contractCode !== CONTINUOUS_CONTRACT_CODE || d.continuousAdjustment === 'UNADJUSTED')
+    );
+    if (eligible.length === 0) return null;
+    // Series with the most recent bar; dataset lastTimestamp is only a hint, the query is authoritative.
+    eligible.sort((a, b) => b.lastTimestamp.localeCompare(a.lastTimestamp));
+    const seen = new Set<string>();
+    let best: { row: { timestampMs: number; close: number; volume: number | null; openInterest: number | null; datasetId: string }; ds: DatasetRecord } | null = null;
+    for (const d of eligible) {
+      const key = `${d.contractCode}|${d.timeframe}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const { rows } = await this.candleRepository.queryCandles(
+        { instrumentId: d.instrumentId, contractCode: d.contractCode, timeframe: d.timeframe },
+        { limit: 1 }
+      );
+      const row = rows[rows.length - 1];
+      if (row && (!best || row.timestampMs > best.row.timestampMs)) {
+        const owner = datasets.find((x) => x.id === row.datasetId) ?? d;
+        best = { row, ds: owner };
+      }
+    }
+    if (!best) return null;
+    const { row, ds } = best;
+    const barIso = new Date(row.timestampMs).toISOString();
+    return {
+      symbol: instrument.exchangeSymbol,
+      exchange: instrument.exchange,
+      contractMonth: ds.contractCode === CONTINUOUS_CONTRACT_CODE ? null : ds.contractCode,
+      price: row.close,
+      bid: null,
+      ask: null,
+      volume: row.volume,
+      openInterest: row.openInterest,
+      currency: instrument.specification.tradingCurrency,
+      unit: ds.priceUnit || instrument.specification.quotationUnit,
+      source: `${ds.sourceLabel} (${ds.sourceQuality})`,
+      timestamp: barIso,
+      retrievedAt: ds.importedAt,
+      status: 'HISTORICAL',
+      statusReason: `Last close of ${ds.contractCode} ${ds.timeframe} bar dated ${barIso.slice(0, 10)} from the stored dataset (imported ${ds.importedAt}); historical data, not a live quote.`,
     };
   }
 
@@ -357,6 +426,7 @@ export class ProviderRegistry {
       thirdPartyRest:
         this.restFeeds.get('THIRD_PARTY_FEED') ??
         fallbackRest('THIRD_PARTY_FEED', 'Third-party REST', 'MARKET_DATA_PROVIDER_URL', 'MARKET_DATA_PROVIDER_KEY'),
+      persistCandles: this.persistCandles,
     });
   }
 

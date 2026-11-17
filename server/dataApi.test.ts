@@ -161,12 +161,16 @@ test('import → query roundtrip over HTTP with SQLite; dryRun writes nothing; h
       assert.equal(apiHealth.body.capabilities.marketDataOverallStatus, 'HISTORICAL');
       assert.equal(apiHealth.body.capabilities.marketDataLiveProvidersConnected, 0);
 
-      // live quotes stay fail-closed
+      // No live feed: the quote is the stored last close, labelled HISTORICAL with its bar date.
       const quote = await getJson(`${baseUrl}/api/market/quotes/ZC`);
-      assert.equal(quote.body.quote.status, 'UNAVAILABLE');
-      assert.equal(quote.body.quote.price, null);
+      assert.equal(quote.body.quote.status, 'HISTORICAL');
+      assert.equal(quote.body.quote.price, 431.28);
+      assert.equal(quote.body.quote.contractMonth, 'ZCH25');
+      assert.equal(String(quote.body.quote.timestamp).slice(0, 10), '2025-02-17');
+      assert.match(String(quote.body.quote.statusReason), /bar dated 2025-02-17.*not a live quote/);
+      assert.match(String(quote.body.quote.source), /USER_PROVIDED/);
       const quotes = await getJson(`${baseUrl}/api/market/quotes`);
-      assert.equal(quotes.body.overallStatus, 'UNAVAILABLE');
+      assert.equal(quotes.body.overallStatus, 'HISTORICAL', 'stored closes must never be reported as CURRENT');
     });
   } finally {
     cleanup();

@@ -1,6 +1,7 @@
 /**
  * Admin guard for mutating endpoints (POST /api/data/import, DELETE /api/data/datasets/:id,
- * POST /api/cot/sync).
+ * POST /api/cot/sync, POST /api/market/candles/import, DELETE /api/market/candles,
+ * POST /api/providers/sync, POST /api/fundamental/records) - wired in server/app.ts.
  *
  * - ADMIN_API_TOKEN set   → every request must send `Authorization: Bearer <token>` (constant-time
  *                           compare), else 401. Applies to loopback requests too.
@@ -98,7 +99,7 @@ export const requireAdminToken: RequestHandler = createRequireAdminToken();
 export function adminAuthStartupWarning(token?: string | null): string | null {
   const resolved = resolveAdminToken(token);
   if (resolved === null) {
-    return `[security] ${ADMIN_TOKEN_ENV} is not set: mutating endpoints (POST /api/data/import, DELETE /api/data/datasets/:id, POST /api/cot/sync) accept only direct localhost requests. Set ${ADMIN_TOKEN_ENV} to enable token auth.`;
+    return `[security] ${ADMIN_TOKEN_ENV} is not set: mutating endpoints (data import/delete, COT sync, provider sync, legacy candle import/clear, fundamental records) accept only direct localhost requests. Set ${ADMIN_TOKEN_ENV} to enable token auth.`;
   }
   if (resolved.length < 16) {
     return `[security] ${ADMIN_TOKEN_ENV} is shorter than 16 characters; use a long random value.`;

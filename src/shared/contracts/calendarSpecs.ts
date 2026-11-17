@@ -11,6 +11,8 @@
  * `{ kind: 'UNAVAILABLE', reason }` - never guessed.
  */
 
+import type { HolidayCalendarId } from './holidays/types.ts';
+
 export type CalendarVerification = 'VERIFIED' | 'UNVERIFIED';
 
 export type DateAnchor =
@@ -35,7 +37,7 @@ export type EncodedDateRule =
       sourceUrl: string;
       /** How ambiguous wording was read, and what it was cross-checked against. */
       interpretation?: string;
-      /** Business-day calendar the exchange uses (holidays are NOT applied by default). */
+      /** Business-day calendar the exchange uses (descriptive; the applied holidays come from InstrumentCalendarSpec.holidayCalendars). */
       businessDayCalendar: string;
     }
   | { kind: 'UNAVAILABLE'; reason: string; sourceUrl: string | null };
@@ -64,6 +66,8 @@ export interface InstrumentCalendarSpec {
   listing: ListingSchedule;
   lastTradingDay: EncodedDateRule;
   firstNoticeDay: EncodedDateRule;
+  /** Bundled holiday calendars applied by default (src/shared/contracts/holidays). Empty = Mon-Fri only. */
+  holidayCalendars: HolidayCalendarId[];
   /** Mirrors CONTRACT_CALENDAR_RULES[id].verificationStatus. */
   calendarStatus: CalendarVerification;
   /** Approximations that apply to every computed contract of this instrument. */
@@ -98,6 +102,7 @@ function grainSpec(
       businessDayCalendar: CME_BUSINESS,
     },
     firstNoticeDay: { kind: 'UNAVAILABLE', reason: NO_FND_TEXT, sourceUrl: null },
+    holidayCalendars: ['CME_US'],
     calendarStatus: 'VERIFIED',
     notes: [
       'Listing horizon (how many years out CBOT lists this cycle) is not modeled; far contracts may not be listed yet.',
@@ -182,6 +187,7 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
       sourceUrl: 'https://www.ice.com/products/15/Coffee-C-Futures',
       businessDayCalendar: ICE_US_BUSINESS,
     },
+    holidayCalendars: ['ICE_US'],
     calendarStatus: 'VERIFIED',
     notes: ['Listing horizon not modeled; far contracts may not be listed yet.'],
   },
@@ -206,8 +212,11 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
       sourceUrl: 'https://www.ice.com/products/37089079/Robusta-Coffee-Futures',
       businessDayCalendar: ICE_EU_BUSINESS,
     },
+    holidayCalendars: ['ICE_EU_SOFTS_LONDON'],
     calendarStatus: 'VERIFIED',
-    notes: ['Business days are London business days (UK bank holidays not applied).'],
+    notes: [
+      'Business days = London business days: published England & Wales bank holidays are applied (assumes ICE Europe softs close on every UK bank holiday).',
+    ],
   },
 
   'ICE:SB': {
@@ -232,6 +241,7 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
         'LTD is the last business day of the prior month, so the first business day after it is the first business day of the delivery month. FND falls AFTER LTD for this contract.',
       businessDayCalendar: ICE_US_BUSINESS,
     },
+    holidayCalendars: ['ICE_US'],
     calendarStatus: 'VERIFIED',
     notes: ['Listing horizon not modeled; far contracts may not be listed yet.'],
   },
@@ -258,6 +268,7 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
       sourceUrl: 'https://www.ice.com/products/7/Cocoa-Futures',
       businessDayCalendar: ICE_US_BUSINESS,
     },
+    holidayCalendars: ['ICE_US'],
     calendarStatus: 'VERIFIED',
     notes: ['Listing horizon not modeled; far contracts may not be listed yet.'],
   },
@@ -273,7 +284,7 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
       ruleText: 'Seventeen business days from end of spot month.',
       sourceUrl: 'https://www.ice.com/products/254/Cotton-No-2-Futures',
       interpretation:
-        'Read as the 17th business day counting back from the end of the month with the last business day counted as day 1 (= 16 business days before the last business day). Cross-check: CTZ24 expired 2024-12-06 (barchart.com/futures/quotes/CTZ24, third-party), which this reading reproduces once Christmas (2024-12-25) is treated as a holiday; the alternative reading (17 before) would give 2024-12-05. Without holidays the Mon-Fri computation gives 2024-12-09.',
+        'Read as the 17th business day counting back from the end of the month with the last business day counted as day 1 (= 16 business days before the last business day). Cross-check: CTZ24 expired 2024-12-06 (barchart.com/futures/quotes/CTZ24, third-party), which this reading reproduces with the bundled ICE_US calendar (Christmas 2024-12-25 is a holiday); the alternative reading (17 before) would give 2024-12-05. Mon-Fri only (no holidays) gives 2024-12-09.',
       businessDayCalendar: ICE_US_BUSINESS,
     },
     firstNoticeDay: {
@@ -285,6 +296,7 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
       sourceUrl: 'https://www.ice.com/products/254/Cotton-No-2-Futures',
       businessDayCalendar: ICE_US_BUSINESS,
     },
+    holidayCalendars: ['ICE_US'],
     calendarStatus: 'VERIFIED',
     notes: ['Listing horizon not modeled; far contracts may not be listed yet.'],
   },
@@ -303,6 +315,7 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
       'https://www.cmegroup.com/education/articles-and-reports/hedging-with-comex-copper-futures'
     ),
     firstNoticeDay: { kind: 'UNAVAILABLE', reason: NO_FND_TEXT, sourceUrl: null },
+    holidayCalendars: ['CME_US'],
     calendarStatus: 'UNVERIFIED',
     notes: [
       'Number of consecutive months is UNVERIFIED (CME article: 24, MXV: 37); 24 is used.',
@@ -325,6 +338,7 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
       'https://www.cmegroup.com/trading/metals/files/fact-card-gold-futures-options.pdf'
     ),
     firstNoticeDay: { kind: 'UNAVAILABLE', reason: NO_FND_TEXT, sourceUrl: null },
+    holidayCalendars: ['CME_US'],
     calendarStatus: 'VERIFIED',
     notes: ['"Within N months" listing horizons are approximate (counted as month offset <= N from the current month).'],
   },
@@ -344,6 +358,7 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
       'https://www.cmegroup.com/content/dam/cmegroup/rulebook/COMEX/1a/112.pdf'
     ),
     firstNoticeDay: { kind: 'UNAVAILABLE', reason: NO_FND_TEXT, sourceUrl: null },
+    holidayCalendars: ['CME_US'],
     calendarStatus: 'VERIFIED',
     notes: ['"Within N months" listing horizons are approximate (counted as month offset <= N from the current month).'],
   },
@@ -361,6 +376,7 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
       'https://www.cmegroup.com/trading/metals/files/metals-prod-guide-2023.pdf'
     ),
     firstNoticeDay: { kind: 'UNAVAILABLE', reason: NO_FND_TEXT, sourceUrl: null },
+    holidayCalendars: ['CME_US'],
     calendarStatus: 'VERIFIED',
     notes: ['"Within N months" listing horizons are approximate (counted as month offset <= N from the current month).'],
   },
@@ -375,14 +391,15 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
       ruleText:
         'Last business day of the contract month; if a Singapore public holiday, the preceding business day.',
       sourceUrl: 'https://www.cmegroup.com/trading/metals/files/iron-ore-future-and-options.pdf',
-      businessDayCalendar: 'CME business days AND Singapore public holidays (neither applied)',
-      interpretation: 'Pass both US exchange holidays and Singapore public holidays in `holidays` to apply the adjustment.',
+      businessDayCalendar: 'CME business days AND Singapore public holidays',
+      interpretation: 'Applied as the union of the bundled CME_US (projected) and SG_PUBLIC (published) calendars.',
     },
     firstNoticeDay: {
       kind: 'UNAVAILABLE',
       reason: 'Cash-settled contract: there is no delivery notice period.',
       sourceUrl: 'https://www.cmegroup.com/trading/metals/files/iron-ore-futures-faq.pdf',
     },
+    holidayCalendars: ['CME_US', 'SG_PUBLIC'],
     calendarStatus: 'UNVERIFIED',
     notes: ['Listing horizon not verified.'],
   },
@@ -409,6 +426,7 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
         'No first-notice-day rule text in the verified source. (Delivery for CL is scheduled after trading terminates; not computed.)',
       sourceUrl: null,
     },
+    holidayCalendars: ['CME_US'],
     calendarStatus: 'UNVERIFIED',
     notes: ['Listing horizon UNVERIFIED (5 vs 10 years per different sources); not modeled. LTD rule text itself is from the CME contract-spec page.'],
   },
@@ -433,8 +451,11 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
       reason: 'EFP delivery with cash-settlement option against the ICE Brent Index; no notice day in the source.',
       sourceUrl: 'https://www.ice.com/products/219/Brent-Crude-Futures',
     },
+    holidayCalendars: [],
     calendarStatus: 'VERIFIED',
-    notes: ['Business days are London business days (UK bank holidays not applied).'],
+    notes: [
+      'ICE Futures Europe ENERGY holiday schedule is not bundled (Brent trades on several UK bank holidays, so UK bank holidays are NOT applied): business days are Mon-Fri only - confirm on the ICE expiry calendar.',
+    ],
   },
   'NYMEX:NG': {
     instrumentId: 'NYMEX:NG',
@@ -450,6 +471,7 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
       businessDayCalendar: CME_BUSINESS,
     },
     firstNoticeDay: { kind: 'UNAVAILABLE', reason: NO_FND_TEXT, sourceUrl: null },
+    holidayCalendars: ['CME_US'],
     calendarStatus: 'UNVERIFIED',
     notes: ['Listing horizon not verified; LTD rule from a 2017 SER.'],
   },

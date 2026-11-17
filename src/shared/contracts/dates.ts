@@ -5,9 +5,8 @@
  * "business day" is a calendar date in the exchange's own zone, so all arithmetic is done on
  * UTC-midnight day numbers purely as a calendar device.
  *
- * Business days: Monday-Friday, minus an optional caller-supplied holiday list. No exchange holiday
- * calendar is bundled (none could be sourced and kept current here), so callers must treat any
- * computed date as approximate unless they pass the official holiday list themselves.
+ * Business days: Monday-Friday, minus a holiday list. Exchange holiday lists live in ./holidays
+ * (bundled, each date marked PUBLISHED or PROJECTED with its source) and are applied by expiry.ts.
  */
 
 const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;

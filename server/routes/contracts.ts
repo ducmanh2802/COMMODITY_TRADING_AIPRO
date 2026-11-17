@@ -102,7 +102,12 @@ export function createContractsRouter(options: ContractRoutesOptions = {}): expr
         status: 'OK',
         calendarStatus: chain.calendarStatus,
         listedMonths: chain.listedMonthsText,
-        holidayAdjusted: false,
+        // True only when every computed date had a holiday calendar applied.
+        holidayAdjusted:
+          chain.contracts.length > 0 &&
+          chain.contracts.every((c) =>
+            [c.lastTradingDay, c.firstNoticeDay].every((r) => r.status !== 'COMPUTED' || r.holidayAdjusted)
+          ),
         contracts: chain.contracts,
         notes: chain.notes,
         warnings: chain.warnings,
