@@ -1,8 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { InstrumentDefinition, Timeframe, TradingStyle } from '../shared/types/instrument';
 import type { DataQualityStatus, MarketQuote, MarketScope, ProviderHealth } from '../shared/types/market';
+import type { FullDataHealthReport } from '../shared/types/dataHealth';
 import type { AppModuleId, PhaseModuleDescriptor } from '../shared/types/risk';
 import type { RoadmapPhase } from '../shared/architecture';
+import { safeReadJson } from '../shared/utils/http';
 
 export interface BackendHealthPayload {
   status: string;
@@ -75,6 +77,7 @@ interface TerminalContextValue {
   instruments: InstrumentDefinition[];
   quotesBySymbol: Record<string, MarketQuote>;
   datasets: CandleDatasetSummary[];
+  dataHealthReport: FullDataHealthReport | null;
   modules: PhaseModuleDescriptor[];
   roadmap: RoadmapPhase[];
   loading: boolean;
@@ -82,7 +85,12 @@ interface TerminalContextValue {
   lastSyncSummary: SyncResultSummary | null;
   loadError: string | null;
   refreshBackendData: () => Promise<void>;
-  syncProviderFeeds: (options?: { symbol?: string; timeframe?: Timeframe }) => Promise<SyncResultSummary | null>;
+  syncProviderFeeds: (options?: {
+    symbol?: string;
+    timeframe?: Timeframe;
+    historicalRange?: '1y' | '2y' | '5y' | '10y';
+    includePublicMacro?: boolean;
+  }) => Promise<SyncResultSummary | null>;
   openInstrumentIn: (symbol: string, module: AppModuleId) => void;
 }
 
@@ -102,6 +110,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [instruments, setInstruments] = useState<InstrumentDefinition[]>([]);
   const [quotesBySymbol, setQuotesBySymbol] = useState<Record<string, MarketQuote>>({});
   const [datasets, setDatasets] = useState<CandleDatasetSummary[]>([]);
+  const [dataHealthReport, setDataHealthReport] = useState<FullDataHealthReport | null>(null);
   const [modules, setModules] = useState<PhaseModuleDescriptor[]>([]);
   const [roadmap, setRoadmap] = useState<RoadmapPhase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,36 +131,43 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
         '/api/market/quotes',
         '/api/architecture',
         '/api/market/datasets',
+        '/api/data/health-report',
       ] as const;
       const failures: string[] = [];
       const results = await Promise.all(
         endpoints.map(async (path) => {
           try {
             const res = await fetch(path);
-            if (!res.ok) {
-              failures.push(`${path} → HTTP ${res.status}`);
-              return null;
-            }
-            return await res.json();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return await safeReadJson<any>(res);
           } catch (err) {
             failures.push(`${path} → ${err instanceof Error ? err.message : 'network error'}`);
             return null;
           }
         })
       );
-      const [healthJson, provJson, instJson, quotesJson, archJson, dsJson] = results;
+      const [healthJson, provJson, instJson, quotesJson, archJson, dsJson, reportJson] = results as [
+        BackendHealthPayload | null,
+        { providers?: ProviderHealth[] } | null,
+        { instruments?: InstrumentDefinition[] } | null,
+        { quotes?: MarketQuote[] } | null,
+        { modules?: PhaseModuleDescriptor[]; roadmap?: RoadmapPhase[] } | null,
+        { datasets?: CandleDatasetSummary[] } | null,
+        FullDataHealthReport | null,
+      ];
 
       if (healthJson) setHealth(healthJson);
       if (provJson) setProviders(provJson.providers ?? []);
       if (instJson) setInstruments(instJson.instruments ?? []);
       if (quotesJson) {
         const quoteMap: Record<string, MarketQuote> = {};
-        for (const q of (quotesJson.quotes ?? []) as MarketQuote[]) {
+        for (const q of quotesJson.quotes ?? []) {
           quoteMap[q.symbol] = q;
         }
         setQuotesBySymbol(quoteMap);
       }
       if (dsJson) setDatasets(dsJson.datasets ?? []);
+      if (reportJson && Array.isArray(reportJson.commodities)) setDataHealthReport(reportJson);
       if (archJson) {
         setModules(archJson.modules ?? []);
         setRoadmap(archJson.roadmap ?? []);
@@ -168,7 +184,12 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const syncProviderFeeds = useCallback(
-    async (options?: { symbol?: string; timeframe?: Timeframe }): Promise<SyncResultSummary | null> => {
+    async (options?: {
+      symbol?: string;
+      timeframe?: Timeframe;
+      historicalRange?: '1y' | '2y' | '5y' | '10y';
+      includePublicMacro?: boolean;
+    }): Promise<SyncResultSummary | null> => {
       setSyncing(true);
       setLoadError(null);
       try {
@@ -178,15 +199,14 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
           body: JSON.stringify({
             symbol: options?.symbol,
             timeframe: options?.timeframe ?? timeframe,
+            historicalRange: options?.historicalRange,
+            includePublicMacro: options?.includePublicMacro ?? true,
           }),
         });
-        const json = await res.json();
-        if (!res.ok) {
-          throw new Error(json.message ?? 'Provider synchronization failed.');
-        }
-        setLastSyncSummary(json as SyncResultSummary);
+        const json = await safeReadJson<SyncResultSummary>(res);
+        setLastSyncSummary(json);
         await refreshBackendData();
-        return json as SyncResultSummary;
+        return json;
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : 'Provider synchronization error.');
         return null;
@@ -226,6 +246,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
         instruments,
         quotesBySymbol,
         datasets,
+        dataHealthReport,
         modules,
         roadmap,
         loading,

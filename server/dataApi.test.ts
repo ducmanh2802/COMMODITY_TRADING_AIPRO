@@ -323,9 +323,9 @@ test('DELETE /api/data/datasets/:id removes candles and provider health returns 
 test('body limit: import route accepts > 256kb, other routes do not, import rejects > 10mb with 413', async () => {
   await withServer(new InMemoryCandleRepository(), async (baseUrl) => {
     const padding = 'x'.repeat(12_000);
-    const bigCsv = FIXTURE_CSV.split('\r\n')
+    const bigCsv = FIXTURE_CSV.split(/\r?\n/)
       .map((line, i) => (line === '' ? line : i === 0 ? line : i === 1 ? `${line},Note` : `${line},${padding}`))
-      .join('\r\n');
+      .join('\n');
     assert.ok(bigCsv.length > 300_000);
     const big = await postImport(baseUrl, { ...baseImport, csv: bigCsv, dryRun: true });
     assert.equal(big.status, 200, JSON.stringify(big.body).slice(0, 300));

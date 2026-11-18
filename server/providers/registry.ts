@@ -17,11 +17,12 @@ import {
   ConfigurableRestFeedAdapter,
   EiaEnergyAdapter,
   FmpCommoditiesAdapter,
+  FredMacroAdapter,
   syncConfiguredProviders,
   TwelveDataAdapter,
   UsdaQuickStatsAdapter,
 } from './externalAdapters.ts';
-import { isYahooEnabled, YahooFinanceAdapter, type YahooAdapterOptions } from './yahooAdapter.ts';
+import { isYahooEnabled, YahooFinanceAdapter, type YahooAdapterOptions, type YahooHistoryRange } from './yahooAdapter.ts';
 
 function hasEnv(name: string): boolean {
   const val = process.env[name];
@@ -134,6 +135,7 @@ export class ProviderRegistry {
   private readonly alphaVantage: AlphaVantageAdapter;
   private readonly eia: EiaEnergyAdapter;
   private readonly usda: UsdaQuickStatsAdapter;
+  private readonly fred: FredMacroAdapter;
   private readonly yahoo: YahooFinanceAdapter;
   private readonly restFeeds = new Map<ProviderId, ConfigurableRestFeedAdapter>();
   private readonly providers: MarketDataProvider[];
@@ -156,6 +158,7 @@ export class ProviderRegistry {
     this.alphaVantage = new AlphaVantageAdapter();
     this.eia = new EiaEnergyAdapter();
     this.usda = new UsdaQuickStatsAdapter();
+    this.fred = new FredMacroAdapter();
     this.yahoo = new YahooFinanceAdapter(options.yahoo);
 
     this.providers = [];
@@ -196,7 +199,7 @@ export class ProviderRegistry {
     }
 
     if (options.externalAdapters !== false) {
-      for (const adapter of [this.twelveData, this.fmp, this.commoditiesApi, this.alphaVantage, this.eia, this.usda, this.yahoo]) {
+      for (const adapter of [this.twelveData, this.fmp, this.commoditiesApi, this.alphaVantage, this.eia, this.usda, this.fred, this.yahoo]) {
         register(adapter);
       }
     }
@@ -431,7 +434,12 @@ export class ProviderRegistry {
     };
   }
 
-  async syncAll(options?: { symbol?: string; timeframe?: Timeframe }) {
+  async syncAll(options?: {
+    symbol?: string;
+    timeframe?: Timeframe;
+    historicalRange?: YahooHistoryRange;
+    includePublicMacro?: boolean;
+  }) {
     this.liveQuoteCache.clear();
     const fallbackRest = (id: ProviderId, name: string, urlEnv: string, keyEnv: string) =>
       new ConfigurableRestFeedAdapter({
@@ -445,11 +453,14 @@ export class ProviderRegistry {
     return syncConfiguredProviders({
       symbol: options?.symbol,
       timeframe: options?.timeframe,
+      historicalRange: options?.historicalRange,
+      includePublicMacro: options?.includePublicMacro,
       twelveData: this.twelveData,
       fmp: this.fmp,
       alphaVantage: this.alphaVantage,
       eia: this.eia,
       usda: this.usda,
+      fred: this.fred,
       mxvRest:
         this.restFeeds.get('MXV_OFFICIAL') ?? fallbackRest('MXV_OFFICIAL', 'MXV REST', 'MXV_API_URL', 'MXV_API_KEY'),
       thirdPartyRest:

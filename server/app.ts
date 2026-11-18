@@ -8,6 +8,8 @@ import { ProviderRegistry } from './providers/registry.ts';
 import { registerDataRoutes } from './routes/dataRoutes.ts';
 import { registerContractRoutes } from './routes/contracts.ts';
 import { registerCotRoutes } from './routes/cot.ts';
+import { registerCycleRoutes } from './routes/cycleRoutes.ts';
+import { CotService } from './cot/service.ts';
 import type { ICandleRepository } from './storage/candleRepository.ts';
 import { getDefaultCandleRepository } from './storage/sqliteCandleRepository.ts';
 import type { ProviderHealth } from '../src/shared/types/market.ts';
@@ -31,8 +33,12 @@ import { analyzeTechnicalSnapshot, calculateEMA } from './engines/technicalEngin
 import { generateCommodityAiAnalysis } from './services/aiAnalyst.ts';
 import { historicalCandleStore } from './services/candleStore.ts';
 import { parseAndValidateCsvCandles } from './services/csvImporter.ts';
-import { fundamentalStore } from './services/fundamentalService.ts';
+import {
+  buildFundamentalDomainsStatus,
+  fundamentalStore,
+} from './services/fundamentalService.ts';
 import { loadEngineCandles, type EngineCandleResult } from './services/engineCandles.ts';
+import { buildFullDataHealthReport } from './services/dataHealthService.ts';
 
 const TimeframeEnum = z.enum(['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1']);
 const CategoryEnum = z.enum(['AGRICULTURE', 'SOFT_COMMODITIES', 'METALS', 'ENERGY']);
@@ -104,6 +110,8 @@ const CsvImportSchema = z.object({
 const SyncRequestSchema = z.object({
   symbol: z.string().min(1).max(24).optional(),
   timeframe: TimeframeEnum.optional(),
+  historicalRange: z.enum(['1y', '2y', '5y', '10y', 'max']).optional(),
+  includePublicMacro: z.boolean().optional(),
 });
 
 const ScannerRequestSchema = z.object({
@@ -170,12 +178,26 @@ const AiAnalyzeRequestSchema = z.object({
     .optional(),
 });
 
+const FundamentalCategoryEnum = z.enum([
+  'USDA_WASDE',
+  'USDA_CROP',
+  'EIA_INVENTORIES',
+  'CFTC_COT',
+  'ICE_STOCKS',
+  'GLOBAL_SD',
+  'SEASONAL',
+  'WEATHER_RISK',
+  'MACRO',
+]);
+
 const FundamentalRecordSchema = z.object({
   kind: z.enum(['MACRO', 'NEWS']).default('MACRO'),
   dataset: z.string().min(1).max(80),
   source: z.string().min(1).max(120),
   publicationTimestamp: z.string().min(1).max(64),
+  observationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   dataPeriod: z.string().min(1).max(40).default('CURRENT'),
+  category: FundamentalCategoryEnum.optional(),
   actualValue: z.union([z.number(), z.string()]).nullable().default(null),
   previousValue: z.union([z.number(), z.string()]).nullable().default(null),
   forecastValue: z.union([z.number(), z.string()]).nullable().default(null),
@@ -520,6 +542,41 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   });
   registerContractRoutes(app, { instruments: instrumentRepository });
   registerCotRoutes(app);
+  let lazyCotService: CotService | null | undefined;
+  const cotBridge = options.candles
+    ? null
+    : {
+        query: (instrumentId: string, q: Parameters<CotService['query']>[1]) => {
+          const svc = (lazyCotService ??= new CotService());
+          return svc.query(instrumentId, q);
+        },
+        health: () => {
+          const svc = (lazyCotService ??= new CotService());
+          return svc.health();
+        },
+      };
+
+  registerCycleRoutes(app, {
+    instruments: instrumentRepository,
+    providers: providerRegistry,
+    candles: candleRepository,
+    cotService: cotBridge,
+    aiRateLimiter,
+  });
+
+  app.get('/api/data/health-report', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const report = await buildFullDataHealthReport({
+        instruments: instrumentRepository,
+        providers: providerRegistry,
+        candles: candleRepository,
+        cotService: cotBridge,
+      });
+      res.json(report);
+    } catch (err) {
+      next(err);
+    }
+  });
 
 
   // Phase 2 (owner, legacy): in-memory CSV datasets & OHLCV candles.
@@ -902,13 +959,34 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   });
 
   // Phase 10: Sourced Fundamental, Macro & Economic Calendar
-  app.get('/api/fundamental/records', (_req: Request, res: Response) => {
-    const records = fundamentalStore.listRecords();
-    const news = fundamentalStore.listNews();
+  app.get('/api/fundamental/records', (req: Request, res: Response) => {
+    const asOfRaw = typeof req.query.asOf === 'string' && req.query.asOf.trim() ? req.query.asOf.trim() : undefined;
+    if (asOfRaw && !Number.isFinite(Date.parse(asOfRaw))) {
+      res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Invalid asOf timestamp parameter.' });
+      return;
+    }
+    const catParsed = req.query.category
+      ? FundamentalCategoryEnum.safeParse(req.query.category)
+      : null;
+    if (catParsed && !catParsed.success) {
+      res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Invalid category parameter.' });
+      return;
+    }
+    const symbolRaw = typeof req.query.symbol === 'string' && req.query.symbol.trim() ? req.query.symbol.trim() : undefined;
+
+    const records = fundamentalStore.listRecords({
+      asOf: asOfRaw,
+      category: catParsed?.success ? catParsed.data : undefined,
+      symbol: symbolRaw,
+    });
+    const news = fundamentalStore.listNews({ asOf: asOfRaw });
+    const domains = buildFundamentalDomainsStatus({ records });
     res.json({
       status: records.length > 0 || news.length > 0 ? 'HISTORICAL' : 'UNAVAILABLE',
+      asOf: asOfRaw ?? null,
       records,
       news,
+      domains,
     });
   });
 
@@ -942,7 +1020,10 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
         dataset: parsed.data.dataset,
         source: parsed.data.source,
         publicationTimestamp: parsed.data.publicationTimestamp,
+        observationDate: parsed.data.observationDate,
         dataPeriod: parsed.data.dataPeriod,
+        category: parsed.data.category,
+        relatedSymbols: parsed.data.relatedSymbols,
         actualValue: parsed.data.actualValue,
         previousValue: parsed.data.previousValue,
         forecastValue: parsed.data.forecastValue,

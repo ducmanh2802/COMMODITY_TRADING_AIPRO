@@ -19,6 +19,7 @@ export type ProviderId =
   | 'ALPHA_VANTAGE'
   | 'EIA_ENERGY'
   | 'USDA_QUICKSTATS'
+  | 'FRED_MACRO'
   | 'THIRD_PARTY_FEED'
   | 'CSV_HISTORICAL'
   | 'YAHOO_UNOFFICIAL';

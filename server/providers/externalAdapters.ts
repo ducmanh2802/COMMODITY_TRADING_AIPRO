@@ -18,7 +18,7 @@ import {
 import { historicalCandleStore } from '../services/candleStore.ts';
 import { fundamentalStore, sanitizeExternalText } from '../services/fundamentalService.ts';
 import { instrumentRepository } from '../services/instrumentRegistry.ts';
-import { isYahooEnabled, type YahooFinanceAdapter } from './yahooAdapter.ts';
+import { isYahooEnabled, type YahooFinanceAdapter, type YahooHistoryRange } from './yahooAdapter.ts';
 
 export type FetchLike = typeof fetch;
 
@@ -1201,7 +1201,10 @@ export class EiaEnergyAdapter implements MarketDataProvider {
             dataset: `EIA_US_CRUDE_STOCKS (${rows[0].period})`,
             source: 'U.S. EIA Open Data v2 (WCRSTUS1)',
             publicationTimestamp: ts,
+            observationDate: String(rows[0].period ?? ts.slice(0, 10)),
             dataPeriod: String(rows[0].period ?? 'WEEKLY'),
+            category: 'EIA_INVENTORIES',
+            relatedSymbols: ['CL', 'BRN'],
             actualValue: curr,
             previousValue: prev,
             forecastValue: null,
@@ -1231,7 +1234,10 @@ export class EiaEnergyAdapter implements MarketDataProvider {
             dataset: `EIA_US_NATURAL_GAS_STORAGE (${ngRows[0].period})`,
             source: 'U.S. EIA Open Data v2 (Working Gas)',
             publicationTimestamp: ts,
+            observationDate: String(ngRows[0].period ?? ts.slice(0, 10)),
             dataPeriod: String(ngRows[0].period ?? 'WEEKLY'),
+            category: 'EIA_INVENTORIES',
+            relatedSymbols: ['NG'],
             actualValue: curr,
             previousValue: prev,
             forecastValue: null,
@@ -1378,7 +1384,19 @@ export class UsdaQuickStatsAdapter implements MarketDataProvider {
         dataset: `USDA_${commodity}_PRODUCTION (${latest.year})`,
         source: 'USDA NASS QuickStats',
         publicationTimestamp: `${latest.year}-11-01T17:00:00.000Z`,
+        observationDate: `${latest.year}-01-01`,
         dataPeriod: String(latest.year),
+        category: 'USDA_CROP',
+        relatedSymbols:
+          commodity === 'SOYBEANS'
+            ? ['ZS', 'ZM', 'ZL']
+            : commodity === 'CORN'
+              ? ['ZC']
+              : commodity === 'WHEAT'
+                ? ['ZW']
+                : commodity === 'COTTON'
+                  ? ['CT']
+                  : ['ZR'],
         actualValue: latest.val,
         previousValue: prev?.val ?? null,
         forecastValue: null,
@@ -1662,17 +1680,255 @@ export class ConfigurableRestFeedAdapter implements MarketDataProvider {
 }
 
 /**
+ * 9. Federal Reserve Economic Data (FRED) Macro Cycle Adapter (FRED_API_KEY)
+ * Supplies Broad USD Index (DTWEXBGS), Fed Funds Rate (FEDFUNDS), 10Y Treasury Yield (DGS10), and CPI (CPIAUCSL).
+ */
+export class FredMacroAdapter implements MarketDataProvider {
+  public readonly providerId: ProviderId = 'FRED_MACRO';
+  public readonly providerName = 'Federal Reserve Economic Data (FRED Macro)';
+  private readonly fetchFn: FetchLike;
+  private lastSyncAt: string | null = null;
+  private lastError: string | null = null;
+
+  constructor(fetchFn: FetchLike = globalThis.fetch) {
+    this.fetchFn = fetchFn;
+  }
+
+  private getApiKey(): string {
+    return getEnvTrimmed('FRED_API_KEY');
+  }
+
+  async getInstruments(): Promise<string[]> {
+    return [];
+  }
+
+  async getQuote(symbol: string): Promise<MarketQuote> {
+    return createUnavailableQuote({
+      symbol,
+      exchange: 'MACRO',
+      contractMonth: null,
+      currency: 'USD',
+      unit: 'INDEX',
+      source: this.providerId,
+      reason: 'FRED_MACRO provides macro cycle series rather than tradable futures quotes.',
+    });
+  }
+
+  async getCandles(): Promise<{ candles: MarketCandle[]; status: DataQualityStatus; reason?: string }> {
+    return { candles: [], status: 'UNAVAILABLE', reason: 'FRED_MACRO provides macro economic series only.' };
+  }
+
+  async getVolume(): Promise<{ volume: number | null; timestamp: string | null; status: DataQualityStatus }> {
+    return { volume: null, timestamp: null, status: 'UNAVAILABLE' };
+  }
+
+  async getOpenInterest(): Promise<{ openInterest: number | null; timestamp: string | null; status: DataQualityStatus }> {
+    return { openInterest: null, timestamp: null, status: 'UNAVAILABLE' };
+  }
+
+  async getContractSpecification(): Promise<Record<string, unknown> | null> {
+    return null;
+  }
+
+  async syncMacroSeries(): Promise<{ synced: number; error?: string }> {
+    const apiKey = this.getApiKey();
+    if (!apiKey) return { synced: 0, error: 'FRED_API_KEY not configured.' };
+
+    const seriesDefs = [
+      { id: 'DTWEXBGS', dataset: 'FRED_DXY_BROAD_USD', unit: 'INDEX_2006=100' },
+      { id: 'FEDFUNDS', dataset: 'FRED_FED_FUNDS_RATE', unit: 'PCT' },
+      { id: 'DGS10', dataset: 'FRED_US_10Y_YIELD', unit: 'PCT' },
+      { id: 'CPIAUCSL', dataset: 'FRED_US_CPI_INDEX', unit: 'INDEX_1982=100' },
+    ];
+
+    let synced = 0;
+    let lastErr: string | undefined;
+
+    for (const def of seriesDefs) {
+      try {
+        const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${def.id}&api_key=${encodeURIComponent(
+          apiKey
+        )}&file_type=json&sort_order=desc&limit=5`;
+        const res = await this.fetchFn(url, { signal: AbortSignal.timeout(10_000) });
+        const payload = (await res.json()) as {
+          observations?: Array<{ date?: string; value?: string }>;
+          error_message?: string;
+        };
+        if (!res.ok || !Array.isArray(payload.observations)) {
+          lastErr = sanitizeExternalText(payload.error_message ?? `HTTP ${res.status}`);
+          continue;
+        }
+        const validObs = payload.observations
+          .map((o) => ({ date: o.date, val: Number(o.value) }))
+          .filter((o) => Boolean(o.date) && Number.isFinite(o.val));
+        if (validObs.length === 0) continue;
+
+        const latest = validObs[0];
+        const prev = validObs[1];
+        const impact =
+          def.id === 'DTWEXBGS' || def.id === 'FEDFUNDS' || def.id === 'DGS10'
+            ? prev && latest.val < prev.val
+              ? 'BULLISH'
+              : prev && latest.val > prev.val
+                ? 'BEARISH'
+                : 'SIDEWAYS'
+            : 'SIDEWAYS';
+
+        fundamentalStore.addRecord({
+          dataset: def.dataset,
+          source: `FRED (${def.id})`,
+          publicationTimestamp: new Date(`${latest.date}T12:00:00Z`).toISOString(),
+          observationDate: latest.date ?? 'LATEST',
+          dataPeriod: latest.date ?? 'LATEST',
+          category: 'MACRO',
+          actualValue: latest.val,
+          previousValue: prev ? prev.val : null,
+          forecastValue: null,
+          unit: def.unit,
+          revisionStatus: 'FINAL',
+          impactAssessment: impact,
+        });
+        synced += 1;
+      } catch (err) {
+        lastErr = sanitizeExternalText(err instanceof Error ? err.message : 'FRED request failed');
+      }
+    }
+
+    if (synced > 0) {
+      this.lastSyncAt = new Date().toISOString();
+      this.lastError = null;
+    } else if (lastErr) {
+      this.lastError = lastErr;
+    }
+
+    return { synced, error: lastErr };
+  }
+
+  /**
+   * Public no-key fallback verified live against fred.stlouisfed.org/graph/fredgraph.csv?id=...
+   * Parses official Federal Reserve CSV directly, validates header + numeric rows, fails closed on error.
+   */
+  async syncPublicCsvMacroSeries(): Promise<{ synced: number; error?: string }> {
+    const seriesDefs = [
+      { id: 'DTWEXBGS', dataset: 'FRED_DXY_BROAD_USD', unit: 'INDEX_2006=100' },
+      { id: 'FEDFUNDS', dataset: 'FRED_FED_FUNDS_RATE', unit: 'PCT' },
+      { id: 'DGS10', dataset: 'FRED_US_10Y_YIELD', unit: 'PCT' },
+      { id: 'CPIAUCSL', dataset: 'FRED_US_CPI_INDEX', unit: 'INDEX_1982=100' },
+    ];
+
+    let synced = 0;
+    let lastErr: string | undefined;
+
+    for (const def of seriesDefs) {
+      try {
+        const url = `https://fred.stlouisfed.org/graph/fredgraph.csv?id=${encodeURIComponent(def.id)}`;
+        const res = await this.fetchFn(url, { signal: AbortSignal.timeout(12_000) });
+        if (!res.ok) {
+          lastErr = `HTTP ${res.status} for FRED public CSV ${def.id}`;
+          continue;
+        }
+        const text = await res.text();
+        const lines = text.trim().split(/\r?\n/);
+        if (lines.length < 2 || (!lines[0].toUpperCase().includes('DATE') && !lines[0].toUpperCase().includes('OBSERVATION_DATE'))) {
+          lastErr = `Unexpected FRED CSV header for ${def.id}`;
+          continue;
+        }
+        const validObs: Array<{ date: string; val: number }> = [];
+        for (let i = 1; i < lines.length; i++) {
+          const [rawDate, rawVal] = lines[i].split(',');
+          const d = rawDate?.trim();
+          if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) continue;
+          if (!rawVal || rawVal.trim() === '.' || rawVal.trim() === '') continue;
+          const v = Number(rawVal.trim());
+          if (Number.isFinite(v)) validObs.push({ date: d, val: v });
+        }
+        if (validObs.length === 0) {
+          lastErr = `No valid numeric rows in FRED public CSV for ${def.id}`;
+          continue;
+        }
+        const latest = validObs[validObs.length - 1];
+        const prev = validObs.length >= 2 ? validObs[validObs.length - 2] : null;
+        const impact =
+          def.id === 'DTWEXBGS' || def.id === 'FEDFUNDS' || def.id === 'DGS10'
+            ? prev && latest.val < prev.val
+              ? 'BULLISH'
+              : prev && latest.val > prev.val
+                ? 'BEARISH'
+                : 'SIDEWAYS'
+            : 'SIDEWAYS';
+
+        fundamentalStore.addRecord({
+          dataset: def.dataset,
+          source: `FRED Public CSV (${def.id})`,
+          publicationTimestamp: new Date(`${latest.date}T12:00:00Z`).toISOString(),
+          observationDate: latest.date,
+          dataPeriod: latest.date,
+          category: 'MACRO',
+          actualValue: latest.val,
+          previousValue: prev ? prev.val : null,
+          forecastValue: null,
+          unit: def.unit,
+          revisionStatus: 'FINAL',
+          impactAssessment: impact,
+        });
+        synced += 1;
+      } catch (err) {
+        lastErr = sanitizeExternalText(err instanceof Error ? err.message : 'FRED public CSV failed');
+      }
+    }
+
+    if (synced > 0) {
+      this.lastSyncAt = new Date().toISOString();
+      this.lastError = null;
+    } else if (lastErr) {
+      this.lastError = lastErr;
+    }
+    return { synced, error: lastErr };
+  }
+
+  async getProviderStatus(): Promise<ProviderHealth> {
+    const configured = Boolean(this.getApiKey()) || Boolean(this.lastSyncAt);
+    const hasKey = Boolean(this.getApiKey());
+    return {
+      providerId: this.providerId,
+      name: this.providerName,
+      exchanges: ['MACRO'],
+      connectionState: !configured ? 'UNCONFIGURED' : this.lastError ? 'DEGRADED' : 'CONNECTED',
+      dataStatus: configured && !this.lastError ? 'HISTORICAL' : 'UNAVAILABLE',
+      credentialsConfigured: hasKey,
+      supportsRealtime: false,
+      supportsHistorical: true,
+      lastCheckedAt: new Date().toISOString(),
+      lastSuccessfulSyncAt: this.lastSyncAt,
+      requiredEnvVars: ['FRED_API_KEY (tùy chọn — có Public CSV miễn phí không cần key)'],
+      supportedScopes: ['DXY Broad USD', 'Fed Funds Rate', 'US 10Y Yield', 'US CPI Inflation'],
+      lastError: this.lastError,
+      message: hasKey
+        ? this.lastError
+          ? `Last sync issue: ${this.lastError}`
+          : 'FRED_API_KEY configured on server.'
+        : this.lastSyncAt
+          ? 'Synced via official FRED Public CSV (fredgraph.csv, no API key required).'
+          : 'Supports official FRED Public CSV (0 key) when Sync Public Macro is enabled, or set FRED_API_KEY for JSON API.',
+    };
+  }
+}
+
+/**
  * Coordinates on-demand sync of configured server-side API providers into validated stores.
  * Never fabricates data when keys are missing.
  */
 export async function syncConfiguredProviders(options: {
   symbol?: string;
   timeframe?: Timeframe;
+  historicalRange?: YahooHistoryRange;
+  includePublicMacro?: boolean;
   twelveData: TwelveDataAdapter;
   fmp: FmpCommoditiesAdapter;
   alphaVantage: AlphaVantageAdapter;
   eia: EiaEnergyAdapter;
   usda: UsdaQuickStatsAdapter;
+  fred?: FredMacroAdapter;
   mxvRest: ConfigurableRestFeedAdapter;
   thirdPartyRest: ConfigurableRestFeedAdapter;
   /** Yahoo UNOFFICIAL adapter (T30); only syncs when YAHOO_ENABLED=true. */
@@ -1973,8 +2229,9 @@ export async function syncConfiguredProviders(options: {
       const targets = instruments.filter((i) => options.yahoo!.supports(i));
       const updated: string[] = [];
       let lastErr: string | undefined;
+      const yahooRange: YahooHistoryRange = options.historicalRange ?? '2y';
       for (const inst of targets) {
-        const res = await options.yahoo.getCandles(inst.exchangeSymbol, 'D1');
+        const res = await options.yahoo.getCandles(inst.exchangeSymbol, 'D1', undefined, undefined, { range: yahooRange });
         if (res.candles.length > 0) {
           await store('YAHOO_UNOFFICIAL', inst, 'D1', res.candles, res.reason ? [res.reason] : [], inst.specification.quotationUnit);
           updated.push(inst.exchangeSymbol);
@@ -1992,7 +2249,7 @@ export async function syncConfiguredProviders(options: {
         symbolsUpdated: updated,
         message:
           updated.length > 0
-            ? `Synced ${updated.length} UNOFFICIAL D1 continuous series (2y) from Yahoo Finance (personal use only).`
+            ? `Synced ${updated.length} UNOFFICIAL D1 continuous series (${yahooRange}) from Yahoo Finance (personal use only).`
             : lastErr ?? 'No Yahoo candles returned for supported symbols.',
         error: updated.length === 0 ? lastErr : undefined,
       });
@@ -2005,6 +2262,50 @@ export async function syncConfiguredProviders(options: {
         macroSynced: 0,
         symbolsUpdated: [],
         message: 'Yahoo adapter disabled (set YAHOO_ENABLED=true; UNOFFICIAL, personal use only).',
+      });
+    }
+  }
+
+  // 9. Federal Reserve Economic Data (FRED) macro sync (API key OR explicit public CSV)
+  if (options.fred) {
+    if (envPresent('FRED_API_KEY')) {
+      const fredRes = await options.fred.syncMacroSeries();
+      totalMacroAdded += fredRes.synced;
+      outcomes.push({
+        providerId: 'FRED_MACRO',
+        providerName: options.fred.providerName,
+        status: fredRes.synced > 0 ? 'CONNECTED' : 'DEGRADED',
+        candlesSynced: 0,
+        macroSynced: fredRes.synced,
+        symbolsUpdated: [],
+        message: `Synced ${fredRes.synced} FRED macro cycle series (API JSON).`,
+        error: fredRes.error,
+      });
+    } else if (options.includePublicMacro || envPresent('FRED_PUBLIC_CSV_ENABLED')) {
+      const fredCsvRes = await options.fred.syncPublicCsvMacroSeries();
+      totalMacroAdded += fredCsvRes.synced;
+      outcomes.push({
+        providerId: 'FRED_MACRO',
+        providerName: options.fred.providerName,
+        status: fredCsvRes.synced > 0 ? 'CONNECTED' : 'DEGRADED',
+        candlesSynced: 0,
+        macroSynced: fredCsvRes.synced,
+        symbolsUpdated: [],
+        message:
+          fredCsvRes.synced > 0
+            ? `Synced ${fredCsvRes.synced} FRED macro cycle series via official Public CSV (no key required).`
+            : fredCsvRes.error ?? 'FRED Public CSV sync failed.',
+        error: fredCsvRes.error,
+      });
+    } else {
+      outcomes.push({
+        providerId: 'FRED_MACRO',
+        providerName: options.fred.providerName,
+        status: 'UNCONFIGURED',
+        candlesSynced: 0,
+        macroSynced: 0,
+        symbolsUpdated: [],
+        message: 'FRED_API_KEY not set (Pass includePublicMacro=true for no-key Public CSV).',
       });
     }
   }

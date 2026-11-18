@@ -71,16 +71,34 @@ export interface TradeScannerOpportunity {
   invalidationCondition: string;
 }
 
+export type FundamentalDatasetCategory =
+  | 'USDA_WASDE'
+  | 'USDA_CROP'
+  | 'EIA_INVENTORIES'
+  | 'CFTC_COT'
+  | 'ICE_STOCKS'
+  | 'GLOBAL_SD'
+  | 'SEASONAL'
+  | 'WEATHER_RISK'
+  | 'MACRO';
+
 export interface FundamentalMacroRecord {
   id: string;
   dataset: string;
   source: string;
   publicationTimestamp: string;
+  /** Observation period / "as-of" date (YYYY-MM-DD), separated from publicationTimestamp to prevent look-ahead bias. */
+  observationDate?: string;
   dataPeriod: string;
+  category?: FundamentalDatasetCategory;
+  relatedSymbols?: string[];
   actualValue: number | string | null;
   previousValue: number | string | null;
   forecastValue: number | string | null;
   unit: string;
   revisionStatus: 'PRELIMINARY' | 'FINAL' | 'REVISED';
   impactAssessment: MarketDirection;
+  freshnessStatus?: DataQualityStatus;
+  /** Number of calendar days between observationDate and publicationTimestamp. */
+  releaseLagDays?: number;
 }

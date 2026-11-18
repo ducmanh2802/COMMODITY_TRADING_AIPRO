@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
@@ -10,6 +10,10 @@ import { DualViewTabs } from './components/views/DualViewTabs';
 import {
   LazyAiAnalystView,
   LazyBacktestView,
+  LazyCommodityProfileView,
+  LazyCommodityWorldView,
+  LazyCycleResearchReportView,
+  LazyCycleScannerView,
   LazyDataHealthView,
   LazyFundamentalNewsView,
   LazyMarketWatchView,
@@ -27,13 +31,27 @@ import { AuthProvider } from './contexts/AuthContext';
 import { TerminalProvider, useTerminal } from './contexts/TerminalContext';
 
 function TerminalWorkspace() {
-  const { activeModule } = useTerminal();
+  const { activeModule, selectedSymbol } = useTerminal();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mainRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    mainRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [activeModule, selectedSymbol]);
 
   const renderActiveView = () => {
     switch (activeModule) {
       case 'overview':
         return <OverviewDashboard />;
+      case 'commodity-world':
+        return <LazyCommodityWorldView />;
+      case 'commodity-profile':
+        return <LazyCommodityProfileView />;
+      case 'cycle-hunter':
+        return <LazyCycleScannerView />;
+      case 'research-report':
+        return <LazyCycleResearchReportView />;
       case 'markets':
         return <LazyMarketWatchView />;
       case 'explorer':
@@ -122,7 +140,7 @@ function TerminalWorkspace() {
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
 
-        <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
+        <main ref={mainRef} className="flex-1 p-4 sm:p-6 overflow-y-auto">
           {renderActiveView()}
         </main>
       </div>

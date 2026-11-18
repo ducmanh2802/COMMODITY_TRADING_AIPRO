@@ -209,6 +209,8 @@ export interface YahooAdapterOptions {
 
 type FetchResult = { ok: true; result: YahooChartResult } | { ok: false; error: string };
 
+export type YahooHistoryRange = '1y' | '2y' | '5y' | '10y' | 'max';
+
 export class YahooFinanceAdapter implements MarketDataProvider {
   public readonly providerId: ProviderId = YAHOO_PROVIDER_ID;
   public readonly providerName = 'Yahoo Finance chart API (UNOFFICIAL, delayed, personal use only)';
@@ -435,13 +437,18 @@ export class YahooFinanceAdapter implements MarketDataProvider {
   }
 
   /**
-   * Daily candles (range=2y, interval=1d). Bars are dated by the exchange-local trading date
-   * (UTC midnight). The bar of the session still in progress is dropped (incomplete).
+   * Daily candles (default range=2y, interval=1d; supports 5y/10y via options.range).
+   * Bars are dated by the exchange-local trading date (UTC midnight).
+   * The bar of the session still in progress is dropped (incomplete).
    */
   async getCandles(
     symbol: string,
-    _timeframe: string = 'D1'
+    _timeframe: string = 'D1',
+    _fromIso?: string,
+    _toIso?: string,
+    options?: { range?: YahooHistoryRange }
   ): Promise<{ candles: MarketCandle[]; status: DataQualityStatus; reason?: string }> {
+    const range: YahooHistoryRange = options?.range ?? '2y';
     if (!isYahooEnabled()) {
       return { candles: [], status: 'UNAVAILABLE', reason: 'Yahoo adapter disabled (YAHOO_ENABLED is not true).' };
     }
@@ -451,7 +458,7 @@ export class YahooFinanceAdapter implements MarketDataProvider {
     if (!mapping) {
       return { candles: [], status: 'UNAVAILABLE', reason: `UNSUPPORTED — ${YahooFinanceAdapter.unsupportedReason(inst.exchangeSymbol)}` };
     }
-    const fetched = await this.fetchChart(mapping.yahooSymbol, '2y', '1d');
+    const fetched = await this.fetchChart(mapping.yahooSymbol, range, '1d');
     if (!fetched.ok) {
       this.lastError = fetched.error;
       return { candles: [], status: 'UNAVAILABLE', reason: `Yahoo request failed: ${fetched.error}` };
@@ -471,7 +478,7 @@ export class YahooFinanceAdapter implements MarketDataProvider {
     return {
       candles: validation.validCandles,
       status: 'HISTORICAL',
-      reason: `UNOFFICIAL Yahoo ${mapping.yahooSymbol} D1, ${YAHOO_CONTRACT_LABEL}; personal use only.${parsed.dropped ? ` ${parsed.dropped} incomplete/null bar(s) dropped.` : ''}`,
+      reason: `UNOFFICIAL Yahoo ${mapping.yahooSymbol} D1 (${range}), ${YAHOO_CONTRACT_LABEL}; personal use only.${parsed.dropped ? ` ${parsed.dropped} incomplete/null bar(s) dropped.` : ''}`,
     };
   }
 

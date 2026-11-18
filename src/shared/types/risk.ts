@@ -76,6 +76,10 @@ export interface TradeJournalEntry {
 
 export type AppModuleId =
   | 'overview'
+  | 'commodity-world'
+  | 'commodity-profile'
+  | 'cycle-hunter'
+  | 'research-report'
   | 'markets'
   | 'explorer'
   | 'term-structure'
