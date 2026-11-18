@@ -7,6 +7,7 @@ import * as trading from './dict/trading';
 import * as notebook from './dict/notebook';
 import * as ai from './dict/ai';
 import * as macro from './dict/macro';
+import * as friendly from './dict/friendly';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
@@ -20,4 +21,5 @@ export const en: Record<TKey, string> = {
   ...notebook.en,
   ...ai.en,
   ...macro.en,
+  ...friendly.en,
 };

@@ -4,7 +4,8 @@ import { useTerminal } from '../../contexts/TerminalContext';
 import type { ProductCategory } from '../../shared/types/instrument';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
-import { fmtFixed, fmtNum, useT } from '../../i18n';
+import { fmtNum, useT } from '../../i18n';
+import { fmtPrice, hasPrice, plainUnit } from '../common/quoteFormat';
 
 const CATEGORIES: Array<'ALL' | ProductCategory> = [
   'ALL',
@@ -105,8 +106,8 @@ export function MarketWatchView() {
                 <th className="py-3 px-3 font-medium text-right">{t('common.price')}</th>
                 <th className="py-3 px-3 font-medium text-right">{t('common.volume')}</th>
                 <th className="py-3 px-3 font-medium text-right">{t('term.openInterest')}</th>
-                <th className="py-3 px-3 font-medium">{t('dash.mw.colTimestamp')}</th>
-                <th className="py-3 px-3 font-medium text-right">{t('dash.mw.colQuality')}</th>
+                <th className="py-3 px-3 font-medium">{t('fr.mw.colTime')}</th>
+                <th className="py-3 px-3 font-medium text-right">{t('fr.mw.colStatus')}</th>
                 <th className="py-3 px-4 font-medium text-right">{t('dash.mw.colActions')}</th>
               </tr>
             </thead>
@@ -132,7 +133,7 @@ export function MarketWatchView() {
                         <div className="font-medium text-white">
                           {inst.commodityProfile?.vietnameseName ?? inst.productName}
                         </div>
-                        <div className="text-[11px] font-mono text-[#E5E7EB]/50">
+                        <div className="text-[11px] text-[#E5E7EB]/50">
                           {inst.productName}
                           {inst.commodityProfile?.contractMonths
                             ? t('dash.mw.months', { months: inst.commodityProfile.contractMonths.join(',') })
@@ -148,7 +149,7 @@ export function MarketWatchView() {
                       <td className="py-2.5 px-3 font-mono text-white whitespace-nowrap">
                         {inst.exchangeSymbol}
                       </td>
-                      <td className="py-2.5 px-3 font-mono whitespace-nowrap">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         {inst.mxvMapping ? (
                           <span className="text-[#E5E7EB]/85">
                             {inst.mxvMapping.mxvSymbol} ·{' '}
@@ -159,30 +160,37 @@ export function MarketWatchView() {
                         )}
                       </td>
                       <td
-                        className="py-2.5 px-3 font-mono text-[#F59E0B] whitespace-nowrap"
+                        className="py-2.5 px-3 text-[#FBBF24]/90 whitespace-nowrap"
                         title={t(`verify.${inst.specification.verificationStatus}.desc`)}
                       >
                         {t(`verify.${inst.specification.verificationStatus}`)}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-right tabular-nums text-[#E5E7EB]/60 whitespace-nowrap">
-                        {quote?.price !== null && quote?.price !== undefined
-                          ? `${fmtFixed(quote.price, 2)} ${quote.unit && quote.unit !== 'UNSPECIFIED' ? quote.unit : quote.currency}`
-                          : <span title={t('status.DATA_UNAVAILABLE.desc')}>{t('status.DATA_UNAVAILABLE')}</span>}
+                      <td className="py-2.5 px-3 text-right tabular-nums whitespace-nowrap">
+                        {hasPrice(quote) ? (
+                          <>
+                            <div className="text-sm font-semibold text-white">{fmtPrice(quote.price)}</div>
+                            <div className="text-[11px] text-[#E5E7EB]/50">{plainUnit(t, quote)}</div>
+                          </>
+                        ) : (
+                          <span className="text-[#E5E7EB]/45" title={t('fr.status.UNAVAILABLE.desc')}>
+                            {t('fr.status.UNAVAILABLE')}
+                          </span>
+                        )}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-right tabular-nums text-[#E5E7EB]/55 whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-right tabular-nums text-[#E5E7EB]/70 whitespace-nowrap">
                         {quote?.volume !== null && quote?.volume !== undefined
                           ? fmtNum(quote.volume)
                           : '—'}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-right tabular-nums text-[#E5E7EB]/55 whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-right tabular-nums text-[#E5E7EB]/70 whitespace-nowrap">
                         {quote?.openInterest !== null && quote?.openInterest !== undefined
                           ? fmtNum(quote.openInterest)
                           : '—'}
                       </td>
-                      <td className="py-2.5 px-3 font-mono tabular-nums text-[#E5E7EB]/55 whitespace-nowrap">
+                      <td className="py-2.5 px-3 tabular-nums text-[#E5E7EB]/60 whitespace-nowrap">
                         {quote?.timestamp
                           ? formatTimestampInZone(quote.timestamp, 'Asia/Ho_Chi_Minh')
-                          : t('dash.mw.noTs')}
+                          : t('fr.noTime')}
                       </td>
                       <td className="py-2.5 px-3 text-right whitespace-nowrap">
                         <div className="inline-flex justify-end">

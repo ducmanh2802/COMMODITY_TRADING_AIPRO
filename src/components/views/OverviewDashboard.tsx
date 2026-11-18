@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
-import { ArrowRight, CloudDownload, ShieldAlert } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowRight, Database, Lightbulb, RefreshCw, Upload } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
-import { formatTimestampInZone } from '../../shared/utils/time';
+import type { InstrumentDefinition, ProductCategory } from '../../shared/types/instrument';
+import type { MarketQuote } from '../../shared/types/market';
 import { DataStatusBadge } from '../common/DataStatusBadge';
-import { fmtFixed, useT } from '../../i18n';
+import { Term } from '../common/Term';
+import { fmtFixed, fmtNum, hasKey, useT } from '../../i18n';
+import { fmtClock, fmtPrice, hasPrice, plainUnit } from '../common/quoteFormat';
 
 interface OverviewTechSummary {
   status: string;
@@ -11,6 +14,65 @@ interface OverviewTechSummary {
   marketRegime: string;
   atr14: number | null;
   rsi14: number | null;
+}
+
+const CATEGORY_ORDER: ProductCategory[] = ['AGRICULTURE', 'SOFT_COMMODITIES', 'METALS', 'ENERGY'];
+function PriceCard({
+  inst,
+  quote,
+  onOpen,
+}: {
+  inst: InstrumentDefinition;
+  quote: MarketQuote | undefined;
+  onOpen: () => void;
+}) {
+  const t = useT();
+  const name = inst.commodityProfile?.vietnameseName ?? inst.productName;
+  const priced = hasPrice(quote);
+  const clock = priced ? fmtClock(quote.timestamp) : null;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={t('fr.ov.openChart', { name })}
+      className="text-left bg-[#111622] hover:bg-[#151C2B] border border-[#263244] hover:border-[#6366F1]/60 rounded-xl p-4 flex flex-col gap-2 transition-colors min-w-0"
+    >
+      <div className="flex items-start justify-between gap-2 min-w-0">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-white leading-snug">{name}</p>
+          <p className="text-[11px] text-[#E5E7EB]/45 mt-0.5">
+            {inst.exchange} · {inst.exchangeSymbol}
+          </p>
+        </div>
+      </div>
+      {priced ? (
+        <div>
+          <p className="text-2xl font-semibold text-white tabular-nums leading-tight">
+            {fmtPrice(quote.price)}
+          </p>
+          <p className="text-xs text-[#E5E7EB]/60 mt-0.5">{plainUnit(t, quote)}</p>
+        </div>
+      ) : (
+        <div>
+          <p className="text-2xl font-semibold text-[#E5E7EB]/30 leading-tight">—</p>
+          <p className="text-xs text-[#E5E7EB]/50 mt-0.5">{t('fr.ov.noPrice')}</p>
+        </div>
+      )}
+      <div className="mt-auto pt-2 border-t border-[#263244]/70 flex flex-col gap-1">
+        <DataStatusBadge
+          status={quote?.status ?? 'UNAVAILABLE'}
+          compact
+          sourceQuality={quote?.sourceQuality}
+          delayMinutes={quote?.delayMinutes}
+        />
+        {priced && (
+          <p className="text-[11px] text-[#E5E7EB]/50">
+            {clock ? t('fr.updatedAt', { time: clock }) : t('fr.noTime')}
+          </p>
+        )}
+      </div>
+    </button>
+  );
 }
 
 export function OverviewDashboard() {
@@ -21,7 +83,6 @@ export function OverviewDashboard() {
     datasets,
     marketScope,
     timeframe,
-    tradingStyle,
     selectedSymbol,
     health,
     searchQuery,
@@ -73,141 +134,212 @@ export function OverviewDashboard() {
     };
   }, [selectedSymbol, timeframe, datasets.length]);
 
-  const filteredInstruments = instruments.filter((inst) => {
-    if (marketScope === 'MXV' && !inst.isMvxListed) return false;
-    if (marketScope === 'INTERNATIONAL' && inst.exchange === 'MXV') return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      return (
-        inst.productName.toLowerCase().includes(q) ||
-        (inst.commodityProfile?.vietnameseName.toLowerCase().includes(q) ?? false) ||
-        inst.exchangeSymbol.toLowerCase().includes(q) ||
-        (inst.mxvMapping?.mxvSymbol?.toLowerCase().includes(q) ?? false)
-      );
-    }
-    return true;
-  });
+  const filteredInstruments = useMemo(
+    () =>
+      instruments.filter((inst) => {
+        if (marketScope === 'MXV' && !inst.isMvxListed) return false;
+        if (marketScope === 'INTERNATIONAL' && inst.exchange === 'MXV') return false;
+        if (searchQuery.trim()) {
+          const q = searchQuery.trim().toLowerCase();
+          return (
+            inst.productName.toLowerCase().includes(q) ||
+            (inst.commodityProfile?.vietnameseName.toLowerCase().includes(q) ?? false) ||
+            inst.exchangeSymbol.toLowerCase().includes(q) ||
+            (inst.mxvMapping?.mxvSymbol?.toLowerCase().includes(q) ?? false)
+          );
+        }
+        return true;
+      }),
+    [instruments, marketScope, searchQuery]
+  );
+
+  const groups = useMemo(
+    () =>
+      CATEGORY_ORDER.map((cat) => ({
+        cat,
+        items: filteredInstruments.filter((i) => i.category === cat),
+      })).filter((g) => g.items.length > 0),
+    [filteredInstruments]
+  );
 
   const activeInstrument =
     instruments.find((i) => i.exchangeSymbol === selectedSymbol) ?? filteredInstruments[0] ?? null;
+  const activeName = activeInstrument?.commodityProfile?.vietnameseName ?? selectedSymbol;
 
-  const watchlistPreview = filteredInstruments.slice(0, 10);
-  const verifiedSpecCount = instruments.filter(
-    (i) => i.specification.verificationStatus === 'VERIFIED'
-  ).length;
-  const connectedProviderCount = providers.filter(
-    (p) => p.connectionState === 'CONNECTED'
-  ).length;
+  const pricedCount = filteredInstruments.filter((i) => hasPrice(quotesBySymbol[i.exchangeSymbol])).length;
+  const anyPriceAtAll = Object.values(quotesBySymbol).some((q) => hasPrice(q));
+  const connectedProviderCount = providers.filter((p) => p.connectionState === 'CONNECTED').length;
   const overallStatus = health?.capabilities.marketDataOverallStatus ?? 'UNAVAILABLE';
+
+  const trendLabel = (v: string) => {
+    const k = `fr.ov.trend.${v}`;
+    return hasKey(k) ? t(k) : v;
+  };
+  const regimeLabel = (v: string) => {
+    const k = `fr.ov.regime.${v}`;
+    return hasKey(k) ? t(k) : v;
+  };
+
+  const linkBtn = 'text-xs font-medium text-[#818CF8] hover:text-[#A5B4FC] hover:underline whitespace-nowrap';
+  const card = 'bg-[#111622] border border-[#263244] rounded-xl p-4';
 
   return (
     <div className="space-y-6">
-      {/* Page Title & Active Context */}
+      {/* Friendly header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">
-            {marketScope === 'MXV'
-              ? t('dash.ov.titleMxv')
-              : t('dash.ov.title')}
-          </h1>
-          <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            {t('dash.ov.context', { scope: t(`topbar.scope.${marketScope}`), name: activeInstrument?.commodityProfile?.vietnameseName ?? selectedSymbol, symbol: selectedSymbol, tf: timeframe, style: tradingStyle })}
-          </p>
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">{t('fr.ov.hello')}</h1>
+          <p className="text-sm text-[#E5E7EB]/65 mt-1">{t('fr.ov.sub')}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <DataStatusBadge status={overallStatus} />
           <button
             type="button"
             onClick={() => void syncProviderFeeds({ timeframe })}
             disabled={syncing}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded-md text-xs font-medium text-white disabled:opacity-50"
           >
-            <CloudDownload className={`w-3.5 h-3.5 ${syncing ? 'animate-pulse' : ''}`} aria-hidden="true" />
-            <span>{syncing ? t('dash.ov.syncing') : t('dash.ov.sync')}</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} aria-hidden="true" />
+            <span>{syncing ? t('fr.ov.refreshing') : t('fr.ov.refresh')}</span>
           </button>
-          <DataStatusBadge status={overallStatus} />
         </div>
       </div>
 
       {loadError && (
-        <div className="bg-[#111622] border border-[#EF4444]/40 rounded-lg p-4 text-sm text-[#EF4444]">
-          {t('dash.ov.syncError', { error: loadError })}
+        <div className="bg-[#111622] border border-[#EF4444]/40 rounded-xl p-4 text-sm text-[#FCA5A5] space-y-1">
+          <p>{t('fr.ov.loadError')}</p>
+          <details className="text-xs text-[#E5E7EB]/50">
+            <summary className="cursor-pointer">{t('fr.ov.loadErrorDetail')}</summary>
+            <p className="mt-1 break-words">{loadError}</p>
+          </details>
         </div>
       )}
 
-      {/* Fail-Closed Market Data Integrity Banner */}
-      <section
-        aria-label={t('dash.ov.integrityAria')}
-        className="bg-[#111622] border border-[#263244] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-      >
-        <div className="flex items-start gap-3">
-          <ShieldAlert
-            className={`w-5 h-5 shrink-0 mt-0.5 ${
-              overallStatus === 'UNAVAILABLE' ? 'text-[#F59E0B]' : 'text-[#6366F1]'
-            }`}
-            aria-hidden="true"
-          />
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-white font-mono">
-              {overallStatus === 'UNAVAILABLE'
-                ? t('dash.ov.banner.unavailable')
-                : overallStatus === 'CURRENT'
-                  ? t('dash.ov.banner.current', { providers: connectedProviderCount, datasets: datasets.length })
-                  : overallStatus === 'DELAYED'
-                    ? t('dash.ov.banner.delayed', { providers: connectedProviderCount, datasets: datasets.length })
-                    : t('dash.ov.banner.historical', { datasets: datasets.length })}
-            </p>
-            <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">
-              {overallStatus === 'UNAVAILABLE'
-                ? t('dash.ov.banner.unavailableHint')
-                : t('dash.ov.banner.okHint')}
-            </p>
+      {/* Compact status line: prices + data sources (details live in Data Health) */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[#E5E7EB]/70">
+        {!loading && (
+          <span>{t('fr.ov.pricesCount', { n: pricedCount, total: filteredInstruments.length })}</span>
+        )}
+        <span className="inline-flex items-center gap-1.5">
+          <Database className="w-3.5 h-3.5 text-[#E5E7EB]/45" aria-hidden="true" />
+          {t('fr.ov.sources', { n: connectedProviderCount, total: providers.length })}
+          <button type="button" onClick={() => setActiveModule('data-health')} className={`${linkBtn} inline-flex items-center gap-1`}>
+            {t('fr.ov.sourcesLink')}
+            <ArrowRight className="w-3 h-3" aria-hidden="true" />
+          </button>
+        </span>
+        <button type="button" onClick={() => setActiveModule('markets')} className={`${linkBtn} sm:ml-auto`}>
+          {t('fr.ov.allMarkets')} →
+        </button>
+      </div>
+
+      {/* Gentle empty state: only when there are no prices at all */}
+      {!loading && !anyPriceAtAll && (
+        <section className={`${card} border-[#6366F1]/40 space-y-3`}>
+          <h2 className="text-base font-semibold text-white">{t('fr.ov.empty.title')}</h2>
+          <p className="text-sm text-[#E5E7EB]/75 leading-relaxed">{t('fr.ov.empty.body')}</p>
+          <ol className="list-decimal pl-5 space-y-1 text-sm text-[#E5E7EB]/75">
+            <li>{t('fr.ov.empty.step1')}</li>
+            <li>{t('fr.ov.empty.step2')}</li>
+          </ol>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setActiveModule('data-import')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded-md text-xs font-medium text-white"
+            >
+              <Upload className="w-3.5 h-3.5" aria-hidden="true" />
+              {t('fr.ov.empty.import')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveModule('data-health')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded-md text-xs font-medium text-[#E5E7EB]"
+            >
+              <Database className="w-3.5 h-3.5" aria-hidden="true" />
+              {t('fr.ov.empty.health')}
+            </button>
           </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setActiveModule('data-health')}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded-md text-xs font-medium text-[#E5E7EB] whitespace-nowrap"
-          >
-            <span>{t('dash.ov.secretsCsv')}</span>
-            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+        </section>
+      )}
+
+      {/* Price cards grouped by category */}
+      {loading ? (
+        <p className="text-sm text-[#E5E7EB]/55">{t('fr.ov.loading')}</p>
+      ) : groups.length === 0 ? (
+        <p className="text-sm text-[#E5E7EB]/55">{t('fr.ov.noMatch')}</p>
+      ) : (
+        groups.map((g) => (
+          <section key={g.cat} aria-label={t(`dash.cat.${g.cat}`)} className="space-y-3">
+            <h2 className="text-sm font-semibold text-[#E5E7EB]/85">{t(`dash.cat.${g.cat}`)}</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+              {g.items.map((inst) => (
+                <PriceCard
+                  key={inst.id}
+                  inst={inst}
+                  quote={quotesBySymbol[inst.exchangeSymbol]}
+                  onOpen={() => openInstrumentIn(inst.exchangeSymbol, 'charts')}
+                />
+              ))}
+            </div>
+          </section>
+        ))
+      )}
+
+      {/* Beginner tips */}
+      <section className={`${card} space-y-2`}>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-white inline-flex items-center gap-2">
+            <Lightbulb className="w-4 h-4 text-[#FBBF24]" aria-hidden="true" />
+            {t('fr.ov.tipsTitle')}
+          </h2>
+          <button type="button" onClick={() => setActiveModule('learn')} className={linkBtn}>
+            {t('fr.ov.learnMore')} →
           </button>
         </div>
+        <ul className="space-y-1.5 text-sm text-[#E5E7EB]/80 leading-relaxed list-disc pl-5">
+          <li>
+            {t('fr.ov.tip1a')} <Term k="futures" /> {t('fr.ov.tip1b')}
+          </li>
+          <li>
+            {t('fr.ov.tip2a')} <Term k="margin" /> {t('fr.ov.tip2b')} <Term k="stopLoss" /> {t('fr.ov.tip2c')}
+          </li>
+          <li>
+            {t('fr.ov.tip3a')} <Term k="frontMonth">{t('fr.ov.tip3term')}</Term>
+            {t('fr.ov.tip3b')}
+          </li>
+        </ul>
       </section>
 
-      {/* Active Commodity Intelligence Card (Vietnam MXV Focus) */}
+      {/* Selected commodity brief */}
       {activeInstrument?.commodityProfile && (
-        <section
-          aria-label={t('dash.ov.briefAria')}
-          className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3"
-        >
+        <section aria-label={t('dash.ov.briefAria')} className={`${card} space-y-3`}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#263244] pb-2.5">
-            <div>
+            <div className="min-w-0">
+              <p className="text-[11px] text-[#E5E7EB]/50">{t('fr.ov.selected')}</p>
               <h2 className="text-sm font-semibold text-white">
-                {activeInstrument.commodityProfile.vietnameseName} ({activeInstrument.exchange}:{activeInstrument.exchangeSymbol}
-                {activeInstrument.mxvMapping?.mxvSymbol
-                  ? ` · MXV ${activeInstrument.mxvMapping.mxvSymbol}`
-                  : ''})
+                {activeInstrument.commodityProfile.vietnameseName}{' '}
+                <span className="font-normal text-[#E5E7EB]/50">
+                  ({activeInstrument.exchange} · {activeInstrument.exchangeSymbol}
+                  {activeInstrument.mxvMapping?.mxvSymbol ? ` · MXV ${activeInstrument.mxvMapping.mxvSymbol}` : ''})
+                </span>
               </h2>
-              <p className="text-xs font-mono text-[#E5E7EB]/60 mt-0.5">
+              <p className="text-xs text-[#E5E7EB]/60 mt-0.5 break-words">
                 {t('dash.ov.sessionIct', { sessions: activeInstrument.commodityProfile.vietnamTradingSessionsIct })}
               </p>
             </div>
             <button
               type="button"
               onClick={() => openInstrumentIn(activeInstrument.exchangeSymbol, 'explorer')}
-              className="text-xs font-medium text-[#6366F1] hover:underline whitespace-nowrap self-start sm:self-center"
+              className={`${linkBtn} self-start sm:self-center`}
             >
               {t('dash.ov.viewContract')}
             </button>
           </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs">
             <div className="space-y-1">
               <p className="text-[#E5E7EB]/55 font-medium">{t('dash.ov.vnRelevance')}</p>
-              <p className="text-[#E5E7EB]/85 leading-relaxed">
-                {activeInstrument.commodityProfile.vietnamMarketRelevance}
-              </p>
+              <p className="text-[#E5E7EB]/85 leading-relaxed">{activeInstrument.commodityProfile.vietnamMarketRelevance}</p>
             </div>
             <div className="space-y-1">
               <p className="text-[#E5E7EB]/55 font-medium">{t('dash.ov.drivers')}</p>
@@ -219,291 +351,86 @@ export function OverviewDashboard() {
             </div>
             <div className="space-y-1">
               <p className="text-[#E5E7EB]/55 font-medium">{t('dash.ov.seasonal')}</p>
-              <p className="text-[#E5E7EB]/85 leading-relaxed">
-                {activeInstrument.commodityProfile.seasonalPattern}
-              </p>
-              <p className="text-[#F59E0B]/90 leading-relaxed">
-                {activeInstrument.commodityProfile.fxSensitivity}
-              </p>
+              <p className="text-[#E5E7EB]/85 leading-relaxed">{activeInstrument.commodityProfile.seasonalPattern}</p>
+              <p className="text-[#FBBF24]/90 leading-relaxed">{activeInstrument.commodityProfile.fxSensitivity}</p>
             </div>
           </div>
         </section>
       )}
 
-      {/* 4-Column Market Overview Strip */}
-      <section aria-label={t('dash.ov.metricsAria')} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1">
-          <p className="text-xs text-[#E5E7EB]/60">{t('dash.ov.instruments')}</p>
-          <p className="text-2xl font-mono font-semibold text-white tabular-nums">
-            {loading ? '—' : filteredInstruments.length}
-          </p>
-          <p className="text-xs text-[#E5E7EB]/50">
-            {t('dash.ov.mxvMapped', { n: filteredInstruments.filter((i) => i.isMvxListed).length })}
-          </p>
-        </div>
-
-        <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1">
-          <p className="text-xs text-[#E5E7EB]/60">{t('dash.ov.verifiedSpecs')}</p>
-          <p className="text-2xl font-mono font-semibold text-white tabular-nums">
-            {loading ? '—' : `${verifiedSpecCount} / ${instruments.length}`}
-          </p>
-          <button
-            type="button"
-            onClick={() => setActiveModule('explorer')}
-            className="text-xs text-[#6366F1] hover:underline"
-          >
-            {t('dash.ov.inspectExplorer')}
-          </button>
-        </div>
-
-        <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1">
-          <p className="text-xs text-[#E5E7EB]/60">{t('dash.ov.providersDatasets')}</p>
-          <p className="text-2xl font-mono font-semibold text-white tabular-nums">
-            {loading ? '—' : `${connectedProviderCount}/${providers.length} · ${datasets.length} OHLCV`}
-          </p>
-          <p className="text-xs text-[#E5E7EB]/50">{t('dash.ov.failClosed')}</p>
-        </div>
-
-        <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1">
-          <p className="text-xs text-[#E5E7EB]/60">{t('dash.ov.geminiKey')}</p>
-          <p className="text-2xl font-mono font-semibold text-white">
-            {health?.capabilities.geminiServerKeyConfigured ? t('dash.ov.configured') : t('dash.ov.notSet')}
-          </p>
-          <button
-            type="button"
-            onClick={() => setActiveModule('ai-analyst')}
-            className="text-xs text-[#6366F1] hover:underline"
-          >
-            {t('dash.ov.openAi')}
-          </button>
-        </div>
-      </section>
-
-      {/* Primary Two-Column Terminal Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Watchlist Preview (2/3 width) */}
-        <section
-          aria-label={t('dash.ov.watchAria')}
-          className="xl:col-span-2 bg-[#111622] border border-[#263244] rounded-lg flex flex-col"
-        >
-          <div className="px-4 py-3 border-b border-[#263244] flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-semibold text-white">
-                {marketScope === 'MXV' ? t('dash.ov.watchMxv') : t('dash.ov.watch')}
-              </h2>
-              <p className="text-xs text-[#E5E7EB]/55">
-                {t('dash.ov.watchSub')}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setActiveModule('markets')}
-              className="text-xs font-medium text-[#6366F1] hover:text-[#6366F1]/80 whitespace-nowrap"
-            >
-              {t('dash.ov.openMarketWatch')}
+      {/* Secondary cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <section className={`${card} space-y-2`}>
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="text-sm font-semibold text-white">
+              {(() => {
+                // '{term}' is left unreplaced on purpose so the glossary tooltip can be inserted there.
+                const [before, after] = t('fr.ov.trendTitle', { name: activeName }).split('{term}');
+                return (
+                  <>
+                    {before}
+                    <Term k="volatility">{t('gl.volatility').toLowerCase()}</Term>
+                    {after}
+                  </>
+                );
+              })()}
+            </h2>
+            <button type="button" onClick={() => setActiveModule('technical')} className={linkBtn}>
+              {t('fr.ov.open')}
             </button>
           </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-[#263244] text-xs text-[#E5E7EB]/55">
-                  <th className="py-2.5 px-4 font-medium">{t('dash.ov.colCommodity')}</th>
-                  <th className="py-2.5 px-3 font-medium">{t('common.exchange')}</th>
-                  <th className="py-2.5 px-3 font-medium">{t('dash.ov.colMxvCode')}</th>
-                  <th className="py-2.5 px-3 font-medium text-right">{t('dash.ov.colLast')}</th>
-                  <th className="py-2.5 px-4 font-medium text-right">{t('common.status')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#263244]/70 text-xs">
-                {loading ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 px-4 text-center text-[#E5E7EB]/55">
-                      {t('dash.ov.loadingInstruments')}
-                    </td>
-                  </tr>
-                ) : watchlistPreview.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 px-4 text-center text-[#E5E7EB]/55">
-                      {t('dash.ov.noMatch')}
-                    </td>
-                  </tr>
-                ) : (
-                  watchlistPreview.map((inst) => {
-                    const quote = quotesBySymbol[inst.exchangeSymbol];
-                    return (
-                      <tr
-                        key={inst.id}
-                        onClick={() => openInstrumentIn(inst.exchangeSymbol, 'charts')}
-                        className="hover:bg-[#172033]/50 transition-colors cursor-pointer"
-                      >
-                        <td className="py-2.5 px-4">
-                          <div className="font-medium text-white">
-                            {inst.commodityProfile?.vietnameseName ?? inst.productName}
-                          </div>
-                          <div className="text-[11px] text-[#E5E7EB]/50 font-mono">
-                            {inst.exchangeSymbol} · {inst.productName}
-                          </div>
-                        </td>
-                        <td className="py-2.5 px-3 font-mono text-[#E5E7EB]/85">
-                          {inst.exchange}
-                        </td>
-                        <td className="py-2.5 px-3 font-mono text-[#E5E7EB]/70">
-                          {inst.mxvMapping?.mxvSymbol ?? '—'}
-                        </td>
-                        <td className="py-2.5 px-3 font-mono text-right tabular-nums text-[#E5E7EB]/60">
-                          {quote?.price !== null && quote?.price !== undefined
-                            ? `${fmtFixed(quote.price, 2)} ${quote.currency}`
-                            : <span title={t('status.DATA_UNAVAILABLE.desc')}>{t('status.DATA_UNAVAILABLE')}</span>}
-                        </td>
-                        <td className="py-2.5 px-4 text-right">
-                          <div className="inline-flex justify-end">
-                            <DataStatusBadge status={quote?.status ?? 'UNAVAILABLE'} compact />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* Right Column: Top Opportunities + Data Source Health */}
-        <div className="space-y-6">
-          <section
-            aria-label={t('dash.ov.opp')}
-            className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-white">{t('dash.ov.opp')}</h2>
-              <button
-                type="button"
-                onClick={() => setActiveModule('scanner')}
-                className="text-xs text-[#6366F1] hover:text-[#6366F1]/80 whitespace-nowrap"
-              >
-                {t('dash.ov.openScanner')}
-              </button>
-            </div>
-            {datasets.length === 0 ? (
-              <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-3 space-y-1.5">
-                <DataStatusBadge status="UNAVAILABLE" />
-                <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">
-                  {t('dash.ov.oppSuppressed')}
-                </p>
-              </div>
-            ) : (
-              <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-3 space-y-2">
-                <DataStatusBadge status="HISTORICAL" />
-                <p className="text-xs text-[#E5E7EB]/75 leading-relaxed">
-                  {t('dash.ov.oppReady', { n: datasets.length })}
-                </p>
-                <div className="text-[11px] font-mono text-[#E5E7EB]/50">
-                  {t('dash.ov.latestImport', { time: formatTimestampInZone(datasets[0].importedAt, 'Asia/Ho_Chi_Minh') })}
-                </div>
-              </div>
-            )}
-          </section>
-
-          <section
-            aria-label={t('dash.ov.healthAria')}
-            className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-white">{t('dash.ov.health')}</h2>
-              <button
-                type="button"
-                onClick={() => setActiveModule('data-health')}
-                className="text-xs text-[#6366F1] hover:text-[#6366F1]/80 whitespace-nowrap"
-              >
-                {t('dash.ov.apiKeys')}
-              </button>
-            </div>
-            <ul className="divide-y divide-[#263244]/70 text-xs">
-              {providers.slice(0, 7).map((provider) => (
-                <li
-                  key={provider.providerId}
-                  className="py-2 flex items-center justify-between gap-2"
-                >
-                  <div className="min-w-0">
-                    <p className="text-[#E5E7EB] truncate">{provider.name}</p>
-                    <p className="text-[11px] font-mono text-[#E5E7EB]/45">
-                      {provider.exchanges.join(', ')}
-                    </p>
-                  </div>
-                  <DataStatusBadge status={provider.dataStatus} compact />
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
-      </div>
-
-      {/* Secondary Terminal Grid: Trend & Volatility, AI Summary, Economic Calendar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">{t('dash.ov.trend', { symbol: selectedSymbol })}</h2>
-            <button
-              type="button"
-              onClick={() => setActiveModule('technical')}
-              className="text-xs text-[#6366F1] hover:underline"
-            >
-              {t('dash.ov.engine')}
-            </button>
-          </div>
-          <DataStatusBadge
-            status={(techSummary?.status as 'UNAVAILABLE' | 'HISTORICAL') ?? 'UNAVAILABLE'}
-          />
           {techSummary && techSummary.status !== 'UNAVAILABLE' ? (
-            <div className="text-xs font-mono text-[#E5E7EB]/80 space-y-1 pt-1 tabular-nums">
-              <p>{t('dash.ov.trendLine', { trend: techSummary.mainTrend, regime: techSummary.marketRegime })}</p>
+            <div className="text-xs text-[#E5E7EB]/80 space-y-1 tabular-nums">
+              <DataStatusBadge status={techSummary.status as 'HISTORICAL'} compact />
               <p>
-                RSI(14): {techSummary.rsi14 !== null ? fmtFixed(techSummary.rsi14, 2) : t('common.na')} · ATR(14):{' '}
-                {techSummary.atr14 !== null ? fmtFixed(techSummary.atr14, 4) : t('common.na')}
+                {t('fr.ov.trendLine', {
+                  trend: trendLabel(techSummary.mainTrend),
+                  regime: regimeLabel(techSummary.marketRegime),
+                })}
+              </p>
+              <p>
+                <Term k="rsi" /> (14): {techSummary.rsi14 !== null ? fmtFixed(techSummary.rsi14, 1) : t('common.na')}
+              </p>
+              <p>
+                <Term k="atr" />: {techSummary.atr14 !== null ? fmtNum(techSummary.atr14, { maximumFractionDigits: 4 }) : t('common.na')}
               </p>
             </div>
           ) : (
-            <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">
-              {t('dash.ov.trendNeedData', { symbol: selectedSymbol })}
-            </p>
+            <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">{t('fr.ov.trendNeed', { name: activeName })}</p>
           )}
         </section>
 
-        <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">{t('dash.ov.aiTitle')}</h2>
-            <button
-              type="button"
-              onClick={() => setActiveModule('ai-analyst')}
-              className="text-xs text-[#6366F1] hover:underline"
-            >
-              {t('dash.ov.launch')}
+        <section className={`${card} space-y-2`}>
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="text-sm font-semibold text-white">{t('fr.ov.oppTitle')}</h2>
+            <button type="button" onClick={() => setActiveModule('scanner')} className={linkBtn}>
+              {t('fr.ov.open')}
             </button>
           </div>
-          <DataStatusBadge status={overallStatus} />
           <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">
-            {t('dash.ov.aiDesc')}
+            {datasets.length === 0 ? t('fr.ov.oppNone') : t('fr.ov.oppReady', { n: datasets.length })}
           </p>
         </section>
 
-        <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">{t('dash.ov.calTitle')}</h2>
-            <button
-              type="button"
-              onClick={() => setActiveModule('news')}
-              className="text-xs text-[#6366F1] hover:underline"
-            >
-              {t('dash.ov.openCal')}
+        <section className={`${card} space-y-2`}>
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="text-sm font-semibold text-white">{t('dash.ov.aiTitle')}</h2>
+            <button type="button" onClick={() => setActiveModule('ai-analyst')} className={linkBtn}>
+              {t('fr.ov.open')}
             </button>
           </div>
-          <DataStatusBadge status={macroCount > 0 || newsCount > 0 ? 'HISTORICAL' : 'UNAVAILABLE'} />
+          <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">{t('fr.ov.aiDesc')}</p>
+        </section>
+
+        <section className={`${card} space-y-2`}>
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="text-sm font-semibold text-white">{t('dash.ov.calTitle')}</h2>
+            <button type="button" onClick={() => setActiveModule('news')} className={linkBtn}>
+              {t('fr.ov.open')}
+            </button>
+          </div>
           <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">
-            {macroCount + newsCount > 0
-              ? t('dash.ov.calHas', { macro: macroCount, news: newsCount })
-              : t('dash.ov.calEmpty')}
+            {macroCount + newsCount > 0 ? t('dash.ov.calHas', { macro: macroCount, news: newsCount }) : t('fr.ov.calDesc')}
           </p>
         </section>
       </div>
