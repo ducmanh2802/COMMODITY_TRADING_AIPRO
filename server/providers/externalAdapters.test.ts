@@ -243,7 +243,7 @@ test('EiaEnergyAdapter and UsdaQuickStatsAdapter store sourced macro records hon
         return new Response(
           JSON.stringify({
             data: [
-              { year: '2025', Value: '4,366,000,000', unit_desc: 'BU' },
+              { year: '2025', Value: '4,366,000,000', unit_desc: 'BU', load_time: '2026-01-12 12:00:00.000' },
               { year: '2024', Value: '4,165,000,000', unit_desc: 'BU' },
             ],
           }),
@@ -263,7 +263,8 @@ test('EiaEnergyAdapter and UsdaQuickStatsAdapter store sourced macro records hon
 
     const records = fundamentalStore.listRecords();
     assert.ok(records.some((r) => r.dataset.includes('EIA_US_CRUDE_STOCKS')));
-    assert.ok(records.some((r) => r.dataset.includes('USDA_SOYBEANS_PRODUCTION')));
+    const usdaRec = records.find((r) => r.dataset.includes('USDA_SOYBEANS_PRODUCTION'));
+    assert.equal(usdaRec?.publicationTimestamp, '2026-01-12', 'publication date comes from NASS load_time, never invented');
   });
 });
 

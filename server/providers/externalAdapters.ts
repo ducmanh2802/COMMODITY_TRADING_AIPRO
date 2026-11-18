@@ -1344,7 +1344,7 @@ export class UsdaQuickStatsAdapter implements MarketDataProvider {
       )}&statisticcat_desc=PRODUCTION&agg_level_desc=NATIONAL&year__GE=${yearMin}&format=JSON`;
       const res = await this.fetchFn(url, { signal: AbortSignal.timeout(10_000) });
       const json = (await res.json()) as {
-        data?: Array<{ year?: string; Value?: string; unit_desc?: string; short_desc?: string }>;
+        data?: Array<{ year?: string; Value?: string; unit_desc?: string; short_desc?: string; load_time?: string }>;
         error?: string[];
       };
       if (!res.ok || !Array.isArray(json.data) || json.data.length === 0) {
@@ -1358,12 +1358,19 @@ export class UsdaQuickStatsAdapter implements MarketDataProvider {
           val: Number(String(r.Value ?? '').replace(/,/g, '')),
           unit: r.unit_desc ?? 'UNITS',
           desc: r.short_desc ?? `${commodity} PRODUCTION`,
+          // NASS load_time, e.g. "2026-01-12 12:00:00.000" (no timezone): keep the date only.
+          loadDate: /^\d{4}-\d{2}-\d{2}/.exec(r.load_time ?? '')?.[0] ?? null,
         }))
         .filter((r) => Number.isFinite(r.year) && Number.isFinite(r.val) && r.val > 0)
         .sort((a, b) => b.year - a.year);
 
       if (validRows.length === 0) return 0;
       const latest = validRows[0];
+      // Never invent a publication date: without NASS load_time the record is not stored.
+      if (!latest.loadDate) {
+        this.lastError = 'USDA QuickStats row has no load_time; publication date unknown';
+        return 0;
+      }
       const prev = validRows[1] ?? null;
       const impact =
         prev === null
@@ -1377,7 +1384,7 @@ export class UsdaQuickStatsAdapter implements MarketDataProvider {
       fundamentalStore.addRecord({
         dataset: `USDA_${commodity}_PRODUCTION (${latest.year})`,
         source: 'USDA NASS QuickStats',
-        publicationTimestamp: `${latest.year}-11-01T17:00:00.000Z`,
+        publicationTimestamp: latest.loadDate,
         dataPeriod: String(latest.year),
         actualValue: latest.val,
         previousValue: prev?.val ?? null,

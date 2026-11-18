@@ -9,6 +9,7 @@ import { registerDataRoutes } from './routes/dataRoutes.ts';
 import { registerContractRoutes } from './routes/contracts.ts';
 import { registerCotRoutes } from './routes/cot.ts';
 import { registerMxvEstimateRoutes } from './routes/mxvEstimate.ts';
+import { registerMacroRoutes, type MacroServiceLike } from './routes/macro.ts';
 import type { ICandleRepository } from './storage/candleRepository.ts';
 import { getDefaultCandleRepository } from './storage/sqliteCandleRepository.ts';
 import type { ProviderHealth } from '../src/shared/types/market.ts';
@@ -29,7 +30,13 @@ import { calculateDeterministicRisk } from './engines/riskEngine.ts';
 import { runTradeScanner } from './engines/scannerEngine.ts';
 import { evaluateAllStrategies, STRATEGY_CATALOG } from './engines/strategyEngine.ts';
 import { analyzeTechnicalSnapshot, calculateEMA } from './engines/technicalEngine.ts';
-import { generateCommodityAiAnalysis } from './services/aiAnalyst.ts';
+import {
+  generateResearchSummary,
+  loadCotForAi,
+  type AiAnalystDeps,
+  type AiCotQueryLike,
+} from './services/aiAnalyst.ts';
+import { CotService } from './cot/service.ts';
 import { historicalCandleStore } from './services/candleStore.ts';
 import { parseAndValidateCsvCandles } from './services/csvImporter.ts';
 import { fundamentalStore } from './services/fundamentalService.ts';
@@ -93,6 +100,13 @@ export interface CreateApiAppOptions {
   adminIsLoopback?: (req: Request) => boolean;
   /** Startup warning logger; defaults to console.warn, printed at most once per process. */
   logWarn?: (message: string) => void;
+  /** T21 macro service override (tests inject one backed by recorded fixtures; no network). */
+  macro?: MacroServiceLike;
+  /**
+   * AI Analyst (T20) overrides: API key / model client / timeout (tests), and the COT reader
+   * (undefined → lazily created CotService on MARKET_DB_PATH; null → COT not looked up).
+   */
+  aiAnalyst?: AiAnalystDeps & { cot?: AiCotQueryLike | null };
 }
 
 const CsvImportSchema = z.object({
@@ -150,25 +164,11 @@ const BacktestRequestSchema = z.object({
   rolloverCostPerContract: z.number().min(0).max(500).optional(),
 });
 
+// Research-summary mode (T20/D3): no risk settings — the AI never sizes or recommends trades.
 const AiAnalyzeRequestSchema = z.object({
   symbol: z.string().min(1).max(24),
   timeframe: TimeframeEnum,
-  riskSettings: z
-    .object({
-      accountEquity: z.number().nonnegative().default(10000),
-      accountCurrency: z.enum(['USD', 'VND']).default('USD'),
-      riskPercentagePerTrade: z.number().min(0.05).max(10).default(1),
-      dailyLossLimitPct: z.number().min(0.5).max(25).default(3),
-      maxOpenPositions: z.number().int().min(1).max(50).default(4),
-      maxPortfolioRiskPct: z.number().min(0.5).max(50).default(5),
-      maxContractsPerInstrument: z.number().int().min(1).max(100).default(5),
-      defaultTradingStyle: z.enum(['SCALPING', 'INTRADAY', 'SWING', 'POSITION']).default('SWING'),
-      defaultTimeframe: TimeframeEnum.default('H4'),
-      displayTimezone: z
-        .enum(['Asia/Ho_Chi_Minh', 'UTC', 'America/Chicago', 'Europe/London'])
-        .default('Asia/Ho_Chi_Minh'),
-    })
-    .optional(),
+  language: z.enum(['vi', 'en']).default('vi'),
 });
 
 const FundamentalRecordSchema = z.object({
@@ -325,6 +325,19 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   app.use('/api', express.json({ limit: '256kb' }));
 
   const aiRateLimiter = createAiRateLimiter(12, 60_000);
+  const { cot: aiCotOption, ...aiOptions } = options.aiAnalyst ?? {};
+  let aiCot: AiCotQueryLike | null | undefined = aiCotOption;
+  const getAiCot = (): AiCotQueryLike | null => {
+    if (aiCot === undefined) {
+      try {
+        aiCot = new CotService();
+      } catch (err) {
+        logError('[ai] COT store unavailable', err);
+        aiCot = null;
+      }
+    }
+    return aiCot;
+  };
 
   app.get('/api/health', async (_req: Request, res: Response, next: NextFunction) => {
     try {
@@ -522,6 +535,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   registerContractRoutes(app, { instruments: instrumentRepository });
   registerCotRoutes(app);
   registerMxvEstimateRoutes(app, { instruments: instrumentRepository, providers: providerRegistry });
+  registerMacroRoutes(app, { service: options.macro });
 
 
   // Phase 2 (owner, legacy): in-memory CSV datasets & OHLCV candles.
@@ -735,28 +749,23 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
         instrument.exchange,
         tf
       );
-      const signals = evaluateAllStrategies(snapshot, candleRes.candles, tf);
-      const macroRecords = fundamentalStore.listRecords();
-
-      const analysis = await generateCommodityAiAnalysis({
-        instrument,
-        timeframe: tf,
-        snapshot,
-        signals,
-        macroRecords,
-        riskSettings: parsed.data.riskSettings ?? {
-          accountEquity: 10000,
-          accountCurrency: 'USD',
-          riskPercentagePerTrade: 1,
-          dailyLossLimitPct: 3,
-          maxOpenPositions: 4,
-          maxPortfolioRiskPct: 5,
-          maxContractsPerInstrument: 5,
-          defaultTradingStyle: 'SWING',
-          defaultTimeframe: tf,
-          displayTimezone: 'Asia/Ho_Chi_Minh',
-        },
+      const quote = await providerRegistry.getQuoteForInstrument(instrument).catch((err: unknown) => {
+        logError('[ai] quote lookup failed', err);
+        return null;
       });
+
+      const analysis = await generateResearchSummary(
+        {
+          instrument,
+          timeframe: tf,
+          language: parsed.data.language,
+          quote,
+          snapshot,
+          candleSource: candleRes.meta ? `${candleRes.origin} ${candleRes.meta.source}` : candleRes.origin,
+          cot: loadCotForAi(getAiCot(), instrument.id),
+        },
+        { ...aiOptions, logError: aiOptions.logError ?? logError }
+      );
 
       res.json({ analysis });
     } catch (err) {

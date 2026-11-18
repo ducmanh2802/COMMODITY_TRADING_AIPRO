@@ -207,18 +207,49 @@ test('provider registry rejects routing to unregistered or unsupported providers
   );
 });
 
-test('POST /api/ai/analyze returns deterministic NO_TRADE when market data is UNAVAILABLE', async () => {
-  await withTestServer(async (baseUrl) => {
-    const res = await fetch(`${baseUrl}/api/ai/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ symbol: 'GC', timeframe: 'H4' }),
-    });
-    assert.equal(res.status, 200);
-    const body = await res.json();
-    assert.equal(body.analysis.action, 'NO_TRADE');
-    assert.equal(body.analysis.dataQuality.status, 'UNAVAILABLE');
-  });
+test('POST /api/ai/analyze is UNAVAILABLE (no model call, no fabricated text) without verified data', async () => {
+  let calls = 0;
+  await withTestServer(
+    async (baseUrl) => {
+      const res = await fetch(`${baseUrl}/api/ai/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbol: 'GC', timeframe: 'H4' }),
+      });
+      assert.equal(res.status, 200);
+      const body = await res.json();
+      assert.equal(body.analysis.status, 'UNAVAILABLE');
+      assert.equal(body.analysis.unavailableReason, 'NO_VERIFIED_DATA');
+      assert.equal(body.analysis.summary, '');
+      assert.equal(body.analysis.action, undefined);
+      assert.equal(calls, 0);
+    },
+    {
+      aiAnalyst: {
+        cot: null,
+        apiKey: 'test-key',
+        modelClient: { model: 'fake', generate: async () => { calls += 1; return '{}'; } },
+      },
+    }
+  );
+});
+
+test('POST /api/ai/analyze without GEMINI key returns UNAVAILABLE NO_API_KEY', async () => {
+  await withTestServer(
+    async (baseUrl) => {
+      const res = await fetch(`${baseUrl}/api/ai/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbol: 'GC', timeframe: 'H4', language: 'en' }),
+      });
+      assert.equal(res.status, 200);
+      const body = await res.json();
+      assert.equal(body.analysis.status, 'UNAVAILABLE');
+      assert.equal(body.analysis.unavailableReason, 'NO_API_KEY');
+      assert.ok(Array.isArray(body.analysis.inputs));
+    },
+    { aiAnalyst: { cot: null, apiKey: '' } }
+  );
 });
 
 test('CSV import unlocks technicals, scanner, and backtesting end-to-end', async () => {

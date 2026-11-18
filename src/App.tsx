@@ -22,7 +22,9 @@ import {
   LazySignalsView,
   LazyTechnicalAnalysisView,
   LazyTradeJournalView,
+  LazyResearchNotebookView,
 } from './components/views/LazyOwnerViews';
+import { hasPendingNoteContext } from './components/views/journal/researchNotes';
 import { AuthProvider } from './contexts/AuthContext';
 import { TerminalProvider, useTerminal } from './contexts/TerminalContext';
 import { I18nProvider, useT } from './i18n';
@@ -95,7 +97,17 @@ function TerminalWorkspace() {
       case 'portfolio':
         return <LazyPortfolioView />;
       case 'journal':
-        return <LazyTradeJournalView />;
+        // Trade journal + T18 Research Notebook; "note on this chart" opens straight on the notebook tab.
+        return (
+          <DualViewTabs
+            key="journal"
+            initialTabId={hasPendingNoteContext() ? 'notebook' : 'trades'}
+            tabs={[
+              { id: 'trades', label: t('nb.tab.journal'), note: t('nb.tab.journalNote'), render: () => <LazyTradeJournalView /> },
+              { id: 'notebook', label: t('nb.tab.notebook'), note: t('nb.tab.notebookNote'), render: () => <LazyResearchNotebookView /> },
+            ]}
+          />
+        );
       case 'fundamental':
         return <LazyFundamentalNewsView mode="fundamental" />;
       case 'news':

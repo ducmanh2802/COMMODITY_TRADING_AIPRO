@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info, NotebookPen, RefreshCw } from 'lucide-react';
+import { chartToPendingContext, setPendingNoteContext } from '../journal/researchNotes';
 import {
   ApiError,
   fetchCandles,
@@ -107,7 +108,7 @@ function NumInput({
 }
 
 export function ChartsView() {
-  const { instruments } = useTerminal();
+  const { instruments, setActiveModule } = useTerminal();
   const t = useT();
   const [datasets, setDatasets] = useState<DatasetRecord[]>([]);
   const [datasetsError, setDatasetsError] = useState<string | null>(null);
@@ -279,6 +280,29 @@ export function ChartsView() {
             {t('chart.subtitle')}
           </p>
         </div>
+        <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={!instrumentId}
+          title={t('nb.addFromChartTitle')}
+          onClick={() => {
+            // T18: hand the current chart selection to the Research Notebook and open it.
+            setPendingNoteContext(
+              chartToPendingContext({
+                instrumentId,
+                contractCode,
+                timeframe: data?.timeframe ?? timeframe,
+                firstTimestamp: candles[0]?.timestamp ?? null,
+                lastTimestamp: candles[candles.length - 1]?.timestamp ?? null,
+              })
+            );
+            setActiveModule('journal');
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-[#263244] text-[#E5E7EB]/80 hover:text-white hover:bg-[#172033] w-fit disabled:opacity-40"
+        >
+          <NotebookPen className="w-3.5 h-3.5" aria-hidden="true" />
+          {t('nb.addFromChart')}
+        </button>
         <button
           type="button"
           onClick={() => setReloadKey((k) => k + 1)}
@@ -287,6 +311,7 @@ export function ChartsView() {
           <RefreshCw className={`w-3.5 h-3.5 ${datasetsLoading || candlesLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
           {t('chart.reload')}
         </button>
+        </div>
       </div>
 
       {/* Series pickers */}

@@ -6,6 +6,7 @@ import type { FundamentalMacroRecord, MarketDirection } from '../../shared/types
 import type { DataQualityStatus } from '../../shared/types/market';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { MacroDataPanel } from '../common/MacroDataPanel';
 import { VietnamEconomicCalendar } from '../common/VietnamEconomicCalendar';
 import { hasKey, tr, useT } from '../../i18n';
 
@@ -199,6 +200,9 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
           {syncMessage}
         </div>
       )}
+
+      {/* T21: sourced EIA / WASDE / DXY / USD-VND (server-fetched, cached, fail-closed) */}
+      {mode === 'fundamental' && <MacroDataPanel />}
 
       {/* Vietnam-Focused Commodity Session & Holiday Economic Calendar */}
       <VietnamEconomicCalendar macroRecords={records} />

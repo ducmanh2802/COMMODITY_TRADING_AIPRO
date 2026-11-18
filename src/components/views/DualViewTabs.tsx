@@ -11,8 +11,8 @@ export interface DualViewTab {
  * One module, two implementations (merge of agent work + origin/main e7a6c70). The first tab is the
  * primary implementation; the second keeps the alternative reachable without a duplicate nav item.
  */
-export function DualViewTabs({ tabs }: { tabs: DualViewTab[] }) {
-  const [active, setActive] = useState(tabs[0]?.id);
+export function DualViewTabs({ tabs, initialTabId }: { tabs: DualViewTab[]; initialTabId?: string }) {
+  const [active, setActive] = useState(() => initialTabId ?? tabs[0]?.id);
   const current = tabs.find((t) => t.id === active) ?? tabs[0];
   return (
     <div className="space-y-4">
