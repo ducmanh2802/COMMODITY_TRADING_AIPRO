@@ -1,12 +1,17 @@
-import { useEffect, useState } from 'react';
-import { ArrowRight, ArrowUpRight, CloudDownload, Compass, FileText, Radar, ShieldAlert } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowRight, ArrowUpRight, Compass, Database, FileText, Lightbulb, Radar, RefreshCw, Upload } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
 import { getCommodityVisual } from '../../shared/data/commodityVisuals';
+import type { InstrumentDefinition, ProductCategory } from '../../shared/types/instrument';
+import type { MarketQuote } from '../../shared/types/market';
 import type { CycleMarketOverview, PerformanceHorizonReturns } from '../../shared/types/cycle';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { CommodityHeroImage } from '../common/CommodityHeroImage';
 import { CyclePhaseBadge, getBottomScoreAccent } from '../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { Term } from '../common/Term';
+import { fmtClock, fmtPrice, hasPrice, plainUnit } from '../common/quoteFormat';
+import { fmtFixed, fmtNum, hasKey, useT } from '../../i18n';
 import { safeReadJson } from '../../shared/utils/http';
 
 interface OverviewTechSummary {
@@ -18,31 +23,66 @@ interface OverviewTechSummary {
 }
 
 type HeatmapHorizon = 'w1' | 'm1' | 'm3' | 'm6' | 'y1';
+const HEATMAP_HORIZONS: HeatmapHorizon[] = ['w1', 'm1', 'm3', 'm6', 'y1'];
 
-const HEATMAP_LABELS: Record<HeatmapHorizon, string> = {
-  w1: '1W',
-  m1: '1M',
-  m3: '3M',
-  m6: '6M',
-  y1: '1Y',
-};
-
-const SPOTLIGHT_PRIORITY_IDS = [
-  'ICE:RC',
-  'MXV:JRU',
-  'CBOT:ZC',
-  'CBOT:ZS',
-  'NYMEX:CL',
-  'COMEX:GC',
-];
+const SPOTLIGHT_PRIORITY_IDS = ['ICE:RC', 'MXV:JRU', 'CBOT:ZC', 'CBOT:ZS', 'NYMEX:CL', 'COMEX:GC'];
+const CATEGORY_ORDER: ProductCategory[] = ['AGRICULTURE', 'SOFT_COMMODITIES', 'METALS', 'ENERGY'];
 
 function getHeatmapTone(val: number | null): string {
   if (val === null) return 'bg-[#0B0E14] border-[#263244] text-[#E5E7EB]/45';
-  if (val >= 5) return 'bg-[#22C55E]/20 border-[#22C55E]/40 text-[#22C55E]';
-  if (val > 0) return 'bg-[#22C55E]/10 border-[#22C55E]/25 text-[#22C55E]';
-  if (val <= -5) return 'bg-[#EF4444]/20 border-[#EF4444]/40 text-[#EF4444]';
-  if (val < 0) return 'bg-[#EF4444]/10 border-[#EF4444]/25 text-[#EF4444]';
+  if (val >= 5) return 'bg-[#22C55E]/20 border-[#22C55E]/40 text-[#4ADE80]';
+  if (val > 0) return 'bg-[#22C55E]/10 border-[#22C55E]/25 text-[#4ADE80]';
+  if (val <= -5) return 'bg-[#EF4444]/20 border-[#EF4444]/40 text-[#F87171]';
+  if (val < 0) return 'bg-[#EF4444]/10 border-[#EF4444]/25 text-[#F87171]';
   return 'bg-[#0B0E14] border-[#263244] text-[#E5E7EB]/75';
+}
+
+function fmtPct(val: number): string {
+  return `${val > 0 ? '+' : ''}${fmtFixed(val, 2)}%`;
+}
+
+function PriceCard({ inst, quote, onOpen }: { inst: InstrumentDefinition; quote: MarketQuote | undefined; onOpen: () => void }) {
+  const t = useT();
+  const name = getCommodityVisual(inst.id)?.nameVi ?? inst.commodityProfile?.vietnameseName ?? inst.productName;
+  const priced = hasPrice(quote);
+  const clock = priced ? fmtClock(quote.timestamp) : null;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={t('fr.ov.openChart', { name })}
+      className="text-left bg-[#111622] hover:bg-[#151C2B] border border-[#263244] hover:border-[#6366F1]/60 rounded-xl p-4 flex flex-col gap-2 transition-colors min-w-0"
+    >
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-white leading-snug">{name}</p>
+        <p className="text-[11px] text-[#E5E7EB]/45 mt-0.5">
+          {inst.exchange} · {inst.exchangeSymbol}
+        </p>
+      </div>
+      {priced ? (
+        <div>
+          <p className="text-2xl font-semibold text-white tabular-nums leading-tight">{fmtPrice(quote.price)}</p>
+          <p className="text-xs text-[#E5E7EB]/60 mt-0.5">{plainUnit(t, quote)}</p>
+        </div>
+      ) : (
+        <div>
+          <p className="text-2xl font-semibold text-[#E5E7EB]/30 leading-tight">—</p>
+          <p className="text-xs text-[#E5E7EB]/50 mt-0.5">{t('fr.ov.noPrice')}</p>
+        </div>
+      )}
+      <div className="mt-auto pt-2 border-t border-[#263244]/70 flex flex-col gap-1">
+        <DataStatusBadge
+          status={quote?.status ?? 'UNAVAILABLE'}
+          compact
+          sourceQuality={quote?.sourceQuality}
+          delayMinutes={quote?.delayMinutes}
+        />
+        {priced && (
+          <p className="text-[11px] text-[#E5E7EB]/50">{clock ? t('fr.updatedAt', { time: clock }) : t('fr.noTime')}</p>
+        )}
+      </div>
+    </button>
+  );
 }
 
 export function OverviewDashboard() {
@@ -53,7 +93,6 @@ export function OverviewDashboard() {
     datasets,
     marketScope,
     timeframe,
-    tradingStyle,
     selectedSymbol,
     health,
     searchQuery,
@@ -66,6 +105,7 @@ export function OverviewDashboard() {
     loadError,
   } = useTerminal();
 
+  const t = useT();
   const [techSummary, setTechSummary] = useState<OverviewTechSummary | null>(null);
   const [cycleOverview, setCycleOverview] = useState<CycleMarketOverview | null>(null);
   const [heatmapHorizon, setHeatmapHorizon] = useState<HeatmapHorizon>('m1');
@@ -112,63 +152,90 @@ export function OverviewDashboard() {
     };
   }, [selectedSymbol, timeframe, datasets.length]);
 
-  const filteredInstruments = instruments.filter((inst) => {
-    if (marketScope === 'MXV' && !inst.isMvxListed) return false;
-    if (marketScope === 'INTERNATIONAL' && inst.exchange === 'MXV') return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      return (
-        inst.productName.toLowerCase().includes(q) ||
-        (inst.commodityProfile?.vietnameseName.toLowerCase().includes(q) ?? false) ||
-        inst.exchangeSymbol.toLowerCase().includes(q) ||
-        (inst.mxvMapping?.mxvSymbol?.toLowerCase().includes(q) ?? false)
-      );
-    }
-    return true;
-  });
+  const filteredInstruments = useMemo(
+    () =>
+      instruments.filter((inst) => {
+        if (marketScope === 'MXV' && !inst.isMvxListed) return false;
+        if (marketScope === 'INTERNATIONAL' && inst.exchange === 'MXV') return false;
+        if (searchQuery.trim()) {
+          const q = searchQuery.trim().toLowerCase();
+          return (
+            inst.productName.toLowerCase().includes(q) ||
+            (inst.commodityProfile?.vietnameseName.toLowerCase().includes(q) ?? false) ||
+            inst.exchangeSymbol.toLowerCase().includes(q) ||
+            (inst.mxvMapping?.mxvSymbol?.toLowerCase().includes(q) ?? false)
+          );
+        }
+        return true;
+      }),
+    [instruments, marketScope, searchQuery]
+  );
+
+  const groups = useMemo(
+    () =>
+      CATEGORY_ORDER.map((cat) => ({ cat, items: filteredInstruments.filter((i) => i.category === cat) })).filter(
+        (g) => g.items.length > 0
+      ),
+    [filteredInstruments]
+  );
 
   const activeInstrument =
     instruments.find((i) => i.exchangeSymbol === selectedSymbol) ?? filteredInstruments[0] ?? null;
+  const activeName = activeInstrument?.commodityProfile?.vietnameseName ?? selectedSymbol;
 
-  const watchlistPreview = filteredInstruments.slice(0, 10);
-  const connectedProviderCount = providers.filter(
-    (p) => p.connectionState === 'CONNECTED'
-  ).length;
+  const pricedCount = filteredInstruments.filter((i) => hasPrice(quotesBySymbol[i.exchangeSymbol])).length;
+  const anyPriceAtAll = Object.values(quotesBySymbol).some((q) => hasPrice(q));
+  const connectedProviderCount = providers.filter((p) => p.connectionState === 'CONNECTED').length;
   const overallStatus = health?.capabilities.marketDataOverallStatus ?? 'UNAVAILABLE';
+  const worldCount = cycleOverview?.commodities.length ?? instruments.length;
 
   const spotlightCommodities = (() => {
     const list = cycleOverview?.commodities ?? [];
-    const prioritized = SPOTLIGHT_PRIORITY_IDS.map((id) =>
-      list.find((c) => c.instrument.id === id)
-    ).filter((c): c is NonNullable<typeof c> => Boolean(c));
+    const prioritized = SPOTLIGHT_PRIORITY_IDS.map((id) => list.find((c) => c.instrument.id === id)).filter(
+      (c): c is NonNullable<typeof c> => Boolean(c)
+    );
     return prioritized.length > 0 ? prioritized : list.slice(0, 6);
   })();
 
   const breadth = cycleOverview?.marketBreadth;
 
+  const label = (prefix: string, v: string) => {
+    const k = `${prefix}${v}`;
+    return hasKey(k) ? t(k) : v;
+  };
+
+  const linkBtn = 'text-xs font-medium text-[#818CF8] hover:text-[#A5B4FC] hover:underline whitespace-nowrap';
+  const card = 'bg-[#111622] border border-[#263244] rounded-xl p-4';
+  const statCard = 'bg-[#111622] border border-[#263244] rounded-xl p-4 space-y-1 min-w-0';
+
   return (
     <div className="space-y-6">
-      {/* Header & Slogan */}
+      {/* Friendly header (owner's slogan kept as kicker) */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-        <div>
-          <p className="text-xs font-mono text-[#6366F1]">
-            COMMODITY TRADING AI PRO · CYCLE HUNTER
-          </p>
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-[#818CF8]">{t('fr.ov2.kicker')}</p>
           <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight mt-0.5 text-balance">
-            Understand the Cycle. Catch the Opportunity.
+            {t('fr.ov.hello')}
           </h1>
-          <p className="text-xs text-[#E5E7EB]/65 mt-1">
-            Scope: {marketScope} · Active: {activeInstrument?.commodityProfile?.vietnameseName ?? selectedSymbol} ({selectedSymbol}) · TF: {timeframe} · {tradingStyle}
+          <p className="text-sm text-[#E5E7EB]/65 mt-1">{t('fr.ov.sub')}</p>
+          <p className="text-xs text-[#E5E7EB]/45 mt-1">
+            {t('fr.ov2.context', {
+              name: activeName,
+              symbol: selectedSymbol,
+              tf: timeframe,
+              scope: t(`topbar.scope.${marketScope}`),
+            })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
+          <DataStatusBadge status={overallStatus} />
           <button
             type="button"
             onClick={() => setActiveModule('commodity-world')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded-md text-xs font-medium text-white whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded-md text-xs font-medium text-white whitespace-nowrap"
           >
-            <Compass className="w-3.5 h-3.5 text-[#6366F1]" aria-hidden="true" />
-            <span>Thế giới Hàng hóa (20)</span>
+            <Compass className="w-3.5 h-3.5 text-[#818CF8]" aria-hidden="true" />
+            <span>{t('fr.ov2.world', { n: worldCount })}</span>
           </button>
           <button
             type="button"
@@ -176,126 +243,171 @@ export function OverviewDashboard() {
             disabled={syncing}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded-md text-xs font-medium text-white disabled:opacity-50 whitespace-nowrap"
           >
-            <CloudDownload className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{syncing ? 'Syncing...' : 'Sync API Feeds'}</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} aria-hidden="true" />
+            <span>{syncing ? t('fr.ov.refreshing') : t('fr.ov.refresh')}</span>
           </button>
-          <DataStatusBadge status={overallStatus} />
         </div>
       </div>
 
       {loadError && (
-        <div className="bg-[#111622] border border-[#EF4444]/40 rounded-lg p-4 text-sm text-[#EF4444]">
-          Backend synchronization error: {loadError}
+        <div className="bg-[#111622] border border-[#EF4444]/40 rounded-xl p-4 text-sm text-[#FCA5A5] space-y-1">
+          <p>{t('fr.ov.loadError')}</p>
+          <details className="text-xs text-[#E5E7EB]/50">
+            <summary className="cursor-pointer">{t('fr.ov.loadErrorDetail')}</summary>
+            <p className="mt-1 break-words">{loadError}</p>
+          </details>
         </div>
       )}
 
       {lastSyncSummary && (
-        <section
-          aria-label="Provider Sync Summary"
-          className="bg-[#111622] border border-[#6366F1]/40 rounded-lg p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs"
-        >
-          <div className="space-y-1">
-            <p className="font-mono font-semibold text-white">
-              Sync Feeds: +{lastSyncSummary.totalCandlesDatasetsAdded} chuỗi OHLCV · +{lastSyncSummary.totalMacroAdded} bản ghi vĩ mô
+        <section className="bg-[#111622] border border-[#6366F1]/40 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs">
+          <div className="space-y-1 min-w-0">
+            <p className="font-semibold text-white">
+              {t('fr.ov2.syncTitle', {
+                candles: lastSyncSummary.totalCandlesDatasetsAdded,
+                macro: lastSyncSummary.totalMacroAdded,
+              })}
             </p>
-            <p className="text-[#E5E7EB]/70">
+            <p className="text-[#E5E7EB]/70 break-words">
               {lastSyncSummary.totalCandlesDatasetsAdded === 0 && lastSyncSummary.totalMacroAdded === 0
-                ? 'Chưa có API key hoặc YAHOO_ENABLED=true được cấu hình trên server Secrets nên chưa thể kéo giá tự động. Bạn có thể cấu hình Secrets hoặc import CSV lịch sử.'
+                ? t('fr.ov2.syncNone')
                 : lastSyncSummary.outcomes
                     .filter((o) => o.status === 'CONNECTED')
                     .map((o) => `${o.providerId}: ${o.message}`)
-                    .join(' · ') || 'Đã hoàn tất đồng bộ các nguồn đã bật.'}
+                    .join(' · ') || t('fr.ov2.syncDone')}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setActiveModule('data-health')}
-              className="px-3 py-1.5 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded text-xs font-medium text-white whitespace-nowrap"
+              className="px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded text-xs font-medium text-white whitespace-nowrap"
             >
-              Mở Data Health &amp; Secrets
+              {t('fr.ov2.syncHealth')}
             </button>
             <button
               type="button"
               onClick={() => setActiveModule('data-import')}
               className="px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded text-xs font-medium text-white whitespace-nowrap"
             >
-              Import CSV D1
+              {t('fr.ov2.syncImport')}
             </button>
           </div>
         </section>
       )}
 
-      {/* A. Market Overview Breadth Strip */}
-      <section aria-label="A. Market Overview Cycle Breadth" className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4">
-        <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1">
-          <p className="text-xs text-[#E5E7EB]/60">Tăng / Giảm (1W)</p>
-          <p className="text-xl font-mono font-semibold text-white tabular-nums">
-            {breadth ? `${breadth.risingCount} ↑ / ${breadth.fallingCount} ↓` : '—'}
-          </p>
-          <p className="text-[11px] text-[#E5E7EB]/50">
-            Có dữ liệu giá: {breadth?.withPriceData ?? 0}/{breadth?.totalTracked ?? 20}
-          </p>
-        </div>
-
-        <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1">
-          <p className="text-xs text-[#E5E7EB]/60">Vùng Tích lũy Đáy</p>
-          <p className="text-xl font-mono font-semibold text-[#38BDF8] tabular-nums">
-            {breadth ? breadth.accumulationCount : '—'}
-          </p>
-          <p className="text-[11px] text-[#E5E7EB]/50">Phase 1 · Accumulation</p>
-        </div>
-
-        <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1">
-          <p className="text-xs text-[#E5E7EB]/60">Ứng viên Tạo đáy (&gt;=70)</p>
-          <p className="text-xl font-mono font-semibold text-[#22C55E] tabular-nums">
-            {breadth ? breadth.bottomCandidateCount : '—'}
-          </p>
+      {/* Compact status line (provider details live in Data Health) */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[#E5E7EB]/70">
+        {!loading && <span>{t('fr.ov.pricesCount', { n: pricedCount, total: filteredInstruments.length })}</span>}
+        <span className="inline-flex flex-wrap items-center gap-1.5">
+          <Database className="w-3.5 h-3.5 text-[#E5E7EB]/45" aria-hidden="true" />
+          {t('fr.ov.sources', { n: connectedProviderCount, total: providers.length })}
           <button
             type="button"
-            onClick={() => setActiveModule('cycle-hunter')}
-            className="text-[11px] text-[#6366F1] hover:underline"
+            onClick={() => setActiveModule('data-health')}
+            className={`${linkBtn} inline-flex items-center gap-1`}
           >
-            Mở Cycle Hunter Scanner →
+            {t('fr.ov.sourcesLink')}
+            <ArrowRight className="w-3 h-3" aria-hidden="true" />
           </button>
-        </div>
+        </span>
+        <button type="button" onClick={() => setActiveModule('markets')} className={`${linkBtn} sm:ml-auto`}>
+          {t('fr.ov.allMarkets')} →
+        </button>
+      </div>
 
-        <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1">
-          <p className="text-xs text-[#E5E7EB]/60">Xu hướng Tăng (Markup)</p>
-          <p className="text-xl font-mono font-semibold text-[#6366F1] tabular-nums">
-            {breadth ? breadth.markupCount : '—'}
-          </p>
-          <p className="text-[11px] text-[#E5E7EB]/50">Phase 3 · Uptrend</p>
-        </div>
+      {/* Gentle empty state: only when there are no prices at all */}
+      {!loading && !anyPriceAtAll && (
+        <section className={`${card} border-[#6366F1]/40 space-y-3`}>
+          <h2 className="text-base font-semibold text-white">{t('fr.ov.empty.title')}</h2>
+          <p className="text-sm text-[#E5E7EB]/75 leading-relaxed">{t('fr.ov.empty.body')}</p>
+          <ol className="list-decimal pl-5 space-y-1 text-sm text-[#E5E7EB]/75">
+            <li>{t('fr.ov.empty.step1')}</li>
+            <li>{t('fr.ov.empty.step2')}</li>
+          </ol>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setActiveModule('data-import')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded-md text-xs font-medium text-white"
+            >
+              <Upload className="w-3.5 h-3.5" aria-hidden="true" />
+              {t('fr.ov.empty.import')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveModule('data-health')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded-md text-xs font-medium text-[#E5E7EB]"
+            >
+              <Database className="w-3.5 h-3.5" aria-hidden="true" />
+              {t('fr.ov.empty.health')}
+            </button>
+          </div>
+        </section>
+      )}
 
-        <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1 col-span-2 sm:col-span-1">
-          <p className="text-xs text-[#E5E7EB]/60">Vùng Phân phối / Rủi ro</p>
-          <p className="text-xl font-mono font-semibold text-[#F59E0B] tabular-nums">
-            {breadth ? breadth.distributionCount : '—'}
+      {/* A. Market breadth by cycle */}
+      <section aria-label={t('fr.ov2.breadthAria')} className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
+        <div className={statCard}>
+          <p className="text-xs text-[#E5E7EB]/60">{t('fr.ov2.upDown')}</p>
+          <p className="text-xl font-semibold text-white tabular-nums">
+            {breadth ? (
+              <>
+                <span className="text-[#4ADE80]">▲ {breadth.risingCount}</span>{' '}
+                <span className="text-[#E5E7EB]/40">/</span>{' '}
+                <span className="text-[#F87171]">▼ {breadth.fallingCount}</span>
+              </>
+            ) : (
+              '—'
+            )}
           </p>
           <p className="text-[11px] text-[#E5E7EB]/50">
-            Thiếu lịch sử: {breadth?.unavailableCount ?? 20}
+            {breadth ? t('fr.ov2.withPrice', { n: breadth.withPriceData, total: breadth.totalTracked }) : '—'}
+          </p>
+        </div>
+        <div className={statCard}>
+          <p className="text-xs text-[#E5E7EB]/60">{t('fr.ov2.accum')}</p>
+          <p className="text-xl font-semibold text-[#38BDF8] tabular-nums">{breadth ? breadth.accumulationCount : '—'}</p>
+          <p className="text-[11px] text-[#E5E7EB]/50">
+            <Term k="cyclePhase">{t('fr.ov2.phase1')}</Term>
+          </p>
+        </div>
+        <div className={statCard}>
+          <p className="text-xs text-[#E5E7EB]/60">
+            <Term k="bottomScore">{t('fr.ov2.bottomCand')}</Term>
+          </p>
+          <p className="text-xl font-semibold text-[#4ADE80] tabular-nums">{breadth ? breadth.bottomCandidateCount : '—'}</p>
+          <button type="button" onClick={() => setActiveModule('cycle-hunter')} className="text-[11px] text-[#818CF8] hover:underline text-left">
+            {t('fr.ov2.openCycle')}
+          </button>
+        </div>
+        <div className={statCard}>
+          <p className="text-xs text-[#E5E7EB]/60">{t('fr.ov2.markup')}</p>
+          <p className="text-xl font-semibold text-[#818CF8] tabular-nums">{breadth ? breadth.markupCount : '—'}</p>
+          <p className="text-[11px] text-[#E5E7EB]/50">{t('fr.ov2.phase3')}</p>
+        </div>
+        <div className={`${statCard} col-span-2 sm:col-span-1`}>
+          <p className="text-xs text-[#E5E7EB]/60">{t('fr.ov2.distrib')}</p>
+          <p className="text-xl font-semibold text-[#FBBF24] tabular-nums">{breadth ? breadth.distributionCount : '—'}</p>
+          <p className="text-[11px] text-[#E5E7EB]/50">
+            {breadth ? t('fr.ov2.missingHist', { n: breadth.unavailableCount }) : '—'}
           </p>
         </div>
       </section>
 
-      {/* Living Commodity World Spotlight Cards */}
-      <section aria-label="Living Commodity World Spotlight" className="space-y-3">
+      {/* Commodity spotlight with images */}
+      <section aria-label={t('fr.ov2.spotTitle')} className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h2 className="text-base font-semibold text-white">
-              Thế giới Hàng hóa Sống — Tâm điểm Việt Nam &amp; Toàn cầu
-            </h2>
-            <p className="text-xs text-[#E5E7EB]/55">
-              Nhấp vào từng hàng hóa để mở Hồ sơ Chu kỳ, 8 Câu hỏi AI Verdict và Kế hoạch Giao dịch.
-            </p>
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-white">{t('fr.ov2.spotTitle')}</h2>
+            <p className="text-xs text-[#E5E7EB]/55">{t('fr.ov2.spotSub')}</p>
           </div>
           <button
             type="button"
             onClick={() => setActiveModule('commodity-world')}
-            className="inline-flex items-center gap-1 text-xs font-medium text-[#6366F1] hover:underline whitespace-nowrap self-start sm:self-auto"
+            className={`${linkBtn} inline-flex items-center gap-1 self-start sm:self-auto`}
           >
-            <span>Xem toàn bộ 20 Hàng hóa</span>
+            <span>{t('fr.ov2.spotAll', { n: worldCount })}</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
@@ -304,12 +416,13 @@ export function OverviewDashboard() {
           {spotlightCommodities.map((item) => {
             const visual = getCommodityVisual(item.instrument.id);
             const nameVi = visual?.nameVi ?? item.instrument.commodityProfile?.vietnameseName ?? item.instrument.productName;
+            const priced = hasPrice(item.quote);
             return (
               <button
                 key={item.instrument.id}
                 type="button"
                 onClick={() => openInstrumentIn(item.instrument.exchangeSymbol, 'commodity-profile')}
-                className="group text-left bg-[#111622] border border-[#263244] hover:border-[#6366F1]/70 rounded-lg overflow-hidden transition-all duration-200 focus-visible:outline-2 focus-visible:outline-[#6366F1]"
+                className="group text-left bg-[#111622] border border-[#263244] hover:border-[#6366F1]/70 rounded-xl overflow-hidden transition-all duration-200 focus-visible:outline-2 focus-visible:outline-[#6366F1]"
               >
                 <div className="relative aspect-video w-full overflow-hidden">
                   <CommodityHeroImage
@@ -323,34 +436,41 @@ export function OverviewDashboard() {
                     aria-hidden="true"
                     className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-[#0B0E14]/60 to-[#0B0E14]/50"
                   />
-                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-mono text-white/95 bg-[#0B0E14]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15">
+                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2">
+                    <span className="text-[11px] text-white/95 bg-[#0B0E14]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15 whitespace-nowrap">
                       {item.instrument.exchangeSymbol}
                       {item.instrument.mxvMapping?.mxvSymbol ? ` · MXV ${item.instrument.mxvMapping.mxvSymbol}` : ''}
                     </span>
                     <span className="inline-flex items-center bg-[#0B0E14]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15 shadow-sm">
-                      <DataStatusBadge status={item.quote.status} compact />
+                      <DataStatusBadge
+                        status={item.quote.status}
+                        compact
+                        sourceQuality={item.quote.sourceQuality}
+                        delayMinutes={item.quote.delayMinutes}
+                      />
                     </span>
                   </div>
                   <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-end justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-[11px] text-[#E5E7EB]/75 truncate">{visual?.groupVi ?? item.instrument.category}</p>
+                      <p className="text-[11px] text-[#E5E7EB]/75 truncate">
+                        {visual?.groupVi ?? t(`dash.cat.${item.instrument.category}`)}
+                      </p>
                       <h3 className="text-base font-semibold text-white truncate">{nameVi}</h3>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-mono font-semibold text-white tabular-nums">
-                        {item.quote.price !== null ? item.quote.price.toFixed(2) : 'DATA_UNAVAILABLE'}
+                      <p className="text-base font-semibold text-white tabular-nums">
+                        {priced ? fmtPrice(item.quote.price as number) : t('fr.ov.noPrice')}
                       </p>
-                      <p className="text-[10px] font-mono text-[#E5E7EB]/65">
-                        {item.bottomScore !== null ? `Bottom ${item.bottomScore}/100` : 'Chưa chấm điểm'}
+                      <p className="text-[10px] text-[#E5E7EB]/65">
+                        {item.bottomScore !== null ? t('fr.ov2.bottomScore', { n: item.bottomScore }) : t('fr.ov2.notScored')}
                       </p>
                     </div>
                   </div>
                 </div>
                 <div className="px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs">
                   <CyclePhaseBadge phase={item.cyclePhase} compact />
-                  <span className="inline-flex items-center gap-1 text-[#6366F1] font-medium whitespace-nowrap">
-                    <span>Phân tích</span>
+                  <span className="inline-flex items-center gap-1 text-[#818CF8] font-medium whitespace-nowrap">
+                    <span>{t('fr.ov2.analyze')}</span>
                     <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
                   </span>
                 </div>
@@ -360,135 +480,210 @@ export function OverviewDashboard() {
         </div>
       </section>
 
-      {/* B. AI Opportunity Radar (Top 10) & D. Economic Cycle Tracker */}
+      {/* Prices grouped by category */}
+      <section aria-label={t('fr.ov2.pricesTitle')} className="space-y-4">
+        <h2 className="text-base font-semibold text-white">{t('fr.ov2.pricesTitle')}</h2>
+        {loading ? (
+          <p className="text-sm text-[#E5E7EB]/55">{t('fr.ov.loading')}</p>
+        ) : groups.length === 0 ? (
+          <p className="text-sm text-[#E5E7EB]/55">{t('fr.ov.noMatch')}</p>
+        ) : (
+          groups.map((g) => (
+            <div key={g.cat} className="space-y-2">
+              <h3 className="text-sm font-medium text-[#E5E7EB]/80">{t(`dash.cat.${g.cat}`)}</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                {g.items.map((inst) => (
+                  <PriceCard
+                    key={inst.id}
+                    inst={inst}
+                    quote={quotesBySymbol[inst.exchangeSymbol]}
+                    onOpen={() => openInstrumentIn(inst.exchangeSymbol, 'commodity-profile')}
+                  />
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </section>
+
+      {/* Beginner tips */}
+      <section className={`${card} space-y-2`}>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-white inline-flex items-center gap-2">
+            <Lightbulb className="w-4 h-4 text-[#FBBF24]" aria-hidden="true" />
+            {t('fr.ov.tipsTitle')}
+          </h2>
+          <button type="button" onClick={() => setActiveModule('learn')} className={linkBtn}>
+            {t('fr.ov.learnMore')} →
+          </button>
+        </div>
+        <ul className="space-y-1.5 text-sm text-[#E5E7EB]/80 leading-relaxed list-disc pl-5">
+          <li>
+            {t('fr.ov.tip1a')} <Term k="futures" /> {t('fr.ov.tip1b')}
+          </li>
+          <li>
+            {t('fr.ov.tip2a')} <Term k="margin" /> {t('fr.ov.tip2b')} <Term k="stopLoss" /> {t('fr.ov.tip2c')}
+          </li>
+          <li>
+            {t('fr.ov.tip3a')} <Term k="frontMonth">{t('fr.ov.tip3term')}</Term>
+            {t('fr.ov.tip3b')}
+          </li>
+        </ul>
+      </section>
+
+      {/* B. Opportunity radar & D. Economic cycle tracker */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <section
-          aria-label="B. AI Opportunity Radar Top 10"
-          className="xl:col-span-2 bg-[#111622] border border-[#263244] rounded-lg overflow-hidden flex flex-col"
+          aria-label={t('fr.ov2.radarTitle')}
+          className="xl:col-span-2 bg-[#111622] border border-[#263244] rounded-xl overflow-hidden flex flex-col"
         >
-          <div className="px-4 py-3 border-b border-[#263244] flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Radar className="w-4 h-4 text-[#6366F1]" aria-hidden="true" />
-              <div>
-                <h2 className="text-sm font-semibold text-white">B. AI Opportunity Radar (Top 10)</h2>
-                <p className="text-xs text-[#E5E7EB]/55">
-                  Xếp hạng đa nhân tố: Định giá, Giai đoạn Chu kỳ, Điểm Đáy, Cung–Cầu &amp; Vị thế COT.
-                </p>
+          <div className="px-4 py-3 border-b border-[#263244] flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2 min-w-0">
+              <Radar className="w-4 h-4 text-[#818CF8] mt-0.5 shrink-0" aria-hidden="true" />
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-white">{t('fr.ov2.radarTitle')}</h2>
+                <p className="text-xs text-[#E5E7EB]/55">{t('fr.ov2.radarSub')}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setActiveModule('research-report')}
-              className="inline-flex items-center gap-1 text-xs font-medium text-[#6366F1] hover:underline whitespace-nowrap"
+              className={`${linkBtn} inline-flex items-center gap-1`}
             >
               <FileText className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Báo cáo Ngày</span>
+              <span>{t('fr.ov2.report')}</span>
             </button>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[560px]">
               <thead>
                 <tr className="border-b border-[#263244] text-xs text-[#E5E7EB]/55">
-                  <th className="py-2.5 px-4 font-medium">Hàng hóa</th>
-                  <th className="py-2.5 px-3 font-medium">Giai đoạn Chu kỳ</th>
-                  <th className="py-2.5 px-3 font-medium text-right">Bottom Score</th>
-                  <th className="py-2.5 px-3 font-medium text-right">Percentile</th>
-                  <th className="py-2.5 px-4 font-medium text-right">Giá / Trạng thái</th>
+                  <th className="py-2.5 px-4 font-medium">{t('fr.ov2.colName')}</th>
+                  <th className="py-2.5 px-3 font-medium">
+                    <Term k="cyclePhase">{t('fr.ov2.colPhase')}</Term>
+                  </th>
+                  <th className="py-2.5 px-3 font-medium text-right">
+                    <Term k="bottomScore">{t('fr.ov2.colBottom')}</Term>
+                  </th>
+                  <th className="py-2.5 px-3 font-medium text-right">
+                    <Term k="percentile">{t('fr.ov2.colPct')}</Term>
+                  </th>
+                  <th className="py-2.5 px-4 font-medium text-right">{t('fr.ov2.colPrice')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#263244]/70 text-xs">
-                {(cycleOverview?.opportunityRadar ?? []).map((item) => {
-                  const nameVi = getCommodityVisual(item.instrument.id)?.nameVi ?? item.instrument.productName;
-                  return (
-                    <tr
-                      key={item.instrument.id}
-                      onClick={() => openInstrumentIn(item.instrument.exchangeSymbol, 'commodity-profile')}
-                      className="hover:bg-[#172033]/50 transition-colors cursor-pointer"
-                    >
-                      <td className="py-2.5 px-4">
-                        <div className="font-medium text-white">{nameVi}</div>
-                        <div className="text-[11px] font-mono text-[#E5E7EB]/50">
-                          {item.instrument.exchange}:{item.instrument.exchangeSymbol}
-                          {item.instrument.mxvMapping?.mxvSymbol ? ` · MXV ${item.instrument.mxvMapping.mxvSymbol}` : ''}
-                        </div>
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <CyclePhaseBadge phase={item.cyclePhase} compact />
-                      </td>
-                      <td className={`py-2.5 px-3 text-right font-mono font-semibold tabular-nums ${getBottomScoreAccent(item.bottomClassification)}`}>
-                        {item.bottomScore !== null ? `${item.bottomScore}/100` : '—'}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-[#E5E7EB]/75 tabular-nums">
-                        {item.percentile10Y !== null ? `${item.percentile10Y.toFixed(0)}%` : '—'}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[#E5E7EB]/85 tabular-nums">
-                        {item.quote.price !== null ? `${item.quote.price.toFixed(2)} ${item.quote.currency}` : 'DATA_UNAVAILABLE'}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {(cycleOverview?.opportunityRadar ?? []).length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-6 px-4 text-center text-[#E5E7EB]/55">
+                      {t('fr.ov2.radarEmpty')}
+                    </td>
+                  </tr>
+                ) : (
+                  (cycleOverview?.opportunityRadar ?? []).map((item) => {
+                    const nameVi = getCommodityVisual(item.instrument.id)?.nameVi ?? item.instrument.productName;
+                    return (
+                      <tr
+                        key={item.instrument.id}
+                        onClick={() => openInstrumentIn(item.instrument.exchangeSymbol, 'commodity-profile')}
+                        className="hover:bg-[#172033]/50 transition-colors cursor-pointer"
+                      >
+                        <td className="py-2.5 px-4">
+                          <div className="font-medium text-white">{nameVi}</div>
+                          <div className="text-[11px] text-[#E5E7EB]/50">
+                            {item.instrument.exchange} · {item.instrument.exchangeSymbol}
+                            {item.instrument.mxvMapping?.mxvSymbol ? ` · MXV ${item.instrument.mxvMapping.mxvSymbol}` : ''}
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <CyclePhaseBadge phase={item.cyclePhase} compact />
+                        </td>
+                        <td className={`py-2.5 px-3 text-right font-semibold tabular-nums ${getBottomScoreAccent(item.bottomClassification)}`}>
+                          {item.bottomScore !== null ? `${item.bottomScore}/100` : '—'}
+                        </td>
+                        <td className="py-2.5 px-3 text-right text-[#E5E7EB]/75 tabular-nums">
+                          {item.percentile10Y !== null ? `${fmtFixed(item.percentile10Y, 0)}%` : '—'}
+                        </td>
+                        <td className="py-2.5 px-4 text-right tabular-nums">
+                          {hasPrice(item.quote) ? (
+                            <span className="text-[#E5E7EB]/90">{fmtPrice(item.quote.price)}</span>
+                          ) : (
+                            <span className="text-[#E5E7EB]/45">{t('fr.ov.noPrice')}</span>
+                          )}
+                          <div className="mt-0.5 inline-flex justify-end w-full">
+                            <DataStatusBadge
+                              status={item.quote.status}
+                              compact
+                              sourceQuality={item.quote.sourceQuality}
+                              delayMinutes={item.quote.delayMinutes}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
         </section>
 
-        {/* D. Economic Cycle Tracker */}
-        <section
-          aria-label="D. Economic Cycle Tracker"
-          className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3"
-        >
-          <div className="flex items-center justify-between gap-2 border-b border-[#263244] pb-2.5">
-            <div>
-              <h2 className="text-sm font-semibold text-white">D. Economic Cycle Tracker</h2>
-              <p className="text-xs text-[#E5E7EB]/55">DXY, Fed Funds, 10Y Yield, CPI &amp; Hàng hóa chuẩn</p>
+        <section aria-label={t('fr.ov2.macroTitle')} className={`${card} space-y-3`}>
+          <div className="flex items-start justify-between gap-2 border-b border-[#263244] pb-2.5">
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-white">{t('fr.ov2.macroTitle')}</h2>
+              <p className="text-xs text-[#E5E7EB]/55">{t('fr.ov2.macroSub')}</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setActiveModule('data-health')}
-              className="text-xs text-[#6366F1] hover:underline whitespace-nowrap"
-            >
-              FRED / API
+            <button type="button" onClick={() => setActiveModule('data-health')} className={linkBtn}>
+              {t('fr.ov2.macroLink')}
             </button>
           </div>
-
-          <ul className="divide-y divide-[#263244]/70 text-xs">
-            {(cycleOverview?.macroTracker ?? []).map((m) => (
-              <li key={m.id} className="py-2.5 space-y-0.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium text-white">{m.labelVi}</span>
-                  <span className="font-mono text-[#E5E7EB] tabular-nums">
-                    {m.value !== null ? `${m.value} ${m.unit}` : 'DATA_UNAVAILABLE'}
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#E5E7EB]/55">{m.cycleImplication}</p>
-              </li>
-            ))}
-          </ul>
+          {(cycleOverview?.macroTracker ?? []).length === 0 ? (
+            <p className="text-xs text-[#E5E7EB]/55">{t('fr.ov2.macroEmpty')}</p>
+          ) : (
+            <ul className="divide-y divide-[#263244]/70 text-xs">
+              {(cycleOverview?.macroTracker ?? []).map((m) => (
+                <li key={m.id} className="py-2.5 space-y-0.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-medium text-white">{m.labelVi}</span>
+                    <span className="text-[#E5E7EB] tabular-nums text-right">
+                      {m.value === null ? (
+                        <span className="text-[#E5E7EB]/45">{t('fr.ov2.noValue')}</span>
+                      ) : typeof m.value === 'number' ? (
+                        `${fmtNum(m.value, { maximumFractionDigits: 2 })} ${m.unit}`
+                      ) : (
+                        `${m.value} ${m.unit}`
+                      )}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#E5E7EB]/55" title={m.cycleImplication}>
+                    {m.cycleImplication.replace(/^DATA_UNAVAILABLE\s*[—-]\s*/, '')}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
 
-      {/* C. Commodity Performance Heatmap */}
-      <section aria-label="C. Commodity Performance Heatmap" className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-4">
+      {/* C. Performance heatmap */}
+      <section aria-label={t('fr.ov2.heatTitle')} className={`${card} space-y-4`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-sm font-semibold text-white">C. Commodity Performance Heatmap (Hiệu suất Chu kỳ)</h2>
-            <p className="text-xs text-[#E5E7EB]/55">
-              Hiển thị phần trăm biến động thực từ dữ liệu D1 đã nạp (hiển thị — khi chưa đủ lịch sử khung thời gian).
-            </p>
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-white">{t('fr.ov2.heatTitle')}</h2>
+            <p className="text-xs text-[#E5E7EB]/55">{t('fr.ov2.heatSub')}</p>
           </div>
-
-          <div className="flex items-center gap-1 p-1 bg-[#0B0E14] border border-[#263244] rounded-md self-start sm:self-auto">
-            {(Object.keys(HEATMAP_LABELS) as HeatmapHorizon[]).map((h) => (
+          <div className="flex flex-wrap items-center gap-1 p-1 bg-[#0B0E14] border border-[#263244] rounded-md self-start sm:self-auto">
+            {HEATMAP_HORIZONS.map((h) => (
               <button
                 key={h}
                 type="button"
                 onClick={() => setHeatmapHorizon(h)}
-                className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
+                className={`px-2.5 py-1 rounded text-xs transition-colors whitespace-nowrap ${
                   heatmapHorizon === h ? 'bg-[#6366F1] text-white' : 'text-[#E5E7EB]/70 hover:text-white'
                 }`}
               >
-                {HEATMAP_LABELS[h]}
+                {t(`fr.ov2.h.${h}`)}
               </button>
             ))}
           </div>
@@ -503,14 +698,14 @@ export function OverviewDashboard() {
                 key={item.instrument.id}
                 type="button"
                 onClick={() => openInstrumentIn(item.instrument.exchangeSymbol, 'commodity-profile')}
-                className={`text-left border rounded-md p-3 transition-colors hover:border-[#6366F1] ${getHeatmapTone(val)}`}
+                className={`text-left border rounded-md p-3 transition-colors hover:border-[#6366F1] min-w-0 ${getHeatmapTone(val)}`}
               >
-                <div className="flex items-center justify-between gap-1">
+                <div className="flex items-center justify-between gap-1 min-w-0">
                   <span className="text-xs font-semibold text-white truncate">{nameVi}</span>
-                  <span className="text-[10px] font-mono text-[#E5E7EB]/60">{item.instrument.exchangeSymbol}</span>
+                  <span className="text-[10px] text-[#E5E7EB]/60 shrink-0">{item.instrument.exchangeSymbol}</span>
                 </div>
-                <p className="text-base font-mono font-semibold tabular-nums mt-1">
-                  {val !== null ? `${val >= 0 ? '+' : ''}${val.toFixed(2)}%` : '—'}
+                <p className="text-base font-semibold tabular-nums mt-1">
+                  {val !== null ? `${val > 0 ? '▲' : val < 0 ? '▼' : ''} ${fmtPct(val)}` : '—'}
                 </p>
               </button>
             );
@@ -518,199 +713,65 @@ export function OverviewDashboard() {
         </div>
       </section>
 
-      {/* Fail-Closed Market Data Integrity Banner */}
-      <section
-        aria-label="Market Data Integrity Notice"
-        className="bg-[#111622] border border-[#263244] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-      >
-        <div className="flex items-start gap-3">
-          <ShieldAlert
-            className={`w-5 h-5 shrink-0 mt-0.5 ${
-              overallStatus === 'UNAVAILABLE' ? 'text-[#F59E0B]' : 'text-[#6366F1]'
-            }`}
-            aria-hidden="true"
-          />
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-white font-mono">
-              {overallStatus === 'UNAVAILABLE'
-                ? 'DATA_UNAVAILABLE — No verified market data available.'
-                : overallStatus === 'CURRENT'
-                  ? `LIVE_FEED_ACTIVE — ${connectedProviderCount} provider adapter(s) connected & ${datasets.length} OHLCV series loaded.`
-                  : overallStatus === 'DELAYED'
-                    ? `DELAYED_FEED_ACTIVE — ${connectedProviderCount} provider adapter(s) connected (delayed quotes) & ${datasets.length} OHLCV series loaded.`
-                    : `HISTORICAL_MODE — ${datasets.length} validated OHLCV series loaded (not live tick quotes).`}
-            </p>
-            <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">
-              {overallStatus === 'UNAVAILABLE'
-                ? 'Configure TWELVEDATA_API_KEY, FMP_API_KEY, COMMODITIES_API_KEY, ALPHAVANTAGE_API_KEY, EIA_API_KEY, FRED_API_KEY, or MXV_API_KEY in AI Studio Settings > Secrets, or import historical CSV datasets.'
-                : 'Cycle Engine, Bottom Detection Engine, deterministic strategy signals, and AI Verdict operate strictly on verified API/CSV feeds.'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setActiveModule('data-health')}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded-md text-xs font-medium text-[#E5E7EB] whitespace-nowrap"
-          >
-            <span>API Secrets &amp; CSV</span>
-            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
-        </div>
-      </section>
-
-      {/* Primary Two-Column Terminal Grid: Watchlist + Data Health */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <section
-          aria-label="Watchlist Preview"
-          className="xl:col-span-2 bg-[#111622] border border-[#263244] rounded-lg flex flex-col"
-        >
-          <div className="px-4 py-3 border-b border-[#263244] flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-semibold text-white">
-                {marketScope === 'MXV' ? 'Vietnam MXV Commodities Watchlist' : 'Watchlist'}
-              </h2>
-              <p className="text-xs text-[#E5E7EB]/55">
-                Robusta, Arabica, Cao su RSS3, Nông sản, Kim loại &amp; Năng lượng liên thông MXV
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setActiveModule('markets')}
-              className="text-xs font-medium text-[#6366F1] hover:text-[#6366F1]/80 whitespace-nowrap"
-            >
-              Open Full Market Watch
+      {/* Trend for the selected commodity + calendar */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section className={`${card} space-y-2`}>
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="text-sm font-semibold text-white">
+              {(() => {
+                // '{term}' is left unreplaced on purpose so the glossary tooltip can be inserted there.
+                const [before, after] = t('fr.ov.trendTitle', { name: activeName }).split('{term}');
+                return (
+                  <>
+                    {before}
+                    <Term k="volatility">{t('gl.volatility').toLowerCase()}</Term>
+                    {after}
+                  </>
+                );
+              })()}
+            </h2>
+            <button type="button" onClick={() => setActiveModule('technical')} className={linkBtn}>
+              {t('fr.ov.open')}
             </button>
           </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-[#263244] text-xs text-[#E5E7EB]/55">
-                  <th className="py-2.5 px-4 font-medium">Commodity</th>
-                  <th className="py-2.5 px-3 font-medium">Exchange</th>
-                  <th className="py-2.5 px-3 font-medium">MXV Code</th>
-                  <th className="py-2.5 px-3 font-medium text-right">Last Price</th>
-                  <th className="py-2.5 px-4 font-medium text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#263244]/70 text-xs">
-                {loading ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 px-4 text-center text-[#E5E7EB]/55">
-                      Loading instrument master...
-                    </td>
-                  </tr>
-                ) : watchlistPreview.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 px-4 text-center text-[#E5E7EB]/55">
-                      No instruments match the current filter.
-                    </td>
-                  </tr>
-                ) : (
-                  watchlistPreview.map((inst) => {
-                    const quote = quotesBySymbol[inst.exchangeSymbol];
-                    return (
-                      <tr
-                        key={inst.id}
-                        onClick={() => openInstrumentIn(inst.exchangeSymbol, 'commodity-profile')}
-                        className="hover:bg-[#172033]/50 transition-colors cursor-pointer"
-                      >
-                        <td className="py-2.5 px-4">
-                          <div className="font-medium text-white">
-                            {inst.commodityProfile?.vietnameseName ?? inst.productName}
-                          </div>
-                          <div className="text-[11px] text-[#E5E7EB]/50 font-mono">
-                            {inst.exchangeSymbol} · {inst.productName}
-                          </div>
-                        </td>
-                        <td className="py-2.5 px-3 font-mono text-[#E5E7EB]/85">
-                          {inst.exchange}
-                        </td>
-                        <td className="py-2.5 px-3 font-mono text-[#E5E7EB]/70">
-                          {inst.mxvMapping?.mxvSymbol ?? '—'}
-                        </td>
-                        <td className="py-2.5 px-3 font-mono text-right tabular-nums text-[#E5E7EB]/60">
-                          {quote?.price !== null && quote?.price !== undefined
-                            ? `${quote.price.toFixed(2)} ${quote.currency}`
-                            : 'DATA_UNAVAILABLE'}
-                        </td>
-                        <td className="py-2.5 px-4 text-right">
-                          <div className="inline-flex justify-end">
-                            <DataStatusBadge status={quote?.status ?? 'UNAVAILABLE'} compact />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          {techSummary && techSummary.status !== 'UNAVAILABLE' ? (
+            <div className="text-xs text-[#E5E7EB]/80 space-y-1 tabular-nums">
+              <DataStatusBadge status={techSummary.status as 'HISTORICAL'} compact />
+              <p>
+                {t('fr.ov.trendLine', {
+                  trend: label('fr.ov.trend.', techSummary.mainTrend),
+                  regime: label('fr.ov.regime.', techSummary.marketRegime),
+                })}
+              </p>
+              <p>
+                <Term k="rsi" /> (14): {techSummary.rsi14 !== null ? fmtFixed(techSummary.rsi14, 1) : t('common.na')}
+              </p>
+              <p>
+                <Term k="atr" /> (14):{' '}
+                {techSummary.atr14 !== null ? fmtNum(techSummary.atr14, { maximumFractionDigits: 4 }) : t('common.na')}
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">{t('fr.ov.trendNeed', { name: activeName })}</p>
+          )}
         </section>
 
-        <div className="space-y-6">
-          <section
-            aria-label="Data Source Health Summary"
-            className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-white">Data Source Health</h2>
-              <button
-                type="button"
-                onClick={() => setActiveModule('data-health')}
-                className="text-xs text-[#6366F1] hover:text-[#6366F1]/80 whitespace-nowrap"
-              >
-                API Keys &amp; Details
-              </button>
-            </div>
-            <ul className="divide-y divide-[#263244]/70 text-xs">
-              {providers.slice(0, 7).map((provider) => (
-                <li
-                  key={provider.providerId}
-                  className="py-2 flex items-center justify-between gap-2"
-                >
-                  <div className="min-w-0">
-                    <p className="text-[#E5E7EB] truncate">{provider.name}</p>
-                    <p className="text-[11px] font-mono text-[#E5E7EB]/45">
-                      {provider.exchanges.join(', ')}
-                    </p>
-                  </div>
-                  <DataStatusBadge status={provider.dataStatus} compact />
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-white">Vietnam Session Calendar &amp; Macro</h2>
-              <button
-                type="button"
-                onClick={() => setActiveModule('news')}
-                className="text-xs text-[#6366F1] hover:underline"
-              >
-                Open Calendar
-              </button>
-            </div>
-            <DataStatusBadge status={macroCount > 0 || newsCount > 0 ? 'HISTORICAL' : 'UNAVAILABLE'} />
-            <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">
-              {macroCount + newsCount > 0
-                ? `${macroCount} sourced macro record(s) and ${newsCount} news record(s) available alongside live Vietnam ICT sessions & holidays.`
-                : 'Live Vietnam ICT trading sessions & 2026–2027 MXV/US/UK holiday calendar ready; sync EIA/USDA/FRED for macro actuals.'}
+        <section className={`${card} space-y-2`}>
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="text-sm font-semibold text-white">{t('fr.ov2.calTitle')}</h2>
+            <button type="button" onClick={() => setActiveModule('news')} className={linkBtn}>
+              {t('fr.ov.open')}
+            </button>
+          </div>
+          <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">
+            {macroCount + newsCount > 0 ? t('fr.ov2.calHas', { macro: macroCount, news: newsCount }) : t('fr.ov.calDesc')}
+          </p>
+          {datasets[0] && (
+            <p className="text-[11px] text-[#E5E7EB]/50">
+              {t('fr.ov2.lastSync', { time: formatTimestampInZone(datasets[0].importedAt, 'Asia/Ho_Chi_Minh') })}
             </p>
-            {datasets[0] && (
-              <p className="text-[11px] font-mono text-[#E5E7EB]/50">
-                Latest sync: {formatTimestampInZone(datasets[0].importedAt, 'Asia/Ho_Chi_Minh')}
-              </p>
-            )}
-            {techSummary && techSummary.status !== 'UNAVAILABLE' && (
-              <p className="text-[11px] font-mono text-[#E5E7EB]/70">
-                {selectedSymbol}: {techSummary.mainTrend} · {techSummary.marketRegime}
-              </p>
-            )}
-          </section>
-        </div>
+          )}
+        </section>
       </div>
     </div>
   );

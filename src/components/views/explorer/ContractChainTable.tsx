@@ -2,14 +2,20 @@ import type { ChainContract } from '../../../shared/contracts/chain';
 import type { ContractDateResult } from '../../../shared/contracts/expiry';
 import type { ContractChainResponse } from '../../../api/contractsApi';
 import { VerificationBadge } from './VerificationBadge';
+import { fmtDate, useT } from '../../../i18n';
 
 function DateCell({ r }: { r: ContractDateResult }) {
+  const t = useT();
   if (r.status === 'COMPUTED') {
-    return <span className="font-mono tabular-nums text-white">{r.date}</span>;
+    return (
+      <span className="font-mono tabular-nums text-white" title={r.date}>
+        {fmtDate(r.date)}
+      </span>
+    );
   }
   return (
     <span className="font-mono text-[#F59E0B]" title={r.reason}>
-      UNAVAILABLE
+      {t('exp.unavailable')}
     </span>
   );
 }
@@ -32,10 +38,12 @@ function rowWarnings(c: ChainContract): string[] {
 }
 
 export function ContractChainTable({ chain }: { chain: ContractChainResponse }) {
+  const t = useT();
+  const flagLabel = (f: string) => (f === 'YES' ? t('exp.yes') : f === 'NO' ? t('exp.no') : t('exp.na'));
   if (chain.status !== 'OK') {
     return (
       <p className="text-xs font-mono text-[#F59E0B]" role="status">
-        CHAIN_UNAVAILABLE — {chain.reason}
+        {t('exp.chain.unavailable', { reason: chain.reason })}
       </p>
     );
   }
@@ -45,15 +53,17 @@ export function ContractChainTable({ chain }: { chain: ContractChainResponse }) 
         <table className="w-full text-left border-collapse min-w-[860px] text-xs">
           <thead>
             <tr className="border-b border-[#263244] bg-[#172033]/50 text-[#E5E7EB]/65">
-              <th className="py-2 px-3 font-medium">Exchange code</th>
-              <th className="py-2 px-3 font-medium">MXV code</th>
-              <th className="py-2 px-3 font-medium">Month</th>
-              <th className="py-2 px-3 font-medium">Last trading day</th>
-              <th className="py-2 px-3 font-medium">First notice day</th>
-              <th className="py-2 px-3 font-medium text-right">Days to LTD</th>
-              <th className="py-2 px-3 font-medium">Holiday-adjusted</th>
-              <th className="py-2 px-3 font-medium">Calendar</th>
-              <th className="py-2 px-3 font-medium">Warnings</th>
+              <th className="py-2 px-3 font-medium">{t('exp.chain.exchangeCode')}</th>
+              <th className="py-2 px-3 font-medium">{t('exp.chain.mxvCode')}</th>
+              <th className="py-2 px-3 font-medium">{t('exp.chain.month')}</th>
+              <th className="py-2 px-3 font-medium">{t('term.lastTradingDay')}</th>
+              <th className="py-2 px-3 font-medium">{t('term.firstNoticeDay')}</th>
+              <th className="py-2 px-3 font-medium text-right" title={t('exp.chain.daysToLtdTitle')}>
+                {t('exp.chain.daysToLtd')}
+              </th>
+              <th className="py-2 px-3 font-medium">{t('exp.chain.holidayAdjusted')}</th>
+              <th className="py-2 px-3 font-medium">{t('exp.chain.calendar')}</th>
+              <th className="py-2 px-3 font-medium">{t('exp.chain.warnings')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#263244]/70">
@@ -63,7 +73,7 @@ export function ContractChainTable({ chain }: { chain: ContractChainResponse }) 
                 <tr key={c.code} className="hover:bg-[#172033]/40 align-top">
                   <td className="py-2 px-3 font-mono text-white whitespace-nowrap">{c.code}</td>
                   <td className="py-2 px-3 font-mono whitespace-nowrap">
-                    {c.mxvCode ?? <span className="text-[#E5E7EB]/40">UNAVAILABLE</span>}
+                    {c.mxvCode ?? <span className="text-[#E5E7EB]/40">{t('exp.unavailable')}</span>}
                   </td>
                   <td className="py-2 px-3 font-mono text-[#E5E7EB]/75 whitespace-nowrap">{c.contractMonth}</td>
                   <td className="py-2 px-3 whitespace-nowrap">
@@ -73,17 +83,17 @@ export function ContractChainTable({ chain }: { chain: ContractChainResponse }) 
                     <DateCell r={c.firstNoticeDay} />
                   </td>
                   <td className="py-2 px-3 font-mono tabular-nums text-right whitespace-nowrap">
-                    {c.calendarDaysToLastTrade ?? <span className="text-[#E5E7EB]/40">n/a</span>}
+                    {c.calendarDaysToLastTrade ?? <span className="text-[#E5E7EB]/40">{t('exp.na')}</span>}
                   </td>
                   <td className="py-2 px-3 font-mono whitespace-nowrap">
-                    <span className={holidayFlag(c) === 'YES' ? 'text-[#22C55E]' : 'text-[#F59E0B]'}>{holidayFlag(c)}</span>
+                    <span className={holidayFlag(c) === 'YES' ? 'text-[#22C55E]' : 'text-[#F59E0B]'}>{flagLabel(holidayFlag(c))}</span>
                   </td>
                   <td className="py-2 px-3 whitespace-nowrap">
                     <VerificationBadge status={c.calendarStatus} />
                   </td>
                   <td className="py-2 px-3 text-[11px] text-[#F59E0B]/85 max-w-[360px]">
                     {warns.length === 0 ? (
-                      <span className="text-[#E5E7EB]/40">none</span>
+                      <span className="text-[#E5E7EB]/40">{t('exp.none')}</span>
                     ) : (
                       <ul className="list-disc pl-4 space-y-0.5">
                         {warns.map((w) => (

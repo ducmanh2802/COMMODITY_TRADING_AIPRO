@@ -3,6 +3,7 @@ import { ArrowRight, RefreshCw, ShieldAlert } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { ExchangeCode, ProductCategory } from '../../shared/types/instrument';
 import { VerificationBadge } from './explorer/VerificationBadge';
+import { fmtDate, fmtNum, useT } from '../../i18n';
 
 export function ContractExplorerView() {
   const {
@@ -14,6 +15,7 @@ export function ContractExplorerView() {
     timeframe,
     syncProviderFeeds,
   } = useTerminal();
+  const t = useT();
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | ProductCategory>('ALL');
   const [exchangeFilter, setExchangeFilter] = useState<'ALL' | ExchangeCode>('ALL');
 
@@ -36,34 +38,34 @@ export function ContractExplorerView() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-white tracking-tight">
-            Futures Contract Explorer & Commodity Profiles
+            {t('exp.o.title')}
           </h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Verified contract specifications, Vietnam MXV mappings, fundamental drivers, ICT sessions, and external API ticker bindings.
+            {t('exp.o.subtitle')}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <select
-            aria-label="Filter by category"
+            aria-label={t('exp.o.filterCategory')}
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value as 'ALL' | ProductCategory)}
             className="bg-[#111622] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#6366F1]"
           >
-            <option value="ALL">All Categories</option>
-            <option value="AGRICULTURE">Agriculture</option>
-            <option value="SOFT_COMMODITIES">Soft Commodities</option>
-            <option value="METALS">Metals</option>
-            <option value="ENERGY">Energy</option>
+            <option value="ALL">{t('exp.allCategories')}</option>
+            <option value="AGRICULTURE">{t('exp.o.cat.AGRICULTURE')}</option>
+            <option value="SOFT_COMMODITIES">{t('exp.o.cat.SOFT_COMMODITIES')}</option>
+            <option value="METALS">{t('exp.o.cat.METALS')}</option>
+            <option value="ENERGY">{t('exp.o.cat.ENERGY')}</option>
           </select>
 
           <select
-            aria-label="Filter by exchange"
+            aria-label={t('exp.o.filterExchange')}
             value={exchangeFilter}
             onChange={(e) => setExchangeFilter(e.target.value as 'ALL' | ExchangeCode)}
             className="bg-[#111622] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#6366F1]"
           >
-            <option value="ALL">All Exchanges</option>
+            <option value="ALL">{t('exp.allExchanges')}</option>
             <option value="MXV">MXV</option>
             <option value="ICE">ICE</option>
             <option value="CBOT">CBOT</option>
@@ -77,13 +79,13 @@ export function ContractExplorerView() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Contract List (1/3) */}
         <section
-          aria-label="Registered Contracts"
+          aria-label={t('exp.o.registered')}
           className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
         >
           <div className="px-4 py-3 border-b border-[#263244] flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Contracts ({filtered.length})</h2>
+            <h2 className="text-sm font-semibold text-white">{t('exp.o.contractsCount', { n: filtered.length })}</h2>
             <span className="text-xs font-mono text-[#E5E7EB]/50">
-              {instruments.length} Master Specs
+              {t('exp.o.masterSpecs', { n: instruments.length })}
             </span>
           </div>
           <ul className="divide-y divide-[#263244]/70 max-h-[680px] overflow-y-auto p-1.5 space-y-1">
@@ -110,13 +112,14 @@ export function ContractExplorerView() {
                       </div>
                     </div>
                     <span
+                      title={inst.specification.verificationStatus}
                       className={`text-[11px] font-mono shrink-0 ${
                         inst.specification.verificationStatus === 'VERIFIED'
                           ? 'text-[#22C55E]'
                           : 'text-[#F59E0B]'
                       }`}
                     >
-                      {inst.specification.verificationStatus}
+                      {t(`verify.${inst.specification.verificationStatus}`)}
                     </span>
                   </button>
                 </li>
@@ -127,12 +130,12 @@ export function ContractExplorerView() {
 
         {/* Detailed Contract Specification & Commodity Analysis Inspector (2/3) */}
         <section
-          aria-label="Contract Specification Details"
+          aria-label={t('exp.o.details')}
           className="xl:col-span-2 bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-5"
         >
           {!activeContract ? (
             <div className="py-10 text-center text-xs text-[#E5E7EB]/60 font-mono">
-              Select a contract to inspect specifications.
+              {t('exp.o.selectContract')}
             </div>
           ) : (
             <>
@@ -149,7 +152,7 @@ export function ContractExplorerView() {
                     </span>
                   </div>
                   <p className="text-xs text-[#E5E7EB]/60 mt-1 font-mono">
-                    ID: {activeContract.id} · Source: {activeContract.specification.dataSource}
+                    {t('exp.o.idSource', { id: activeContract.id, source: activeContract.specification.dataSource })}
                   </p>
                 </div>
 
@@ -166,14 +169,14 @@ export function ContractExplorerView() {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded-md text-xs text-white disabled:opacity-50"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} aria-hidden="true" />
-                    <span>Sync {activeContract.exchangeSymbol}</span>
+                    <span>{t('exp.o.sync', { symbol: activeContract.exchangeSymbol })}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => openInstrumentIn(activeContract.exchangeSymbol, 'charts')}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded-md text-xs text-white"
                   >
-                    <span>Chart</span>
+                    <span>{t('exp.o.chart')}</span>
                     <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                   <button
@@ -181,7 +184,7 @@ export function ContractExplorerView() {
                     onClick={() => openInstrumentIn(activeContract.exchangeSymbol, 'risk')}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded-md text-xs font-medium text-white"
                   >
-                    <span>Size Position</span>
+                    <span>{t('exp.o.sizePosition')}</span>
                     <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
@@ -192,61 +195,61 @@ export function ContractExplorerView() {
                   <ShieldAlert className="w-4 h-4 text-[#F59E0B] shrink-0 mt-0.5" aria-hidden="true" />
                   <div className="text-xs text-[#E5E7EB]/80">
                     <span className="font-mono font-semibold text-[#F59E0B]">
-                      {activeContract.specification.verificationStatus}:
+                      {t(`verify.${activeContract.specification.verificationStatus}`)} ({activeContract.specification.verificationStatus}):
                     </span>{' '}
-                    Contract size, tick size, and tick value are not verified for automated sizing. Risk & Backtest engines reject this contract until verified specs are supplied.
+                    {t('exp.o.unverifiedWarn')}
                   </div>
                 </div>
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
                 <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-3">
-                  <p className="text-[#E5E7EB]/55">Contract Size</p>
+                  <p className="text-[#E5E7EB]/55">{t('term.contractSize')}</p>
                   <p className="font-mono text-sm text-white mt-1 tabular-nums">
                     {activeContract.specification.contractSize !== null
-                      ? `${activeContract.specification.contractSize.toLocaleString()} ${activeContract.specification.contractSizeUnit}`
-                      : 'UNAVAILABLE'}
+                      ? `${fmtNum(activeContract.specification.contractSize)} ${activeContract.specification.contractSizeUnit}`
+                      : t('exp.unavailable')}
                   </p>
                 </div>
 
                 <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-3">
-                  <p className="text-[#E5E7EB]/55">Minimum Tick Size</p>
+                  <p className="text-[#E5E7EB]/55">{t('exp.o.minTick')}</p>
                   <p className="font-mono text-sm text-white mt-1 tabular-nums">
                     {activeContract.specification.minimumTickSize !== null
-                      ? activeContract.specification.minimumTickSize
-                      : 'UNAVAILABLE'}
+                      ? fmtNum(activeContract.specification.minimumTickSize)
+                      : t('exp.unavailable')}
                   </p>
                 </div>
 
                 <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-3">
-                  <p className="text-[#E5E7EB]/55">Tick Value</p>
+                  <p className="text-[#E5E7EB]/55">{t('term.tickValue')}</p>
                   <p className="font-mono text-sm text-white mt-1 tabular-nums">
                     {activeContract.specification.tickValue !== null
-                      ? `${activeContract.specification.tickValue} ${activeContract.specification.tradingCurrency}`
-                      : 'UNAVAILABLE'}
+                      ? `${fmtNum(activeContract.specification.tickValue)} ${activeContract.specification.tradingCurrency}`
+                      : t('exp.unavailable')}
                   </p>
                 </div>
 
                 <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-3">
-                  <p className="text-[#E5E7EB]/55">Quotation & Currency</p>
+                  <p className="text-[#E5E7EB]/55">{t('exp.o.quotationCurrency')}</p>
                   <p className="font-mono text-sm text-white mt-1">
                     {activeContract.specification.quotationUnit} ({activeContract.specification.tradingCurrency})
                   </p>
                 </div>
 
                 <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-3">
-                  <p className="text-[#E5E7EB]/55">Settlement Method</p>
+                  <p className="text-[#E5E7EB]/55">{t('exp.o.settlementMethod')}</p>
                   <p className="font-mono text-sm text-white mt-1">
                     {activeContract.specification.settlementMethod}
                   </p>
                 </div>
 
                 <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-3">
-                  <p className="text-[#E5E7EB]/55">Exchange Margin Requirement</p>
+                  <p className="text-[#E5E7EB]/55">{t('exp.o.margin')}</p>
                   <p className="font-mono text-sm text-[#F59E0B] mt-1">
                     {activeContract.specification.marginRequirement !== null
-                      ? `${activeContract.specification.marginRequirement} ${activeContract.specification.marginCurrency ?? 'USD'}`
-                      : 'UNAVAILABLE (Clearing Check Req.)'}
+                      ? `${fmtNum(activeContract.specification.marginRequirement)} ${activeContract.specification.marginCurrency ?? 'USD'}`
+                      : t('exp.o.marginUnavailable')}
                   </p>
                 </div>
               </div>
@@ -311,38 +314,38 @@ export function ContractExplorerView() {
               {/* External API Ticker Bindings */}
               {mappings && (
                 <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-4 space-y-2.5 text-xs">
-                  <p className="font-semibold text-white">External API & Server Secret Ticker Bindings</p>
+                  <p className="font-semibold text-white">{t('exp.o.bindings')}</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 font-mono">
                     <div className="bg-[#111622] border border-[#263244] rounded p-2">
-                      <span className="text-[10px] text-[#E5E7EB]/50 block">MXV Code</span>
-                      <span className="text-white">{mappings.mxvCode ?? 'N/A'}</span>
+                      <span className="text-[10px] text-[#E5E7EB]/50 block">{t('exp.chain.mxvCode')}</span>
+                      <span className="text-white">{mappings.mxvCode ?? t('common.na')}</span>
                     </div>
                     <div className="bg-[#111622] border border-[#263244] rounded p-2">
                       <span className="text-[10px] text-[#E5E7EB]/50 block">Twelve Data</span>
-                      <span className="text-white">{mappings.twelveDataSymbol ?? 'UNMAPPED'}</span>
+                      <span className="text-white">{mappings.twelveDataSymbol ?? t('exp.o.unmapped')}</span>
                     </div>
                     <div className="bg-[#111622] border border-[#263244] rounded p-2">
                       <span className="text-[10px] text-[#E5E7EB]/50 block">FMP (/stable)</span>
-                      <span className="text-white">{mappings.fmpSymbol ?? 'UNMAPPED'}</span>
+                      <span className="text-white">{mappings.fmpSymbol ?? t('exp.o.unmapped')}</span>
                     </div>
                     <div className="bg-[#111622] border border-[#263244] rounded p-2">
                       <span className="text-[10px] text-[#E5E7EB]/50 block">Commodities-API</span>
-                      <span className="text-white">{mappings.commoditiesApiSymbol ?? 'UNMAPPED'}</span>
+                      <span className="text-white">{mappings.commoditiesApiSymbol ?? t('exp.o.unmapped')}</span>
                     </div>
                     <div className="bg-[#111622] border border-[#263244] rounded p-2">
                       <span className="text-[10px] text-[#E5E7EB]/50 block">Alpha Vantage</span>
-                      <span className="text-white">{mappings.alphaVantageFunction ?? 'UNMAPPED'}</span>
+                      <span className="text-white">{mappings.alphaVantageFunction ?? t('exp.o.unmapped')}</span>
                     </div>
                     <div className="bg-[#111622] border border-[#263244] rounded p-2">
                       <span className="text-[10px] text-[#E5E7EB]/50 block">EIA / USDA</span>
                       <span className="text-white">
-                        {mappings.eiaSeriesType ?? mappings.usdaCommodity ?? 'NONE'}
+                        {mappings.eiaSeriesType ?? mappings.usdaCommodity ?? t('common.none')}
                       </span>
                     </div>
                   </div>
                   {(mappings.alphaVantageNote || mappings.twelveDataNote) && (
                     <p className="text-[11px] text-[#F59E0B] leading-relaxed">
-                      Proxy transparency: {mappings.twelveDataNote ?? mappings.alphaVantageNote}
+                      {t('exp.o.proxy', { note: mappings.twelveDataNote ?? mappings.alphaVantageNote })}
                     </p>
                   )}
                 </div>
@@ -350,40 +353,48 @@ export function ContractExplorerView() {
 
               <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-4 space-y-2 text-xs">
                 <p className="text-[#E5E7EB]/55">
-                  Trading Hours ({activeContract.specification.tradingHoursTimezone})
+                  {t('exp.o.tradingHours', { tz: activeContract.specification.tradingHoursTimezone })}
                 </p>
                 <p className="font-mono text-[#E5E7EB]">
                   {activeContract.specification.tradingHoursSummary}
                 </p>
                 <div className="pt-2 border-t border-[#263244] flex flex-wrap gap-6 font-mono text-[#E5E7EB]/70">
                   <span>
-                    Expiration Date: {activeContract.specification.expirationDate ?? 'CONTINUOUS / UNAVAILABLE'}
+                    {t('exp.o.expiration', {
+                      v: activeContract.specification.expirationDate
+                        ? fmtDate(activeContract.specification.expirationDate)
+                        : t('exp.o.continuous'),
+                    })}
                   </span>
                   <span>
-                    First Notice Date: {activeContract.specification.firstNoticeDate ?? 'UNAVAILABLE'}
+                    {t('exp.o.firstNotice', {
+                      v: activeContract.specification.firstNoticeDate
+                        ? fmtDate(activeContract.specification.firstNoticeDate)
+                        : t('exp.unavailable'),
+                    })}
                   </span>
                 </div>
               </div>
 
               <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-4 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
-                  <p className="font-semibold text-white">Vietnam MXV Contract Mapping</p>
+                  <p className="font-semibold text-white">{t('exp.o.mxvMapping')}</p>
                   {/* Mapping verification status (not a market-data freshness status). */}
                   <VerificationBadge
                     status={activeContract.mxvMapping?.mappingStatus ?? 'UNAVAILABLE'}
-                    title="MXV mapping verification status"
+                    title={t('exp.o.mxvMappingTitle')}
                   />
                 </div>
                 {activeContract.mxvMapping ? (
                   <div className="space-y-1">
                     <p className="font-mono text-[#E5E7EB]">
-                      MXV Symbol: {activeContract.mxvMapping.mxvSymbol ?? 'NONE'}
+                      {t('exp.o.mxvSymbol', { v: activeContract.mxvMapping.mxvSymbol ?? t('common.none') })}
                     </p>
                     <p className="text-[#E5E7EB]/65">{activeContract.mxvMapping.notes}</p>
                   </div>
                 ) : (
                   <p className="text-[#E5E7EB]/60">
-                    No MXV-listed contract mapping recorded for this instrument.
+                    {t('exp.o.noMxv')}
                   </p>
                 )}
               </div>

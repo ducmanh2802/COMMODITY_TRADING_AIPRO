@@ -261,7 +261,8 @@ test('GET /api/data/health-report & /api/fundamental/records?asOf= work end-to-e
     assert.equal(fundBefore.domains.length, 8);
 
     const report = await (await fetch(`${baseUrl}/api/data/health-report`)).json();
-    assert.equal(report.coverageSummary.totalCommodities, 20);
+    // 20 Instrument Master ids + the owner-added MXV:JRU (rubber, UNVERIFIED) merged in from origin/main.
+    assert.equal(report.coverageSummary.totalCommodities, 21);
     assert.equal(report.exchangeAdapters.length, 6);
     assert.equal(report.fundamentalDomains.length, 8);
     assert.equal(report.engineReadiness.length, 5);

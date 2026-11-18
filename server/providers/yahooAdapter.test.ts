@@ -15,6 +15,9 @@ import {
 import { ProviderRegistry } from './registry.ts';
 import { InMemoryCandleRepository } from '../storage/candleRepository.ts';
 import { INITIAL_INSTRUMENTS } from '../data/instruments.ts';
+import { historicalCandleStore } from '../services/candleStore.ts';
+import { loadEngineCandles } from '../services/engineCandles.ts';
+import { CONTINUOUS_CONTRACT_CODE } from '../storage/candleRepository.ts';
 
 /** One real response (see __fixtures__/yahoo/README.md for URL and fetch time). */
 const FIXTURE_TEXT = readFileSync(
@@ -338,5 +341,129 @@ test('registry: Yahoo is last in the live chain; STALE fallback; syncAll persist
     assert.equal(ds.contractCode, 'VENDOR_YAHOO');
     assert.equal(ds.sourceQuality, 'UNOFFICIAL');
     assert.equal(ds.priceUnit, 'cents/bushel');
+  });
+});
+
+test('quotes are stale-while-revalidate: slow Yahoo never blocks, one refresh per symbol, labels stay honest', async () => {
+  await withEnv({ YAHOO_ENABLED: 'true' }, async () => {
+    // Earlier tests persist ZC candles into the process-wide store; start from a truly cold cache.
+    historicalCandleStore.clearAll();
+    const zc = INITIAL_INSTRUMENTS.find((i) => i.exchangeSymbol === 'ZC')!;
+    let release!: () => void;
+    let gate = new Promise<void>((r) => (release = r));
+    const h = harness(async () => {
+      await gate;
+      return json(fixture());
+    });
+    const registry = new ProviderRegistry({ yahoo: h.options, yahooQuoteWaitMs: 20 });
+
+    // Cold cache, Yahoo hanging: answer quickly without a price, never DELAYED/CURRENT.
+    const started = performance.now();
+    const [a, b] = await Promise.all([registry.getQuoteForInstrument(zc), registry.getQuoteForInstrument(zc)]);
+    assert.ok(performance.now() - started < 1000, 'did not wait for Yahoo');
+    for (const q of [a, b]) {
+      assert.equal(q.price, null);
+      assert.notEqual(q.status, 'DELAYED');
+      assert.notEqual(q.status, 'CURRENT');
+    }
+    assert.equal(h.calls.length, 1, 'concurrent requests share one background refresh');
+
+    // Refresh lands in the background; the next read is served from cache.
+    release();
+    await registry.waitForBackgroundRefreshes();
+    const warm = await registry.getQuoteForInstrument(zc);
+    assert.equal(warm.status, 'DELAYED');
+    assert.equal(warm.price, 448.75);
+    assert.equal(h.calls.length, 1);
+
+    // TTL expired and the market timestamp is now beyond delay + margin: the cached price is returned
+    // immediately, re-labelled STALE (not DELAYED), while a refresh runs in the background.
+    gate = new Promise<void>((r) => (release = r));
+    h.clock.t = FIXTURE_MARKET_TIME_MS + 40 * MIN;
+    const stale = await registry.getQuoteForInstrument(zc);
+    assert.equal(stale.status, 'STALE');
+    assert.equal(stale.price, 448.75);
+    assert.equal(stale.timestamp, '2026-11-17T17:57:59.000Z', 'market timestamp, not retrieval time');
+    assert.match(stale.statusReason ?? '', /refreshing in background/);
+    assert.equal(h.calls.length, 2);
+    release();
+    await registry.waitForBackgroundRefreshes();
+  });
+});
+
+test('failed background refresh backs off instead of refetching on every request', async () => {
+  await withEnv({ YAHOO_ENABLED: 'true' }, async () => {
+    const zc = INITIAL_INSTRUMENTS.find((i) => i.exchangeSymbol === 'ZC')!;
+    const h = harness(() => json({}, 500));
+    const adapter = new YahooFinanceAdapter({ ...h.options, maxRetries: 0 });
+    const first = await adapter.getQuoteStaleWhileRevalidate(zc, 1000);
+    assert.equal(first.quote.price, null);
+    assert.equal(h.calls.length, 1);
+    const second = await adapter.getQuoteStaleWhileRevalidate(zc, 1000);
+    assert.equal(second.quote.price, null);
+    assert.match(second.quote.statusReason ?? '', /paused after failure/);
+    assert.equal(h.calls.length, 1, 'no new request during the back-off window');
+    h.clock.t += 61_000;
+    await adapter.getQuoteStaleWhileRevalidate(zc, 1000);
+    assert.equal(h.calls.length, 2, 'retried after one TTL');
+  });
+});
+
+test('T33: Yahoo history backfills 10y then refreshes incrementally; engineCandles serves it; CSV keeps priority', async () => {
+  await withEnv({ YAHOO_ENABLED: 'true' }, async () => {
+    const zc = INITIAL_INSTRUMENTS.find((i) => i.exchangeSymbol === 'ZC')!;
+    const urls: string[] = [];
+    const nowMs = Date.parse('2026-11-18T06:00:00Z');
+    const h = harness((url) => {
+      urls.push(url);
+      return json(fixture());
+    }, nowMs);
+    const repo = new InMemoryCandleRepository();
+    const registry = new ProviderRegistry({ candles: repo, yahoo: h.options });
+
+    const first = await registry.syncYahooHistory([zc], () => nowMs);
+    assert.equal(first.enabled, true);
+    assert.match(urls[0], /range=10y&interval=1d$/);
+    assert.equal(first.results[0].status, 'PERSISTED');
+    assert.equal(first.results[0].rowsWritten, 4);
+
+    const second = await registry.syncYahooHistory([zc], () => nowMs);
+    assert.match(urls[1], /range=1mo&interval=1d$/); // incremental: history exists
+    assert.equal(second.results[0].status, 'UP_TO_DATE');
+    assert.equal(second.results[0].rowsWritten, 0);
+
+    const [ds] = await repo.listDatasets({ instrumentId: zc.id });
+    assert.match(ds.sourceLabel, /NOT roll-adjusted/);
+    assert.match(ds.sourceLabel, /UNOFFICIAL/);
+
+    const served = await loadEngineCandles(repo, zc, 'D1');
+    assert.equal(served.origin, 'SQLITE');
+    assert.equal(served.candles.length, 4);
+    assert.ok(served.meta?.warnings.some((w) => /NOT roll-adjusted/.test(w)));
+
+    // CSV (CONTINUOUS) series takes priority over Yahoo once it exists.
+    await repo.commitImport(
+      {
+        ...ds,
+        id: 'csv-1',
+        contractCode: CONTINUOUS_CONTRACT_CODE,
+        sourceLabel: 'csv',
+        sourceQuality: 'USER_IMPORTED' as typeof ds.sourceQuality,
+        rowCount: 1,
+        firstTimestamp: '2026-11-10T00:00:00.000Z',
+        lastTimestamp: '2026-11-10T00:00:00.000Z',
+      },
+      [{ timestampMs: Date.parse('2026-11-10T00:00:00Z'), open: 1, high: 2, low: 1, close: 2, volume: null, openInterest: null }],
+      'append'
+    );
+    const csv = await loadEngineCandles(repo, zc, 'D1');
+    assert.equal(csv.candles.length, 1);
+  });
+  // Disabled: no fetch, nothing persisted.
+  await withEnv({ YAHOO_ENABLED: undefined }, async () => {
+    const zc = INITIAL_INSTRUMENTS.find((i) => i.exchangeSymbol === 'ZC')!;
+    const h = harness(() => assert.fail('must not fetch'));
+    const registry = new ProviderRegistry({ candles: new InMemoryCandleRepository(), yahoo: h.options });
+    assert.equal((await registry.syncYahooHistory([zc])).enabled, false);
   });
 });

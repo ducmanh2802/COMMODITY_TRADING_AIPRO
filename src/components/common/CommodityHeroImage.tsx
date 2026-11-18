@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Wheat, Flame, Gem, Sprout } from 'lucide-react';
-import { getCommodityVisual } from '../../shared/data/commodityVisuals';
+import {
+  COMMODITY_IMAGE_HEIGHT,
+  COMMODITY_IMAGE_WIDTH,
+  getCommodityVisual,
+} from '../../shared/data/commodityVisuals';
 import type { ProductCategory } from '../../shared/types/instrument';
 
 interface CommodityHeroImageProps {
@@ -61,7 +65,10 @@ export function CommodityHeroImage({
         src={visual.imageUrl}
         alt={visual.imageAlt}
         referrerPolicy="no-referrer"
+        width={COMMODITY_IMAGE_WIDTH}
+        height={COMMODITY_IMAGE_HEIGHT}
         loading={priority ? 'eager' : 'lazy'}
+        decoding="async"
         onError={() => setErrored(true)}
         className={`w-full h-full object-cover ${imgClassName}`}
       />

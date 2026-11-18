@@ -17,6 +17,7 @@ import {
 import type { ChainContract } from '../../../shared/contracts/chain';
 import { utcDateOfTimestamp } from '../../../shared/contracts/dates';
 import { parseContractCode } from '../../../shared/contracts/monthCodes';
+import { tr } from '../../../i18n';
 import {
   buildTermStructure,
   type CurvePointInput,
@@ -67,7 +68,7 @@ export function groupContractDatasets(
       if (!skipped.some((s) => s.contract === d.contractCode)) {
         skipped.push({
           contract: d.contractCode,
-          reason: `Not an individual contract code for roots ${roots.join('/')} (expected ROOT + month code + year).`,
+          reason: tr('ts.r.notContractCode', { roots: roots.join('/') }),
         });
       }
       continue;
@@ -99,14 +100,14 @@ export async function loadCurveSnapshot(
   const { contracts, skipped } = groupContractDatasets(instrument, datasets, Number(asOf.slice(0, 4)));
   snapshot.excluded.push(...skipped);
   if (contracts.length === 0) {
-    snapshot.unavailableReason = `DATA_UNAVAILABLE — no ${CURVE_TIMEFRAME} datasets for individual ${instrument.exchangeSymbol} contracts have been imported.`;
+    snapshot.unavailableReason = tr('ts.r.noDatasets', { tf: CURVE_TIMEFRAME, symbol: instrument.exchangeSymbol });
     return snapshot;
   }
 
   const chain = await fetchContractChain(instrument.id, { asOf, count: 36 }, signal);
   if (chain.status !== 'OK') {
-    snapshot.unavailableReason = `Contract chain unavailable: ${chain.reason}`;
-    snapshot.excluded.push(...contracts.map((c) => ({ contract: c.code, reason: 'No expiry date: contract chain unavailable.' })));
+    snapshot.unavailableReason = tr('ts.r.chainUnavailable', { reason: chain.reason });
+    snapshot.excluded.push(...contracts.map((c) => ({ contract: c.code, reason: tr('ts.r.noExpiry') })));
     return snapshot;
   }
   snapshot.chainWarnings = chain.warnings;
@@ -120,12 +121,12 @@ export async function loadCurveSnapshot(
       if (!link) {
         snapshot.excluded.push({
           contract: c.code,
-          reason: `Not in the contract chain as of ${asOf} (already expired, not a listed month, or beyond the encoded listing horizon).`,
+          reason: tr('ts.r.notInChain', { asOf }),
         });
         return;
       }
       if (link.lastTradingDay.status !== 'COMPUTED') {
-        snapshot.excluded.push({ contract: c.code, reason: `Last trading day unavailable: ${link.lastTradingDay.reason}` });
+        snapshot.excluded.push({ contract: c.code, reason: tr('ts.r.ltdUnavailable', { reason: link.lastTradingDay.reason }) });
         return;
       }
       try {
@@ -142,11 +143,11 @@ export async function loadCurveSnapshot(
         );
         const bar = res.candles.find((k) => utcDateOfTimestamp(k.timestamp) === asOf);
         if (!bar) {
-          snapshot.excluded.push({ contract: c.code, reason: `No ${CURVE_TIMEFRAME} bar dated exactly ${asOf}.` });
+          snapshot.excluded.push({ contract: c.code, reason: tr('ts.r.noBar', { tf: CURVE_TIMEFRAME, asOf }) });
           return;
         }
         if (!Number.isFinite(bar.close)) {
-          snapshot.excluded.push({ contract: c.code, reason: `Close on ${asOf} is not a finite number.` });
+          snapshot.excluded.push({ contract: c.code, reason: tr('ts.r.closeNotFinite', { asOf }) });
           return;
         }
         if (res.priceUnit) units.add(res.priceUnit);
@@ -160,7 +161,7 @@ export async function loadCurveSnapshot(
         });
       } catch (err) {
         if (signal?.aborted) throw err;
-        snapshot.excluded.push({ contract: c.code, reason: `Candle request failed: ${errorMessage(err)}` });
+        snapshot.excluded.push({ contract: c.code, reason: tr('ts.r.candleFailed', { error: errorMessage(err) }) });
       }
     })
   );
@@ -169,11 +170,11 @@ export async function loadCurveSnapshot(
   snapshot.excluded.sort((a, b) => a.contract.localeCompare(b.contract));
 
   if (snapshot.included.length < 2) {
-    snapshot.unavailableReason = `Only ${snapshot.included.length} contract(s) have a ${CURVE_TIMEFRAME} close on ${asOf}; at least two are required for a curve.`;
+    snapshot.unavailableReason = tr('ts.r.tooFew', { n: snapshot.included.length, tf: CURVE_TIMEFRAME, asOf });
     return snapshot;
   }
   if (units.size > 1) {
-    snapshot.unavailableReason = `Contracts were imported with different price units (${[...units].join(', ')}); refusing to mix them on one curve.`;
+    snapshot.unavailableReason = tr('ts.r.mixedUnits', { units: [...units].join(', ') });
     return snapshot;
   }
   snapshot.result = buildTermStructure(

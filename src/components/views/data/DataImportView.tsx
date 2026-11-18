@@ -22,6 +22,7 @@ import {
   type ImportRequest,
   type SourceQuality,
 } from '../../../api/dataApi';
+import { fmtInt, tr, useT } from '../../../i18n';
 import { ConfirmDeleteDialog, DatasetTable } from './DatasetTable';
 import { ImportReportPanel } from './ImportReportPanel';
 
@@ -37,7 +38,6 @@ const COMMON_TIMEZONES = [
   'Asia/Tokyo',
   'UTC',
 ];
-const MONTH_CODES = 'F=Jan G=Feb H=Mar J=Apr K=May M=Jun N=Jul Q=Aug U=Sep V=Oct X=Nov Z=Dec';
 
 const inputCls =
   'w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs text-[#E5E7EB] placeholder:text-[#E5E7EB]/35 focus:outline-none focus:border-[#6366F1] disabled:opacity-50';
@@ -97,11 +97,12 @@ interface ReportState {
 function errorText(err: unknown): string {
   if (err instanceof ApiError) return err.message;
   if (err instanceof Error) return err.message;
-  return 'Unexpected error.';
+  return tr('data.err.unexpected');
 }
 
 export function DataImportView() {
   const { instruments, loading: instrumentsLoading } = useTerminal();
+  const t = useT();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [file, setFile] = useState<LoadedFile | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -142,14 +143,14 @@ export function DataImportView() {
   const isContinuous = contractCode === 'CONTINUOUS';
 
   const missing: string[] = [];
-  if (!file) missing.push('CSV file');
-  if (!form.instrumentId) missing.push('instrument');
-  if (!contractCode) missing.push('contract code');
-  else if (!/^[A-Z0-9._-]{1,32}$/.test(contractCode)) missing.push('valid contract code (A–Z, 0–9, . _ -)');
-  if (isContinuous && !form.continuousAdjustment) missing.push('continuous adjustment');
-  if (!timezone) missing.push('source timezone');
-  if (!form.sourceLabel.trim()) missing.push('source label');
-  if (!form.sourceQuality) missing.push('source quality');
+  if (!file) missing.push(t('data.missing.file'));
+  if (!form.instrumentId) missing.push(t('data.missing.instrument'));
+  if (!contractCode) missing.push(t('data.missing.contract'));
+  else if (!/^[A-Z0-9._-]{1,32}$/.test(contractCode)) missing.push(t('data.missing.validContract'));
+  if (isContinuous && !form.continuousAdjustment) missing.push(t('data.missing.adjustment'));
+  if (!timezone) missing.push(t('data.missing.timezone'));
+  if (!form.sourceLabel.trim()) missing.push(t('data.missing.sourceLabel'));
+  if (!form.sourceQuality) missing.push(t('data.missing.sourceQuality'));
 
   const request = ((): Omit<ImportRequest, 'dryRun'> | null => {
     if (missing.length > 0 || !file || !form.sourceQuality) return null;
@@ -184,7 +185,7 @@ export function DataImportView() {
     setFile(null);
     if (!f) return;
     if (f.size > MAX_FILE_BYTES) {
-      setFileError(`File is ${(f.size / 1024 / 1024).toFixed(1)} MB — the limit is 10 MB. Split the file and import in parts.`);
+      setFileError(t('data.file.tooBig', { mb: (f.size / 1024 / 1024).toFixed(1) }));
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -192,12 +193,12 @@ export function DataImportView() {
     reader.onload = () => {
       const text = typeof reader.result === 'string' ? reader.result : '';
       if (!text.trim()) {
-        setFileError('File is empty.');
+        setFileError(t('data.file.empty'));
         return;
       }
       setFile({ id: nextFileId++, name: f.name, size: f.size, text });
     };
-    reader.onerror = () => setFileError('Could not read the file.');
+    reader.onerror = () => setFileError(t('data.file.readError'));
     reader.readAsText(f);
   };
 
@@ -251,14 +252,14 @@ export function DataImportView() {
     <div className="space-y-5">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">Data Import</h1>
+          <h1 className="text-xl font-semibold text-white tracking-tight">{t('data.title')}</h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Import historical OHLCV from CSV. Rows are validated, never corrected: a bad line rejects the whole file.
+            {t('data.subtitle')}
           </p>
         </div>
         <div className="w-full md:w-80">
           <label htmlFor="admin-token" className={`${labelCls} flex items-center gap-1.5`}>
-            <KeyRound className="w-3.5 h-3.5" aria-hidden="true" /> Admin token
+            <KeyRound className="w-3.5 h-3.5" aria-hidden="true" /> {t('data.adminToken')}
           </label>
           <input
             id="admin-token"
@@ -266,10 +267,10 @@ export function DataImportView() {
             autoComplete="off"
             value={token}
             onChange={(e) => saveToken(e.target.value)}
-            placeholder="Required for import/delete on non-local servers"
+            placeholder={t('data.adminTokenPlaceholder')}
             className={inputCls}
           />
-          <p className={hintCls}>Kept in sessionStorage for this tab only; sent as Authorization: Bearer.</p>
+          <p className={hintCls}>{t('data.adminTokenHint')}</p>
         </div>
       </div>
 
@@ -283,7 +284,7 @@ export function DataImportView() {
         {/* File */}
         <div>
           <label htmlFor="csv-file" className={labelCls}>
-            CSV file (≤ 10 MB)
+            {t('data.file.label')}
           </label>
           <div className="flex flex-wrap items-center gap-3">
             <input
@@ -297,7 +298,7 @@ export function DataImportView() {
             {file && (
               <span className="inline-flex items-center gap-1.5 text-xs font-mono text-[#E5E7EB]/70">
                 <FileUp className="w-3.5 h-3.5 text-[#6366F1]" aria-hidden="true" />
-                {file.name} · {(file.size / 1024).toFixed(1)} KB · {file.text.split(/\r?\n/).length.toLocaleString()} lines
+                {file.name} · {(file.size / 1024).toFixed(1)} KB · {t('data.file.lines', { n: fmtInt(file.text.split(/\r?\n/).length) })}
               </span>
             )}
           </div>
@@ -307,7 +308,7 @@ export function DataImportView() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <div>
             <label htmlFor="imp-instrument" className={labelCls}>
-              Instrument
+              {t('data.instrument')}
             </label>
             <select
               id="imp-instrument"
@@ -315,7 +316,7 @@ export function DataImportView() {
               onChange={(e) => update('instrumentId', e.target.value)}
               className={inputCls}
             >
-              <option value="">{instrumentsLoading ? 'Loading…' : 'Select instrument…'}</option>
+              <option value="">{instrumentsLoading ? t('common.loading') : t('data.selectInstrument')}</option>
               {instruments.map((i) => (
                 <option key={i.id} value={i.id}>
                   {i.exchange}:{i.exchangeSymbol} — {i.productName}
@@ -326,25 +327,25 @@ export function DataImportView() {
 
           <div>
             <label htmlFor="imp-contract" className={labelCls}>
-              Contract code
+              {t('data.contractCode')}
             </label>
             <input
               id="imp-contract"
               value={form.contractCode}
               onChange={(e) => update('contractCode', e.target.value)}
-              placeholder="e.g. ZCH25 or CONTINUOUS"
+              placeholder={t('data.contractCodePlaceholder')}
               className={`${inputCls} font-mono uppercase`}
               list="contract-code-suggestions"
             />
             <datalist id="contract-code-suggestions">
               <option value="CONTINUOUS" />
             </datalist>
-            <p className={hintCls}>Root + month code + year. {MONTH_CODES}</p>
+            <p className={hintCls}>{t('data.contractCodeHint', { codes: t('data.monthCodes') })}</p>
           </div>
 
           <div>
             <label htmlFor="imp-adjust" className={labelCls}>
-              Continuous adjustment
+              {t('data.adjustment')}
             </label>
             <select
               id="imp-adjust"
@@ -353,19 +354,19 @@ export function DataImportView() {
               disabled={!isContinuous}
               className={inputCls}
             >
-              <option value="">{isContinuous ? 'Select (required)…' : 'NONE (specific contract)'}</option>
+              <option value="">{isContinuous ? t('data.adjustment.required') : t('data.adjustment.none')}</option>
               {CONTINUOUS_ADJUSTMENTS.map((a) => (
                 <option key={a} value={a}>
-                  {a}
+                  {a} — {t(`data.adj.${a}`)}
                 </option>
               ))}
             </select>
-            <p className={hintCls}>Only for CONTINUOUS series.</p>
+            <p className={hintCls}>{t('data.adjustment.hint')}</p>
           </div>
 
           <div>
             <label htmlFor="imp-tf" className={labelCls}>
-              Timeframe
+              {t('data.timeframe')}
             </label>
             <select
               id="imp-tf"
@@ -383,7 +384,7 @@ export function DataImportView() {
 
           <div>
             <label htmlFor="imp-tz" className={labelCls}>
-              Source timezone <span className="text-[#EF4444]">*</span>
+              {t('data.timezone')} <span className="text-[#EF4444]">*</span>
             </label>
             <select
               id="imp-tz"
@@ -392,31 +393,31 @@ export function DataImportView() {
               className={inputCls}
               required
             >
-              <option value="">Select timezone…</option>
+              <option value="">{t('data.selectTimezone')}</option>
               {COMMON_TIMEZONES.map((tz) => (
                 <option key={tz} value={tz}>
                   {tz}
                 </option>
               ))}
-              <option value={OTHER_TZ}>Other IANA zone…</option>
+              <option value={OTHER_TZ}>{t('data.otherTimezone')}</option>
             </select>
             {form.tzChoice === OTHER_TZ && (
               <input
-                aria-label="Custom IANA timezone"
+                aria-label={t('data.customTimezone')}
                 value={form.tzCustom}
                 onChange={(e) => update('tzCustom', e.target.value)}
-                placeholder="e.g. Europe/Berlin"
+                placeholder={t('data.timezonePlaceholder')}
                 className={`${inputCls} mt-2 font-mono`}
               />
             )}
             <p className={hintCls}>
-              Timezone of the source file’s timestamps. D1/W1 bars keep the session date as written; intraday bars are converted to UTC.
+              {t('data.timezoneHint')}
             </p>
           </div>
 
           <div>
             <label htmlFor="imp-datefmt" className={labelCls}>
-              Date format
+              {t('data.dateFormat')}
             </label>
             <select
               id="imp-datefmt"
@@ -424,7 +425,7 @@ export function DataImportView() {
               onChange={(e) => update('dateFormat', e.target.value as FormState['dateFormat'])}
               className={inputCls}
             >
-              <option value="">Auto-detect (only if unambiguous)</option>
+              <option value="">{t('data.dateFormat.auto')}</option>
               {DATE_FORMATS.map((f) => (
                 <option key={f} value={f}>
                   {f}
@@ -436,7 +437,7 @@ export function DataImportView() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="imp-delim" className={labelCls}>
-                Delimiter
+                {t('data.delimiter')}
               </label>
               <select
                 id="imp-delim"
@@ -444,14 +445,14 @@ export function DataImportView() {
                 onChange={(e) => update('delimiter', e.target.value as FormState['delimiter'])}
                 className={inputCls}
               >
-                <option value="">Auto</option>
-                <option value=",">Comma ,</option>
-                <option value=";">Semicolon ;</option>
+                <option value="">{t('data.auto')}</option>
+                <option value=",">{t('data.comma')}</option>
+                <option value=";">{t('data.semicolon')}</option>
               </select>
             </div>
             <div>
               <label htmlFor="imp-decimal" className={labelCls}>
-                Decimal sep.
+                {t('data.decimalSep')}
               </label>
               <select
                 id="imp-decimal"
@@ -459,36 +460,36 @@ export function DataImportView() {
                 onChange={(e) => update('decimalSeparator', e.target.value as FormState['decimalSeparator'])}
                 className={inputCls}
               >
-                <option value="">Default (.)</option>
-                <option value=".">Dot .</option>
-                <option value=",">Comma ,</option>
+                <option value="">{t('data.decimalDefault')}</option>
+                <option value=".">{t('data.dot')}</option>
+                <option value=",">{t('data.comma')}</option>
               </select>
             </div>
           </div>
 
           <div>
             <label htmlFor="imp-unit" className={labelCls}>
-              Price unit (optional)
+              {t('data.priceUnit')}
             </label>
             <input
               id="imp-unit"
               value={form.priceUnit}
               onChange={(e) => update('priceUnit', e.target.value)}
-              placeholder="Default: Instrument Master quotation unit"
+              placeholder={t('data.priceUnitPlaceholder')}
               className={inputCls}
             />
-            <p className={hintCls}>Recorded as-is; prices are never converted.</p>
+            <p className={hintCls}>{t('data.priceUnitHint')}</p>
           </div>
 
           <div>
             <label htmlFor="imp-source" className={labelCls}>
-              Source label <span className="text-[#EF4444]">*</span>
+              {t('data.sourceLabel')} <span className="text-[#EF4444]">*</span>
             </label>
             <input
               id="imp-source"
               value={form.sourceLabel}
               onChange={(e) => update('sourceLabel', e.target.value)}
-              placeholder="e.g. Barchart export"
+              placeholder={t('data.sourceLabelPlaceholder')}
               maxLength={200}
               className={inputCls}
             />
@@ -496,7 +497,7 @@ export function DataImportView() {
 
           <div>
             <label htmlFor="imp-quality" className={labelCls}>
-              Source quality <span className="text-[#EF4444]">*</span>
+              {t('data.sourceQuality')} <span className="text-[#EF4444]">*</span>
             </label>
             <select
               id="imp-quality"
@@ -504,10 +505,10 @@ export function DataImportView() {
               onChange={(e) => update('sourceQuality', e.target.value as FormState['sourceQuality'])}
               className={inputCls}
             >
-              <option value="">Select…</option>
+              <option value="">{t('data.select')}</option>
               {SOURCE_QUALITIES.map((q) => (
                 <option key={q} value={q}>
-                  {q}
+                  {q} — {t(`data.q.${q}`)}
                 </option>
               ))}
             </select>
@@ -515,7 +516,7 @@ export function DataImportView() {
 
           <div>
             <label htmlFor="imp-mode" className={labelCls}>
-              Mode
+              {t('data.mode')}
             </label>
             <select
               id="imp-mode"
@@ -525,16 +526,12 @@ export function DataImportView() {
             >
               {IMPORT_MODES.map((m) => (
                 <option key={m} value={m}>
-                  {m}
+                  {m} — {t(`data.mode.${m}`)}
                 </option>
               ))}
             </select>
             <p className={hintCls}>
-              {form.mode === 'reject_conflicts'
-                ? 'Identical rows skipped; any changed OHLC rejects the file.'
-                : form.mode === 'append'
-                  ? 'Only new timestamps are added; never overwrites.'
-                  : 'Deletes ALL existing candles and datasets of this series first.'}
+              {t(`data.mode.${form.mode}.hint`)}
             </p>
           </div>
 
@@ -547,7 +544,7 @@ export function DataImportView() {
               className="mt-0.5 accent-[#6366F1]"
             />
             <label htmlFor="imp-sort" className="text-xs text-[#E5E7EB]/75">
-              Sort rows by time (otherwise out-of-order rows are errors)
+              {t('data.sort')}
             </label>
           </div>
         </div>
@@ -559,7 +556,7 @@ export function DataImportView() {
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-[#6366F1] text-white hover:bg-[#5458E8] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Play className="w-3.5 h-3.5" aria-hidden="true" />
-            {busy === 'dry' ? 'Running dry run…' : 'Dry run'}
+            {busy === 'dry' ? t('data.dryRunning') : t('data.dryRun')}
           </button>
           <button
             type="button"
@@ -568,16 +565,16 @@ export function DataImportView() {
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-[#22C55E] text-[#0B0E14] hover:bg-[#16A34A] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Upload className="w-3.5 h-3.5" aria-hidden="true" />
-            {busy === 'import' ? 'Importing…' : 'Import'}
+            {busy === 'import' ? t('data.importing') : t('data.import')}
           </button>
           <span className="text-xs text-[#E5E7EB]/55">
             {missing.length > 0
-              ? `Required: ${missing.join(', ')}.`
+              ? t('data.required', { list: missing.join(', ') })
               : !dryRunMatches
-                ? 'Run a dry run first — Import unlocks after a dry run with 0 errors for these exact inputs.'
+                ? t('data.needDryRun')
                 : canImport
-                  ? 'Dry run passed. Review warnings, then Import.'
-                  : 'Dry run reported errors — fix the file or settings and run it again.'}
+                  ? t('data.dryRunPassed')
+                  : t('data.dryRunFailed')}
           </span>
         </div>
 

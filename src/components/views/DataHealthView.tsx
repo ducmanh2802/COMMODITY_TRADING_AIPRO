@@ -16,6 +16,8 @@ import { useTerminal } from '../../contexts/TerminalContext';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { CsvImportPanel } from '../common/CsvImportPanel';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { fmtPrice } from '../common/quoteFormat';
+import { fmtNum, hasKey, useT } from '../../i18n';
 import { CotHealthSection } from './cot/CotHealthSection';
 
 interface ApiSecretSpec {
@@ -119,6 +121,12 @@ export function DataHealthView() {
     openInstrumentIn,
   } = useTerminal();
   const { firestoreStatus } = useAuth();
+  const t = useT();
+  const label = (prefix: string, v: string) => {
+    const k = `${prefix}${v}`;
+    return hasKey(k) ? t(k) : v;
+  };
+  const connectedCount = providers.filter((p) => p.connectionState === 'CONNECTED').length;
 
   const [activeTab, setActiveTab] = useState<HealthTab>('COVERAGE');
   const [historicalRange, setHistoricalRange] = useState<'2y' | '5y' | '10y'>('5y');
@@ -161,26 +169,22 @@ export function DataHealthView() {
       {/* Header & Actions */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">
-            Data Health Monitor &amp; Intelligence
-          </h1>
-          <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Giám sát độ phủ dữ liệu 20 hàng hóa (D1/W1/Monthly · 5Y–10Y), nguồn sàn MXV/CME/ICE/COMEX/NYMEX, COT &amp; Fundamental Engine.
-          </p>
+          <h1 className="text-xl font-semibold text-white tracking-tight">{t('fr.dh.title')}</h1>
+          <p className="text-sm text-[#E5E7EB]/65 mt-1">{t('fr.dh.sub')}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 self-start">
           <label className="inline-flex items-center gap-1.5 bg-[#111622] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-[#E5E7EB]/80">
-            <span>Lịch sử Yahoo</span>
+            <span>{t('fr.dh.yahooHist')}</span>
             <select
-              aria-label="Historical Range"
+              aria-label={t('fr.dh.histRange')}
               value={historicalRange}
               onChange={(e) => setHistoricalRange(e.target.value as '2y' | '5y' | '10y')}
-              className="bg-transparent font-mono text-white focus:outline-none"
+              className="bg-transparent text-white focus:outline-none"
             >
-              <option value="2y" className="bg-[#111622]">2Y</option>
-              <option value="5y" className="bg-[#111622]">5Y</option>
-              <option value="10y" className="bg-[#111622]">10Y</option>
+              <option value="2y" className="bg-[#111622]">{t('fr.dh.years', { n: 2 })}</option>
+              <option value="5y" className="bg-[#111622]">{t('fr.dh.years', { n: 5 })}</option>
+              <option value="10y" className="bg-[#111622]">{t('fr.dh.years', { n: 10 })}</option>
             </select>
           </label>
 
@@ -191,7 +195,7 @@ export function DataHealthView() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded-md text-xs font-medium text-white disabled:opacity-50 whitespace-nowrap shrink-0"
           >
             <CloudDownload className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{syncing ? 'Đang đồng bộ...' : 'Sync Feeds & Public Macro'}</span>
+            <span>{syncing ? t('fr.dh.syncing') : t('fr.dh.sync')}</span>
           </button>
 
           <button
@@ -201,23 +205,29 @@ export function DataHealthView() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded-md text-xs font-medium text-white disabled:opacity-50 whitespace-nowrap shrink-0"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
-            <span>Run Health Check</span>
+            <span>{t('fr.dh.check')}</span>
           </button>
         </div>
+      </div>
+
+      {/* Friendly summary */}
+      <div className="bg-[#111622] border border-[#263244] rounded-xl p-4 text-sm text-[#E5E7EB]/80 space-y-1">
+        <p className="font-medium text-white">{t('fr.dh.summary', { n: connectedCount, total: providers.length })}</p>
+        <p className="text-xs text-[#E5E7EB]/60">{t('fr.dh.envHint')}</p>
       </div>
 
       {/* Sync Summary Banner */}
       {lastSyncSummary && (
         <section
-          aria-label="Latest Sync Result"
+          aria-label={t('fr.dh.syncDoneAt', { time: formatTimestampInZone(lastSyncSummary.syncedAt, 'Asia/Ho_Chi_Minh') })}
           className="bg-[#111622] border border-[#6366F1]/40 rounded-lg p-4 space-y-3"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <p className="text-xs font-semibold text-white font-mono">
-              Sync Completed ({formatTimestampInZone(lastSyncSummary.syncedAt, 'Asia/Ho_Chi_Minh')} ICT)
+            <p className="text-xs font-semibold text-white">
+              {t('fr.dh.syncDoneAt', { time: formatTimestampInZone(lastSyncSummary.syncedAt, 'Asia/Ho_Chi_Minh') })}
             </p>
-            <span className="text-xs font-mono text-[#22C55E] tabular-nums">
-              +{lastSyncSummary.totalCandlesDatasetsAdded} OHLCV series · +{lastSyncSummary.totalMacroAdded} Macro records
+            <span className="text-xs text-[#4ADE80] tabular-nums">
+              {t('fr.dh.syncAdded', { candles: lastSyncSummary.totalCandlesDatasetsAdded, macro: lastSyncSummary.totalMacroAdded })}
             </span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
@@ -226,7 +236,8 @@ export function DataHealthView() {
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-white truncate">{o.providerName}</span>
                   <span
-                    className={`font-mono text-[11px] shrink-0 ${
+                    title={o.status}
+                    className={`text-[11px] shrink-0 ${
                       o.status === 'CONNECTED'
                         ? 'text-[#22C55E]'
                         : o.status === 'UNCONFIGURED'
@@ -234,7 +245,7 @@ export function DataHealthView() {
                           : 'text-[#F59E0B]'
                     }`}
                   >
-                    {o.status}
+                    {label('fr.dh.out.', o.status)}
                   </span>
                 </div>
                 <p className="text-[11px] text-[#E5E7EB]/70">{o.message}</p>
@@ -245,10 +256,10 @@ export function DataHealthView() {
       )}
 
       {/* Top KPI Strip */}
-      <section aria-label="Data Quality KPI Overview" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section aria-label={t('fr.dh.kpiAria')} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2">
           <div className="flex items-center justify-between text-xs text-[#E5E7EB]/60">
-            <span>Data Quality Score</span>
+            <span>{t('fr.dh.kpiScore')}</span>
             <ShieldCheck className="w-4 h-4 text-[#6366F1]" aria-hidden="true" />
           </div>
           <div className="flex items-baseline justify-between">
@@ -267,7 +278,7 @@ export function DataHealthView() {
 
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1.5">
           <div className="flex items-center justify-between text-xs text-[#E5E7EB]/60">
-            <span>Historical &amp; Price Coverage</span>
+            <span>{t('fr.dh.kpiCoverage')}</span>
             <Database className="w-4 h-4 text-[#6366F1]" aria-hidden="true" />
           </div>
           <p className="text-2xl font-mono font-semibold text-white tabular-nums">
@@ -275,48 +286,59 @@ export function DataHealthView() {
               ? `${dataHealthReport.coverageSummary.withDailyHistory}/${dataHealthReport.coverageSummary.totalCommodities}`
               : '—'}
           </p>
-          <p className="text-xs font-mono text-[#E5E7EB]/55 tabular-nums">
+          <p className="text-xs text-[#E5E7EB]/55 tabular-nums">
             {dataHealthReport
-              ? `5Y: ${dataHealthReport.coverageSummary.with5YHistory} · 10Y: ${dataHealthReport.coverageSummary.with10YHistory} · COT: ${dataHealthReport.coverageSummary.withCotHistory}`
-              : 'Loading coverage metrics...'}
+              ? t('fr.dh.kpiCoverageSub', {
+                  y5: dataHealthReport.coverageSummary.with5YHistory,
+                  y10: dataHealthReport.coverageSummary.with10YHistory,
+                  cot: dataHealthReport.coverageSummary.withCotHistory,
+                })
+              : t('fr.dh.loadingMetrics')}
           </p>
         </div>
 
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1.5">
           <div className="flex items-center justify-between text-xs text-[#E5E7EB]/60">
-            <span>Status Taxonomy</span>
+            <span>{t('fr.dh.kpiStatus')}</span>
             <Activity className="w-4 h-4 text-[#6366F1]" aria-hidden="true" />
           </div>
-          <div className="grid grid-cols-3 gap-x-2 gap-y-1 text-[11px] font-mono tabular-nums pt-0.5">
-            <span className="text-[#22C55E]">RT: {dataHealthReport?.statusBreakdown.current ?? 0}</span>
-            <span className="text-[#F59E0B]">DLY: {dataHealthReport?.statusBreakdown.delayed ?? 0}</span>
-            <span className="text-[#6366F1]">HIST: {dataHealthReport?.statusBreakdown.historical ?? 0}</span>
-            <span className="text-[#F59E0B]">STALE: {dataHealthReport?.statusBreakdown.stale ?? 0}</span>
-            <span className="text-[#E5E7EB]/65">N/A: {dataHealthReport?.statusBreakdown.unavailable ?? 0}</span>
-            <span className="text-[#EF4444]">INV: {dataHealthReport?.statusBreakdown.invalid ?? 0}</span>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] tabular-nums pt-0.5">
+            <span className="text-[#22C55E]">{t('fr.status.CURRENT')}: {dataHealthReport?.statusBreakdown.current ?? 0}</span>
+            <span className="text-[#F59E0B]">{t('fr.status.DELAYED')}: {dataHealthReport?.statusBreakdown.delayed ?? 0}</span>
+            <span className="text-[#6366F1]">{t('status.HISTORICAL')}: {dataHealthReport?.statusBreakdown.historical ?? 0}</span>
+            <span className="text-[#F59E0B]">{t('fr.status.STALE')}: {dataHealthReport?.statusBreakdown.stale ?? 0}</span>
+            <span className="text-[#E5E7EB]/65">{t('fr.status.UNAVAILABLE')}: {dataHealthReport?.statusBreakdown.unavailable ?? 0}</span>
+            <span className="text-[#EF4444]">{t('fr.status.INVALID')}: {dataHealthReport?.statusBreakdown.invalid ?? 0}</span>
           </div>
-          <p className="text-[11px] font-mono text-[#E5E7EB]/50 tabular-nums">
-            Gaps: {dataHealthReport?.coverageSummary.totalMissingGaps ?? 0} · Stale series: {dataHealthReport?.coverageSummary.totalStaleSeries ?? 0}
+          <p className="text-[11px] text-[#E5E7EB]/50 tabular-nums">
+            {t('fr.dh.gaps', { g: dataHealthReport?.coverageSummary.totalMissingGaps ?? 0, s: dataHealthReport?.coverageSummary.totalStaleSeries ?? 0 })}
           </p>
         </div>
 
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1.5">
           <div className="flex items-center justify-between text-xs text-[#E5E7EB]/60">
-            <span>Providers &amp; Runtime</span>
+            <span>{t('fr.dh.kpiProviders')}</span>
             <CheckCircle2 className="w-4 h-4 text-[#6366F1]" aria-hidden="true" />
           </div>
-          <p className="text-lg font-mono font-semibold text-white tabular-nums">
+          <p className="text-lg font-semibold text-white tabular-nums">
             {dataHealthReport
-              ? `${dataHealthReport.providerSummary.connected}/${dataHealthReport.providerSummary.total} Connected`
-              : health?.status ?? 'CHECKING'}
+              ? t('fr.dh.connected', { n: dataHealthReport.providerSummary.connected, total: dataHealthReport.providerSummary.total })
+              : health
+                ? t('fr.dh.connected', { n: connectedCount, total: providers.length })
+                : t('fr.dh.checking')}
           </p>
-          <p className="text-[11px] font-mono text-[#E5E7EB]/55 truncate">
-            Gemini: {health?.capabilities.geminiServerKeyConfigured ? 'KEY PRESENT' : 'NOT SET'} · DB: {firestoreStatus}
+          <p className="text-[11px] text-[#E5E7EB]/55 break-words" title={`DB: ${firestoreStatus}`}>
+            {t('fr.dh.gemini', {
+              state: health?.capabilities.geminiServerKeyConfigured ? t('fr.dh.keySet') : t('fr.dh.keyNotSet'),
+              db: firestoreStatus,
+            })}
           </p>
-          <p className="text-[11px] font-mono text-[#E5E7EB]/45 truncate">
-            Updated: {dataHealthReport?.providerSummary.lastSuccessfulUpdate
-              ? `${formatTimestampInZone(dataHealthReport.providerSummary.lastSuccessfulUpdate, 'Asia/Ho_Chi_Minh')} ICT`
-              : 'Chưa đồng bộ'}
+          <p className="text-[11px] text-[#E5E7EB]/45 break-words">
+            {t('fr.dh.updated', {
+              time: dataHealthReport?.providerSummary.lastSuccessfulUpdate
+                ? formatTimestampInZone(dataHealthReport.providerSummary.lastSuccessfulUpdate, 'Asia/Ho_Chi_Minh')
+                : t('fr.dh.notSynced'),
+            })}
           </p>
         </div>
       </section>
@@ -324,17 +346,17 @@ export function DataHealthView() {
       {/* Navigation Tabs */}
       <div
         role="tablist"
-        aria-label="Data Health Sections"
+        aria-label={t('fr.dh.tabsAria')}
         className="flex flex-wrap items-center gap-1 border-b border-[#263244] pb-2"
       >
         {(
           [
-            { id: 'COVERAGE', label: 'Coverage 20 Hàng hóa', icon: Layers },
-            { id: 'PROVIDERS', label: 'Sàn & Provider Adapters', icon: KeyRound },
-            { id: 'FUNDAMENTALS', label: 'Fundamental Engine (8) & COT', icon: Activity },
-            { id: 'CSV_SERIES', label: 'Import CSV & Chuỗi Rollover', icon: FileSpreadsheet },
+            { id: 'COVERAGE', icon: Layers },
+            { id: 'PROVIDERS', icon: KeyRound },
+            { id: 'FUNDAMENTALS', icon: Activity },
+            { id: 'CSV_SERIES', icon: FileSpreadsheet },
           ] as const
-        ).map(({ id, label, icon: Icon }) => {
+        ).map(({ id, icon: Icon }) => {
           const selected = activeTab === id;
           return (
             <button
@@ -350,7 +372,7 @@ export function DataHealthView() {
               }`}
             >
               <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>{label}</span>
+              <span>{t(`fr.dh.tab.${id}`)}</span>
             </button>
           );
         })}
@@ -360,17 +382,15 @@ export function DataHealthView() {
       {activeTab === 'COVERAGE' && (
         <div className="space-y-6">
           <section
-            aria-label="20-Commodity Historical Coverage Matrix"
+            aria-label={t('fr.dh.tab.COVERAGE')}
             className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
           >
             <div className="p-4 border-b border-[#263244] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
               <div>
                 <h2 className="text-sm font-semibold text-white">
-                  Độ phủ Dữ liệu Lịch sử &amp; Chỉ số Chất lượng theo Từng Hàng hóa ({filteredCommodities.length}/20)
+                  {t('fr.dh.covTitle', { n: filteredCommodities.length, total: dataHealthReport?.commodities.length ?? 0 })}
                 </h2>
-                <p className="text-xs text-[#E5E7EB]/55 mt-0.5">
-                  Kiểm tra nến D1 / W1 / Monthly (MN), độ dài lịch sử 5Y–10Y, nến thiếu (gaps), trùng lặp (dups), COT &amp; điểm chất lượng 0–100.
-                </p>
+                <p className="text-xs text-[#E5E7EB]/55 mt-0.5">{t('fr.dh.covSub')}</p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -380,20 +400,20 @@ export function DataHealthView() {
                     type="text"
                     value={coverageSearch}
                     onChange={(e) => setCoverageSearch(e.target.value)}
-                    placeholder="Tìm mã hoặc tên hàng..."
-                    aria-label="Search commodity coverage"
+                    placeholder={t('fr.dh.search')}
+                    aria-label={t('fr.dh.search')}
                     className="bg-[#0B0E14] border border-[#263244] rounded-md pl-8 pr-3 py-1.5 text-xs text-white placeholder-[#E5E7EB]/40 focus:outline-none focus:border-[#6366F1]"
                   />
                 </div>
 
                 <select
-                  aria-label="Filter by Exchange"
+                  aria-label={t('fr.dh.colExchange')}
                   value={exchangeFilter}
                   onChange={(e) => setExchangeFilter(e.target.value)}
                   className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#6366F1]"
                 >
-                  <option value="ALL">Tất cả Sàn (20)</option>
-                  <option value="MXV">Liên thông MXV</option>
+                  <option value="ALL">{t('fr.dh.exAll')}</option>
+                  <option value="MXV">{t('fr.dh.exMxv')}</option>
                   <option value="CBOT">CBOT</option>
                   <option value="ICE">ICE</option>
                   <option value="COMEX">COMEX</option>
@@ -401,37 +421,37 @@ export function DataHealthView() {
                 </select>
 
                 <select
-                  aria-label="Filter by Readiness"
+                  aria-label={t('fr.dh.colStatus')}
                   value={coverageFilter}
                   onChange={(e) => setCoverageFilter(e.target.value as 'ALL' | 'READY' | 'GAPS_OR_STALE' | 'MISSING')}
                   className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#6366F1]"
                 >
-                  <option value="ALL">Mọi trạng thái</option>
-                  <option value="READY">Có dữ liệu (&gt;=30 D1)</option>
-                  <option value="GAPS_OR_STALE">Có Gaps / Stale</option>
-                  <option value="MISSING">Thiếu OHLCV</option>
+                  <option value="ALL">{t('fr.dh.fAll')}</option>
+                  <option value="READY">{t('fr.dh.fReady')}</option>
+                  <option value="GAPS_OR_STALE">{t('fr.dh.fGaps')}</option>
+                  <option value="MISSING">{t('fr.dh.fMissing')}</option>
                 </select>
               </div>
             </div>
 
             {!dataHealthReport ? (
-              <div className="p-6 text-xs font-mono text-[#E5E7EB]/60">
-                Đang tải báo cáo Data Health Monitor...
+              <div className="p-6 text-xs text-[#E5E7EB]/60">
+                {t('fr.dh.loadingReport')}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[980px]">
                   <thead>
                     <tr className="border-b border-[#263244] bg-[#172033]/50 text-[11px] text-[#E5E7EB]/65">
-                      <th className="py-2.5 px-4 font-medium">Mã / Hàng hóa</th>
-                      <th className="py-2.5 px-3 font-medium">Sàn</th>
-                      <th className="py-2.5 px-3 font-medium">Giá / Quote</th>
-                      <th className="py-2.5 px-3 font-medium text-right">D1 / W1 / MN</th>
-                      <th className="py-2.5 px-3 font-medium text-right">Span (5Y / 10Y)</th>
-                      <th className="py-2.5 px-3 font-medium text-right">Gaps / Dups</th>
-                      <th className="py-2.5 px-3 font-medium">COT / Fund</th>
-                      <th className="py-2.5 px-3 font-medium">Quality Score</th>
-                      <th className="py-2.5 px-4 font-medium text-right">Action</th>
+                      <th className="py-2.5 px-4 font-medium">{t('fr.dh.colName')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colExchange')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colPrice')}</th>
+                      <th className="py-2.5 px-3 font-medium text-right">{t('fr.dh.colBars')}</th>
+                      <th className="py-2.5 px-3 font-medium text-right">{t('fr.dh.colSpan')}</th>
+                      <th className="py-2.5 px-3 font-medium text-right">{t('fr.dh.colGaps')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colCot')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colScore')}</th>
+                      <th className="py-2.5 px-4 font-medium text-right">{t('fr.dh.colAction')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#263244]/70 text-xs">
@@ -442,16 +462,16 @@ export function DataHealthView() {
                             <span className="font-mono font-semibold text-white">{row.symbol}</span>
                             <span className="text-[#E5E7EB]/85">{row.vietnameseName}</span>
                           </div>
-                          <div className="text-[11px] font-mono text-[#E5E7EB]/45">
-                            {row.quotationUnit}{row.isMvxListed ? ' · MXV Linked' : ''}
+                          <div className="text-[11px] text-[#E5E7EB]/45">
+                            {row.quotationUnit}{row.isMvxListed ? ` · ${t('fr.dh.mxvLinked')}` : ''}
                           </div>
                         </td>
                         <td className="py-2.5 px-3 font-mono text-[#E5E7EB]/80">{row.exchange}</td>
                         <td className="py-2.5 px-3">
                           <DataStatusBadge status={row.quoteStatus} compact />
                           {row.quotePrice !== null && (
-                            <div className="font-mono text-[11px] text-white tabular-nums mt-0.5">
-                              {row.quotePrice.toLocaleString()}
+                            <div className="text-[11px] text-white tabular-nums mt-0.5">
+                              {fmtPrice(row.quotePrice)}
                             </div>
                           )}
                         </td>
@@ -459,7 +479,7 @@ export function DataHealthView() {
                           {row.dailyBars} / {row.weeklyBars} / {row.monthlyBars}
                         </td>
                         <td className="py-2.5 px-3 text-right font-mono tabular-nums">
-                          <div className="text-white">{row.spanYears}y</div>
+                          <div className="text-white">{t('fr.dh.years', { n: fmtNum(row.spanYears, { maximumFractionDigits: 1 }) })}</div>
                           <div className="text-[11px] text-[#E5E7EB]/55">
                             {row.coverage5Y}% · {row.coverage10Y}%
                           </div>
@@ -483,9 +503,9 @@ export function DataHealthView() {
                                   : 'text-[#F59E0B]'
                             }
                           >
-                            COT: {row.cotStatus === 'NOT_REPORTED' ? 'N/A' : `${row.cotWeeks}w`}
+                            {row.cotStatus === 'NOT_REPORTED' ? t('fr.dh.cotNa') : t('fr.dh.cotWeeks', { n: row.cotWeeks })}
                           </div>
-                          <div className="text-[#E5E7EB]/55">Fund: {row.fundamentalCount} rec</div>
+                          <div className="text-[#E5E7EB]/55">{t('fr.dh.fund', { n: row.fundamentalCount })}</div>
                         </td>
                         <td className="py-2.5 px-3 min-w-[115px]">
                           <div className="flex items-center justify-between font-mono text-xs tabular-nums">
@@ -505,7 +525,7 @@ export function DataHealthView() {
                             onClick={() => openInstrumentIn(row.symbol, 'commodity-profile')}
                             className="px-2.5 py-1 bg-[#172033] hover:bg-[#6366F1] border border-[#263244] rounded text-[11px] font-medium text-white transition-colors whitespace-nowrap"
                           >
-                            Profile
+                            {t('fr.dh.profile')}
                           </button>
                         </td>
                       </tr>
@@ -519,16 +539,12 @@ export function DataHealthView() {
           {/* Engine Connection Readiness (Task 6) */}
           {dataHealthReport && (
             <section
-              aria-label="Analysis Engines Data Readiness"
+              aria-label={t('fr.dh.engTitle')}
               className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
             >
               <div className="px-4 py-3 border-b border-[#263244]">
-                <h2 className="text-sm font-semibold text-white">
-                  Trạng thái Kết nối Dữ liệu vào Các Engine Phân tích
-                </h2>
-                <p className="text-xs text-[#E5E7EB]/55 mt-0.5">
-                  Cycle Engine, Bottom Detection Engine (giữ nguyên thang 100đ), Opportunity Radar, Scanner &amp; AI Research Report chỉ đọc dữ liệu đã xác thực.
-                </p>
+                <h2 className="text-sm font-semibold text-white">{t('fr.dh.engTitle')}</h2>
+                <p className="text-xs text-[#E5E7EB]/55 mt-0.5">{t('fr.dh.engSub')}</p>
               </div>
               <div className="divide-y divide-[#263244]/70">
                 {dataHealthReport.engineReadiness.map((eng) => (
@@ -540,14 +556,14 @@ export function DataHealthView() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-white">{eng.name}</span>
                         {eng.formulaPreserved && (
-                          <span className="font-mono text-[10px] text-[#22C55E]">· 100pt formula locked</span>
+                          <span className="text-[10px] text-[#4ADE80]">· {t('fr.dh.formulaLocked')}</span>
                         )}
                       </div>
                       <p className="text-[#E5E7EB]/60">{eng.notes}</p>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0 font-mono tabular-nums">
+                    <div className="flex items-center gap-3 shrink-0 tabular-nums">
                       <span className="text-[#E5E7EB]/75">
-                        {eng.readyInstruments}/{eng.totalInstruments} mã
+                        {t('fr.dh.engCount', { n: eng.readyInstruments, total: eng.totalInstruments })}
                       </span>
                       <span
                         className={
@@ -558,7 +574,7 @@ export function DataHealthView() {
                               : 'text-[#E5E7EB]/50'
                         }
                       >
-                        {eng.status}
+                        {label('fr.dh.eng.', eng.status)}
                       </span>
                     </div>
                   </div>
@@ -575,16 +591,12 @@ export function DataHealthView() {
           {/* Exchange Licensing Matrix (Task 3) */}
           {dataHealthReport && (
             <section
-              aria-label="Exchange Licensing & Access Assessment"
+              aria-label={t('fr.dh.exTitle')}
               className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
             >
               <div className="px-4 py-3 border-b border-[#263244]">
-                <h2 className="text-sm font-semibold text-white">
-                  Đánh giá Khả năng Truy cập &amp; Bản quyền theo Sàn (MXV · CME/CBOT · ICE · COMEX · NYMEX)
-                </h2>
-                <p className="text-xs text-[#E5E7EB]/55 mt-0.5">
-                  Không scrape trái phép hoặc giả lập giá; hiển thị rõ nguồn miễn phí chính thống vs yêu cầu bản quyền và cơ chế fallback CSV.
-                </p>
+                <h2 className="text-sm font-semibold text-white">{t('fr.dh.exTitle')}</h2>
+                <p className="text-xs text-[#E5E7EB]/55 mt-0.5">{t('fr.dh.exSub')}</p>
               </div>
               <div className="divide-y divide-[#263244]/70">
                 {dataHealthReport.exchangeAdapters.map((ex) => (
@@ -594,27 +606,27 @@ export function DataHealthView() {
                         <h3 className="font-semibold text-white">{ex.exchangeGroup}</h3>
                         <p className="font-mono text-[11px] text-[#6366F1] mt-0.5">{ex.primaryOfficialFeed}</p>
                       </div>
-                      <div className="flex items-center gap-3 font-mono text-[11px] shrink-0">
+                      <div className="flex flex-wrap items-center gap-3 text-[11px] shrink-0">
                         <span className={ex.requiresPaidLicense ? 'text-[#F59E0B]' : 'text-[#22C55E]'}>
                           {ex.accessTier}
                         </span>
                         <span className="text-[#E5E7EB]/60">
-                          {ex.publicApiAvailable ? 'Public API Available' : 'Key / CSV Fallback'}
+                          {ex.publicApiAvailable ? t('fr.dh.publicApi') : t('fr.dh.keyOrCsv')}
                         </span>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] text-[#E5E7EB]/75 pt-1">
                       <div>
-                        <span className="text-[#E5E7EB]/50 font-medium">Nguồn miễn phí / khả dụng: </span>
+                        <span className="text-[#E5E7EB]/50 font-medium">{t('fr.dh.freeSources')}</span>
                         {ex.supportedFreeSources.join(' · ')}
                       </div>
                       <div>
-                        <span className="text-[#E5E7EB]/50 font-medium">Chuẩn Rollover &amp; CSV: </span>
+                        <span className="text-[#E5E7EB]/50 font-medium">{t('fr.dh.rollPolicy')}</span>
                         {ex.contractRollPolicy}
                       </div>
                     </div>
                     <p className="text-[11px] text-[#E5E7EB]/55">
-                      <span className="text-[#E5E7EB]/45 font-medium">Giới hạn &amp; Tuân thủ: </span>
+                      <span className="text-[#E5E7EB]/45 font-medium">{t('fr.dh.limits')}</span>
                       {ex.rateLimitNote} {ex.legalAndComplianceNote}
                     </p>
                   </div>
@@ -625,27 +637,25 @@ export function DataHealthView() {
 
           {/* Provider Adapters Live Status Table */}
           <section
-            aria-label="Market Data Provider Adapters"
+            aria-label={t('fr.dh.provTitle')}
             className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
           >
             <div className="px-4 py-3 border-b border-[#263244]">
-              <h2 className="text-sm font-semibold text-white">MarketDataProvider Runtime Adapters</h2>
-              <p className="text-xs text-[#E5E7EB]/55 mt-0.5">
-                Các adapter thiếu key sẽ fail-closed với DATA_UNAVAILABLE thay vì sinh dữ liệu giả.
-              </p>
+              <h2 className="text-sm font-semibold text-white">{t('fr.dh.provTitle')}</h2>
+              <p className="text-xs text-[#E5E7EB]/55 mt-0.5">{t('fr.dh.provSub')}</p>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[820px]">
                 <thead>
                   <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
-                    <th className="py-3 px-4 font-medium">Provider</th>
-                    <th className="py-3 px-3 font-medium">Exchanges</th>
-                    <th className="py-3 px-3 font-medium">Status</th>
-                    <th className="py-3 px-3 font-medium">Credentials</th>
-                    <th className="py-3 px-3 font-medium">Capabilities</th>
-                    <th className="py-3 px-3 font-medium">Checked (ICT)</th>
-                    <th className="py-3 px-4 font-medium">Diagnostic Detail</th>
+                    <th className="py-3 px-4 font-medium">{t('fr.dh.colProvider')}</th>
+                    <th className="py-3 px-3 font-medium">{t('fr.dh.colExchange')}</th>
+                    <th className="py-3 px-3 font-medium">{t('fr.dh.colStatus')}</th>
+                    <th className="py-3 px-3 font-medium">{t('fr.dh.colKey')}</th>
+                    <th className="py-3 px-3 font-medium">{t('fr.dh.colCaps')}</th>
+                    <th className="py-3 px-3 font-medium">{t('fr.dh.colChecked')}</th>
+                    <th className="py-3 px-4 font-medium">{t('fr.dh.colDetail')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#263244]/70 text-xs">
@@ -661,18 +671,18 @@ export function DataHealthView() {
                       <td className="py-3 px-3">
                         <DataStatusBadge status={p.dataStatus} compact sourceQuality={p.sourceQuality} />
                         {p.delayNote && (
-                          <div className="font-mono text-[10px] text-[#E5E7EB]/50 mt-0.5">{p.delayNote}</div>
+                          <div className="text-[10px] text-[#E5E7EB]/50 mt-0.5">{p.delayNote}</div>
                         )}
                       </td>
-                      <td className="py-3 px-3 font-mono text-[#E5E7EB]/75">
-                        {p.credentialsConfigured ? 'CONFIGURED' : 'NOT_SET'}
+                      <td className={`py-3 px-3 ${p.credentialsConfigured ? 'text-[#4ADE80]' : 'text-[#E5E7EB]/50'}`}>
+                        {p.credentialsConfigured ? t('fr.dh.keySet') : t('fr.dh.keyNotSet')}
                       </td>
-                      <td className="py-3 px-3 font-mono text-[#E5E7EB]/70">
-                        {[p.supportsRealtime ? 'RT' : null, p.supportsHistorical ? 'HIST' : null]
+                      <td className="py-3 px-3 text-[#E5E7EB]/70">
+                        {[p.supportsRealtime ? t('fr.dh.capRt') : null, p.supportsHistorical ? t('fr.dh.capHist') : null]
                           .filter(Boolean)
                           .join(' / ')}
                       </td>
-                      <td className="py-3 px-3 font-mono tabular-nums text-[#E5E7EB]/65 whitespace-nowrap">
+                      <td className="py-3 px-3 tabular-nums text-[#E5E7EB]/65 whitespace-nowrap">
                         {formatTimestampInZone(p.lastCheckedAt, 'Asia/Ho_Chi_Minh')}
                       </td>
                       <td className="py-3 px-4 text-[#E5E7EB]/70 max-w-md">{p.message}</td>
@@ -685,27 +695,23 @@ export function DataHealthView() {
 
           {/* Server Secrets Reference */}
           <section
-            aria-label="Server-Side Commodity API Secrets Guide"
+            aria-label={t('fr.dh.secTitle')}
             className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
           >
             <div className="px-4 py-3 border-b border-[#263244]">
-              <h2 className="text-sm font-semibold text-white">
-                Server-Side Commodity API Secrets Reference
-              </h2>
-              <p className="text-xs text-[#E5E7EB]/60 mt-0.5">
-                Cấu hình các biến môi trường trên server trong AI Studio <span className="font-mono text-white">Settings &gt; Secrets</span> (không bao giờ lộ ra trình duyệt).
-              </p>
+              <h2 className="text-sm font-semibold text-white">{t('fr.dh.secTitle')}</h2>
+              <p className="text-xs text-[#E5E7EB]/60 mt-0.5">{t('fr.dh.envHint')}</p>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[860px]">
                 <thead>
                   <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
-                    <th className="py-2.5 px-4 font-medium">Provider</th>
-                    <th className="py-2.5 px-3 font-medium">Server Env Secret</th>
-                    <th className="py-2.5 px-3 font-medium">Latency &amp; Tier</th>
-                    <th className="py-2.5 px-3 font-medium">Commodity Coverage</th>
-                    <th className="py-2.5 px-4 font-medium text-right">Status</th>
+                    <th className="py-2.5 px-4 font-medium">{t('fr.dh.colProvider')}</th>
+                    <th className="py-2.5 px-3 font-medium">{t('fr.dh.colEnv')}</th>
+                    <th className="py-2.5 px-3 font-medium">{t('fr.dh.colTier')}</th>
+                    <th className="py-2.5 px-3 font-medium">{t('fr.dh.colCoverage')}</th>
+                    <th className="py-2.5 px-4 font-medium text-right">{t('fr.dh.colKey')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#263244]/70 text-xs">
@@ -720,13 +726,13 @@ export function DataHealthView() {
                         <td className="py-2.5 px-3 font-mono text-[#6366F1]">{spec.secretName}</td>
                         <td className="py-2.5 px-3 text-[#E5E7EB]/75">{spec.latencyAndTier}</td>
                         <td className="py-2.5 px-3 text-[#E5E7EB]/75">{spec.commodityCoverage}</td>
-                        <td className="py-2.5 px-4 text-right font-mono">
+                        <td className="py-2.5 px-4 text-right">
                           <span
                             className={
                               liveState?.credentialsConfigured ? 'text-[#22C55E]' : 'text-[#E5E7EB]/50'
                             }
                           >
-                            {liveState?.credentialsConfigured ? 'CONFIGURED' : 'NOT_SET'}
+                            {liveState?.credentialsConfigured ? t('fr.dh.keySet') : t('fr.dh.keyNotSet')}
                           </span>
                         </td>
                       </tr>
@@ -744,27 +750,23 @@ export function DataHealthView() {
         <div className="space-y-6">
           {dataHealthReport && (
             <section
-              aria-label="Fundamental Data Engine Status"
+              aria-label={t('fr.dh.fundTitle')}
               className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
             >
               <div className="px-4 py-3 border-b border-[#263244]">
-                <h2 className="text-sm font-semibold text-white">
-                  Fundamental Data Engine (8 Bộ Dữ liệu Cơ bản &amp; Chống Look-Ahead Bias)
-                </h2>
-                <p className="text-xs text-[#E5E7EB]/55 mt-0.5">
-                  Mỗi bản ghi gắn chặt Source, Observation Date, Publication Date, Unit &amp; Freshness Status. Bộ lọc lịch sử <span className="font-mono text-white">asOf</span> chặn tuyệt đối dữ liệu công bố trong tương lai.
-                </p>
+                <h2 className="text-sm font-semibold text-white">{t('fr.dh.fundTitle')}</h2>
+                <p className="text-xs text-[#E5E7EB]/55 mt-0.5">{t('fr.dh.fundSub')}</p>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[880px]">
                   <thead>
                     <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
-                      <th className="py-2.5 px-4 font-medium">Dataset Domain</th>
-                      <th className="py-2.5 px-3 font-medium">Nguồn chính &amp; Chu kỳ</th>
-                      <th className="py-2.5 px-3 font-medium">Obs Date / Pub Date</th>
-                      <th className="py-2.5 px-3 font-medium">Unit</th>
-                      <th className="py-2.5 px-3 font-medium">Freshness</th>
-                      <th className="py-2.5 px-4 font-medium">Status &amp; Ghi chú</th>
+                      <th className="py-2.5 px-4 font-medium">{t('fr.dh.colDomain')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colSource')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colDates')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colUnit')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colFresh')}</th>
+                      <th className="py-2.5 px-4 font-medium">{t('fr.dh.colNotes')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#263244]/70 text-xs">
@@ -777,12 +779,12 @@ export function DataHealthView() {
                         <td className="py-3 px-3">
                           <div className="text-[#E5E7EB]/85">{dom.primarySource}</div>
                           <div className="text-[11px] text-[#E5E7EB]/50">
-                            {dom.cadence} · Lag ~{dom.expectedReleaseLagDays}d
+                            {dom.cadence} · {t('fr.dh.lag', { n: dom.expectedReleaseLagDays })}
                           </div>
                         </td>
-                        <td className="py-3 px-3 font-mono text-[11px] tabular-nums text-[#E5E7EB]/80">
-                          <div>Obs: {dom.latestObservationDate ?? '—'}</div>
-                          <div className="text-[#E5E7EB]/50">Pub: {dom.latestPublicationDate ?? '—'}</div>
+                        <td className="py-3 px-3 text-[11px] tabular-nums text-[#E5E7EB]/80">
+                          <div>{t('fr.dh.obs', { d: dom.latestObservationDate ?? '—' })}</div>
+                          <div className="text-[#E5E7EB]/50">{t('fr.dh.pub', { d: dom.latestPublicationDate ?? '—' })}</div>
                         </td>
                         <td className="py-3 px-3 font-mono text-[11px] text-[#E5E7EB]/75">
                           {dom.unit ?? '—'}
@@ -793,7 +795,7 @@ export function DataHealthView() {
                         <td className="py-3 px-4 text-[#E5E7EB]/70 max-w-sm">
                           {dom.notes}
                           {dom.envVarHint && dom.status === 'UNAVAILABLE' && (
-                            <span className="font-mono text-[#6366F1] block mt-0.5">Env: {dom.envVarHint}</span>
+                            <span className="text-[#818CF8] block mt-0.5">{t('fr.dh.envVar', { v: dom.envVarHint })}</span>
                           )}
                         </td>
                       </tr>
@@ -814,38 +816,36 @@ export function DataHealthView() {
           <CsvImportPanel />
 
           <section
-            aria-label="Imported Historical Datasets"
+            aria-label={t('fr.dh.dsTitle')}
             className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
           >
             <div className="px-4 py-3 border-b border-[#263244] flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-white">Validated Historical &amp; Synced OHLCV Datasets</h2>
-                <p className="text-xs text-[#E5E7EB]/55 mt-0.5">
-                  Dữ liệu đã xác thực trong bộ nhớ và SQLite dùng cho Biểu đồ, Cycle Engine, Scanner &amp; Backtest.
-                </p>
+                <h2 className="text-sm font-semibold text-white">{t('fr.dh.dsTitle')}</h2>
+                <p className="text-xs text-[#E5E7EB]/55 mt-0.5">{t('fr.dh.dsSub')}</p>
               </div>
-              <span className="font-mono text-xs text-[#E5E7EB]/65 tabular-nums">
-                {datasets.length} dataset(s)
+              <span className="text-xs text-[#E5E7EB]/65 tabular-nums whitespace-nowrap">
+                {t('fr.dh.dsCount', { n: datasets.length })}
               </span>
             </div>
 
             {datasets.length === 0 ? (
-              <div className="p-6 text-xs text-[#E5E7EB]/60 font-mono">
-                DATA_UNAVAILABLE — No historical CSV or synced API OHLCV datasets loaded yet.
+              <div className="p-6 text-xs text-[#E5E7EB]/60">
+                {t('fr.dh.dsEmpty')}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[760px]">
                   <thead>
                     <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
-                      <th className="py-2.5 px-4 font-medium">Symbol</th>
-                      <th className="py-2.5 px-3 font-medium">Exchange</th>
-                      <th className="py-2.5 px-3 font-medium">TF</th>
-                      <th className="py-2.5 px-3 font-medium text-right">Bars</th>
-                      <th className="py-2.5 px-3 font-medium">Range (ICT)</th>
-                      <th className="py-2.5 px-3 font-medium">Source</th>
-                      <th className="py-2.5 px-3 font-medium">Status</th>
-                      <th className="py-2.5 px-4 font-medium text-right">Action</th>
+                      <th className="py-2.5 px-4 font-medium">{t('fr.dh.colSymbol')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colExchange')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colTf')}</th>
+                      <th className="py-2.5 px-3 font-medium text-right">{t('fr.dh.colBarCount')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colRange')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colProvider')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('fr.dh.colStatus')}</th>
+                      <th className="py-2.5 px-4 font-medium text-right">{t('fr.dh.colAction')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#263244]/70 text-xs">
@@ -855,7 +855,7 @@ export function DataHealthView() {
                         <td className="py-2.5 px-3 font-mono text-[#E5E7EB]/85">{ds.exchange}</td>
                         <td className="py-2.5 px-3 font-mono text-[#E5E7EB]">{ds.timeframe}</td>
                         <td className="py-2.5 px-3 font-mono text-right tabular-nums text-white">
-                          {ds.barCount}
+                          {fmtNum(ds.barCount)}
                         </td>
                         <td className="py-2.5 px-3 font-mono tabular-nums text-[#E5E7EB]/65">
                           {formatTimestampInZone(ds.earliestTimestamp, 'Asia/Ho_Chi_Minh')} →{' '}
@@ -871,7 +871,7 @@ export function DataHealthView() {
                             onClick={() => openInstrumentIn(ds.symbol, 'charts')}
                             className="px-2.5 py-1 bg-[#172033] hover:bg-[#6366F1] border border-[#263244] rounded text-[11px] font-medium text-white transition-colors"
                           >
-                            Open Chart
+                            {t('fr.dh.openChart')}
                           </button>
                         </td>
                       </tr>
@@ -884,16 +884,12 @@ export function DataHealthView() {
 
           {dataHealthReport && (
             <section
-              aria-label="Contract Rollover Separation Audit"
+              aria-label={t('fr.dh.rollTitle')}
               className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
             >
               <div className="px-4 py-3 border-b border-[#263244]">
-                <h2 className="text-sm font-semibold text-white">
-                  Kiểm toán Tách biệt Hợp đồng Kỳ hạn vs Chuỗi Liên tục (Contract vs Continuous)
-                </h2>
-                <p className="text-xs text-[#E5E7EB]/55 mt-0.5">
-                  Ngăn ngừa nối tùy tiện các hợp đồng futures; phân biệt rõ hợp đồng riêng lẻ (ZCH25), CONTINUOUS (UNADJUSTED/BACK/RATIO) và VENDOR proxy.
-                </p>
+                <h2 className="text-sm font-semibold text-white">{t('fr.dh.rollTitle')}</h2>
+                <p className="text-xs text-[#E5E7EB]/55 mt-0.5">{t('fr.dh.rollSub')}</p>
               </div>
               <div className="divide-y divide-[#263244]/70">
                 {dataHealthReport.commodities
@@ -908,18 +904,22 @@ export function DataHealthView() {
                     <div key={c.instrumentId} className="px-4 py-3 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
                         <span className="font-mono font-semibold text-white">{c.symbol}</span>
-                        <span className="text-[#E5E7EB]/70 ml-2">{c.rollNotice ?? 'Tách chuỗi hợp lệ.'}</span>
+                        <span className="text-[#E5E7EB]/70 ml-2">{c.rollNotice ?? t('fr.dh.rollOk')}</span>
                       </div>
-                      <div className="font-mono text-[11px] text-[#E5E7EB]/60 shrink-0">
-                        Contracts: {c.individualContracts.length} · Continuous: {c.continuousAdjustments.join(',') || 'NONE'} · Vendor: {c.vendorProxyCount}
+                      <div className="text-[11px] text-[#E5E7EB]/60 shrink-0">
+                        {t('fr.dh.rollCounts', {
+                          a: c.individualContracts.length,
+                          b: c.continuousAdjustments.join(', ') || t('fr.dh.none'),
+                          c: c.vendorProxyCount,
+                        })}
                       </div>
                     </div>
                   ))}
                 {dataHealthReport.commodities.every(
                   (c) => c.individualContracts.length === 0 && c.continuousAdjustments.length === 0 && c.vendorProxyCount === 0
                 ) && (
-                  <div className="p-5 text-xs font-mono text-[#E5E7EB]/55">
-                    Chưa có chuỗi hợp đồng hoặc chuỗi liên tục SQLite nào được nạp. Hãy dùng mục Import CSV phía trên hoặc Sync Feeds.
+                  <div className="p-5 text-xs text-[#E5E7EB]/55">
+                    {t('fr.dh.rollEmpty')}
                   </div>
                 )}
               </div>

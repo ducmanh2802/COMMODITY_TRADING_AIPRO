@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import { formatStoredTimestamp, type DatasetRecord } from '../../../api/dataApi';
+import { fmtInt, useT } from '../../../i18n';
 
 interface DatasetTableProps {
   datasets: DatasetRecord[];
@@ -18,12 +19,13 @@ const QUALITY_COLOR: Record<string, string> = {
 };
 
 export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDelete }: DatasetTableProps) {
+  const t = useT();
   return (
-    <section aria-label="Imported datasets" className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
+    <section aria-label={t('data.ds.title')} className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
       <div className="px-4 py-3 border-b border-[#263244] flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-white">Imported datasets</h2>
-          <p className="text-xs text-[#E5E7EB]/55 mt-0.5">Provenance of every stored series. Deleting removes the candles a dataset owns.</p>
+          <h2 className="text-sm font-semibold text-white">{t('data.ds.title')}</h2>
+          <p className="text-xs text-[#E5E7EB]/55 mt-0.5">{t('data.ds.subtitle')}</p>
         </div>
         <button
           type="button"
@@ -31,7 +33,7 @@ export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDel
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-[#263244] text-[#E5E7EB]/80 hover:text-white hover:bg-[#172033]"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
-          Refresh
+          {t('common.refresh')}
         </button>
       </div>
       {error && <p className="px-4 py-2 text-xs text-[#EF4444] border-b border-[#263244]">{error}</p>}
@@ -39,25 +41,25 @@ export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDel
         <table className="w-full text-left border-collapse min-w-[1080px]">
           <thead>
             <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
-              <th className="py-3 px-4 font-medium">Instrument</th>
-              <th className="py-3 px-3 font-medium">Contract</th>
-              <th className="py-3 px-3 font-medium">TF</th>
-              <th className="py-3 px-3 font-medium">Source</th>
-              <th className="py-3 px-3 font-medium">Quality</th>
-              <th className="py-3 px-3 font-medium">Unit</th>
-              <th className="py-3 px-3 font-medium text-right">Rows (owned)</th>
-              <th className="py-3 px-3 font-medium">Range</th>
-              <th className="py-3 px-3 font-medium">Source TZ</th>
+              <th className="py-3 px-4 font-medium">{t('data.ds.instrument')}</th>
+              <th className="py-3 px-3 font-medium">{t('data.ds.contract')}</th>
+              <th className="py-3 px-3 font-medium">{t('data.ds.tf')}</th>
+              <th className="py-3 px-3 font-medium">{t('data.ds.source')}</th>
+              <th className="py-3 px-3 font-medium">{t('data.ds.quality')}</th>
+              <th className="py-3 px-3 font-medium">{t('data.ds.unit')}</th>
+              <th className="py-3 px-3 font-medium text-right">{t('data.ds.rows')}</th>
+              <th className="py-3 px-3 font-medium">{t('data.ds.range')}</th>
+              <th className="py-3 px-3 font-medium">{t('data.ds.tz')}</th>
               <th className="py-3 px-3 font-medium">SHA-256</th>
-              <th className="py-3 px-3 font-medium">Imported (UTC)</th>
-              <th className="py-3 px-4 font-medium text-right">Action</th>
+              <th className="py-3 px-3 font-medium">{t('data.ds.imported')}</th>
+              <th className="py-3 px-4 font-medium text-right">{t('data.ds.action')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#263244]/70 text-xs">
             {datasets.length === 0 ? (
               <tr>
                 <td colSpan={12} className="py-10 px-4 text-center text-[#E5E7EB]/55">
-                  {loading ? 'Loading datasets...' : 'No datasets imported yet — DATA_UNAVAILABLE.'}
+                  {loading ? t('data.ds.loading') : t('data.ds.empty')}
                 </td>
               </tr>
             ) : (
@@ -74,15 +76,18 @@ export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDel
                   <td className="py-2.5 px-3 text-[#E5E7EB]/85 max-w-[180px] truncate" title={d.sourceLabel}>
                     {d.sourceLabel}
                   </td>
-                  <td className={`py-2.5 px-3 font-mono whitespace-nowrap ${QUALITY_COLOR[d.sourceQuality] ?? ''}`}>
+                  <td
+                    className={`py-2.5 px-3 font-mono whitespace-nowrap ${QUALITY_COLOR[d.sourceQuality] ?? ''}`}
+                    title={d.sourceQuality in QUALITY_COLOR ? t(`data.q.${d.sourceQuality}` as 'data.q.OFFICIAL') : undefined}
+                  >
                     {d.sourceQuality}
                   </td>
                   <td className="py-2.5 px-3 font-mono text-[#E5E7EB]/80 whitespace-nowrap">
                     {d.priceUnit}
-                    {d.priceUnitDeclared && <span className="text-[#F59E0B]"> (declared)</span>}
+                    {d.priceUnitDeclared && <span className="text-[#F59E0B]"> {t('data.ds.declared')}</span>}
                   </td>
                   <td className="py-2.5 px-3 font-mono tabular-nums text-right text-[#E5E7EB]/80 whitespace-nowrap">
-                    {d.rowCount.toLocaleString()} ({d.insertedCount.toLocaleString()})
+                    {fmtInt(d.rowCount)} ({fmtInt(d.insertedCount)})
                   </td>
                   <td className="py-2.5 px-3 font-mono tabular-nums text-[#E5E7EB]/80 whitespace-nowrap">
                     {formatStoredTimestamp(d.firstTimestamp, d.timeframe)} → {formatStoredTimestamp(d.lastTimestamp, d.timeframe)}
@@ -98,11 +103,11 @@ export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDel
                     <button
                       type="button"
                       onClick={() => onRequestDelete(d)}
-                      aria-label={`Delete dataset ${d.instrumentId} ${d.contractCode} ${d.timeframe}`}
+                      aria-label={t('data.ds.deleteAria', { id: `${d.instrumentId} ${d.contractCode} ${d.timeframe}` })}
                       className="inline-flex items-center gap-1 px-2 py-1 rounded text-[#EF4444]/85 hover:text-[#EF4444] hover:bg-[#EF4444]/10"
                     >
                       <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      Delete
+                      {t('common.delete')}
                     </button>
                   </td>
                 </tr>
@@ -124,6 +129,7 @@ interface ConfirmDeleteDialogProps {
 }
 
 export function ConfirmDeleteDialog({ dataset, busy, error, onCancel, onConfirm }: ConfirmDeleteDialogProps) {
+  const t = useT();
   const cancelRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     cancelRef.current?.focus();
@@ -143,15 +149,15 @@ export function ConfirmDeleteDialog({ dataset, busy, error, onCancel, onConfirm 
         className="w-full max-w-md bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-4"
       >
         <h2 id="confirm-delete-title" className="text-sm font-semibold text-white">
-          Delete dataset?
+          {t('data.ds.confirmTitle')}
         </h2>
         <p className="text-xs text-[#E5E7EB]/75 leading-relaxed">
-          This permanently removes dataset <span className="font-mono text-white">{dataset.id.slice(0, 8)}</span> (
+          {t('data.ds.confirm1')} <span className="font-mono text-white">{dataset.id.slice(0, 8)}</span> (
           <span className="font-mono">
             {dataset.instrumentId} · {dataset.contractCode} · {dataset.timeframe}
           </span>
-          , source “{dataset.sourceLabel}”) and the{' '}
-          <span className="font-mono text-white">{dataset.insertedCount.toLocaleString()}</span> candles it owns. This cannot be undone.
+          {t('data.ds.confirm2', { source: dataset.sourceLabel })}{' '}
+          <span className="font-mono text-white">{fmtInt(dataset.insertedCount)}</span> {t('data.ds.confirm3')}
         </p>
         {error && <p className="text-xs text-[#EF4444]">{error}</p>}
         <div className="flex justify-end gap-2">
@@ -162,7 +168,7 @@ export function ConfirmDeleteDialog({ dataset, busy, error, onCancel, onConfirm 
             disabled={busy}
             className="px-3 py-1.5 text-xs rounded-md border border-[#263244] text-[#E5E7EB]/85 hover:bg-[#172033] disabled:opacity-50"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -170,7 +176,7 @@ export function ConfirmDeleteDialog({ dataset, busy, error, onCancel, onConfirm 
             disabled={busy}
             className="px-3 py-1.5 text-xs rounded-md bg-[#EF4444] text-white hover:bg-[#DC2626] disabled:opacity-50"
           >
-            {busy ? 'Deleting…' : 'Delete dataset'}
+            {busy ? t('data.ds.deleting') : t('data.ds.deleteBtn')}
           </button>
         </div>
       </div>

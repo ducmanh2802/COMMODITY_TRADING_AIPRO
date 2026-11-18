@@ -8,6 +8,7 @@
 4. **Immutable Audit Trail (`auditLogs/{logId}`)**: Audit logs are append-only (`allow create` only when `userId == request.auth.uid` and `createdAt == request.time`); `update` and `delete` are unconditionally denied. `list` queries are restricted to `resource.data.userId == request.auth.uid`.
 5. **Temporal Integrity**: All `createdAt` and `updatedAt` fields must equal `request.time` (server timestamps). `createdAt` and owner UID fields are immutable after creation.
 6. **Strict Schema Enforcement**: Every write requires exact allowlisted keys (`hasAll` + `hasOnly` on create, `affectedKeys().hasOnly(...)` on update) to block shadow fields and resource exhaustion attacks.
+7. **Research Notebook (`researchNotes/{noteId}`, T18)**: Private to the verified owner (`userId == request.auth.uid` for get/list/create/update/delete; list must be scoped by `where('userId', '==', uid)`). Schema: `userId`, `instrumentId` (1–32), `title` (1–120), `body` (≤ 10,000), `tags` (list ≤ 8 of strings 1–32), `chartContext` (`null` or a map with exactly `timeframe` ('' or M1…W1), `contractCode` (≤ 24), `rangeStart`/`rangeEnd` (≤ 40)), `createdAt`/`updatedAt` server timestamps. `userId` and `createdAt` are immutable; updates may only touch `instrumentId`, `title`, `body`, `tags`, `chartContext`, `updatedAt`. Covered by `tests/rules/researchNotes.emulator.test.ts`.
 
 ## 2. The "Dirty Dozen" Adversarial Payloads (Must Return PERMISSION_DENIED)
 

@@ -6,7 +6,9 @@ import type { FundamentalMacroRecord, MarketDirection } from '../../shared/types
 import type { DataQualityStatus } from '../../shared/types/market';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { MacroDataPanel } from '../common/MacroDataPanel';
 import { VietnamEconomicCalendar } from '../common/VietnamEconomicCalendar';
+import { hasKey, tr, useT } from '../../i18n';
 
 interface NewsRecord {
   id: string;
@@ -33,7 +35,14 @@ function recordStatusFromPublication(ts: string): DataQualityStatus {
   return 'HISTORICAL';
 }
 
+/** Code plus Vietnamese/English label, e.g. "BULLISH · Tăng giá"; unknown codes are shown as-is. */
+function codeLabel(prefix: 'news.dir.' | 'news.rev.', code: string): string {
+  const key = `${prefix}${code}`;
+  return hasKey(key) ? `${code} · ${tr(key)}` : code;
+}
+
 export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
+  const t = useT();
   const { syncProviderFeeds, syncing, timeframe } = useTerminal();
   const [records, setRecords] = useState<FundamentalMacroRecord[]>([]);
   const [news, setNews] = useState<NewsRecord[]>([]);
@@ -81,24 +90,24 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!source.trim() || !pubTs.trim()) {
-      setError('Official source and publication timestamp are strictly required.');
+      setError(t('news.err.required'));
       return;
     }
     const pubMs = new Date(pubTs).getTime();
     if (Number.isNaN(pubMs)) {
-      setError('Publication timestamp is invalid.');
+      setError(t('news.err.invalidTs'));
       return;
     }
     if (pubMs > Date.now() + 60_000) {
-      setError('Publication timestamp is in the future — a record can only be stored after it is published.');
+      setError(t('news.err.futureTs'));
       return;
     }
     if (kind === 'MACRO' && !revisionStatus) {
-      setError('Choose the revision status (PRELIMINARY / FINAL / REVISED) stated by the source.');
+      setError(t('news.err.revision'));
       return;
     }
     if (kind === 'MACRO' && !dataset.trim()) {
-      setError('Dataset / topic is required.');
+      setError(t('news.err.dataset'));
       return;
     }
 
@@ -131,7 +140,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.message ?? 'Validation failed.');
+      if (!res.ok) throw new Error(json.message ?? t('news.err.validation'));
       setSource('');
       setHeadline('');
       setSummary('');
@@ -140,7 +149,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
       setDataPeriod('');
       await fetchAll();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to store sourced record.');
+      setError(err instanceof Error ? err.message : t('news.err.store'));
     } finally {
       setSubmitting(false);
     }
@@ -151,13 +160,13 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
     const res = await syncProviderFeeds({ timeframe });
     await fetchAll();
     if (!res) {
-      setSyncMessage('Unable to sync EIA / USDA macro feeds.');
+      setSyncMessage(t('news.err.sync'));
       return;
     }
     const eia = res.outcomes.find((o) => o.providerId === 'EIA_ENERGY');
     const usda = res.outcomes.find((o) => o.providerId === 'USDA_QUICKSTATS');
     setSyncMessage(
-      `EIA: ${eia?.message ?? 'N/A'} | USDA: ${usda?.message ?? 'N/A'}`
+      `EIA: ${eia?.message ?? t('common.na')} | USDA: ${usda?.message ?? t('common.na')}`
     );
   };
 
@@ -166,12 +175,10 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-white tracking-tight">
-            {mode === 'news'
-              ? 'Vietnam Commodity Economic Calendar & News'
-              : 'Fundamental, Macro Releases & Vietnam Session Calendar'}
+            {mode === 'news' ? t('news.title.news') : t('news.title.fundamental')}
           </h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Strictly sourced USDA, EIA, USD/VND, Vietnam ICT session schedules, and major market holidays. Zero fabricated forecasts or headlines.
+            {t('news.subtitle')}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
@@ -182,7 +189,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50 whitespace-nowrap shrink-0"
           >
             <CloudDownload className={`w-3.5 h-3.5 ${syncing ? 'animate-pulse' : ''}`} aria-hidden="true" />
-            <span>{syncing ? 'Syncing...' : 'Sync Official Macro (EIA / USDA)'}</span>
+            <span>{syncing ? t('news.syncing') : t('news.sync')}</span>
           </button>
           <DataStatusBadge status={status} />
         </div>
@@ -194,6 +201,9 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
         </div>
       )}
 
+      {/* T21: sourced EIA / WASDE / DXY / USD-VND (server-fetched, cached, fail-closed) */}
+      {mode === 'fundamental' && <MacroDataPanel />}
+
       {/* Vietnam-Focused Commodity Session & Holiday Economic Calendar */}
       <VietnamEconomicCalendar macroRecords={records} />
 
@@ -203,27 +213,27 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
         className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">Ingest Sourced Fundamental / News Record</h2>
+          <h2 className="text-sm font-semibold text-white">{t('news.form.title')}</h2>
           <select
-            aria-label="Record kind"
+            aria-label={t('news.form.kind')}
             value={kind}
             onChange={(e) => setKind(e.target.value as 'MACRO' | 'NEWS')}
             className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1 text-xs font-mono text-white"
           >
-            <option value="MACRO">MACRO DATASET</option>
-            <option value="NEWS">SOURCED NEWS</option>
+            <option value="MACRO">{t('news.form.kind.MACRO')}</option>
+            <option value="NEWS">{t('news.form.kind.NEWS')}</option>
           </select>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
             <label htmlFor="fund-source" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Official Source (Required)
+              {t('news.form.source')}
             </label>
             <input
               id="fund-source"
               type="text"
-              placeholder="e.g. USDA / EIA / SBV / Reuters"
+              placeholder={t('news.form.sourcePlaceholder')}
               value={source}
               onChange={(e) => setSource(e.target.value)}
               className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs text-white"
@@ -231,7 +241,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
           </div>
           <div>
             <label htmlFor="fund-ts" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Publication Time (Required)
+              {t('news.form.pubTime')}
             </label>
             <input
               id="fund-ts"
@@ -243,12 +253,12 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
           </div>
           <div>
             <label htmlFor="fund-dataset" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Dataset / Topic
+              {t('news.form.dataset')}
             </label>
             <input
               id="fund-dataset"
               type="text"
-              placeholder="e.g. USDA_WASDE"
+              placeholder={t('news.form.datasetPlaceholder')}
               value={dataset}
               onChange={(e) => setDataset(e.target.value)}
               className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
@@ -256,7 +266,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
           </div>
           <div>
             <label htmlFor="fund-impact" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Impact Classification
+              {t('news.form.impact')}
             </label>
             <select
               id="fund-impact"
@@ -264,10 +274,10 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
               onChange={(e) => setImpact(e.target.value as MarketDirection)}
               className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
             >
-              <option value="BULLISH">BULLISH</option>
-              <option value="BEARISH">BEARISH</option>
-              <option value="SIDEWAYS">NEUTRAL / SIDEWAYS</option>
-              <option value="UNCERTAIN">UNCERTAIN</option>
+              <option value="BULLISH">{codeLabel('news.dir.', 'BULLISH')}</option>
+              <option value="BEARISH">{codeLabel('news.dir.', 'BEARISH')}</option>
+              <option value="SIDEWAYS">{codeLabel('news.dir.', 'SIDEWAYS')}</option>
+              <option value="UNCERTAIN">{codeLabel('news.dir.', 'UNCERTAIN')}</option>
             </select>
           </div>
         </div>
@@ -276,47 +286,47 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <input
               type="text"
-              placeholder="Actual value"
+              placeholder={t('news.form.actual')}
               value={actualVal}
               onChange={(e) => setActualVal(e.target.value)}
               className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
             />
             <input
               type="text"
-              placeholder="Previous value"
+              placeholder={t('news.form.previous')}
               value={previousVal}
               onChange={(e) => setPreviousVal(e.target.value)}
               className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
             />
             <input
               type="text"
-              placeholder="Forecast value"
+              placeholder={t('news.form.forecast')}
               value={forecastVal}
               onChange={(e) => setForecastVal(e.target.value)}
               className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
             />
             <input
               type="text"
-              placeholder="Unit (e.g. MMT, %)"
+              placeholder={t('news.form.unit')}
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
               className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
             />
             <select
-              aria-label="Revision status (required)"
+              aria-label={t('news.form.revision')}
               value={revisionStatus}
               onChange={(e) => setRevisionStatus(e.target.value as FundamentalMacroRecord['revisionStatus'] | '')}
               className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
             >
-              <option value="">Revision status (required)…</option>
-              <option value="PRELIMINARY">PRELIMINARY</option>
-              <option value="FINAL">FINAL</option>
-              <option value="REVISED">REVISED</option>
+              <option value="">{t('news.form.revisionPlaceholder')}</option>
+              <option value="PRELIMINARY">{codeLabel('news.rev.', 'PRELIMINARY')}</option>
+              <option value="FINAL">{codeLabel('news.rev.', 'FINAL')}</option>
+              <option value="REVISED">{codeLabel('news.rev.', 'REVISED')}</option>
             </select>
             <input
               type="text"
-              aria-label="Reference period"
-              placeholder="Reference period, e.g. 2026/27 or Oct-2026 (blank = USER_PROVIDED)"
+              aria-label={t('news.form.period')}
+              placeholder={t('news.form.periodPlaceholder')}
               maxLength={40}
               value={dataPeriod}
               onChange={(e) => setDataPeriod(e.target.value)}
@@ -327,14 +337,14 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               type="text"
-              placeholder="Verified news headline"
+              placeholder={t('news.form.headline')}
               value={headline}
               onChange={(e) => setHeadline(e.target.value)}
               className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-white"
             />
             <input
               type="text"
-              placeholder="Concise factual summary"
+              placeholder={t('news.form.summary')}
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-white"
@@ -351,7 +361,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{submitting ? 'Saving...' : 'Store Sourced Record'}</span>
+            <span>{submitting ? t('news.form.saving') : t('news.form.submit')}</span>
           </button>
         </div>
       </form>
@@ -360,13 +370,13 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
           <div className="px-4 py-3 border-b border-[#263244]">
-            <h2 className="text-sm font-semibold text-white">Macro Releases ({records.length})</h2>
+            <h2 className="text-sm font-semibold text-white">{t('news.macro.title', { n: records.length })}</h2>
           </div>
           {loading ? (
-            <div className="p-6 text-xs font-mono text-[#E5E7EB]/60">Loading macro records...</div>
+            <div className="p-6 text-xs font-mono text-[#E5E7EB]/60">{t('news.macro.loading')}</div>
           ) : records.length === 0 ? (
             <div className="p-6 text-xs font-mono text-[#F59E0B]">
-              DATA_UNAVAILABLE — No sourced macro datasets ingested yet.
+              {t('news.macro.empty')}
             </div>
           ) : (
             <div className="divide-y divide-[#263244]/70">
@@ -374,18 +384,23 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
                 <div key={r.id} className="p-4 space-y-1 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-white">{r.dataset}</span>
-                    <span className="font-mono text-[#6366F1]">{r.impactAssessment}</span>
+                    <span className="font-mono text-[#6366F1]">{codeLabel('news.dir.', r.impactAssessment)}</span>
                   </div>
                   <p className="font-mono text-[#E5E7EB]/75">
-                    Actual: {r.actualValue ?? 'N/A'} {r.unit} · Prev: {r.previousValue ?? 'N/A'} · Fcst: {r.forecastValue ?? 'N/A'}
+                    {t('news.macro.values', {
+                      actual: r.actualValue ?? t('common.na'),
+                      unit: r.unit,
+                      prev: r.previousValue ?? t('common.na'),
+                      fcst: r.forecastValue ?? t('common.na'),
+                    })}
                   </p>
                   <p className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-[#E5E7EB]/60">
                     <DataStatusBadge status={recordStatusFromPublication(r.publicationTimestamp)} compact />
-                    <span>{r.revisionStatus}</span>
-                    <span>· Period: {r.dataPeriod}</span>
+                    <span>{codeLabel('news.rev.', r.revisionStatus)}</span>
+                    <span>{t('news.macro.period', { period: r.dataPeriod })}</span>
                   </p>
                   <p className="text-[11px] font-mono text-[#E5E7EB]/50">
-                    Source: {r.source} · {formatTimestampInZone(r.publicationTimestamp, 'Asia/Ho_Chi_Minh')}
+                    {t('news.sourceLine', { source: r.source, time: formatTimestampInZone(r.publicationTimestamp, 'Asia/Ho_Chi_Minh') })}
                   </p>
                 </div>
               ))}
@@ -396,13 +411,13 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
         <section className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
           <div className="px-4 py-3 border-b border-[#263244] flex items-center gap-2">
             <Newspaper className="w-4 h-4 text-[#6366F1]" aria-hidden="true" />
-            <h2 className="text-sm font-semibold text-white">Sourced News ({news.length})</h2>
+            <h2 className="text-sm font-semibold text-white">{t('news.list.title', { n: news.length })}</h2>
           </div>
           {loading ? (
-            <div className="p-6 text-xs font-mono text-[#E5E7EB]/60">Loading sourced news...</div>
+            <div className="p-6 text-xs font-mono text-[#E5E7EB]/60">{t('news.list.loading')}</div>
           ) : news.length === 0 ? (
             <div className="p-6 text-xs font-mono text-[#F59E0B]">
-              DATA_UNAVAILABLE — No sourced commodity news records ingested yet.
+              {t('news.list.empty')}
             </div>
           ) : (
             <div className="divide-y divide-[#263244]/70">
@@ -410,11 +425,11 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
                 <div key={n.id} className="p-4 space-y-1 text-xs">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold text-white">{n.headline}</span>
-                    <span className="font-mono text-[#6366F1] shrink-0">{n.classification}</span>
+                    <span className="font-mono text-[#6366F1] shrink-0">{codeLabel('news.dir.', n.classification)}</span>
                   </div>
                   <p className="text-[#E5E7EB]/80">{n.summary}</p>
                   <p className="text-[11px] font-mono text-[#E5E7EB]/50">
-                    Source: {n.source} · {formatTimestampInZone(n.publicationTimestamp, 'Asia/Ho_Chi_Minh')}
+                    {t('news.sourceLine', { source: n.source, time: formatTimestampInZone(n.publicationTimestamp, 'Asia/Ho_Chi_Minh') })}
                   </p>
                 </div>
               ))}

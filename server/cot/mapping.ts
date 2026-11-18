@@ -108,6 +108,10 @@ export const COT_MARKET_MAPPINGS: readonly CotMarketMapping[] = [
     'CME:TIO',
     'No market name containing "IRON" appears in the 2026 CFTC Disaggregated or Legacy futures-only files (332 markets in the disaggregated file), so no CFTC COT data was found for CME TIO. Not substituted with a steel market.'
   ),
+  notReported(
+    'SGX:FEF',
+    'SGX TSI Iron Ore futures trade on Singapore Exchange (SGX-DT), which is not a CFTC-designated contract market; SGX products are not in CFTC COT reports. Not substituted with any US market.'
+  ),
   // Energy
   reported(
     'NYMEX:CL',

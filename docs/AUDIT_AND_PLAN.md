@@ -99,3 +99,17 @@ Ký hiệu: **P0** = chặn mọi việc khác · **P1** = lõi nghiên cứu ·
 
 ## 5. Đường găng
 `T01 → T05 → (T06 song song T03) → T12/T10 → T17`. Quyết định **D1/D2** càng sớm càng tốt vì chặn T05/T07.
+
+### Wave 5 — Cải tiến (đề xuất 2026-11-18, giao dần cho agent rảnh)
+| ID | Task | Ưu tiên | Ghi chú |
+|---|---|---|---|
+| T32 | Bỏ nhãn tự động BULLISH/BEARISH trong đồng bộ EIA/USDA (chỉ dựa vào tăng/giảm) → mô tả trung tính | P1 | Đúng định hướng "nghiên cứu, không tín hiệu" |
+| T33 | Lưu lịch sử nến từ Yahoo (UNOFFICIAL) vào SQLite để Biểu đồ/Kỹ thuật/Mùa vụ/Biến động có dữ liệu mà không cần CSV | P0 | Hiện phần lớn trang phân tích trống |
+| T34 | Quy đổi giá quốc tế → VND/hợp đồng MXV trên thẻ giá (dùng tỷ giá VCB UNOFFICIAL + spec hợp đồng), ghi rõ công thức | P1 | Người mới hiểu "1 hợp đồng = bao nhiêu tiền" |
+| T35 | "Hôm nay có gì": lịch sự kiện trong ngày/tuần (EIA thứ Tư, COT thứ Sáu, WASDE, phiên MXV mở/đóng) trên Tổng quan | P1 | Từ lịch có nguồn, không ước đoán |
+| T36 | Đồng bộ định kỳ phía server: COT hàng tuần, macro, Yahoo warm-up; trạng thái lần đồng bộ cuối trên Data Health | P1 | |
+| T37 | Việt hoá + nhãn thân thiện cho các view mới của chủ dự án (CommodityWorld, Cycle Hunter/Report, CommodityProfile) | P1 | Sau đợt merge c26263f |
+| T38 | Nén ảnh hàng hoá (~40 JPG ~1 MB) sang WebP + lazy-load | P2 | Hiệu năng/mobile |
+| T39 | Smoke test trình duyệt trong CI (mở các trang chính, không lỗi console, không 404 API) | P1 | Bắt lỗi kiểu "Backend sync partially failed" |
+| T40 | Hướng dẫn nhập môn tương tác (tour 5 bước) + trang Thuật ngữ | P2 | Người mới |
+| T41 | Cảnh báo giá/biến động (ngưỡng do người dùng đặt, chỉ thông báo, không khuyến nghị) | P2 | |

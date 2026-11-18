@@ -13,6 +13,7 @@ import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { ContractChainTable } from './ContractChainTable';
 import { TickCalculator } from './TickCalculator';
 import { SourceLink, VerificationBadge } from './VerificationBadge';
+import { fmtNum, useT } from '../../../i18n';
 
 type Filter<T> = 'ALL' | T;
 type Loadable<T> = { state: 'idle' } | { state: 'loading' } | { state: 'ok'; data: T } | { state: 'error'; message: string };
@@ -34,20 +35,22 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function NullValue() {
-  return <span className="text-[#F59E0B]">UNAVAILABLE</span>;
+  const t = useT();
+  return <span className="text-[#F59E0B]">{t('exp.unavailable')}</span>;
 }
 
 function num(v: number | null, unit?: string): ReactNode {
   if (v === null) return <NullValue />;
   return (
     <span className="tabular-nums">
-      {v} {unit ? <span className="text-[#E5E7EB]/55">{unit}</span> : null}
+      {fmtNum(v)} {unit ? <span className="text-[#E5E7EB]/55">{unit}</span> : null}
     </span>
   );
 }
 
 export default function ContractExplorerView() {
   const { instruments, loading } = useTerminal();
+  const t = useT();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<Filter<ProductCategory>>('ALL');
   const [exchange, setExchange] = useState<Filter<ExchangeCode>>('ALL');
@@ -107,16 +110,16 @@ export default function ContractExplorerView() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold text-white tracking-tight">Contract Explorer</h1>
+        <h1 className="text-xl font-semibold text-white tracking-tight">{t('exp.title')}</h1>
         <p className="text-sm text-[#E5E7EB]/65 mt-1">
-          Instrument Master specifications, expiry calendars and MXV ↔ international mapping. Unverified values are flagged, never filled in.
+          {t('exp.subtitle')}
         </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-full sm:w-64">
           <label htmlFor="explorer-search" className="sr-only">
-            Search instruments
+            {t('exp.searchLabel')}
           </label>
           <Search className="w-4 h-4 text-[#E5E7EB]/45 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
           <input
@@ -124,35 +127,35 @@ export default function ContractExplorerView() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Symbol, product, MXV code..."
+            placeholder={t('exp.searchPlaceholder')}
             className="w-full bg-[#111622] border border-[#263244] rounded-md pl-9 pr-3 py-1.5 text-xs text-[#E5E7EB] placeholder:text-[#E5E7EB]/40 focus:outline-none focus:border-[#6366F1]"
           />
         </div>
-        <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value as Filter<ProductCategory>)} className={selectClass}>
-          <option value="ALL">All categories</option>
+        <select aria-label={t('exp.category')} value={category} onChange={(e) => setCategory(e.target.value as Filter<ProductCategory>)} className={selectClass}>
+          <option value="ALL">{t('exp.allCategories')}</option>
           {categories.map((c) => (
             <option key={c} value={c}>
               {c.replace('_', ' ')}
             </option>
           ))}
         </select>
-        <select aria-label="Exchange" value={exchange} onChange={(e) => setExchange(e.target.value as Filter<ExchangeCode>)} className={selectClass}>
-          <option value="ALL">All exchanges</option>
+        <select aria-label={t('common.exchange')} value={exchange} onChange={(e) => setExchange(e.target.value as Filter<ExchangeCode>)} className={selectClass}>
+          <option value="ALL">{t('exp.allExchanges')}</option>
           {exchanges.map((x) => (
             <option key={x} value={x}>
               {x}
             </option>
           ))}
         </select>
-        <select aria-label="Spec status" value={specStatus} onChange={(e) => setSpecStatus(e.target.value)} className={selectClass}>
-          <option value="ALL">Any spec status</option>
-          <option value="VERIFIED">VERIFIED</option>
-          <option value="UNVERIFIED">UNVERIFIED</option>
-          <option value="UNAVAILABLE">UNAVAILABLE</option>
+        <select aria-label={t('exp.specStatus')} value={specStatus} onChange={(e) => setSpecStatus(e.target.value)} className={selectClass}>
+          <option value="ALL">{t('exp.anySpecStatus')}</option>
+          <option value="VERIFIED">{t('verify.VERIFIED')} (VERIFIED)</option>
+          <option value="UNVERIFIED">{t('verify.UNVERIFIED')} (UNVERIFIED)</option>
+          <option value="UNAVAILABLE">{t('verify.UNAVAILABLE')} (UNAVAILABLE)</option>
         </select>
         <label className="inline-flex items-center gap-1.5 text-xs text-[#E5E7EB]/75">
           <input type="checkbox" checked={mxvOnly} onChange={(e) => setMxvOnly(e.target.checked)} className="accent-[#6366F1]" />
-          MXV-listed only
+          {t('exp.mxvOnly')}
         </label>
       </div>
 
@@ -160,9 +163,9 @@ export default function ContractExplorerView() {
         {/* Instrument list */}
         <div className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
           <div className="px-3 py-2 border-b border-[#263244] text-xs text-[#E5E7EB]/55 font-mono">
-            {loading ? 'Loading instruments...' : `${filtered.length} / ${instruments.length} instruments`}
+            {loading ? t('exp.loadingInstruments') : t('exp.instrumentsCount', { n: filtered.length, total: instruments.length })}
           </div>
-          <ul className="max-h-[70vh] overflow-y-auto divide-y divide-[#263244]/60" aria-label="Instruments">
+          <ul className="max-h-[70vh] overflow-y-auto divide-y divide-[#263244]/60" aria-label={t('exp.instruments')}>
             {filtered.map((i) => {
               const active = selected?.id === i.id;
               return (
@@ -182,13 +185,13 @@ export default function ContractExplorerView() {
                         {i.mxvMapping?.mxvSymbol ? ` · MXV ${i.mxvMapping.mxvSymbol}` : ''}
                       </span>
                     </span>
-                    <VerificationBadge status={i.specification.verificationStatus} />
+                    <VerificationBadge compact status={i.specification.verificationStatus} />
                   </button>
                 </li>
               );
             })}
             {!loading && filtered.length === 0 && (
-              <li className="px-3 py-6 text-center text-xs text-[#E5E7EB]/55">No instruments match the filters.</li>
+              <li className="px-3 py-6 text-center text-xs text-[#E5E7EB]/55">{t('exp.noMatch')}</li>
             )}
           </ul>
         </div>
@@ -207,29 +210,29 @@ export default function ContractExplorerView() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-[#E5E7EB]/55">Specification</span>
+                  <span className="text-xs text-[#E5E7EB]/55">{t('exp.specification')}</span>
                   <VerificationBadge status={selected.specification.verificationStatus} />
                 </div>
               </div>
               <dl className="text-xs">
-                <Field label="Contract size">{num(selected.specification.contractSize, selected.specification.contractSizeUnit)}</Field>
-                <Field label="Minimum tick">{num(selected.specification.minimumTickSize, selected.specification.quotationUnit)}</Field>
-                <Field label="Tick value">{num(selected.specification.tickValue, selected.specification.tradingCurrency)}</Field>
-                <Field label="Quotation unit">{selected.specification.quotationUnit || <NullValue />}</Field>
-                <Field label="Trading currency">{selected.specification.tradingCurrency || <NullValue />}</Field>
-                <Field label="Settlement">{selected.specification.settlementMethod}</Field>
-                <Field label="Trading hours">
+                <Field label={t('term.contractSize')}>{num(selected.specification.contractSize, selected.specification.contractSizeUnit)}</Field>
+                <Field label={t('exp.minimumTick')}>{num(selected.specification.minimumTickSize, selected.specification.quotationUnit)}</Field>
+                <Field label={t('term.tickValue')}>{num(selected.specification.tickValue, selected.specification.tradingCurrency)}</Field>
+                <Field label={t('exp.quotationUnit')}>{selected.specification.quotationUnit || <NullValue />}</Field>
+                <Field label={t('exp.tradingCurrency')}>{selected.specification.tradingCurrency || <NullValue />}</Field>
+                <Field label={t('exp.settlement')}>{selected.specification.settlementMethod}</Field>
+                <Field label={t('exp.tradingHours')}>
                   <span className="font-sans">{selected.specification.tradingHoursSummary || <NullValue />}</span>{' '}
                   <span className="text-[#E5E7EB]/55">({selected.specification.tradingHoursTimezone})</span>
                 </Field>
-                <Field label="Margin">
+                <Field label={t('term.margin')}>
                   {selected.specification.marginRequirement === null ? (
-                    <span className="text-[#F59E0B]">UNAVAILABLE — not stored (changes frequently; check the exchange/broker)</span>
+                    <span className="text-[#F59E0B]">{t('exp.marginUnavailable')}</span>
                   ) : (
                     `${selected.specification.marginRequirement} ${selected.specification.marginCurrency ?? ''}`
                   )}
                 </Field>
-                <Field label="Data source">
+                <Field label={t('exp.dataSource')}>
                   <SourceLink href={selected.specification.dataSource} />
                 </Field>
               </dl>
@@ -238,29 +241,29 @@ export default function ContractExplorerView() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2 text-xs">
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-sm font-semibold text-white">Calendar rule</h2>
+                  <h2 className="text-sm font-semibold text-white">{t('exp.calendarRule')}</h2>
                   {rule.state === 'ok' && rule.data.rule && <VerificationBadge status={rule.data.rule.verificationStatus} />}
                 </div>
                 {rule.state === 'loading' || rule.state === 'idle' ? (
-                  <p className="text-[#E5E7EB]/55">Loading...</p>
+                  <p className="text-[#E5E7EB]/55">{t('common.loading')}</p>
                 ) : rule.state === 'error' ? (
                   <p className="font-mono text-[#EF4444]">{rule.message}</p>
                 ) : !rule.data.rule ? (
-                  <p className="font-mono text-[#F59E0B]">UNAVAILABLE — no calendar rule recorded for this instrument.</p>
+                  <p className="font-mono text-[#F59E0B]">{t('exp.noCalendarRule')}</p>
                 ) : (
                   <dl>
-                    <Field label="Listed months">
+                    <Field label={t('exp.listedMonths')}>
                       <span className="font-sans">{rule.data.rule.listedMonths}</span>
                     </Field>
-                    <Field label="Last trading day">
+                    <Field label={t('term.lastTradingDay')}>
                       <span className="font-sans">{rule.data.rule.lastTradingDayRule}</span>
                     </Field>
                     {rule.data.rule.notes && (
-                      <Field label="Notes">
+                      <Field label={t('common.notes')}>
                         <span className="font-sans text-[#E5E7EB]/75">{rule.data.rule.notes}</span>
                       </Field>
                     )}
-                    <Field label="Source">
+                    <Field label={t('common.source')}>
                       <SourceLink href={rule.data.rule.sourceUrl} />
                     </Field>
                   </dl>
@@ -269,22 +272,22 @@ export default function ContractExplorerView() {
 
               <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2 text-xs">
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-sm font-semibold text-white">MXV mapping</h2>
+                  <h2 className="text-sm font-semibold text-white">{t('exp.mxvMapping')}</h2>
                   <VerificationBadge status={selected.mxvMapping?.mappingStatus ?? 'UNAVAILABLE'} />
                 </div>
                 {selected.mxvMapping ? (
                   <dl>
-                    <Field label="MXV code">{selected.mxvMapping.mxvSymbol ?? <NullValue />}</Field>
-                    <Field label="International">
+                    <Field label={t('exp.chain.mxvCode')}>{selected.mxvMapping.mxvSymbol ?? <NullValue />}</Field>
+                    <Field label={t('exp.international')}>
                       {selected.mxvMapping.internationalExchange}:{selected.mxvMapping.internationalSymbol}
                     </Field>
-                    <Field label="MXV-listed flag">{selected.isMvxListed ? 'YES' : 'NO'}</Field>
-                    <Field label="Notes">
+                    <Field label={t('exp.mxvListedFlag')}>{selected.isMvxListed ? t('exp.yes') : t('exp.no')}</Field>
+                    <Field label={t('common.notes')}>
                       <span className="font-sans text-[#E5E7EB]/75">{selected.mxvMapping.notes || '—'}</span>
                     </Field>
                   </dl>
                 ) : (
-                  <p className="font-mono text-[#F59E0B]">UNAVAILABLE — no MXV mapping recorded.</p>
+                  <p className="font-mono text-[#F59E0B]">{t('exp.noMxvMapping')}</p>
                 )}
               </section>
             </div>
@@ -292,18 +295,18 @@ export default function ContractExplorerView() {
             <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <h2 className="text-sm font-semibold text-white">Contract chain</h2>
+                  <h2 className="text-sm font-semibold text-white">{t('exp.contractChain')}</h2>
                   <p className="text-xs text-[#E5E7EB]/55">
-                    From <span className="font-mono">GET /api/contracts/{selected.id}/chain</span>
+                    {t('exp.from')} <span className="font-mono">GET /api/contracts/{selected.id}/chain</span>
                   </p>
                 </div>
                 <div className="flex items-end gap-2">
                   <label className="text-xs text-[#E5E7EB]/65 space-y-1">
-                    <span className="block">As of</span>
+                    <span className="block">{t('exp.asOf')}</span>
                     <input type="date" value={asOf} onChange={(e) => setAsOf(e.target.value)} className={selectClass} />
                   </label>
                   <label className="text-xs text-[#E5E7EB]/65 space-y-1">
-                    <span className="block">Contracts</span>
+                    <span className="block">{t('exp.tick.contracts')}</span>
                     <select value={count} onChange={(e) => setCount(Number(e.target.value))} className={selectClass}>
                       {[4, 8, 12, 24, 36].map((n) => (
                         <option key={n} value={n}>
@@ -315,7 +318,7 @@ export default function ContractExplorerView() {
                 </div>
               </div>
               {chain.state === 'loading' || chain.state === 'idle' ? (
-                <p className="text-xs text-[#E5E7EB]/55">Loading chain...</p>
+                <p className="text-xs text-[#E5E7EB]/55">{t('exp.loadingChain')}</p>
               ) : chain.state === 'error' ? (
                 <div className="flex items-center gap-2 text-xs">
                   <DataStatusBadge status="UNAVAILABLE" />
@@ -330,7 +333,7 @@ export default function ContractExplorerView() {
           </div>
         ) : (
           <div className="bg-[#111622] border border-[#263244] rounded-lg p-6 text-xs text-[#E5E7EB]/55">
-            {loading ? 'Loading instruments...' : 'Select an instrument.'}
+            {loading ? t('exp.loadingInstruments') : t('exp.selectInstrument')}
           </div>
         )}
       </div>

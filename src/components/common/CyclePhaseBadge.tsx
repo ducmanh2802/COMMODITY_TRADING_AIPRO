@@ -1,4 +1,5 @@
 import type { BottomClassification, CyclePhase } from '../../shared/types/cycle';
+import { useT } from '../../i18n';
 
 const PHASE_STYLES: Record<CyclePhase, { label: string; textClass: string; borderClass: string }> = {
   PHASE_1_ACCUMULATION: {
@@ -29,14 +30,17 @@ const PHASE_STYLES: Record<CyclePhase, { label: string; textClass: string; borde
 };
 
 export function CyclePhaseBadge({ phase, compact = false }: { phase: CyclePhase; compact?: boolean }) {
-  const cfg = PHASE_STYLES[phase] ?? PHASE_STYLES.DATA_UNAVAILABLE;
+  const t = useT();
+  const key: CyclePhase = PHASE_STYLES[phase] ? phase : 'DATA_UNAVAILABLE';
+  const cfg = PHASE_STYLES[key];
   return (
     <span
-      className={`inline-flex items-center font-mono whitespace-nowrap rounded border ${cfg.borderClass} ${cfg.textClass} ${
+      title={key === 'DATA_UNAVAILABLE' ? t('fr.phase.DATA_UNAVAILABLE.desc') : undefined}
+      className={`inline-flex items-center whitespace-nowrap rounded border ${cfg.borderClass} ${cfg.textClass} ${
         compact ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-[11px]'
       }`}
     >
-      {cfg.label}
+      {t(`fr.phase.${key}`)}
     </span>
   );
 }

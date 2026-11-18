@@ -30,9 +30,9 @@ test('Cycle API fails closed cleanly when no OHLCV or live providers are configu
     const res = await fetch(`${baseUrl}/api/cycle/overview`);
     assert.equal(res.status, 200);
     const body = (await res.json()) as CycleMarketOverview;
-    assert.equal(body.commodities.length, 20);
+    assert.equal(body.commodities.length, 21);
     assert.equal(body.marketBreadth.withPriceData, 0);
-    assert.equal(body.marketBreadth.unavailableCount, 20);
+    assert.equal(body.marketBreadth.unavailableCount, 21);
     assert.ok(body.macroTracker.length === 8);
 
     const profRes = await fetch(`${baseUrl}/api/cycle/profile/CBOT:ZC`);

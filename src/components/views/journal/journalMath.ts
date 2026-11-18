@@ -1,5 +1,6 @@
 import type { ContractSpecification } from '../../../shared/types/instrument';
 import { computeTickPnl } from '../explorer/tickMath';
+import { tr } from '../../../i18n/translate';
 
 export interface JournalExitInput {
   direction: 'LONG' | 'SHORT';
@@ -32,23 +33,23 @@ export type JournalExitResult =
  * currency is not USD (journal analytics aggregate in USD), or when inputs are invalid.
  */
 export function computeJournalExit(spec: ContractSpecification | null | undefined, input: JournalExitInput): JournalExitResult {
-  if (!spec) return { ok: false, reason: 'Refused: instrument not found in the Instrument Master.' };
+  if (!spec) return { ok: false, reason: tr('jr.m.noInstrument') };
   const { direction, entryPrice, stopLoss, exitPrice, contracts, tradingCosts } = input;
-  if (!(entryPrice > 0) || !(stopLoss > 0)) return { ok: false, reason: 'Entry and stop must be positive.' };
-  if (!(Number.isFinite(exitPrice) && exitPrice > 0)) return { ok: false, reason: 'Enter a positive exit price.' };
-  if (!(Number.isFinite(tradingCosts) && tradingCosts >= 0)) return { ok: false, reason: 'Trading costs must be 0 or more.' };
+  if (!(entryPrice > 0) || !(stopLoss > 0)) return { ok: false, reason: tr('jr.m.entryStopPositive') };
+  if (!(Number.isFinite(exitPrice) && exitPrice > 0)) return { ok: false, reason: tr('jr.m.exitPositive') };
+  if (!(Number.isFinite(tradingCosts) && tradingCosts >= 0)) return { ok: false, reason: tr('jr.m.costsNonNeg') };
   const risk = Math.abs(entryPrice - stopLoss);
-  if (!(risk > 0)) return { ok: false, reason: 'Stop loss must differ from entry price (R is undefined).' };
+  if (!(risk > 0)) return { ok: false, reason: tr('jr.m.stopEqualsEntry') };
 
   const dir = direction === 'LONG' ? 1 : -1;
   const move = (exitPrice - entryPrice) * dir;
   const tick = computeTickPnl(spec, move, contracts);
   if (!tick.ok) return { ok: false, reason: tick.reason };
   if (tick.currency !== 'USD') {
-    return { ok: false, reason: `Refused: trading currency is ${tick.currency || 'unknown'}; journal analytics are in USD.` };
+    return { ok: false, reason: tr('jr.m.currency', { cur: tick.currency || tr('jr.m.unknown') }) };
   }
   const warnings: string[] = [];
-  if (tick.fractionalTicks) warnings.push('Exit/entry difference is not a whole number of ticks — check the prices.');
+  if (tick.fractionalTicks) warnings.push(tr('jr.m.fractional'));
   const round = (x: number) => Math.round(x * 100) / 100;
   return {
     ok: true,

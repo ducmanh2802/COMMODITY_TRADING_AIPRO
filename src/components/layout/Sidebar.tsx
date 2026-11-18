@@ -8,6 +8,7 @@ import {
   CandlestickChart,
   Compass,
   Cpu,
+  FileSearch,
   FileText,
   Globe,
   GraduationCap,
@@ -28,6 +29,7 @@ import {
 } from 'lucide-react';
 import type { AppModuleId } from '../../shared/types/risk';
 import { useTerminal } from '../../contexts/TerminalContext';
+import { useT } from '../../i18n';
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -36,44 +38,45 @@ interface SidebarProps {
 
 interface NavItem {
   id: AppModuleId;
-  label: string;
   phase: number;
   Icon: typeof LayoutDashboard;
 }
 
 const PRIMARY_NAV_ITEMS: NavItem[] = [
-  { id: 'overview', label: 'Overview', phase: 1, Icon: LayoutDashboard },
-  { id: 'commodity-world', label: 'Thế giới Hàng hóa', phase: 11, Icon: Image },
-  { id: 'cycle-hunter', label: 'Cycle Hunter', phase: 11, Icon: Target },
-  { id: 'commodity-profile', label: 'Hồ sơ Hàng hóa', phase: 11, Icon: Layers },
-  { id: 'research-report', label: 'Báo cáo AI', phase: 11, Icon: FileText },
-  { id: 'learn', label: 'Học', phase: 1, Icon: GraduationCap },
-  { id: 'markets', label: 'Markets', phase: 1, Icon: Globe },
-  { id: 'charts', label: 'Charts', phase: 3, Icon: CandlestickChart },
-  { id: 'ai-analyst', label: 'AI Analyst', phase: 5, Icon: Bot },
-  { id: 'scanner', label: 'Scanner', phase: 6, Icon: Radar },
-  { id: 'risk', label: 'Risk', phase: 7, Icon: ShieldCheck },
-  { id: 'portfolio', label: 'Portfolio', phase: 9, Icon: Briefcase },
-  { id: 'backtest', label: 'Backtest', phase: 8, Icon: History },
-  { id: 'journal', label: 'Journal', phase: 9, Icon: BookOpen },
-  { id: 'news', label: 'News', phase: 10, Icon: Newspaper },
-  { id: 'data-health', label: 'Data Health', phase: 1, Icon: Activity },
-  { id: 'data-import', label: 'Data Import', phase: 2, Icon: Upload },
-  { id: 'settings', label: 'Settings', phase: 1, Icon: Settings },
+  { id: 'overview', phase: 1, Icon: LayoutDashboard },
+  { id: 'commodity-world', phase: 11, Icon: Image },
+  { id: 'cycle-hunter', phase: 11, Icon: Target },
+  { id: 'commodity-profile', phase: 11, Icon: Layers },
+  { id: 'research-report', phase: 11, Icon: FileText },
+  { id: 'learn', phase: 1, Icon: GraduationCap },
+  { id: 'markets', phase: 1, Icon: Globe },
+  { id: 'charts', phase: 3, Icon: CandlestickChart },
+  { id: 'ai-analyst', phase: 5, Icon: Bot },
+  { id: 'scanner', phase: 6, Icon: Radar },
+  { id: 'risk', phase: 7, Icon: ShieldCheck },
+  { id: 'portfolio', phase: 9, Icon: Briefcase },
+  { id: 'backtest', phase: 8, Icon: History },
+  { id: 'journal', phase: 9, Icon: BookOpen },
+  { id: 'news', phase: 10, Icon: Newspaper },
+  { id: 'data-health', phase: 1, Icon: Activity },
+  { id: 'data-import', phase: 2, Icon: Upload },
+  { id: 'settings', phase: 1, Icon: Settings },
 ];
 
 const SECONDARY_ENGINE_ITEMS: NavItem[] = [
-  { id: 'explorer', label: 'Contracts', phase: 2, Icon: Compass },
-  { id: 'term-structure', label: 'Term Structure', phase: 2, Icon: TrendingUp },
-  { id: 'technical', label: 'Technical', phase: 3, Icon: BarChart3 },
-  { id: 'analysis', label: 'Analysis', phase: 3, Icon: AreaChart },
-  { id: 'cot', label: 'COT', phase: 10, Icon: Users },
-  { id: 'signals', label: 'Strategies', phase: 4, Icon: SlidersHorizontal },
-  { id: 'fundamental', label: 'Macro Data', phase: 10, Icon: Cpu },
+  { id: 'explorer', phase: 2, Icon: Compass },
+  { id: 'term-structure', phase: 2, Icon: TrendingUp },
+  { id: 'technical', phase: 3, Icon: BarChart3 },
+  { id: 'analysis', phase: 3, Icon: AreaChart },
+  { id: 'brief', phase: 3, Icon: FileSearch },
+  { id: 'cot', phase: 10, Icon: Users },
+  { id: 'signals', phase: 4, Icon: SlidersHorizontal },
+  { id: 'fundamental', phase: 10, Icon: Cpu },
 ];
 
 export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   const { activeModule, setActiveModule } = useTerminal();
+  const t = useT();
 
   const handleSelect = (id: AppModuleId) => {
     setActiveModule(id);
@@ -103,7 +106,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                   className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#6366F1]' : 'text-[#E5E7EB]/60'}`}
                   aria-hidden="true"
                 />
-                <span className="truncate">{item.label}</span>
+                <span className="truncate">{t(`nav.${item.id}`)}</span>
               </span>
             </button>
           </li>
@@ -123,7 +126,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
       )}
 
       <aside
-        aria-label="Terminal Navigation"
+        aria-label={t('nav.ariaLabel')}
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#111622] border-r border-[#263244] flex flex-col transition-transform duration-150 lg:static lg:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -137,7 +140,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
           <button
             type="button"
             onClick={onCloseMobile}
-            aria-label="Close navigation menu"
+            aria-label={t('nav.closeMenu')}
             className="lg:hidden p-2 text-[#E5E7EB]/70 hover:text-white rounded-md"
           >
             <X className="w-4 h-4" aria-hidden="true" />
@@ -146,24 +149,24 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
 
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
           <div>
-            <p className="px-3 mb-2 text-xs font-medium text-[#E5E7EB]/45">Terminal</p>
+            <p className="px-3 mb-2 text-xs font-medium text-[#E5E7EB]/45">{t('nav.groupTerminal')}</p>
             {renderNavList(PRIMARY_NAV_ITEMS)}
           </div>
 
           <div className="pt-4 border-t border-[#263244]">
-            <p className="px-3 mb-2 text-xs font-medium text-[#E5E7EB]/45">Analysis Engines</p>
+            <p className="px-3 mb-2 text-xs font-medium text-[#E5E7EB]/45">{t('nav.groupEngines')}</p>
             {renderNavList(SECONDARY_ENGINE_ITEMS)}
           </div>
         </nav>
 
         <div className="p-4 border-t border-[#263244] text-xs text-[#E5E7EB]/55 space-y-1">
           <div className="flex items-center justify-between font-mono tabular-nums">
-            <span>Architecture</span>
-            <span className="text-[#E5E7EB]">{PRIMARY_NAV_ITEMS.length + SECONDARY_ENGINE_ITEMS.length} Modules</span>
+            <span>{t('nav.architecture')}</span>
+            <span className="text-[#E5E7EB]">{t('nav.modules', { n: PRIMARY_NAV_ITEMS.length + SECONDARY_ENGINE_ITEMS.length })}</span>
           </div>
           <div className="flex items-center justify-between font-mono">
-            <span>Execution</span>
-            <span>Decision Support</span>
+            <span>{t('nav.execution')}</span>
+            <span>{t('nav.decisionSupport')}</span>
           </div>
         </div>
       </aside>

@@ -4,6 +4,7 @@ import { calendarSpread, spreadZScore, type SeriesPoint } from '../../../shared/
 import type { InstrumentDefinition } from '../../../shared/types/instrument';
 import { CURVE_TIMEFRAME, type ContractDataset } from './curveData';
 import { LineChartSvg } from './LineChartSvg';
+import { fmtDate as fmtDisplayDate, fmtFixed, fmtInt, tr, useT } from '../../../i18n';
 
 const selectClass =
   'bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-[#E5E7EB] font-mono focus:outline-none focus:border-[#6366F1]';
@@ -15,7 +16,7 @@ type LegsState =
   | { state: 'error'; message: string };
 
 const toSeries = (r: CandlesResponse): SeriesPoint[] => r.candles.map((c) => ({ t: c.timestamp, v: c.close }));
-const fmtDate = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+const fmtDate = (ms: number) => fmtDisplayDate(new Date(ms).toISOString().slice(0, 10));
 
 export function SpreadHistoryPanel({
   instrument,
@@ -24,6 +25,7 @@ export function SpreadHistoryPanel({
   instrument: InstrumentDefinition;
   contracts: ContractDataset[];
 }) {
+  const t = useT();
   const [nearCode, setNearCode] = useState('');
   const [farCode, setFarCode] = useState('');
   const [zWindow, setZWindow] = useState(20);
@@ -57,11 +59,11 @@ export function SpreadHistoryPanel({
     if (legs.state !== 'ok') return null;
     const warnings: string[] = [];
     if (legs.near.priceUnit && legs.far.priceUnit && legs.near.priceUnit !== legs.far.priceUnit) {
-      return { ok: false as const, error: `Price units differ (${legs.near.priceUnit} vs ${legs.far.priceUnit}); spread refused.` };
+      return { ok: false as const, error: tr('ts.sp.unitsDiffer', { near: legs.near.priceUnit, far: legs.far.priceUnit }) };
     }
-    if (legs.near.truncated || legs.far.truncated) warnings.push('Candle history truncated to the most recent 20,000 bars.');
+    if (legs.near.truncated || legs.far.truncated) warnings.push(tr('ts.sp.truncated'));
     const spread = calendarSpread(toSeries(legs.near), toSeries(legs.far));
-    if (spread.status !== 'OK') return { ok: false as const, error: `Spread ${spread.status}: ${spread.reason ?? ''}` };
+    if (spread.status !== 'OK') return { ok: false as const, error: tr('ts.sp.spreadStatus', { status: spread.status, reason: spread.reason ?? '' }) };
     const spreadSeries: SeriesPoint[] = [];
     spread.timestamps.forEach((t, i) => {
       const v = spread.values[i];
@@ -85,15 +87,15 @@ export function SpreadHistoryPanel({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id="spread-hist-title" className="text-sm font-semibold text-white">
-            Calendar spread history
+            {t('ts.sp.title')}
           </h2>
           <p className="text-xs text-[#E5E7EB]/55">
-            spread = near − far on common {CURVE_TIMEFRAME} dates (no fill); rolling z-score uses a sample σ window including the current bar.
+            {t('ts.sp.subtitle', { tf: CURVE_TIMEFRAME })}
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-2 text-xs text-[#E5E7EB]/65">
           <label className="space-y-1">
-            <span className="block">Near</span>
+            <span className="block">{t('ts.sp.near')}</span>
             <select value={nearCode} onChange={(e) => setNearCode(e.target.value)} className={selectClass}>
               {contracts.map((c) => (
                 <option key={c.code} value={c.code}>
@@ -103,7 +105,7 @@ export function SpreadHistoryPanel({
             </select>
           </label>
           <label className="space-y-1">
-            <span className="block">Far</span>
+            <span className="block">{t('ts.sp.far')}</span>
             <select value={farCode} onChange={(e) => setFarCode(e.target.value)} className={selectClass}>
               {contracts.map((c) => (
                 <option key={c.code} value={c.code}>
@@ -113,7 +115,7 @@ export function SpreadHistoryPanel({
             </select>
           </label>
           <label className="space-y-1">
-            <span className="block">Z window</span>
+            <span className="block">{t('ts.sp.zWindow')}</span>
             <select value={zWindow} onChange={(e) => setZWindow(Number(e.target.value))} className={selectClass}>
               {[5, 10, 20, 60].map((n) => (
                 <option key={n} value={n}>
@@ -126,43 +128,43 @@ export function SpreadHistoryPanel({
       </div>
 
       {contracts.length < 2 ? (
-        <p className="text-xs font-mono text-[#F59E0B]">DATA_UNAVAILABLE — import at least two individual contracts ({CURVE_TIMEFRAME}) to build a spread.</p>
+        <p className="text-xs font-mono text-[#F59E0B]">{t('ts.sp.needTwo', { tf: CURVE_TIMEFRAME })}</p>
       ) : nearCode === farCode ? (
-        <p className="text-xs font-mono text-[#F59E0B]">Pick two different contracts.</p>
+        <p className="text-xs font-mono text-[#F59E0B]">{t('ts.sp.pickTwo')}</p>
       ) : legs.state === 'loading' || legs.state === 'idle' ? (
-        <p className="text-xs text-[#E5E7EB]/55">Loading legs...</p>
+        <p className="text-xs text-[#E5E7EB]/55">{t('ts.sp.loadingLegs')}</p>
       ) : legs.state === 'error' ? (
         <p className="text-xs font-mono text-[#EF4444]">{legs.message}</p>
       ) : !computed || !computed.ok ? (
-        <p className="text-xs font-mono text-[#F59E0B]">{computed && !computed.ok ? computed.error : 'Spread unavailable.'}</p>
+        <p className="text-xs font-mono text-[#F59E0B]">{computed && !computed.ok ? computed.error : t('ts.sp.unavailable')}</p>
       ) : (
         <div className="space-y-3">
           <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div>
-              <dt className="text-[#E5E7EB]/55">Common dates</dt>
-              <dd className="font-mono tabular-nums text-white">{computed.spreadSeries.length}</dd>
+              <dt className="text-[#E5E7EB]/55">{t('ts.sp.commonDates')}</dt>
+              <dd className="font-mono tabular-nums text-white">{fmtInt(computed.spreadSeries.length)}</dd>
             </div>
             <div>
-              <dt className="text-[#E5E7EB]/55">Last spread ({last ? last.t.slice(0, 10) : '—'})</dt>
+              <dt className="text-[#E5E7EB]/55">{t('ts.sp.lastSpread', { date: last ? fmtDisplayDate(last.t.slice(0, 10)) : '—' })}</dt>
               <dd className="font-mono tabular-nums text-white">
-                {last ? last.v.toFixed(4) : '—'} <span className="text-[#E5E7EB]/50">{computed.unit ?? ''}</span>
+                {last ? fmtFixed(last.v, 4) : '—'} <span className="text-[#E5E7EB]/50">{computed.unit ?? ''}</span>
               </dd>
             </div>
             <div>
-              <dt className="text-[#E5E7EB]/55">Last z-score</dt>
+              <dt className="text-[#E5E7EB]/55">{t('ts.sp.lastZ')}</dt>
               <dd className="font-mono tabular-nums text-white">
                 {computed.z.status !== 'OK' ? (
                   <span className="text-[#F59E0B]">{computed.z.status}</span>
                 ) : lastZ === null ? (
-                  'undefined'
+                  t('ts.undefined')
                 ) : (
-                  lastZ.toFixed(2)
+                  fmtFixed(lastZ, 2)
                 )}
               </dd>
             </div>
           </dl>
           <LineChartSvg
-            ariaLabel={`Calendar spread ${nearCode} minus ${farCode}`}
+            ariaLabel={t('ts.sp.aria', { near: nearCode, far: farCode })}
             series={[
               {
                 name: `${nearCode} − ${farCode}`,
@@ -172,15 +174,15 @@ export function SpreadHistoryPanel({
               },
             ]}
             refLines={[{ y: 0, label: '0' }]}
-            xLabel="Date"
-            yLabel={`Spread (${computed.unit ?? 'price units'})`}
+            xLabel={t('common.date')}
+            yLabel={t('ts.sp.yLabel', { unit: computed.unit ?? t('ts.priceUnits') })}
             formatX={fmtDate}
-            formatY={(y) => y.toFixed(2)}
+            formatY={(y) => fmtFixed(y, 2)}
             height={240}
           />
           {computed.z.status === 'OK' ? (
             <LineChartSvg
-              ariaLabel={`Rolling z-score of spread ${nearCode} minus ${farCode}`}
+              ariaLabel={t('ts.sp.zAria', { near: nearCode, far: farCode })}
               series={[
                 {
                   name: `z-score (${zWindow})`,
@@ -195,14 +197,14 @@ export function SpreadHistoryPanel({
                 { y: 2, label: '+2σ' },
                 { y: -2, label: '−2σ' },
               ]}
-              xLabel="Date"
+              xLabel={t('common.date')}
               yLabel="z"
               formatX={fmtDate}
               height={200}
             />
           ) : (
             <p className="text-xs font-mono text-[#F59E0B]">
-              Z-score {computed.z.status}: {computed.z.reason}
+              {t('ts.sp.zStatus', { status: computed.z.status, reason: computed.z.reason })}
             </p>
           )}
           {computed.warnings.length > 0 && (

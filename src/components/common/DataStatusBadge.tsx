@@ -1,68 +1,55 @@
-import { AlertCircle, CheckCircle2, Clock, Database, ShieldAlert, XCircle } from 'lucide-react';
 import type { DataQualityStatus } from '../../shared/types/market';
+import { useT } from '../../i18n';
 
 interface DataStatusBadgeProps {
   status: DataQualityStatus;
+  /** Smaller text; kept for API compatibility (labels are always friendly, never raw codes). */
   compact?: boolean;
-  /** Optional source quality (e.g. 'UNOFFICIAL'); shown as an extra label when not official/licensed. */
+  /** Optional source quality (e.g. 'UNOFFICIAL'); shown as an extra tag when not official/licensed. */
   sourceQuality?: string;
-  /** Optional declared source delay in minutes, shown next to the source-quality label. */
+  /** Optional declared source delay in minutes, used in the DELAYED label ("Giá trễ ~N phút"). */
   delayMinutes?: number | null;
 }
 
-const STATUS_META: Record<
-  DataQualityStatus,
-  { label: string; colorClass: string; Icon: typeof CheckCircle2 }
-> = {
-  CURRENT: {
-    label: 'CURRENT',
-    colorClass: 'text-[#22C55E]',
-    Icon: CheckCircle2,
-  },
-  DELAYED: {
-    label: 'DELAYED',
-    colorClass: 'text-[#F59E0B]',
-    Icon: Clock,
-  },
-  HISTORICAL: {
-    label: 'HISTORICAL',
-    colorClass: 'text-[#6366F1]',
-    Icon: Database,
-  },
-  STALE: {
-    label: 'STALE',
-    colorClass: 'text-[#F59E0B]',
-    Icon: AlertCircle,
-  },
-  UNAVAILABLE: {
-    label: 'DATA_UNAVAILABLE',
-    colorClass: 'text-[#F59E0B]',
-    Icon: ShieldAlert,
-  },
-  INVALID: {
-    label: 'INVALID',
-    colorClass: 'text-[#EF4444]',
-    Icon: XCircle,
-  },
+/** Technical code (shown only in the tooltip) and colours per status. */
+const STATUS_META: Record<DataQualityStatus, { code: string; text: string; dot: string }> = {
+  CURRENT: { code: 'CURRENT', text: 'text-[#4ADE80]', dot: 'bg-[#22C55E]' },
+  DELAYED: { code: 'DELAYED', text: 'text-[#FBBF24]', dot: 'bg-[#F59E0B]' },
+  HISTORICAL: { code: 'HISTORICAL', text: 'text-[#A5B4FC]', dot: 'bg-[#6366F1]' },
+  STALE: { code: 'STALE', text: 'text-[#FDBA74]', dot: 'bg-[#F97316]' },
+  UNAVAILABLE: { code: 'DATA_UNAVAILABLE', text: 'text-[#9CA3AF]', dot: 'bg-[#6B7280]' },
+  INVALID: { code: 'INVALID', text: 'text-[#F87171]', dot: 'bg-[#EF4444]' },
 };
 
+/**
+ * Friendly data-quality badge: coloured dot + plain-language label; a one-sentence explanation
+ * (and the raw technical code) live in the tooltip. UNOFFICIAL sources always get a visible tag.
+ */
 export function DataStatusBadge({ status, compact = false, sourceQuality, delayMinutes }: DataStatusBadgeProps) {
-  const meta = STATUS_META[status] ?? STATUS_META.UNAVAILABLE;
-  const Icon = meta.Icon;
+  const t = useT();
+  const key = STATUS_META[status] ? status : 'UNAVAILABLE';
+  const meta = STATUS_META[key];
+  const hasDelay = key === 'DELAYED' && typeof delayMinutes === 'number' && delayMinutes > 0;
+  const label = hasDelay ? t('fr.status.DELAYED.n', { n: delayMinutes }) : t(`fr.status.${key}`);
+  const desc = t(`fr.status.${key}.desc`);
   const showQuality = sourceQuality === 'UNOFFICIAL';
-  const delayLabel = typeof delayMinutes === 'number' && delayMinutes > 0 ? `~${delayMinutes}m delay` : null;
+  const title = `${desc}${showQuality ? ` ${t('fr.unofficial.desc')}` : ''} (${t('fr.status.code', { code: meta.code })})`;
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 font-mono text-xs font-medium whitespace-nowrap ${meta.colorClass}`}
-      title={`Data quality status: ${meta.label}${showQuality ? ` · source ${sourceQuality}` : ''}${delayLabel ? ` · ${delayLabel}` : ''}`}
+      className={`inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 font-medium ${compact ? 'text-[11px]' : 'text-xs'} ${meta.text}`}
+      title={title}
     >
-      <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-      <span>{compact ? status : meta.label}</span>
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <span className={`w-2 h-2 rounded-full shrink-0 ${meta.dot}`} aria-hidden="true" />
+        <span>{label}</span>
+      </span>
       {showQuality && (
-        <span className="px-1 py-px rounded border border-[#F59E0B]/50 text-[10px] text-[#F59E0B]">
-          {sourceQuality}
-          {delayLabel ? ` · ${delayLabel}` : ''}
+        <span
+          className="px-1.5 py-px rounded-full border border-[#F59E0B]/40 bg-[#F59E0B]/10 text-[10px] font-normal text-[#FCD34D] whitespace-nowrap"
+          title={t('fr.unofficial.desc')}
+        >
+          {t('fr.unofficial')}
         </span>
       )}
     </span>

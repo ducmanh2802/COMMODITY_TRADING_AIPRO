@@ -1,6 +1,7 @@
 import type { InstrumentDefinition, Timeframe } from '../../src/shared/types/instrument.ts';
 import type { DataQualityStatus, MarketCandle } from '../../src/shared/types/market.ts';
 import { CONTINUOUS_CONTRACT_CODE, type ICandleRepository } from '../storage/candleRepository.ts';
+import { YAHOO_HISTORY_CONTRACT_CODE } from './yahooHistory.ts';
 import { historicalCandleStore, type CandleDatasetMeta } from './candleStore.ts';
 
 /**
@@ -30,10 +31,16 @@ export async function loadEngineCandles(
 ): Promise<EngineCandleResult> {
   if (repository) {
     const key = { instrumentId: instrument.id, contractCode: CONTINUOUS_CONTRACT_CODE, timeframe };
-    const { rows } = await repository.queryCandles(key, { limit: ENGINE_CANDLE_LIMIT });
+    let contractCode: string = CONTINUOUS_CONTRACT_CODE;
+    let { rows } = await repository.queryCandles(key, { limit: ENGINE_CANDLE_LIMIT });
+    if (rows.length === 0 && timeframe === 'D1') {
+      // CSV (CONTINUOUS) is canonical; only when none exists fall back to persisted Yahoo UNOFFICIAL history.
+      contractCode = YAHOO_HISTORY_CONTRACT_CODE;
+      ({ rows } = await repository.queryCandles({ ...key, contractCode }, { limit: ENGINE_CANDLE_LIMIT }));
+    }
     if (rows.length > 0) {
       const datasets = (await repository.listDatasets({ instrumentId: instrument.id })).filter(
-        (d) => d.contractCode === CONTINUOUS_CONTRACT_CODE && d.timeframe === timeframe
+        (d) => d.contractCode === contractCode && d.timeframe === timeframe
       );
       const byId = new Map(datasets.map((d) => [d.id, d]));
       const candles: MarketCandle[] = rows.map((row) => {
@@ -70,7 +77,9 @@ export async function loadEngineCandles(
           importedAt: latestImport,
           source: [...new Set(candles.map((c) => c.source))].join(', '),
           status: 'HISTORICAL',
-          warnings: datasets.some((d) => d.continuousAdjustment === 'UNADJUSTED')
+          warnings: contractCode === YAHOO_HISTORY_CONTRACT_CODE
+            ? ['UNOFFICIAL Yahoo continuous front-month history, NOT roll-adjusted (roll gaps present), not a specific contract month; import CSV for canonical data.']
+            : datasets.some((d) => d.continuousAdjustment === 'UNADJUSTED')
             ? ['CONTINUOUS series is UNADJUSTED: roll gaps are present in the price history.']
             : [],
         },

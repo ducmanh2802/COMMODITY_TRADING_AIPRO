@@ -1,6 +1,8 @@
 import type {
   ContractSpecification,
   InstrumentDefinition,
+  MxvContractSizeUnit,
+  MxvContractSpec,
 } from '../../src/shared/types/instrument.ts';
 
 /**
@@ -31,6 +33,25 @@ const CME_METALS_ENERGY_HOURS =
   'CME Globex: Sun-Fri 18:00-17:00 ET (17:00-16:00 CT) with a 60-minute daily break from 17:00 ET, per CME fact cards';
 
 const MXV_PENDING = 'Not yet confirmed on an MXV source.';
+
+/**
+ * T32: MXV contract specifications (size, tick, quotation unit, linked exchange) read directly on each
+ * MXV product page on 2026-11-18. Every MXV contract below is the same size as its linked international
+ * contract (checked explicitly for ZCE vs ZC, KCE vs KC, CPE vs HG: no mini sizes for these codes; MXV's
+ * Micro/Mini/Nano products such as MZC, MHG, SIL are separate codes and are not modelled here).
+ */
+const MXV_SPEC_CHECKED_ON = '2026-11-18';
+
+function mxvSpec(
+  contractSize: number,
+  contractSizeUnit: MxvContractSizeUnit,
+  minimumTick: number,
+  quotationUnit: string,
+  linkedExchangeLabel: string,
+  sourceUrl: string
+): MxvContractSpec {
+  return { contractSize, contractSizeUnit, minimumTick, quotationUnit, linkedExchangeLabel, sourceUrl, checkedOn: MXV_SPEC_CHECKED_ON };
+}
 
 interface VerifiedSpecInput {
   contractSize: number;
@@ -84,6 +105,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'CBOT',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Đậu tương CBOT" code ZSE, linked exchange CBOT, 5000 bu, tick 0.25 cent/bu. Source: https://mxv.com.vn/hang-hoa/nong-san/dau-tuong.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(5000, 'bushel', 0.25, 'cents/bushel', 'CBOT', 'https://mxv.com.vn/hang-hoa/nong-san/dau-tuong.html'),
     },
     enabled: true,
   },
@@ -113,6 +135,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'CBOT',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Khô đậu tương CBOT" code ZME, linked exchange CBOT, 100 short tons, tick 0.1 USD/short ton. Source: https://mxv.com.vn/hang-hoa/nong-san/kho-dau-tuong.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(100, 'short ton', 0.1, 'USD/short ton', 'CBOT', 'https://mxv.com.vn/hang-hoa/nong-san/kho-dau-tuong.html'),
     },
     enabled: true,
   },
@@ -142,6 +165,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'CBOT',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Dầu đậu tương CBOT" code ZLE, 60,000 lb, tick 0.01 cent/lb. Source: https://mxv.com.vn/hang-hoa/nong-san/dau-dau-tuong.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(60000, 'lb', 0.01, 'cents/lb', 'CBOT', 'https://mxv.com.vn/hang-hoa/nong-san/dau-dau-tuong.html'),
     },
     enabled: true,
   },
@@ -171,6 +195,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'CBOT',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Ngô CBOT" code ZCE, linked exchange CBOT, 5000 bu, tick 0.25 cent/bu. Source: https://mxv.com.vn/hang-hoa/nong-san/ngo.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(5000, 'bushel', 0.25, 'cents/bushel', 'CBOT', 'https://mxv.com.vn/hang-hoa/nong-san/ngo.html'),
     },
     enabled: true,
   },
@@ -200,6 +225,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'CBOT',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Lúa mì Chicago Soft Red Winter CBOT" code ZWA, 5000 bu, tick 0.25 cent/bu. Source: https://mxv.com.vn/hang-hoa/nong-san/lua-mi.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(5000, 'bushel', 0.25, 'cents/bushel', 'CBOT', 'https://mxv.com.vn/hang-hoa/nong-san/lua-mi.html'),
     },
     enabled: true,
   },
@@ -230,6 +256,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'CBOT',
       mappingStatus: 'VERIFIED',
       notes: `MXV "CBOT Rough Rice" code ZRE, linked exchange CBOT, 2000 cwt, tick 0.5 cent/cwt. Source: https://en.mxv.com.vn/product/grains/rough-rice.html (checked ${CHECKED_ON}). Not shown in the Vietnamese-language product menu on mxv.com.vn; confirm with MXV before trading.`,
+      mxvContractSpec: mxvSpec(2000, 'cwt', 0.5, 'cents/cwt', 'CBOT', 'https://en.mxv.com.vn/product/grains/rough-rice.html'),
     },
     enabled: true,
   },
@@ -261,6 +288,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'ICE',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Cà phê Arabica ICE US (Coffee C)" code KCE, linked exchange ICEUS, 37,500 lb, tick 0.05 cent/lb. Source: https://mxv.com.vn/hang-hoa/nguyen-lieu-cong-nghiep/ca-phe-arabica.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(37500, 'lb', 0.05, 'cents/lb', 'ICEUS', 'https://mxv.com.vn/hang-hoa/nguyen-lieu-cong-nghiep/ca-phe-arabica.html'),
     },
     enabled: true,
   },
@@ -290,6 +318,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'ICE',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Cà phê Robusta ICE" code LRC, linked exchange ICEEU, 10 t, tick 1 USD/t. Source: https://mxv.com.vn/hang-hoa/nguyen-lieu-cong-nghiep/ca-phe-robusta.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(10, 'metric ton', 1, 'USD/metric ton', 'ICEEU', 'https://mxv.com.vn/hang-hoa/nguyen-lieu-cong-nghiep/ca-phe-robusta.html'),
     },
     enabled: true,
   },
@@ -319,6 +348,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'ICE',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Đường 11 ICE US" code SBE, linked exchange ICEUS, 112,000 lb, tick 0.01 cent/lb. Source: https://mxv.com.vn/hang-hoa/nguyen-lieu-cong-nghiep/duong-11.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(112000, 'lb', 0.01, 'cents/lb', 'ICEUS', 'https://mxv.com.vn/hang-hoa/nguyen-lieu-cong-nghiep/duong-11.html'),
     },
     enabled: true,
   },
@@ -348,6 +378,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'ICE',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Cacao ICE US" code CCE, linked exchange ICEUS, 10 t, tick 1 USD/t. Source: https://mxv.com.vn/hang-hoa/nguyen-lieu-cong-nghiep/ca-cao.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(10, 'metric ton', 1, 'USD/metric ton', 'ICEUS', 'https://mxv.com.vn/hang-hoa/nguyen-lieu-cong-nghiep/ca-cao.html'),
     },
     enabled: true,
   },
@@ -377,6 +408,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'ICE',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Bông Loại 2 ICE US" code CTE, linked exchange ICEUS, 50,000 lb, tick 0.01 cent/lb. Source: https://mxv.com.vn/hang-hoa/nguyen-lieu-cong-nghiep/bong.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(50000, 'lb', 0.01, 'cents/lb', 'ICEUS', 'https://mxv.com.vn/hang-hoa/nguyen-lieu-cong-nghiep/bong.html'),
     },
     enabled: true,
   },
@@ -408,6 +440,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'COMEX',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Đồng COMEX" code CPE, linked exchange COMEX, 25,000 lb, tick 0.0005 USD/lb. Source: https://mxv.com.vn/hang-hoa/kim-loai/dong.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(25000, 'lb', 0.0005, 'USD/lb', 'COMEX', 'https://mxv.com.vn/hang-hoa/kim-loai/dong.html'),
     },
     enabled: true,
   },
@@ -463,6 +496,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'COMEX',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Bạc COMEX" code SIE, linked exchange COMEX, 5,000 troy oz, tick 0.005 USD/oz. Source: https://mxv.com.vn/hang-hoa/kim-loai/bac.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(5000, 'troy oz', 0.005, 'USD/troy oz', 'COMEX', 'https://mxv.com.vn/hang-hoa/kim-loai/bac.html'),
     },
     enabled: true,
   },
@@ -492,6 +526,7 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalExchange: 'NYMEX',
       mappingStatus: 'VERIFIED',
       notes: `MXV "Bạch kim NYMEX" code PLE, linked exchange NYMEX, 50 troy oz, tick 0.1 USD/oz. Source: https://mxv.com.vn/hang-hoa/kim-loai/bach-kim.html (checked ${CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(50, 'troy oz', 0.1, 'USD/troy oz', 'NYMEX', 'https://mxv.com.vn/hang-hoa/kim-loai/bach-kim.html'),
     },
     enabled: true,
   },
@@ -521,7 +556,54 @@ export const INITIAL_INSTRUMENTS: InstrumentDefinition[] = [
       internationalSymbol: 'TIO',
       internationalExchange: 'CME',
       mappingStatus: 'UNAVAILABLE',
-      notes: `Previous mapping FEF->CME TIO is wrong. MXV "Quặng sắt" code FEF is linked to SGX TSI Iron Ore CFR China (62% Fe Fines), 100 t/lot, tick 0.05 USD/t - not CME TIO (500 dmt). Source: https://en.mxv.com.vn/product/metals/iron-ore.html (checked ${CHECKED_ON}). SGX is not a supported ExchangeCode yet.`,
+      notes: `Previous mapping FEF->CME TIO is wrong. MXV "Quặng sắt" code FEF is linked to SGX TSI Iron Ore CFR China (62% Fe Fines), 100 t/lot, tick 0.05 USD/t - not CME TIO (500 dmt). Source: https://en.mxv.com.vn/product/metals/iron-ore.html (checked ${CHECKED_ON}). The MXV FEF mapping now lives on instrument SGX:FEF (T26).`,
+    },
+    enabled: true,
+  },
+
+  {
+    // T26: SGX TSI Iron Ore CFR China (62% Fe Fines) Index Futures - the contract MXV FEF is linked to.
+    id: 'SGX:FEF',
+    productName: 'SGX TSI Iron Ore CFR China (62% Fe Fines) Index Futures',
+    category: 'METALS',
+    exchange: 'SGX',
+    exchangeSymbol: 'FEF',
+    contractMonth: null,
+    contractYear: null,
+    isMvxListed: true,
+    // UNVERIFIED: sgx.com product pages render client-side only and could not be read from the
+    // verification environment. Tick US$0.05/t was read on an official SGX rulebook document
+    // (Appendix B to Regulatory Notice 4.1.11, minimum tick schedule:
+    // https://rulebook.sgx.com/sites/default/files/2025-08/Amendments%20to%20SGX-DC%20Clearing%20Rules%20and%20Futures%20Trading%20Rules.pdf).
+    // Contract size 100 t is taken from the MXV FEF page (which follows the SGX specification), not
+    // from sgx.com. tickValue = 100 t x 0.05 USD/t. Settlement method not read on an SGX futures page
+    // (the SGX amendment's cash-settlement text is in the iron ore SWAP table) -> UNSPECIFIED.
+    specification: {
+      contractSize: 100,
+      contractSizeUnit: 'metric tons',
+      minimumTickSize: 0.05,
+      tickValue: 5,
+      tradingCurrency: 'USD',
+      quotationUnit: 'USD/metric ton',
+      expirationDate: null,
+      firstNoticeDate: null,
+      tradingHoursTimezone: 'Asia/Ho_Chi_Minh',
+      tradingHoursSummary:
+        'Per the MXV FEF page (Vietnam time): Mon-Fri session 1 06:25-19:00, session 2 19:15-04:15 next day. Not verified on sgx.com.',
+      marginRequirement: null,
+      marginCurrency: null,
+      settlementMethod: 'UNSPECIFIED',
+      dataSource:
+        'https://rulebook.sgx.com/sites/default/files/2025-08/Amendments%20to%20SGX-DC%20Clearing%20Rules%20and%20Futures%20Trading%20Rules.pdf (tick); https://en.mxv.com.vn/product/metals/iron-ore.html (size)',
+      verificationStatus: 'UNVERIFIED',
+    },
+    mxvMapping: {
+      mxvSymbol: 'FEF',
+      internationalSymbol: 'FEF',
+      internationalExchange: 'SGX',
+      mappingStatus: 'VERIFIED',
+      notes: `MXV "Quặng sắt" code FEF, linked exchange SGX (TSI Iron Ore CFR China 62% Fe Fines), 100 t/lot, tick 0.05 USD/t. Source: https://en.mxv.com.vn/product/metals/iron-ore.html (checked ${MXV_SPEC_CHECKED_ON}).`,
+      mxvContractSpec: mxvSpec(100, 'metric ton', 0.05, 'USD/metric ton', 'SGX', 'https://en.mxv.com.vn/product/metals/iron-ore.html'),
     },
     enabled: true,
   },
@@ -750,6 +832,14 @@ export const CONTRACT_CALENDAR_RULES: Record<string, ContractCalendarRule> = {
     sourceUrl: 'https://www.cmegroup.com/trading/metals/files/iron-ore-future-and-options.pdf',
     verificationStatus: 'UNVERIFIED',
     notes: 'Cash settled against the monthly average of the index. Listing horizon not confirmed.',
+  },
+  'SGX:FEF': {
+    listedMonths: 'Monthly contracts; per MXV up to four calendar years from the current year (not verified on sgx.com)',
+    lastTradingDayRule: 'Last business day of the contract month.',
+    sourceUrl: 'https://en.mxv.com.vn/product/metals/iron-ore.html',
+    verificationStatus: 'UNVERIFIED',
+    notes:
+      'Rule as published on the MXV FEF page; sgx.com contract specifications could not be read. Business days = Singapore (SG_PUBLIC holiday calendar).',
   },
   'NYMEX:CL': {
     listedMonths: 'All months (F-Z) consecutively for the current year plus the next five years',

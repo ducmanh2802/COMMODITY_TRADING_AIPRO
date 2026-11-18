@@ -31,6 +31,10 @@ export const VENDOR_CONTRACT_PREFIX = 'VENDOR_';
 export const PROVIDER_CONTRACT_CODE: Partial<Record<ProviderId, string>> = {
   YAHOO_UNOFFICIAL: `${VENDOR_CONTRACT_PREFIX}YAHOO`,
 };
+/** Extra honesty label appended to the dataset source label (what the series is NOT). */
+export const PROVIDER_SERIES_NOTE: Partial<Record<ProviderId, string>> = {
+  YAHOO_UNOFFICIAL: 'continuous front-month, NOT roll-adjusted, not a specific contract month, UNOFFICIAL',
+};
 export const UNVERIFIED_PROVIDER_UNIT = 'UNVERIFIED_PROVIDER_UNIT';
 
 export interface PersistOutcome {
@@ -94,7 +98,9 @@ export function createProviderCandlePersister(
       contractCode,
       timeframe,
       continuousAdjustment: 'NONE',
-      sourceLabel: `${providerName} API sync (provider symbol ${symbols || instrument.exchangeSymbol})`.slice(0, 200),
+      sourceLabel: `${providerName} API sync (provider symbol ${symbols || instrument.exchangeSymbol})${
+        PROVIDER_SERIES_NOTE[providerId] ? ` - ${PROVIDER_SERIES_NOTE[providerId]}` : ''
+      }`.slice(0, 200),
       sourceQuality: quality,
       importedAt: now().toISOString(),
       rowCount: unique.length,

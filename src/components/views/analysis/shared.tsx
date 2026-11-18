@@ -16,22 +16,23 @@ import {
   fetchSeriesOptions,
 } from '../../../api/analysisApi';
 import type { AnalyticsStatus, OhlcBar, SeriesPoint } from '../../../shared/analytics';
+import { fmtDate as fmtDisplayDate, fmtFixed, fmtInt, hasKey, tr, useT } from '../../../i18n';
 
 // ------------------------------------------------------------------------------------------------
 // Formatting
 // ------------------------------------------------------------------------------------------------
 
 export function fmtPct(x: number | null | undefined, digits = 2): string {
-  return x === null || x === undefined || !Number.isFinite(x) ? '—' : `${(x * 100).toFixed(digits)}%`;
+  return x === null || x === undefined || !Number.isFinite(x) ? '—' : `${fmtFixed(x * 100, digits)}%`;
 }
 
 export function fmtNum(x: number | null | undefined, digits = 4): string {
-  return x === null || x === undefined || !Number.isFinite(x) ? '—' : x.toFixed(digits);
+  return x === null || x === undefined || !Number.isFinite(x) ? '—' : fmtFixed(x, digits);
 }
 
 export function fmtDate(t: string | null | undefined): string {
   if (!t) return '—';
-  return t.length >= 10 ? t.slice(0, 10) : t;
+  return t.length >= 10 ? fmtDisplayDate(t.slice(0, 10)) : t;
 }
 
 /** Latest non-null value of an index-aligned series, with its timestamp. */
@@ -71,12 +72,18 @@ const STATUS_STYLE: Record<string, { cls: string; Icon: typeof CheckCircle2 }> =
 };
 
 export function StatusChip({ status }: { status: AnalyticsStatus | string }) {
+  const t = useT();
   const s = STATUS_STYLE[status] ?? STATUS_STYLE.INVALID_INPUT;
   const Icon = s.Icon;
+  const key = `an.status.${status}`;
+  const label = hasKey(key) ? t(key) : status;
   return (
-    <span className={`inline-flex items-center gap-1.5 border rounded px-2 py-0.5 font-mono text-[11px] font-medium ${s.cls}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 border rounded px-2 py-0.5 font-mono text-[11px] font-medium ${s.cls}`}
+      title={status}
+    >
       <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-      {status}
+      {label === status ? status : `${label} (${status})`}
     </span>
   );
 }
@@ -93,6 +100,7 @@ export function StatusBlock({
   reason?: string;
   warnings: string[];
 }) {
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
   const shown = expanded ? warnings : warnings.slice(0, 5);
   return (
@@ -101,7 +109,7 @@ export function StatusBlock({
         <span className="text-[#E5E7EB]/80 font-medium">{label}</span>
         <StatusChip status={status} />
       </div>
-      {status !== 'OK' && reason && <p className="font-mono text-[11px] text-[#E5E7EB]/75">Reason: {reason}</p>}
+      {status !== 'OK' && reason && <p className="font-mono text-[11px] text-[#E5E7EB]/75">{t('an.reason', { reason })}</p>}
       {warnings.length > 0 && (
         <ul className="list-disc pl-5 text-[11px] text-[#F59E0B]/90 space-y-0.5">
           {shown.map((w, i) => (
@@ -110,7 +118,7 @@ export function StatusBlock({
           {warnings.length > 5 && (
             <li className="list-none -ml-5">
               <button type="button" className="underline text-[#E5E7EB]/60" onClick={() => setExpanded((e) => !e)}>
-                {expanded ? 'Show fewer' : `Show all ${warnings.length} warnings`}
+                {expanded ? t('an.showFewer') : t('an.showAll', { n: warnings.length })}
               </button>
             </li>
           )}
@@ -237,7 +245,7 @@ export function useSeriesOptions(reloadToken: number) {
     fetchSeriesOptions(ac.signal)
       .then((o) => setOptions(o))
       .catch((e: unknown) => {
-        if (!ac.signal.aborted) setError(e instanceof Error ? e.message : 'Failed to load datasets.');
+        if (!ac.signal.aborted) setError(e instanceof Error ? e.message : tr('an.loadDatasetsFailed'));
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoading(false);
@@ -267,7 +275,7 @@ export function useLoadedSeries(selected: SeriesOption[]) {
         if (!cancelled) setState({ data, loading: false, error: null });
       })
       .catch((e: unknown) => {
-        if (!cancelled) setState({ data: [], loading: false, error: e instanceof Error ? e.message : 'Failed to load candles.' });
+        if (!cancelled) setState({ data: [], loading: false, error: e instanceof Error ? e.message : tr('an.loadCandlesFailed') });
       });
     return () => {
       cancelled = true;
@@ -301,13 +309,14 @@ export function SeriesSelect({
   value: string;
   onChange: (key: string) => void;
 }) {
+  const t = useT();
   return (
     <div>
       <label htmlFor={id} className={labelClass}>
         {label}
       </label>
       <select id={id} className={`${inputClass} min-w-[240px] font-mono`} value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">— select series —</option>
+        <option value="">{t('an.selectSeries')}</option>
         {options.map((o) => (
           <option key={o.key} value={o.key}>
             {o.label} ({o.priceUnit})
@@ -320,39 +329,42 @@ export function SeriesSelect({
 
 /** Data-integrity notices for one loaded series (shown above any computed numbers). */
 export function SeriesIntegrity({ s, returnBased = true }: { s: LoadedSeries; returnBased?: boolean }) {
+  const t = useT();
   const r = s.response;
   const prov = r.provenance;
   return (
     <div className="space-y-2">
-      {r.status === 'UNAVAILABLE' && <Notice tone="warn">{r.reason ?? 'DATA_UNAVAILABLE — no imported candles for this series.'}</Notice>}
+      {r.status === 'UNAVAILABLE' && <Notice tone="warn">{r.reason ?? t('an.noCandles')}</Notice>}
       {s.nonPositiveCount > 0 && (
         <Notice tone="error">
           <p className="font-semibold">
-            {s.option.label}: {s.nonPositiveCount} candle(s) have a price ≤ 0.
+            {t('an.nonPositive', { label: s.option.label, n: fmtInt(s.nonPositiveCount) })}
           </p>
           {returnBased && (
-            <p>
-              Return-based metrics (returns, volatility, correlation, seasonality, drawdown) are INVALID for this series. This is typical
-              of back-adjusted continuous series; use an unadjusted or ratio-adjusted series instead.
-            </p>
+            <p>{t('an.nonPositiveBody')}</p>
           )}
         </Notice>
       )}
       {s.option.continuousAdjustment === 'BACK_ADJUSTED' && s.nonPositiveCount === 0 && returnBased && (
         <Notice tone="warn">
-          {s.option.label} is BACK_ADJUSTED: absolute levels are shifted, so percentage returns differ from the traded contracts.
+          {t('an.backAdjusted', { label: s.option.label })}
         </Notice>
       )}
       {r.truncated && (
         <Notice tone="warn">
-          Only {r.count} of {r.totalInRange} candles were returned (server limit); results cover a truncated range.
+          {t('an.truncated', { count: fmtInt(r.count), total: fmtInt(r.totalInRange) })}
         </Notice>
       )}
-      {s.excludedIncomplete > 0 && <Notice tone="info">{s.excludedIncomplete} incomplete candle(s) excluded.</Notice>}
+      {s.excludedIncomplete > 0 && <Notice tone="info">{t('an.incompleteExcluded', { n: fmtInt(s.excludedIncomplete) })}</Notice>}
       {prov.length > 0 && (
         <p className="text-[11px] text-[#E5E7EB]/50 font-mono">
-          {s.option.label}: {r.count} candles · unit {r.priceUnit ?? '—'} · adj {r.continuousAdjustment ?? '—'} · source{' '}
-          {prov.map((p) => `${p.sourceLabel} [${p.sourceQuality}]`).join('; ')}
+          {t('an.provenance', {
+            label: s.option.label,
+            count: fmtInt(r.count),
+            unit: r.priceUnit ?? '—',
+            adj: r.continuousAdjustment ?? '—',
+            sources: prov.map((p) => `${p.sourceLabel} [${p.sourceQuality}]`).join('; '),
+          })}
         </p>
       )}
     </div>

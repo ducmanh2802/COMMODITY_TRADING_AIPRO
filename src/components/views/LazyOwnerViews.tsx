@@ -32,6 +32,7 @@ export const LazyRiskManagementView = lazyNamed(() => import('./RiskManagementVi
 export const LazyBacktestView = lazyNamed(() => import('./BacktestView'), 'BacktestView');
 export const LazyPortfolioView = lazyNamed(() => import('./PortfolioView'), 'PortfolioView');
 export const LazyTradeJournalView = lazyNamed(() => import('./TradeJournalView'), 'TradeJournalView');
+export const LazyResearchNotebookView = lazyNamed(() => import('./journal/ResearchNotebookView'), 'ResearchNotebookView');
 export const LazyFundamentalNewsView = lazyNamed(() => import('./FundamentalNewsView'), 'FundamentalNewsView');
 export const LazyDataHealthView = lazyNamed(() => import('./DataHealthView'), 'DataHealthView');
 export const LazySettingsView = lazyNamed(() => import('./SettingsView'), 'SettingsView');
@@ -39,3 +40,4 @@ export const LazyCommodityWorldView = lazyNamed(() => import('./CommodityWorldVi
 export const LazyCommodityProfileView = lazyNamed(() => import('./CommodityProfileView'), 'CommodityProfileView');
 export const LazyCycleScannerView = lazyNamed(() => import('./CycleScannerView'), 'CycleScannerView');
 export const LazyCycleResearchReportView = lazyNamed(() => import('./CycleResearchReportView'), 'CycleResearchReportView');
+export const LazyBriefView = lazyNamed(() => import('./brief/BriefView'), 'BriefView');

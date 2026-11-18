@@ -19,7 +19,14 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 async function startServer(): Promise<void> {
   const { createApiApp } = await import('./server/app.ts');
-  const app = createApiApp();
+  const { MacroService } = await import('./server/macro/service.ts');
+  const { CotService } = await import('./server/cot/service.ts');
+  const { Scheduler, buildSchedulerJobs, isSchedulerEnabled } = await import('./server/scheduler/index.ts');
+  // T36: shared MacroService so scheduler warm-ups fill the cache the routes read.
+  const macro = new MacroService();
+  let cotService: InstanceType<typeof CotService> | null = null;
+  let scheduler: InstanceType<typeof Scheduler> | null = null;
+  const app = createApiApp({ macro, schedulerStatus: () => scheduler?.status() ?? { enabled: false, jobs: [] } });
 
   if (isProduction) {
     const distPath = path.resolve(__dirname, 'dist');
@@ -45,10 +52,45 @@ async function startServer(): Promise<void> {
     app.use(vite.middlewares);
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  // Listen only after the API app (incl. the SQLite DB, opened synchronously in createApiApp) and
+  // the Vite middleware are ready, so the first browser request never hits a half-initialised server.
+  //
+  // HOST unset → Node's default dual-stack bind (`::`, accepting IPv4 too; falls back to 0.0.0.0
+  // without IPv6). Binding only 0.0.0.0 made `http://localhost:PORT` try ::1 first and wait for the
+  // refused connection to time out (~2 s per attempt on Windows): every API call took 4–5 s.
+  const host = process.env.HOST?.trim() || undefined;
+  const onListening = () => {
     console.log(
-      `COMMODITY TRADING AI PRO (${isProduction ? 'production' : 'development'}) listening on http://0.0.0.0:${PORT}`,
+      `COMMODITY TRADING AI PRO (${isProduction ? 'production' : 'development'}) listening on http://localhost:${PORT}` +
+        (host ? ` (bound to ${host})` : ' (IPv4 + IPv6)'),
     );
+  };
+  if (isSchedulerEnabled()) {
+    try {
+      const registry = app.locals.providerRegistry as
+        | { getProviderById?: (id: string) => { syncMacroSeries?: () => Promise<{ synced: number; error?: string }> } | null }
+        | undefined;
+      const fred = registry?.getProviderById?.('FRED_MACRO');
+      scheduler = new Scheduler(
+        buildSchedulerJobs({
+          cot: () => (cotService ??= new CotService()),
+          macro,
+          fredSync: fred?.syncMacroSeries ? () => fred.syncMacroSeries!() : null,
+        }),
+      );
+      scheduler.start();
+    } catch (err) {
+      console.error('Scheduler failed to start (continuing without it):', err instanceof Error ? err.message : 'unknown error');
+    }
+  }
+  const server = host ? app.listen(PORT, host, onListening) : app.listen(PORT, onListening);
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    console.error(
+      err.code === 'EADDRINUSE'
+        ? `Port ${PORT} is already in use (another server instance?). Stop it or set PORT=...`
+        : `Server error: ${err.message}`,
+    );
+    process.exit(1);
   });
 }
 

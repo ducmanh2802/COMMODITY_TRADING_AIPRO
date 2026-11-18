@@ -12,6 +12,7 @@ import {
 } from 'lightweight-charts';
 import type { MarketCandle } from '../../../shared/types/market';
 import { isSessionDateTimeframe } from '../../../api/dataApi';
+import { fmtNum, useT } from '../../../i18n';
 
 /** A drawable line: values index-aligned to `timestamps` (null = gap / warm-up). */
 export interface LineSpec {
@@ -83,6 +84,7 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [legend, setLegend] = useState<Legend | null>(null);
+  const t = useT();
 
   useEffect(() => {
     const el = containerRef.current;
@@ -233,7 +235,7 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
           {legend.v !== null && (
             <>
               {' '}
-              V <span className="text-white">{legend.v.toLocaleString()}</span>
+              V <span className="text-white">{fmtNum(legend.v)}</span>
             </>
           )}
         </div>
@@ -243,7 +245,7 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
         data-testid="candle-chart"
         className={lowerPane ? 'h-[560px]' : 'h-[460px]'}
         role="img"
-        aria-label={`Candlestick chart, ${candles.length} bars`}
+        aria-label={t('chart.candle.aria', { n: candles.length })}
       />
     </div>
   );

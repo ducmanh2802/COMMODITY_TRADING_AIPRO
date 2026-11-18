@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { tr } from '../i18n';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -19,7 +20,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return {
       hasError: true,
-      message: error.message || 'An unexpected terminal error occurred.',
+      message: error.message || tr('error.unexpected'),
     };
   }
 
@@ -34,10 +35,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
           <div className="max-w-lg w-full bg-[#111622] border border-[#263244] rounded-lg p-6 space-y-4">
             <div className="flex items-center gap-3 text-[#EF4444]">
               <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden="true" />
-              <h1 className="text-base font-semibold">Terminal Runtime Guard Triggered</h1>
+              <h1 className="text-base font-semibold">{tr('error.title')}</h1>
             </div>
             <p className="text-sm text-[#E5E7EB]/80 leading-relaxed">
-              A safety boundary caught an unhandled runtime or database error so incomplete state is not displayed.
+              {tr('error.body')}
             </p>
             <pre className="text-xs font-mono bg-[#0B0E14] border border-[#263244] rounded p-3 overflow-x-auto text-[#F59E0B]">
               {this.state.message}
@@ -48,7 +49,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium bg-[#6366F1] hover:bg-[#6366F1]/90 text-white rounded-md transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-              Reload Terminal
+              {tr('error.reload')}
             </button>
           </div>
         </div>

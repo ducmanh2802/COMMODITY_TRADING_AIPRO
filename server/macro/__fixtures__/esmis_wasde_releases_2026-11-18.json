@@ -1,0 +1,91 @@
+{
+ "filters": [],
+ "pager": {
+  "current_page": 0,
+  "items_per_page": 25,
+  "total_pages": 29,
+  "total_results": 704
+ },
+ "results": [
+  {
+   "id": "796142",
+   "files": [
+    "https://esmis.nal.usda.gov/sites/default/release-files/796142/wasde1126.pdf",
+    "https://esmis.nal.usda.gov/sites/default/release-files/796142/wasde1126.txt",
+    "https://esmis.nal.usda.gov/sites/default/release-files/796142/wasde1126.xls",
+    "https://esmis.nal.usda.gov/sites/default/release-files/796142/wasde1126.xml"
+   ],
+   "title": "World Agricultural Supply and Demand Estimates",
+   "release_datetime": "2026-11-10T12:00:00+0000",
+   "identifier": [
+    "wasde"
+   ],
+   "agency_acronym": "WAOB",
+   "bibliographic_citation": "",
+   "description": "",
+   "equipment_software": "",
+   "temporal_coverage": ""
+  },
+  {
+   "id": "796099",
+   "files": [
+    "https://esmis.nal.usda.gov/sites/default/release-files/796099/wasde1026.pdf",
+    "https://esmis.nal.usda.gov/sites/default/release-files/796099/wasde1026.txt",
+    "https://esmis.nal.usda.gov/sites/default/release-files/796099/wasde1026.xls",
+    "https://esmis.nal.usda.gov/sites/default/release-files/796099/wasde1026.xml"
+   ],
+   "title": "World Agricultural Supply and Demand Estimates",
+   "release_datetime": "2026-10-09T12:00:00+0000",
+   "identifier": [
+    "wasde"
+   ],
+   "agency_acronym": "WAOB",
+   "bibliographic_citation": "",
+   "description": "",
+   "equipment_software": "",
+   "temporal_coverage": ""
+  },
+  {
+   "id": "796054",
+   "files": [
+    "https://esmis.nal.usda.gov/sites/default/release-files/796054/wasde0926.pdf",
+    "https://esmis.nal.usda.gov/sites/default/release-files/796054/wasde0926.txt",
+    "https://esmis.nal.usda.gov/sites/default/release-files/796054/wasde0926.xls",
+    "https://esmis.nal.usda.gov/sites/default/release-files/796054/wasde0926.xml"
+   ],
+   "title": "World Agricultural Supply and Demand Estimates",
+   "release_datetime": "2026-09-11T12:00:00+0000",
+   "identifier": [
+    "wasde"
+   ],
+   "agency_acronym": "WAOB",
+   "bibliographic_citation": "",
+   "description": "",
+   "equipment_software": "",
+   "temporal_coverage": ""
+  },
+  {
+   "id": "796014",
+   "files": [
+    "https://esmis.nal.usda.gov/sites/default/release-files/796014/wasde0826.pdf",
+    "https://esmis.nal.usda.gov/sites/default/release-files/796014/wasde0826.txt",
+    "https://esmis.nal.usda.gov/sites/default/release-files/796014/wasde0826.xls",
+    "https://esmis.nal.usda.gov/sites/default/release-files/796014/wasde0826.xml"
+   ],
+   "title": "World Agricultural Supply and Demand Estimates",
+   "release_datetime": "2026-08-12T12:00:00+0000",
+   "identifier": [
+    "wasde"
+   ],
+   "agency_acronym": "WAOB",
+   "bibliographic_citation": "",
+   "description": "",
+   "equipment_software": "",
+   "temporal_coverage": ""
+  }
+ ],
+ "sorters": [],
+ "system": {
+  "page_key": "page"
+ }
+}

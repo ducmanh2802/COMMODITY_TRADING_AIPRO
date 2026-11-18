@@ -6,6 +6,8 @@ import type { Timeframe } from '../../shared/types/instrument';
 import type { MarketScope } from '../../shared/types/market';
 import { getVietnamClockLabel } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { LanguageSwitch } from '../common/LanguageSwitch';
+import { useT } from '../../i18n';
 
 interface TopBarProps {
   onOpenMobileMenu: () => void;
@@ -28,6 +30,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
     setActiveModule,
   } = useTerminal();
 
+  const t = useT();
   const [clockLabel, setClockLabel] = useState(() => getVietnamClockLabel());
 
   useEffect(() => {
@@ -46,7 +49,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
         <button
           type="button"
           onClick={onOpenMobileMenu}
-          aria-label="Open navigation menu"
+          aria-label={t('nav.openMenu')}
           className="lg:hidden p-2.5 bg-[#172033] border border-[#263244] rounded-md text-[#E5E7EB] hover:text-white"
         >
           <Menu className="w-4 h-4" aria-hidden="true" />
@@ -64,14 +67,14 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
                   : 'text-[#E5E7EB]/70 hover:text-white'
               }`}
             >
-              {scope === 'ALL' ? 'All Markets' : scope === 'MXV' ? 'Vietnam MXV' : 'International'}
+              {t(`topbar.scope.${scope}`)}
             </button>
           ))}
         </div>
 
         <div className="relative flex-1 max-w-xs hidden sm:block">
           <label htmlFor="topbar-instrument-search" className="sr-only">
-            Search instrument
+            {t('topbar.search')}
           </label>
           <Search
             className="w-3.5 h-3.5 text-[#E5E7EB]/45 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
@@ -87,7 +90,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
                 setActiveModule('markets');
               }
             }}
-            placeholder="Search symbol or commodity..."
+            placeholder={t('topbar.searchPlaceholder')}
             className="w-full bg-[#0B0E14] border border-[#263244] rounded-md pl-8 pr-3 py-1.5 text-xs text-[#E5E7EB] placeholder:text-[#E5E7EB]/40 focus:outline-none focus:border-[#6366F1]"
           />
         </div>
@@ -97,7 +100,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
       <div className="flex items-center gap-3 shrink-0">
         <div className="flex items-center gap-1.5">
           <label htmlFor="topbar-timeframe" className="sr-only">
-            Timeframe
+            {t('topbar.timeframe')}
           </label>
           <select
             id="topbar-timeframe"
@@ -123,10 +126,13 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           </span>
         </div>
 
+        <LanguageSwitch />
+
         <button
           type="button"
           onClick={() => void refreshBackendData()}
-          aria-label="Refresh backend status"
+          aria-label={t('topbar.refresh')}
+          title={t('topbar.refresh')}
           disabled={loading}
           className="p-2 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded-md text-[#E5E7EB] disabled:opacity-50 transition-colors"
         >
@@ -148,7 +154,8 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
             <button
               type="button"
               onClick={() => void logout()}
-              aria-label="Sign out"
+              aria-label={t('topbar.signOut')}
+              title={t('topbar.signOut')}
               className="p-2 bg-[#172033] hover:bg-[#EF4444]/15 border border-[#263244] hover:border-[#EF4444]/40 rounded-md text-[#E5E7EB]/80 hover:text-[#EF4444] transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
@@ -161,7 +168,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0"
           >
             <LogIn className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Sign In</span>
+            <span>{t('topbar.signIn')}</span>
           </button>
         )}
       </div>

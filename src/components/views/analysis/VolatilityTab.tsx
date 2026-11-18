@@ -12,6 +12,7 @@ import {
   realizedVolatility,
 } from '../../../shared/analytics';
 import { CHART_COLORS, type ChartLine, TimeSeriesChart } from './TimeSeriesChart';
+import { fmtFixed, fmtNum as fmtLocaleNum, useT } from '../../../i18n';
 import {
   Notice,
   NumberField,
@@ -19,6 +20,7 @@ import {
   SeriesIntegrity,
   SeriesSelect,
   StatusBlock,
+  StatusChip,
   defaultAnnualization,
   fmtDate,
   fmtPct,
@@ -27,9 +29,10 @@ import {
   useOptionMap,
 } from './shared';
 
-const pctFmt = (v: number) => `${v.toFixed(1)}%`;
+const pctFmt = (v: number) => `${fmtFixed(v, 1)}%`;
 
 export function VolatilityTab({ options }: { options: SeriesOption[] }) {
+  const t = useT();
   const byKey = useOptionMap(options);
   const [key, setKey] = useState('');
   const [windowLen, setWindowLen] = useState(20);
@@ -59,63 +62,63 @@ export function VolatilityTab({ options }: { options: SeriesOption[] }) {
   const volLines = useMemo<ChartLine[]>(() => {
     if (!results) return [];
     const mk = (name: string, r: SeriesResult, color: string): ChartLine | null =>
-      r.status === 'OK' ? { name, color, points: r.timestamps.map((t, i) => ({ t, v: r.values[i] === null ? null : (r.values[i] as number) * 100 })) } : null;
+      r.status === 'OK' ? { name, color, points: r.timestamps.map((ts, i) => ({ t: ts, v: r.values[i] === null ? null : (r.values[i] as number) * 100 })) } : null;
     return [
-      mk('Realized (close-close)', results.realized, CHART_COLORS[0]),
+      mk(t('an.vol.realized'), results.realized, CHART_COLORS[0]),
       mk('Parkinson', results.parkinson, CHART_COLORS[1]),
       mk('Garman–Klass', results.gk, CHART_COLORS[2]),
     ].filter((x): x is ChartLine => x !== null);
-  }, [results]);
+  }, [results, t]);
 
   const atrLines = useMemo<ChartLine[]>(() => {
     if (!results || results.atr.status !== 'OK') return [];
-    return [{ name: `ATR% (${atrPeriod})`, color: CHART_COLORS[3], points: results.atr.timestamps.map((t, i) => ({ t, v: results.atr.values[i] })) }];
+    return [{ name: `ATR% (${atrPeriod})`, color: CHART_COLORS[3], points: results.atr.timestamps.map((ts, i) => ({ t: ts, v: results.atr.values[i] })) }];
   }, [results, atrPeriod]);
 
   const rows: { label: string; r: SeriesResult; annualized: boolean }[] = results
     ? [
-        { label: 'Realized vol (close-to-close, sample σ of log returns)', r: results.realized, annualized: true },
-        { label: 'Parkinson (high-low)', r: results.parkinson, annualized: true },
+        { label: t('an.vol.realizedLong'), r: results.realized, annualized: true },
+        { label: t('an.vol.parkinsonLong'), r: results.parkinson, annualized: true },
         { label: 'Garman–Klass (OHLC)', r: results.gk, annualized: true },
-        { label: `ATR% (Wilder, period ${atrPeriod})`, r: results.atr, annualized: false },
+        { label: t('an.vol.atrLong', { n: atrPeriod }), r: results.atr, annualized: false },
       ]
     : [];
 
   return (
     <div className="space-y-4">
-      <Panel title="Volatility" subtitle="Annualized σ = σ per bar × √(annualization factor). ATR% is not annualized.">
+      <Panel title={t('an.vol.title')} subtitle={t('an.vol.subtitle')}>
         <div className="flex flex-wrap items-end gap-4">
-          <SeriesSelect id="vol-series" label="Series" options={options} value={key} onChange={setKey} />
-          <NumberField id="vol-window" label="Window (bars)" value={windowLen} onChange={setWindowLen} min={2} />
+          <SeriesSelect id="vol-series" label={t('an.series')} options={options} value={key} onChange={setKey} />
+          <NumberField id="vol-window" label={t('an.vol.window')} value={windowLen} onChange={setWindowLen} min={2} />
           <NumberField
             id="vol-af"
-            label="Annualization factor"
+            label={t('an.vol.af')}
             value={af}
             onChange={setAf}
             min={1}
-            hint={option ? `default for ${option.timeframe}: ${defaultAnnualization(option.timeframe) ?? 'none — enter bars/year'}` : undefined}
+            hint={option ? t('an.vol.afHint', { tf: option.timeframe, v: defaultAnnualization(option.timeframe) ?? t('an.vol.afNone') }) : undefined}
           />
-          <NumberField id="vol-atr" label="ATR period" value={atrPeriod} onChange={setAtrPeriod} min={1} />
+          <NumberField id="vol-atr" label={t('an.vol.atrPeriod')} value={atrPeriod} onChange={setAtrPeriod} min={1} />
         </div>
         {option && !Number.isFinite(af) && (
-          <Notice tone="warn">No safe default annualization for timeframe {option.timeframe}: enter the number of bars per year.</Notice>
+          <Notice tone="warn">{t('an.vol.noAf', { tf: option.timeframe })}</Notice>
         )}
-        {loading && <p className="text-xs text-[#E5E7EB]/55">Loading candles…</p>}
+        {loading && <p className="text-xs text-[#E5E7EB]/55">{t('an.loadingCandles')}</p>}
         {error && <Notice tone="error">{error}</Notice>}
         {s && <SeriesIntegrity s={s} />}
       </Panel>
 
       {results && (
         <>
-          <Panel title="Latest values" subtitle={`Window ${windowLen} · annualization factor ${Number.isFinite(af) ? af : '—'}`}>
+          <Panel title={t('an.vol.latest')} subtitle={t('an.vol.latestSub', { w: windowLen, af: Number.isFinite(af) ? af : '—' })}>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs min-w-[560px]">
                 <thead>
                   <tr className="border-b border-[#263244] text-[#E5E7EB]/60">
-                    <th className="py-2 pr-3 font-medium">Metric</th>
-                    <th className="py-2 px-3 font-medium">Status</th>
-                    <th className="py-2 px-3 font-medium text-right">Latest</th>
-                    <th className="py-2 px-3 font-medium">As of</th>
+                    <th className="py-2 pr-3 font-medium">{t('an.vol.metric')}</th>
+                    <th className="py-2 px-3 font-medium">{t('common.status')}</th>
+                    <th className="py-2 px-3 font-medium text-right">{t('an.vol.latestCol')}</th>
+                    <th className="py-2 px-3 font-medium">{t('an.vol.asOf')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#263244]/70">
@@ -125,11 +128,13 @@ export function VolatilityTab({ options }: { options: SeriesOption[] }) {
                       <tr key={label}>
                         <td className="py-2 pr-3 text-[#E5E7EB]/85">
                           {label}
-                          <span className="block text-[10px] text-[#E5E7EB]/45">{annualized ? `annualized ×√${Number.isFinite(af) ? af : '—'}` : 'not annualized'}</span>
+                          <span className="block text-[10px] text-[#E5E7EB]/45">{annualized ? t('an.vol.annualized', { af: Number.isFinite(af) ? fmtLocaleNum(af) : '—' }) : t('an.vol.notAnnualized')}</span>
                         </td>
-                        <td className="py-2 px-3 font-mono">{r.status}</td>
+                        <td className="py-2 px-3 font-mono">
+                          <StatusChip status={r.status} />
+                        </td>
                         <td className="py-2 px-3 font-mono text-right tabular-nums text-white">
-                          {r.status === 'OK' ? (lv ? (annualized ? fmtPct(lv.v) : `${lv.v.toFixed(2)}%`) : '—') : '—'}
+                          {r.status === 'OK' ? (lv ? (annualized ? fmtPct(lv.v) : `${fmtFixed(lv.v, 2)}%`) : '—') : '—'}
                         </td>
                         <td className="py-2 px-3 font-mono text-[#E5E7EB]/60">{r.status === 'OK' && lv ? fmtDate(lv.t) : '—'}</td>
                       </tr>
@@ -146,13 +151,13 @@ export function VolatilityTab({ options }: { options: SeriesOption[] }) {
           </Panel>
 
           {volLines.length > 0 && (
-            <Panel title="Annualized volatility (%)">
-              <TimeSeriesChart lines={volLines} valueFormatter={pctFmt} ariaLabel="Annualized volatility chart" />
+            <Panel title={t('an.vol.chart')}>
+              <TimeSeriesChart lines={volLines} valueFormatter={pctFmt} ariaLabel={t('an.vol.chartAria')} />
             </Panel>
           )}
           {atrLines.length > 0 && (
-            <Panel title="ATR % of close">
-              <TimeSeriesChart lines={atrLines} valueFormatter={pctFmt} height={200} ariaLabel="ATR percent chart" />
+            <Panel title={t('an.vol.atrChart')}>
+              <TimeSeriesChart lines={atrLines} valueFormatter={pctFmt} height={200} ariaLabel={t('an.vol.atrAria')} />
             </Panel>
           )}
         </>

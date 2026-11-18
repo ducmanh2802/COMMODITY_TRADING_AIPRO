@@ -1,4 +1,6 @@
 /** Minimal dependency-free SVG line chart (multi-series, numeric x). */
+import { fmtFixed } from '../../../i18n';
+
 export interface ChartPoint {
   x: number;
   y: number;
@@ -39,7 +41,7 @@ export function LineChartSvg({
   xLabel,
   yLabel,
   formatX = (x) => String(Math.round(x)),
-  formatY = (y) => y.toFixed(2),
+  formatY = (y) => fmtFixed(y, 2),
   refLines = [],
   height = 280,
   ariaLabel,

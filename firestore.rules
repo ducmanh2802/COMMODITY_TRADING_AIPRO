@@ -310,6 +310,55 @@ service cloud.firestore {
         && data.createdAt is timestamp;
     }
 
+    // Research Notebook (T18). Limits mirror NOTE_LIMITS in src/components/views/journal/researchNotes.ts.
+    function isValidNoteTagAt(tags, i) {
+      return tags.size() <= i || (tags[i] is string && tags[i].size() >= 1 && tags[i].size() <= 32);
+    }
+
+    function isValidNoteChartContext(ctx) {
+      return ctx is map
+        && ctx.keys().hasAll(['timeframe', 'contractCode', 'rangeStart', 'rangeEnd'])
+        && ctx.keys().hasOnly(['timeframe', 'contractCode', 'rangeStart', 'rangeEnd'])
+        && ctx.timeframe is string
+        && (ctx.timeframe == '' || ctx.timeframe in ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'])
+        && ctx.contractCode is string
+        && ctx.contractCode.size() <= 24
+        && ctx.rangeStart is string
+        && ctx.rangeStart.size() <= 40
+        && ctx.rangeEnd is string
+        && ctx.rangeEnd.size() <= 40;
+    }
+
+    function isValidResearchNote(data) {
+      return data.keys().hasAll(['userId', 'instrumentId', 'title', 'body', 'tags', 'chartContext', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'instrumentId', 'title', 'body', 'tags', 'chartContext', 'createdAt', 'updatedAt'])
+        && data.userId is string
+        && data.userId.size() >= 1
+        && data.userId.size() <= 128
+        && data.userId == request.auth.uid
+        && data.instrumentId is string
+        && data.instrumentId.size() >= 1
+        && data.instrumentId.size() <= 32
+        && data.title is string
+        && data.title.size() >= 1
+        && data.title.size() <= 120
+        && data.body is string
+        && data.body.size() <= 10000
+        && data.tags is list
+        && data.tags.size() <= 8
+        && isValidNoteTagAt(data.tags, 0)
+        && isValidNoteTagAt(data.tags, 1)
+        && isValidNoteTagAt(data.tags, 2)
+        && isValidNoteTagAt(data.tags, 3)
+        && isValidNoteTagAt(data.tags, 4)
+        && isValidNoteTagAt(data.tags, 5)
+        && isValidNoteTagAt(data.tags, 6)
+        && isValidNoteTagAt(data.tags, 7)
+        && (data.chartContext == null || isValidNoteChartContext(data.chartContext))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
     // Users collection (PII isolated to verified owner only; list completely disabled)
     match /users/{userId} {
       allow get: if isValidId(userId) && isVerifiedOwner(userId);
@@ -425,6 +474,26 @@ service cloud.firestore {
           (incoming().status == 'CLOSED' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'exitTimestamp', 'exitPrice', 'realizedPnl', 'tradingCosts', 'resultInR', 'notes', 'updatedAt']))
         );
       allow delete: if isValidId(entryId) && isVerifiedUser() && existing().userId == request.auth.uid;
+    }
+
+    // Research Notebook notes (T18): private to the verified owner; userId/createdAt immutable.
+    match /researchNotes/{noteId} {
+      allow get: if isValidId(noteId) && isVerifiedUser() && existing().userId == request.auth.uid;
+      allow list: if isVerifiedUser() && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(noteId)
+        && isVerifiedUser()
+        && isValidResearchNote(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(noteId)
+        && isVerifiedUser()
+        && isValidResearchNote(incoming())
+        && existing().userId == request.auth.uid
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['instrumentId', 'title', 'body', 'tags', 'chartContext', 'updatedAt']);
+      allow delete: if isValidId(noteId) && isVerifiedUser() && existing().userId == request.auth.uid;
     }
 
     // Append-only AuditLogs collection

@@ -3,6 +3,8 @@ import { Check, LogIn, LogOut, Save, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Timeframe, TradingStyle } from '../../shared/types/instrument';
 import type { AccountCurrency, DisplayTimezone } from '../../shared/types/risk';
+import { useT } from '../../i18n';
+import { LanguageSwitch } from '../common/LanguageSwitch';
 
 export function SettingsView() {
   const {
@@ -15,6 +17,7 @@ export function SettingsView() {
     logout,
     saveSettings,
   } = useAuth();
+  const t = useT();
 
   const [accountEquity, setAccountEquity] = useState(String(settings.accountEquity));
   const [accountCurrency, setAccountCurrency] = useState<AccountCurrency>(settings.accountCurrency);
@@ -77,7 +80,7 @@ export function SettingsView() {
       parsedMaxContracts < 1 ||
       parsedMaxContracts > 100
     ) {
-      setSaveError('Please enter valid bounded risk parameters before saving.');
+      setSaveError(t('dash.st.invalid'));
       return;
     }
 
@@ -95,9 +98,9 @@ export function SettingsView() {
         defaultTimeframe: timeframe,
         displayTimezone: timezone,
       });
-      setSaveMessage('Settings saved to Cloud Firestore and recorded in auditLogs.');
+      setSaveMessage(t('dash.st.saved'));
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save settings.');
+      setSaveError(err instanceof Error ? err.message : t('dash.st.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -107,28 +110,37 @@ export function SettingsView() {
     <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-xl font-semibold text-white tracking-tight">
-          Settings & Configuration
+          {t('dash.st.title')}
         </h1>
         <p className="text-sm text-[#E5E7EB]/65 mt-1">
-          Firebase authentication, risk management defaults, and server-side credential policies.
+          {t('dash.st.subtitle')}
         </p>
       </div>
+
+      {/* Interface language */}
+      <section className="bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-white">{t('dash.st.langTitle')}</h2>
+          <LanguageSwitch showLabel />
+        </div>
+        <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">{t('lang.hint')}</p>
+      </section>
 
       {/* Authentication & Firestore Status */}
       <section className="bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h2 className="text-sm font-semibold text-white">Account & Persistence</h2>
+            <h2 className="text-sm font-semibold text-white">{t('dash.st.account')}</h2>
             <p className="text-xs text-[#E5E7EB]/65">
-              Firestore Connectivity: <span className="font-mono text-white">{firestoreStatus}</span>
+              {t('dash.st.firestore')} <span className="font-mono text-white">{firestoreStatus}</span>
             </p>
             {user ? (
               <p className="text-xs font-mono text-[#22C55E]">
-                Signed in as {user.email} · UID: {user.uid}
+                {t('dash.st.signedIn', { email: user.email, uid: user.uid })}
               </p>
             ) : (
               <p className="text-xs text-[#E5E7EB]/55">
-                Sign in with Google to persist risk settings and future trade journals privately in Firestore.
+                {t('dash.st.signInHint')}
               </p>
             )}
           </div>
@@ -140,7 +152,7 @@ export function SettingsView() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-[#172033] hover:bg-[#EF4444]/15 border border-[#263244] hover:border-[#EF4444]/40 rounded-md text-xs font-medium text-[#E5E7EB] hover:text-[#EF4444] self-start whitespace-nowrap"
             >
               <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Sign Out</span>
+              <span>{t('dash.st.signOut')}</span>
             </button>
           ) : (
             <button
@@ -149,7 +161,7 @@ export function SettingsView() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md self-start whitespace-nowrap"
             >
               <LogIn className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Sign In with Google</span>
+              <span>{t('dash.st.signIn')}</span>
             </button>
           )}
         </div>
@@ -174,9 +186,9 @@ export function SettingsView() {
       >
         <div className="flex items-center justify-between gap-3 border-b border-[#263244] pb-3">
           <div>
-            <h2 className="text-sm font-semibold text-white">Risk & Terminal Defaults</h2>
+            <h2 className="text-sm font-semibold text-white">{t('dash.st.riskTitle')}</h2>
             <p className="text-xs text-[#E5E7EB]/55">
-              Enforced deterministically by the Phase 7 Risk Engine; AI cannot override these bounds.
+              {t('dash.st.riskSub')}
             </p>
           </div>
           <ShieldCheck className="w-5 h-5 text-[#6366F1] shrink-0" aria-hidden="true" />
@@ -184,7 +196,7 @@ export function SettingsView() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <label className="space-y-1.5 text-xs">
-            <span className="block text-[#E5E7EB]/75">Account Equity</span>
+            <span className="block text-[#E5E7EB]/75">{t('dash.st.equity')}</span>
             <input
               type="number"
               min={0}
@@ -196,7 +208,7 @@ export function SettingsView() {
           </label>
 
           <label className="space-y-1.5 text-xs">
-            <span className="block text-[#E5E7EB]/75">Account Currency</span>
+            <span className="block text-[#E5E7EB]/75">{t('dash.st.currency')}</span>
             <select
               value={accountCurrency}
               onChange={(e) => setAccountCurrency(e.target.value as AccountCurrency)}
@@ -208,7 +220,7 @@ export function SettingsView() {
           </label>
 
           <label className="space-y-1.5 text-xs">
-            <span className="block text-[#E5E7EB]/75">Risk % Per Trade (0.05–10%)</span>
+            <span className="block text-[#E5E7EB]/75">{t('dash.st.riskPct')}</span>
             <input
               type="number"
               min={0.05}
@@ -221,7 +233,7 @@ export function SettingsView() {
           </label>
 
           <label className="space-y-1.5 text-xs">
-            <span className="block text-[#E5E7EB]/75">Daily Loss Limit % (0.5–25%)</span>
+            <span className="block text-[#E5E7EB]/75">{t('dash.st.dailyLoss')}</span>
             <input
               type="number"
               min={0.5}
@@ -234,7 +246,7 @@ export function SettingsView() {
           </label>
 
           <label className="space-y-1.5 text-xs">
-            <span className="block text-[#E5E7EB]/75">Max Open Positions (1–50)</span>
+            <span className="block text-[#E5E7EB]/75">{t('dash.st.maxOpen')}</span>
             <input
               type="number"
               min={1}
@@ -247,7 +259,7 @@ export function SettingsView() {
           </label>
 
           <label className="space-y-1.5 text-xs">
-            <span className="block text-[#E5E7EB]/75">Max Portfolio Risk % (0.5–50%)</span>
+            <span className="block text-[#E5E7EB]/75">{t('dash.st.maxPortRisk')}</span>
             <input
               type="number"
               min={0.5}
@@ -260,7 +272,7 @@ export function SettingsView() {
           </label>
 
           <label className="space-y-1.5 text-xs">
-            <span className="block text-[#E5E7EB]/75">Max Contracts / Instrument (1–100)</span>
+            <span className="block text-[#E5E7EB]/75">{t('dash.st.maxContracts')}</span>
             <input
               type="number"
               min={1}
@@ -273,21 +285,21 @@ export function SettingsView() {
           </label>
 
           <label className="space-y-1.5 text-xs">
-            <span className="block text-[#E5E7EB]/75">Default Trading Style</span>
+            <span className="block text-[#E5E7EB]/75">{t('dash.st.style')}</span>
             <select
               value={tradingStyle}
               onChange={(e) => setTradingStyle(e.target.value as TradingStyle)}
               className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 font-mono text-white focus:outline-none focus:border-[#6366F1]"
             >
-              <option value="SCALPING">SCALPING</option>
-              <option value="INTRADAY">INTRADAY</option>
-              <option value="SWING">SWING</option>
-              <option value="POSITION">POSITION</option>
+              <option value="SCALPING">{t('dash.st.style.SCALPING')}</option>
+              <option value="INTRADAY">{t('dash.st.style.INTRADAY')}</option>
+              <option value="SWING">{t('dash.st.style.SWING')}</option>
+              <option value="POSITION">{t('dash.st.style.POSITION')}</option>
             </select>
           </label>
 
           <label className="space-y-1.5 text-xs">
-            <span className="block text-[#E5E7EB]/75">Display Timezone</span>
+            <span className="block text-[#E5E7EB]/75">{t('dash.st.timezone')}</span>
             <select
               value={timezone}
               onChange={(e) => setTimezone(e.target.value as DisplayTimezone)}
@@ -316,7 +328,7 @@ export function SettingsView() {
 
         <div className="flex items-center justify-between gap-4 pt-2">
           <p className="text-xs text-[#E5E7EB]/50">
-            Market provider API keys and Gemini keys are managed strictly via server-side secrets.
+            {t('dash.st.keysNote')}
           </p>
           <button
             type="submit"
@@ -324,7 +336,7 @@ export function SettingsView() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 disabled:opacity-45 text-white text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0"
           >
             <Save className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{saving ? 'Saving...' : 'Save Settings'}</span>
+            <span>{saving ? t('dash.st.saving') : t('dash.st.save')}</span>
           </button>
         </div>
       </form>

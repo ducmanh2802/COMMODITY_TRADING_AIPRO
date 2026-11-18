@@ -1196,7 +1196,6 @@ export class EiaEnergyAdapter implements MarketDataProvider {
         const prev = Number(rows[1].value);
         const ts = normalizeDateToUtcIso(rows[0].period ?? ''); // merge fix: skip record without a period
         if (ts && Number.isFinite(curr) && Number.isFinite(prev)) {
-          const diff = curr - prev;
           fundamentalStore.addRecord({
             dataset: `EIA_US_CRUDE_STOCKS (${rows[0].period})`,
             source: 'U.S. EIA Open Data v2 (WCRSTUS1)',
@@ -1210,7 +1209,8 @@ export class EiaEnergyAdapter implements MarketDataProvider {
             forecastValue: null,
             unit: 'Thousand Barrels',
             revisionStatus: 'FINAL',
-            impactAssessment: diff < 0 ? 'BULLISH' : diff > 0 ? 'BEARISH' : 'SIDEWAYS',
+            // Raw change stays visible (actual vs previous); direction needs forecast/seasonal context, so no bias is asserted.
+            impactAssessment: 'UNCERTAIN',
           });
           synced += 1;
         }
@@ -1229,7 +1229,6 @@ export class EiaEnergyAdapter implements MarketDataProvider {
         const prev = Number(ngRows[1].value);
         const ts = normalizeDateToUtcIso(ngRows[0].period ?? ''); // merge fix: skip record without a period
         if (ts && Number.isFinite(curr) && Number.isFinite(prev)) {
-          const diff = curr - prev;
           fundamentalStore.addRecord({
             dataset: `EIA_US_NATURAL_GAS_STORAGE (${ngRows[0].period})`,
             source: 'U.S. EIA Open Data v2 (Working Gas)',
@@ -1243,7 +1242,8 @@ export class EiaEnergyAdapter implements MarketDataProvider {
             forecastValue: null,
             unit: 'Bcf',
             revisionStatus: 'FINAL',
-            impactAssessment: diff < 0 ? 'BULLISH' : diff > 0 ? 'BEARISH' : 'SIDEWAYS',
+            // Raw change stays visible (actual vs previous); direction needs forecast/seasonal context, so no bias is asserted.
+            impactAssessment: 'UNCERTAIN',
           });
           synced += 1;
         }
@@ -1350,7 +1350,7 @@ export class UsdaQuickStatsAdapter implements MarketDataProvider {
       )}&statisticcat_desc=PRODUCTION&agg_level_desc=NATIONAL&year__GE=${yearMin}&format=JSON`;
       const res = await this.fetchFn(url, { signal: AbortSignal.timeout(10_000) });
       const json = (await res.json()) as {
-        data?: Array<{ year?: string; Value?: string; unit_desc?: string; short_desc?: string }>;
+        data?: Array<{ year?: string; Value?: string; unit_desc?: string; short_desc?: string; load_time?: string }>;
         error?: string[];
       };
       if (!res.ok || !Array.isArray(json.data) || json.data.length === 0) {
@@ -1364,26 +1364,27 @@ export class UsdaQuickStatsAdapter implements MarketDataProvider {
           val: Number(String(r.Value ?? '').replace(/,/g, '')),
           unit: r.unit_desc ?? 'UNITS',
           desc: r.short_desc ?? `${commodity} PRODUCTION`,
+          // NASS load_time, e.g. "2026-01-12 12:00:00.000" (no timezone): keep the date only.
+          loadDate: /^\d{4}-\d{2}-\d{2}/.exec(r.load_time ?? '')?.[0] ?? null,
         }))
         .filter((r) => Number.isFinite(r.year) && Number.isFinite(r.val) && r.val > 0)
         .sort((a, b) => b.year - a.year);
 
       if (validRows.length === 0) return 0;
       const latest = validRows[0];
+      // Never invent a publication date: without NASS load_time the record is not stored.
+      if (!latest.loadDate) {
+        this.lastError = 'USDA QuickStats row has no load_time; publication date unknown';
+        return 0;
+      }
       const prev = validRows[1] ?? null;
-      const impact =
-        prev === null
-          ? 'UNCERTAIN'
-          : latest.val < prev.val
-            ? 'BULLISH'
-            : latest.val > prev.val
-              ? 'BEARISH'
-              : 'SIDEWAYS';
+      // A year-over-year change in production is not a price direction; raw values stay visible.
+      const impact = 'UNCERTAIN' as const;
 
       fundamentalStore.addRecord({
         dataset: `USDA_${commodity}_PRODUCTION (${latest.year})`,
         source: 'USDA NASS QuickStats',
-        publicationTimestamp: `${latest.year}-11-01T17:00:00.000Z`,
+        publicationTimestamp: latest.loadDate,
         observationDate: `${latest.year}-01-01`,
         dataPeriod: String(latest.year),
         category: 'USDA_CROP',
@@ -1777,7 +1778,8 @@ export class FredMacroAdapter implements MarketDataProvider {
         fundamentalStore.addRecord({
           dataset: def.dataset,
           source: `FRED (${def.id})`,
-          publicationTimestamp: new Date(`${latest.date}T12:00:00Z`).toISOString(),
+          // FRED observations carry no release time; the observation date is NOT the publication time (look-ahead). Use the moment we fetched it (latest time it was provably public).
+          publicationTimestamp: new Date().toISOString(),
           observationDate: latest.date ?? 'LATEST',
           dataPeriod: latest.date ?? 'LATEST',
           category: 'MACRO',
@@ -1860,7 +1862,8 @@ export class FredMacroAdapter implements MarketDataProvider {
         fundamentalStore.addRecord({
           dataset: def.dataset,
           source: `FRED Public CSV (${def.id})`,
-          publicationTimestamp: new Date(`${latest.date}T12:00:00Z`).toISOString(),
+          // FRED observations carry no release time; the observation date is NOT the publication time (look-ahead). Use the moment we fetched it (latest time it was provably public).
+          publicationTimestamp: new Date().toISOString(),
           observationDate: latest.date,
           dataPeriod: latest.date,
           category: 'MACRO',

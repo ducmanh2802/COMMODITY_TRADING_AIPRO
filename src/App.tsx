@@ -23,15 +23,20 @@ import {
   LazyRiskManagementView,
   LazyScannerView,
   LazySettingsView,
+  LazyBriefView,
   LazySignalsView,
   LazyTechnicalAnalysisView,
   LazyTradeJournalView,
+  LazyResearchNotebookView,
 } from './components/views/LazyOwnerViews';
+import { hasPendingNoteContext } from './components/views/journal/researchNotes';
 import { AuthProvider } from './contexts/AuthContext';
 import { TerminalProvider, useTerminal } from './contexts/TerminalContext';
+import { I18nProvider, useT } from './i18n';
 
 function TerminalWorkspace() {
   const { activeModule, selectedSymbol } = useTerminal();
+  const t = useT();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mainRef = useRef<HTMLElement | null>(null);
 
@@ -62,14 +67,14 @@ function TerminalWorkspace() {
             tabs={[
               {
                 id: 'chain',
-                label: 'Contract chain & calculator',
-                note: 'Verified specifications with sources, contract chain from calendar rules, tick calculator (refuses unverified specs).',
+                label: t('app.explorer.chain'),
+                note: t('app.explorer.chainNote'),
                 render: () => <LazyContractExplorerView />,
               },
               {
                 id: 'profiles',
-                label: 'Commodity profiles & mappings',
-                note: 'Owner module: Vietnamese commodity profiles and external API symbol mappings (descriptive text, not verified market data).',
+                label: t('app.explorer.profiles'),
+                note: t('app.explorer.profilesNote'),
                 render: () => <LazyOwnerContractExplorerView />,
               },
             ]}
@@ -83,14 +88,14 @@ function TerminalWorkspace() {
             tabs={[
               {
                 id: 'datasets',
-                label: 'Imported datasets',
-                note: 'Candles from GET /api/market/candles (SQLite data layer) with client-side indicators.',
+                label: t('app.charts.datasets'),
+                note: t('app.charts.datasetsNote'),
                 render: () => <LazyChartsView />,
               },
               {
                 id: 'overlay',
-                label: 'Technical overlay (EMA)',
-                note: 'Owner module: GET /api/market/candles/:symbol with server-computed EMA 20/50/200 overlays.',
+                label: t('app.charts.overlay'),
+                note: t('app.charts.overlayNote'),
                 render: () => <LazyOwnerChartsView />,
               },
             ]}
@@ -111,7 +116,17 @@ function TerminalWorkspace() {
       case 'portfolio':
         return <LazyPortfolioView />;
       case 'journal':
-        return <LazyTradeJournalView />;
+        // Trade journal + T18 Research Notebook; "note on this chart" opens straight on the notebook tab.
+        return (
+          <DualViewTabs
+            key="journal"
+            initialTabId={hasPendingNoteContext() ? 'notebook' : 'trades'}
+            tabs={[
+              { id: 'trades', label: t('nb.tab.journal'), note: t('nb.tab.journalNote'), render: () => <LazyTradeJournalView /> },
+              { id: 'notebook', label: t('nb.tab.notebook'), note: t('nb.tab.notebookNote'), render: () => <LazyResearchNotebookView /> },
+            ]}
+          />
+        );
       case 'fundamental':
         return <LazyFundamentalNewsView mode="fundamental" />;
       case 'news':
@@ -122,6 +137,8 @@ function TerminalWorkspace() {
         return <LazyDataImportView />;
       case 'term-structure':
         return <LazyTermStructureView />;
+      case 'brief':
+        return <LazyBriefView />;
       case 'analysis':
         return <LazyAnalysisView />;
       case 'cot':
@@ -150,6 +167,7 @@ function TerminalWorkspace() {
 
 export default function App() {
   return (
+    <I18nProvider>
     <ErrorBoundary>
       <AuthProvider>
         <TerminalProvider>
@@ -157,5 +175,6 @@ export default function App() {
         </TerminalProvider>
       </AuthProvider>
     </ErrorBoundary>
+    </I18nProvider>
   );
 }

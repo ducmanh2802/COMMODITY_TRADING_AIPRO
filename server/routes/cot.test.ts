@@ -127,7 +127,7 @@ test('sync → query → health round trip with a mocked CFTC client', async () 
     assert.equal(brn.status, 'NOT_REPORTED');
 
     const markets = await (await fetch(`${base}/api/cot/markets`)).json();
-    assert.equal(markets.markets.length, 19);
+    assert.equal(markets.markets.length, 20);
   });
 });
 

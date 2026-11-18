@@ -4,6 +4,8 @@ import { useTerminal } from '../../contexts/TerminalContext';
 import type { ProductCategory } from '../../shared/types/instrument';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { fmtNum, useT } from '../../i18n';
+import { fmtPrice, hasPrice, plainUnit } from '../common/quoteFormat';
 
 const CATEGORIES: Array<'ALL' | ProductCategory> = [
   'ALL',
@@ -23,6 +25,7 @@ export function MarketWatchView() {
     openInstrumentIn,
     loading,
   } = useTerminal();
+  const t = useT();
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | ProductCategory>('ALL');
 
   const filtered = useMemo(() => {
@@ -45,15 +48,15 @@ export function MarketWatchView() {
     <div className="space-y-5">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">Market Watch</h1>
+          <h1 className="text-xl font-semibold text-white tracking-tight">{t('dash.mw.title')}</h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Instrument registry and live quote integrity across Vietnam MXV and international futures exchanges.
+            {t('dash.mw.subtitle')}
           </p>
         </div>
 
         <div className="relative w-full md:w-72">
           <label htmlFor="market-watch-search" className="sr-only">
-            Filter instruments
+            {t('dash.mw.filterLabel')}
           </label>
           <Search
             className="w-4 h-4 text-[#E5E7EB]/45 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
@@ -64,7 +67,7 @@ export function MarketWatchView() {
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filter by symbol, VN name, or MXV code..."
+            placeholder={t('dash.mw.filterPlaceholder')}
             className="w-full bg-[#111622] border border-[#263244] rounded-md pl-9 pr-3 py-2 text-xs text-[#E5E7EB] placeholder:text-[#E5E7EB]/40 focus:outline-none focus:border-[#6366F1]"
           />
         </div>
@@ -83,7 +86,7 @@ export function MarketWatchView() {
                 : 'text-[#E5E7EB]/70 hover:text-white hover:bg-[#172033]'
             }`}
           >
-            {cat === 'ALL' ? 'All Categories' : cat.replace('_', ' ')}
+            {t(`dash.cat.${cat}`)}
           </button>
         ))}
       </div>
@@ -94,31 +97,31 @@ export function MarketWatchView() {
           <table className="w-full text-left border-collapse min-w-[920px]">
             <thead>
               <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
-                <th className="py-3 px-4 font-medium">Product</th>
-                <th className="py-3 px-3 font-medium">Category</th>
-                <th className="py-3 px-3 font-medium">Exchange</th>
-                <th className="py-3 px-3 font-medium">Symbol</th>
-                <th className="py-3 px-3 font-medium">MXV Mapping</th>
-                <th className="py-3 px-3 font-medium">Spec Status</th>
-                <th className="py-3 px-3 font-medium text-right">Price</th>
-                <th className="py-3 px-3 font-medium text-right">Volume</th>
-                <th className="py-3 px-3 font-medium text-right">Open Interest</th>
-                <th className="py-3 px-3 font-medium">Timestamp (ICT)</th>
-                <th className="py-3 px-3 font-medium text-right">Quality</th>
-                <th className="py-3 px-4 font-medium text-right">Actions</th>
+                <th className="py-3 px-4 font-medium">{t('dash.mw.colProduct')}</th>
+                <th className="py-3 px-3 font-medium">{t('dash.mw.colCategory')}</th>
+                <th className="py-3 px-3 font-medium">{t('common.exchange')}</th>
+                <th className="py-3 px-3 font-medium">{t('common.symbol')}</th>
+                <th className="py-3 px-3 font-medium">{t('dash.mw.colMxv')}</th>
+                <th className="py-3 px-3 font-medium">{t('dash.mw.colSpec')}</th>
+                <th className="py-3 px-3 font-medium text-right">{t('common.price')}</th>
+                <th className="py-3 px-3 font-medium text-right">{t('common.volume')}</th>
+                <th className="py-3 px-3 font-medium text-right">{t('term.openInterest')}</th>
+                <th className="py-3 px-3 font-medium">{t('fr.mw.colTime')}</th>
+                <th className="py-3 px-3 font-medium text-right">{t('fr.mw.colStatus')}</th>
+                <th className="py-3 px-4 font-medium text-right">{t('dash.mw.colActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#263244]/70 text-xs">
               {loading ? (
                 <tr>
                   <td colSpan={12} className="py-10 px-4 text-center text-[#E5E7EB]/55">
-                    Loading market watch records...
+                    {t('dash.mw.loading')}
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={12} className="py-10 px-4 text-center text-[#E5E7EB]/55">
-                    No instruments match the selected filters.
+                    {t('dash.mw.noMatch')}
                   </td>
                 </tr>
               ) : (
@@ -130,15 +133,15 @@ export function MarketWatchView() {
                         <div className="font-medium text-white">
                           {inst.commodityProfile?.vietnameseName ?? inst.productName}
                         </div>
-                        <div className="text-[11px] font-mono text-[#E5E7EB]/50">
+                        <div className="text-[11px] text-[#E5E7EB]/50">
                           {inst.productName}
                           {inst.commodityProfile?.contractMonths
-                            ? ` · Tháng: ${inst.commodityProfile.contractMonths}`
+                            ? t('dash.mw.months', { months: inst.commodityProfile.contractMonths.join(',') })
                             : ''}
                         </div>
                       </td>
                       <td className="py-2.5 px-3 text-[#E5E7EB]/70 whitespace-nowrap">
-                        {inst.category}
+                        {t(`dash.cat.${inst.category}`)}
                       </td>
                       <td className="py-2.5 px-3 font-mono text-[#E5E7EB] whitespace-nowrap">
                         {inst.exchange}
@@ -146,38 +149,48 @@ export function MarketWatchView() {
                       <td className="py-2.5 px-3 font-mono text-white whitespace-nowrap">
                         {inst.exchangeSymbol}
                       </td>
-                      <td className="py-2.5 px-3 font-mono whitespace-nowrap">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         {inst.mxvMapping ? (
                           <span className="text-[#E5E7EB]/85">
                             {inst.mxvMapping.mxvSymbol} ·{' '}
-                            <span className="text-[#F59E0B]">{inst.mxvMapping.mappingStatus}</span>
+                            <span className="text-[#F59E0B]" title={t(`verify.${inst.mxvMapping.mappingStatus}.desc`)}>{t(`verify.${inst.mxvMapping.mappingStatus}`)}</span>
                           </span>
                         ) : (
-                          <span className="text-[#E5E7EB]/40">NONE</span>
+                          <span className="text-[#E5E7EB]/40">{t('common.none')}</span>
                         )}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-[#F59E0B] whitespace-nowrap">
-                        {inst.specification.verificationStatus}
+                      <td
+                        className="py-2.5 px-3 text-[#FBBF24]/90 whitespace-nowrap"
+                        title={t(`verify.${inst.specification.verificationStatus}.desc`)}
+                      >
+                        {t(`verify.${inst.specification.verificationStatus}`)}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-right tabular-nums text-[#E5E7EB]/60 whitespace-nowrap">
-                        {quote?.price !== null && quote?.price !== undefined
-                          ? `${quote.price.toFixed(2)} ${quote.unit && quote.unit !== 'UNSPECIFIED' ? quote.unit : quote.currency}`
-                          : 'DATA_UNAVAILABLE'}
+                      <td className="py-2.5 px-3 text-right tabular-nums whitespace-nowrap">
+                        {hasPrice(quote) ? (
+                          <>
+                            <div className="text-sm font-semibold text-white">{fmtPrice(quote.price)}</div>
+                            <div className="text-[11px] text-[#E5E7EB]/50">{plainUnit(t, quote)}</div>
+                          </>
+                        ) : (
+                          <span className="text-[#E5E7EB]/45" title={t('fr.status.UNAVAILABLE.desc')}>
+                            {t('fr.status.UNAVAILABLE')}
+                          </span>
+                        )}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-right tabular-nums text-[#E5E7EB]/55 whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-right tabular-nums text-[#E5E7EB]/70 whitespace-nowrap">
                         {quote?.volume !== null && quote?.volume !== undefined
-                          ? quote.volume.toLocaleString()
-                          : 'UNAVAILABLE'}
+                          ? fmtNum(quote.volume)
+                          : '—'}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-right tabular-nums text-[#E5E7EB]/55 whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-right tabular-nums text-[#E5E7EB]/70 whitespace-nowrap">
                         {quote?.openInterest !== null && quote?.openInterest !== undefined
-                          ? quote.openInterest.toLocaleString()
-                          : 'UNAVAILABLE'}
+                          ? fmtNum(quote.openInterest)
+                          : '—'}
                       </td>
-                      <td className="py-2.5 px-3 font-mono tabular-nums text-[#E5E7EB]/55 whitespace-nowrap">
+                      <td className="py-2.5 px-3 tabular-nums text-[#E5E7EB]/60 whitespace-nowrap">
                         {quote?.timestamp
                           ? formatTimestampInZone(quote.timestamp, 'Asia/Ho_Chi_Minh')
-                          : 'NO_MARKET_TS'}
+                          : t('fr.noTime')}
                       </td>
                       <td className="py-2.5 px-3 text-right whitespace-nowrap">
                         <div className="inline-flex justify-end">
@@ -196,14 +209,14 @@ export function MarketWatchView() {
                             onClick={() => openInstrumentIn(inst.exchangeSymbol, 'charts')}
                             className="px-2 py-1 bg-[#172033] hover:bg-[#6366F1] border border-[#263244] rounded text-[11px] font-medium text-[#E5E7EB] hover:text-white transition-colors"
                           >
-                            Chart
+                            {t('dash.mw.chart')}
                           </button>
                           <button
                             type="button"
                             onClick={() => openInstrumentIn(inst.exchangeSymbol, 'explorer')}
                             className="px-2 py-1 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded text-[11px] font-medium text-[#E5E7EB]/80 hover:text-white transition-colors"
                           >
-                            Spec
+                            {t('dash.mw.spec')}
                           </button>
                         </div>
                       </td>

@@ -14,6 +14,7 @@ import { formatTimestampInZone } from '../../shared/utils/time';
 import { CsvImportPanel } from '../common/CsvImportPanel';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { InstrumentToolbar } from '../common/InstrumentToolbar';
+import { fmtFixed, fmtNum, useT } from '../../i18n';
 
 interface CandleApiResponse {
   status: DataQualityStatus;
@@ -28,6 +29,7 @@ interface CandleApiResponse {
 
 export function ChartsView() {
   const { selectedSymbol, timeframe, datasets } = useTerminal();
+  const t = useT();
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [candleData, setCandleData] = useState<CandleApiResponse | null>(null);
@@ -50,7 +52,7 @@ export function ChartsView() {
         );
         const json = await res.json();
         if (!res.ok) {
-          throw new Error(json.message ?? 'Failed to fetch candle series.');
+          throw new Error(json.message ?? t('chart.err.series'));
         }
         if (!cancelled) {
           setCandleData(json);
@@ -59,7 +61,7 @@ export function ChartsView() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load candles.');
+          setError(err instanceof Error ? err.message : t('chart.err.candles'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -199,10 +201,10 @@ export function ChartsView() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-white tracking-tight">
-            Multi-Timeframe Chart ({selectedSymbol} · {timeframe})
+            {t('chart.owner.title', { symbol: selectedSymbol, tf: timeframe })}
           </h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Interactive Lightweight Charts candlestick renderer with server-computed EMA overlays.
+            {t('chart.owner.subtitle')}
           </p>
         </div>
         <DataStatusBadge status={status} />
@@ -244,7 +246,7 @@ export function ChartsView() {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#6366F1] border border-[#263244] rounded-md text-xs font-medium text-white transition-colors"
             >
               <Upload className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>{showCsvPanel ? 'Hide CSV Import' : 'Import CSV'}</span>
+              <span>{showCsvPanel ? t('chart.owner.hideCsv') : t('chart.owner.importCsv')}</span>
             </button>
           </>
         }
@@ -265,7 +267,7 @@ export function ChartsView() {
       )}
 
       <section
-        aria-label="Candlestick Chart Canvas"
+        aria-label={t('chart.owner.canvas')}
         className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
       >
         <div className="px-4 py-2.5 border-b border-[#263244] flex flex-wrap items-center justify-between gap-3 text-xs font-mono tabular-nums">
@@ -274,41 +276,41 @@ export function ChartsView() {
               <span className="text-[#E5E7EB]/60">
                 {formatTimestampInZone(hoverCandle.timestamp, 'Asia/Ho_Chi_Minh')}
               </span>
-              <span>O: {hoverCandle.open.toFixed(4)}</span>
-              <span>H: {hoverCandle.high.toFixed(4)}</span>
-              <span>L: {hoverCandle.low.toFixed(4)}</span>
+              <span>O: {fmtFixed(hoverCandle.open, 4)}</span>
+              <span>H: {fmtFixed(hoverCandle.high, 4)}</span>
+              <span>L: {fmtFixed(hoverCandle.low, 4)}</span>
               <span className={hoverCandle.close >= hoverCandle.open ? 'text-[#22C55E]' : 'text-[#EF4444]'}>
-                C: {hoverCandle.close.toFixed(4)}
+                C: {fmtFixed(hoverCandle.close, 4)}
               </span>
-              <span>Vol: {hoverCandle.volume !== null ? hoverCandle.volume.toLocaleString() : 'N/A'}</span>
+              <span>{t('chart.owner.vol')}: {hoverCandle.volume !== null ? fmtNum(hoverCandle.volume) : t('common.na')}</span>
             </div>
           ) : (
             <span className="text-[#F59E0B]">
-              DATA_UNAVAILABLE — No verified market data available.
+              {t('chart.owner.noVerified')}
             </span>
           )}
-          <span className="text-[#E5E7EB]/55">{candles.length} bar(s)</span>
+          <span className="text-[#E5E7EB]/55">{t('chart.bars', { n: candles.length })}</span>
         </div>
 
         {loading ? (
           <div className="h-[440px] flex items-center justify-center text-xs font-mono text-[#E5E7EB]/60">
-            Loading OHLCV series...
+            {t('chart.owner.loading')}
           </div>
         ) : candles.length === 0 ? (
           <div className="h-[440px] flex flex-col items-center justify-center p-6 text-center space-y-3">
             <DataStatusBadge status="UNAVAILABLE" />
             <p className="text-sm font-mono text-white">
-              DATA_UNAVAILABLE — No verified OHLCV candles for {selectedSymbol} ({timeframe}).
+              {t('chart.owner.noCandles', { symbol: selectedSymbol, tf: timeframe })}
             </p>
             <p className="text-xs text-[#E5E7EB]/60 max-w-md">
-              Live exchange adapters are unconfigured and fail closed. Import a validated CSV OHLCV file to render interactive charts and server-computed overlays.
+              {t('chart.owner.noCandlesHint')}
             </p>
             <button
               type="button"
               onClick={() => setShowCsvPanel(true)}
               className="px-3.5 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md"
             >
-              Upload Historical OHLCV CSV
+              {t('chart.owner.uploadCsv')}
             </button>
           </div>
         ) : (
