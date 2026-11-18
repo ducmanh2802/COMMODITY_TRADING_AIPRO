@@ -83,9 +83,9 @@ test('fails closed on missing / malformed fields and flags inconsistent totals',
   assert.equal(r5.record.warnings.length, 2);
 });
 
-test('mapping covers all 19 Instrument Master ids with evidence or a NOT_REPORTED reason', () => {
+test('mapping covers all 20 Instrument Master ids with evidence or a NOT_REPORTED reason', () => {
   const ids = INITIAL_INSTRUMENTS.map((i) => i.id).sort();
-  assert.equal(ids.length, 19);
+  assert.equal(ids.length, 20);
   assert.deepEqual(COT_MARKET_MAPPINGS.map((m) => m.instrumentId).sort(), ids);
   for (const m of COT_MARKET_MAPPINGS) {
     if (m.status === 'REPORTED') {

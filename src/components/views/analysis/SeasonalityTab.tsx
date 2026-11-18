@@ -20,13 +20,15 @@ import {
   useLoadedSeries,
   useOptionMap,
 } from './shared';
+import { fmtFixed, fmtInt, useT } from '../../../i18n';
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_NUMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 const MONTH_START_IDX = [1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336];
 
 function PathChart({ path }: { path: PathPoint[] }) {
+  const t = useT();
   const pts = path.filter((p) => p.mean !== null) as (PathPoint & { mean: number })[];
-  if (pts.length < 2) return <p className="text-xs text-[#E5E7EB]/55">Not enough path points to draw.</p>;
+  if (pts.length < 2) return <p className="text-xs text-[#E5E7EB]/55">{t('an.seas.notEnough')}</p>;
   const W = 800;
   const H = 240;
   const pad = { l: 44, r: 10, t: 10, b: 24 };
@@ -46,19 +48,19 @@ function PathChart({ path }: { path: PathPoint[] }) {
   // Isolated days (weekends break daily continuity) — also draw as dots so sparse paths stay visible.
   const ticks = [yMin, (yMin + yMax) / 2, yMax];
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Average seasonal path chart">
-      {ticks.map((t) => (
-        <g key={t}>
-          <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke="#263244" strokeWidth={1} />
-          <text x={pad.l - 4} y={y(t) + 3} fontSize={10} textAnchor="end" fill="#E5E7EB99">
-            {t.toFixed(1)}
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={t('an.seas.pathAria')}>
+      {ticks.map((tk) => (
+        <g key={tk}>
+          <line x1={pad.l} x2={W - pad.r} y1={y(tk)} y2={y(tk)} stroke="#263244" strokeWidth={1} />
+          <text x={pad.l - 4} y={y(tk) + 3} fontSize={10} textAnchor="end" fill="#E5E7EB99">
+            {fmtFixed(tk, 1)}
           </text>
         </g>
       ))}
       <line x1={pad.l} x2={W - pad.r} y1={y(100)} y2={y(100)} stroke="#E5E7EB55" strokeDasharray="4 3" />
       {MONTH_START_IDX.map((idx, i) => (
         <text key={idx} x={x(idx)} y={H - 6} fontSize={10} fill="#E5E7EB99">
-          {MONTHS[i]}
+          {t(`an.month.${MONTH_NUMS[i]}`)}
         </text>
       ))}
       <path d={d} fill="none" stroke="#6366F1" strokeWidth={1.5} />
@@ -70,6 +72,7 @@ function PathChart({ path }: { path: PathPoint[] }) {
 }
 
 export function SeasonalityTab({ options }: { options: SeriesOption[] }) {
+  const t = useT();
   const byKey = useOptionMap(options);
   const [key, setKey] = useState('');
   const [minYears, setMinYears] = useState(5);
@@ -85,58 +88,59 @@ export function SeasonalityTab({ options }: { options: SeriesOption[] }) {
   return (
     <div className="space-y-4">
       <Panel
-        title="Seasonality"
-        subtitle="Monthly return = month-end close / previous month-end close − 1 (UTC calendar). Requires daily data and ≥ minYears years with monthly returns."
+        title={t('an.seas.title')}
+        subtitle={t('an.seas.subtitle')}
       >
         <div className="flex flex-wrap items-end gap-4">
-          <SeriesSelect id="seas-series" label="Series (daily)" options={options} value={key} onChange={setKey} />
-          <NumberField id="seas-minyears" label="minYears" value={minYears} onChange={setMinYears} min={1} />
+          <SeriesSelect id="seas-series" label={t('an.seas.series')} options={options} value={key} onChange={setKey} />
+          <NumberField id="seas-minyears" label={t('an.seas.minYears')} value={minYears} onChange={setMinYears} min={1} />
           <div>
             <label htmlFor="seas-fill" className={labelClass}>
-              Path fill
+              {t('an.seas.pathFill')}
             </label>
             <select id="seas-fill" className={inputClass} value={pathFill} onChange={(e) => setPathFill(e.target.value as 'none' | 'carryForward')}>
-              <option value="none">none (exact dates only)</option>
-              <option value="carryForward">carry forward (explicit)</option>
+              <option value="none">{t('an.seas.fillNone')}</option>
+              <option value="carryForward">{t('an.seas.fillCarry')}</option>
             </select>
           </div>
           <label className="inline-flex items-center gap-2 text-xs text-[#E5E7EB]/80 pb-1.5">
             <input type="checkbox" className="accent-[#6366F1]" checked={includeFinalMonth} onChange={(e) => setIncludeFinalMonth(e.target.checked)} />
-            Include final (possibly partial) month
+            {t('an.seas.includeFinal')}
           </label>
         </div>
-        {option && option.timeframe !== 'D1' && <Notice tone="warn">Seasonality expects daily (D1) data; {option.timeframe} will be rejected or flagged.</Notice>}
-        {loading && <p className="text-xs text-[#E5E7EB]/55">Loading candles…</p>}
+        {option && option.timeframe !== 'D1' && <Notice tone="warn">{t('an.seas.needD1', { tf: option.timeframe })}</Notice>}
+        {loading && <p className="text-xs text-[#E5E7EB]/55">{t('an.loadingCandles')}</p>}
         {error && <Notice tone="error">{error}</Notice>}
         {s && <SeriesIntegrity s={s} />}
       </Panel>
 
       {res && (
         <>
-          <Panel title="Coverage" subtitle={`Requirement: ≥ ${Number.isFinite(minYears) ? minYears : '—'} calendar years with at least one monthly return`}>
-            <StatusBlock label="Seasonality" status={res.status} reason={res.reason} warnings={res.warnings} />
+          <Panel title={t('an.seas.coverage')} subtitle={t('an.seas.requirement', { n: Number.isFinite(minYears) ? minYears : '—' })}>
+            <StatusBlock label={t('an.seas.title')} status={res.status} reason={res.reason} warnings={res.warnings} />
             {res.status !== 'INVALID_INPUT' && (
               <>
                 <p className="text-xs font-mono text-[#E5E7EB]/80">
-                  Years covered: <span className="text-white">{res.yearsCovered}</span> / required {Number.isFinite(minYears) ? minYears : '—'}
+                  {t('an.seas.yearsCovered')} <span className="text-white">{res.yearsCovered}</span>{' '}
+                  {t('an.seas.required', { n: Number.isFinite(minYears) ? minYears : '—' })}
                 </p>
                 <div className="overflow-x-auto">
                   <table className="text-xs font-mono min-w-[420px]">
                     <thead>
                       <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
-                        <th className="py-1.5 pr-4 text-left font-medium">Year</th>
-                        <th className="py-1.5 px-3 text-right font-medium">Observations</th>
-                        <th className="py-1.5 px-3 text-right font-medium">Monthly returns</th>
-                        <th className="py-1.5 px-3 text-left font-medium">In avg path</th>
+                        <th className="py-1.5 pr-4 text-left font-medium">{t('an.seas.year')}</th>
+                        <th className="py-1.5 px-3 text-right font-medium">{t('an.seas.observations')}</th>
+                        <th className="py-1.5 px-3 text-right font-medium">{t('an.seas.monthlyReturns')}</th>
+                        <th className="py-1.5 px-3 text-left font-medium">{t('an.seas.inPath')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#263244]/70">
                       {res.years.map((y) => (
                         <tr key={y.year}>
                           <td className="py-1.5 pr-4 text-white">{y.year}</td>
-                          <td className="py-1.5 px-3 text-right tabular-nums">{y.observations}</td>
+                          <td className="py-1.5 px-3 text-right tabular-nums">{fmtInt(y.observations)}</td>
                           <td className="py-1.5 px-3 text-right tabular-nums">{y.monthlyReturns}</td>
-                          <td className="py-1.5 px-3">{y.includedInPath ? 'yes' : 'no (needs Jan & Dec)'}</td>
+                          <td className="py-1.5 px-3">{y.includedInPath ? t('an.seas.yes') : t('an.seas.noNeeds')}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -148,26 +152,26 @@ export function SeasonalityTab({ options }: { options: SeriesOption[] }) {
 
           {res.status === 'OK' && (
             <>
-              <Panel title="Monthly return statistics">
+              <Panel title={t('an.seas.stats')}>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs font-mono min-w-[640px]">
                     <thead>
                       <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
-                        <th className="py-1.5 pr-3 text-left font-medium">Month</th>
+                        <th className="py-1.5 pr-3 text-left font-medium">{t('an.seas.month')}</th>
                         <th className="py-1.5 px-3 text-right font-medium">n</th>
-                        <th className="py-1.5 px-3 text-right font-medium">Mean</th>
-                        <th className="py-1.5 px-3 text-right font-medium">Median</th>
-                        <th className="py-1.5 px-3 text-right font-medium">% positive</th>
-                        <th className="py-1.5 px-3 text-right font-medium">Min</th>
-                        <th className="py-1.5 px-3 text-right font-medium">Max</th>
+                        <th className="py-1.5 px-3 text-right font-medium">{t('an.seas.mean')}</th>
+                        <th className="py-1.5 px-3 text-right font-medium">{t('an.seas.median')}</th>
+                        <th className="py-1.5 px-3 text-right font-medium">{t('an.seas.pctPositive')}</th>
+                        <th className="py-1.5 px-3 text-right font-medium">{t('an.seas.min')}</th>
+                        <th className="py-1.5 px-3 text-right font-medium">{t('an.seas.max')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#263244]/70">
                       {res.months.map((m) => (
                         <tr key={m.month} className={m.count < minYears ? 'text-[#E5E7EB]/45' : 'text-[#E5E7EB]/90'}>
                           <td className="py-1.5 pr-3">
-                            {MONTHS[m.month - 1]}
-                            {m.count < minYears && <span className="text-[#F59E0B] ml-1" title="fewer samples than minYears">*</span>}
+                            {MONTH_NUMS[m.month - 1] ? t(`an.month.${MONTH_NUMS[m.month - 1]}`) : m.month}
+                            {m.count < minYears && <span className="text-[#F59E0B] ml-1" title={t('an.seas.fewerTitle')}>*</span>}
                           </td>
                           <td className="py-1.5 px-3 text-right tabular-nums">{m.count}</td>
                           <td className={`py-1.5 px-3 text-right tabular-nums ${m.mean !== null && m.mean < 0 ? 'text-[#EF4444]' : ''}`}>{fmtPct(m.mean)}</td>
@@ -179,10 +183,10 @@ export function SeasonalityTab({ options }: { options: SeriesOption[] }) {
                       ))}
                     </tbody>
                   </table>
-                  <p className="text-[10px] text-[#E5E7EB]/45 mt-1">* fewer yearly samples than minYears — treat with caution.</p>
+                  <p className="text-[10px] text-[#E5E7EB]/45 mt-1">{t('an.seas.fewerNote')}</p>
                 </div>
               </Panel>
-              <Panel title="Average year path" subtitle="Each included year normalized to 100 at its first observation; mean per calendar day over contributing years.">
+              <Panel title={t('an.seas.avgPath')} subtitle={t('an.seas.avgPathSub')}>
                 <PathChart path={res.path} />
               </Panel>
             </>

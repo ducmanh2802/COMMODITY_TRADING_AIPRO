@@ -37,34 +37,29 @@ import {
 } from '../../../shared/cot/analytics';
 import { CHART_COLORS, type ChartLine, TimeSeriesChart } from '../analysis/TimeSeriesChart';
 import { Notice, NumberField, Panel, StatusBlock, inputClass, labelClass } from '../analysis/shared';
+import { fmtDate, fmtFixed, fmtInt as fmtIntDisplay, tr, useT } from '../../../i18n';
 
-const CATEGORY_LABEL: Record<CotCategory, string> = {
-  producerMerchant: 'Producer/Merchant',
-  swapDealers: 'Swap Dealers',
-  managedMoney: 'Managed Money',
-  otherReportables: 'Other Reportables',
-  nonReportables: 'Non-Reportables',
-  nonCommercial: 'Non-Commercial',
-  commercial: 'Commercial',
-};
+/** Translated trader-category label (vi/en). */
+const categoryLabel = (c: CotCategory): string => tr(`cot.cat.${c}`);
 
 const RECENT_WEEKS = 12;
 const ZERO = [0];
 const INDEX_BANDS = [20, 80];
-const intFmt = (v: number) => Math.round(v).toLocaleString('en-US');
-const pctFmt = (v: number) => `${v.toFixed(1)}%`;
+const intFmt = (v: number) => fmtIntDisplay(v);
+const pctFmt = (v: number) => `${fmtFixed(v, 1)}%`;
 const idxFmt = (v: number) => v.toFixed(0);
 
 function fmtInt(x: number | null | undefined): string {
-  return x === null || x === undefined ? '—' : Math.round(x).toLocaleString('en-US');
+  return x === null || x === undefined ? '—' : fmtIntDisplay(x);
 }
 function fmtSigned(x: number | null | undefined): string {
   if (x === null || x === undefined) return '—';
-  const s = Math.round(x).toLocaleString('en-US');
+  const s = fmtIntDisplay(x);
   return x > 0 ? `+${s}` : s;
 }
 
 export default function CotView() {
+  const t = useT();
   const [markets, setMarkets] = useState<CotMarketMapping[]>([]);
   const [marketsError, setMarketsError] = useState<string | null>(null);
   const [instrumentId, setInstrumentId] = useState('');
@@ -85,7 +80,7 @@ export default function CotView() {
         if (first) setInstrumentId((cur) => cur || first.instrumentId);
       })
       .catch((e: unknown) => {
-        if (!ac.signal.aborted) setMarketsError(e instanceof Error ? e.message : 'Failed to load COT markets.');
+        if (!ac.signal.aborted) setMarketsError(e instanceof Error ? e.message : tr('cot.err.markets'));
       });
     return () => ac.abort();
   }, []);
@@ -98,9 +93,9 @@ export default function CotView() {
 
   const paramError =
     !Number.isInteger(lookback) || lookback < MIN_COT_LOOKBACK_WEEKS || lookback > MAX_COT_LOOKBACK_WEEKS
-      ? `Lookback must be an integer between ${MIN_COT_LOOKBACK_WEEKS} and ${MAX_COT_LOOKBACK_WEEKS} weeks.`
+      ? t('cot.err.lookback', { min: MIN_COT_LOOKBACK_WEEKS, max: MAX_COT_LOOKBACK_WEEKS })
       : !Number.isInteger(maxMissing) || maxMissing < 0 || maxMissing > 52 || maxMissing >= lookback
-        ? 'Max missing weeks must be an integer in [0, 52] and below the lookback.'
+        ? t('cot.err.maxMissing')
         : null;
 
   useEffect(() => {
@@ -116,7 +111,7 @@ export default function CotView() {
       .catch((e: unknown) => {
         if (ac.signal.aborted) return;
         setData(null);
-        setError(e instanceof ApiError ? `${e.code} (HTTP ${e.httpStatus}): ${e.message}` : e instanceof Error ? e.message : 'Failed to load COT data.');
+        setError(e instanceof ApiError ? `${e.code} (HTTP ${e.httpStatus}): ${e.message}` : e instanceof Error ? e.message : tr('cot.err.data'));
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoading(false);
@@ -131,10 +126,9 @@ export default function CotView() {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">Commitments of Traders</h1>
+          <h1 className="text-xl font-semibold text-white tracking-tight">{t('cot.title')}</h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            CFTC futures-only positioning by trader category: net positions, net % of open interest and COT Index. Weekly gaps are never
-            interpolated.
+            {t('cot.subtitle')}
           </p>
         </div>
         <button
@@ -144,17 +138,17 @@ export default function CotView() {
           className="inline-flex items-center gap-2 px-4 py-2 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded-md text-xs font-medium text-white disabled:opacity-50 whitespace-nowrap self-start"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
-          <span>Reload</span>
+          <span>{t('cot.reload')}</span>
         </button>
       </div>
 
-      {marketsError && <Notice tone="error">Could not load COT markets: {marketsError}</Notice>}
+      {marketsError && <Notice tone="error">{t('cot.marketsError', { error: marketsError })}</Notice>}
 
-      <Panel title="Selection">
+      <Panel title={t('cot.selection')}>
         <div className="flex flex-wrap items-end gap-4">
           <div>
             <label htmlFor="cot-instrument" className={labelClass}>
-              Instrument
+              {t('cot.instrument')}
             </label>
             <select id="cot-instrument" className={`${inputClass} font-mono min-w-[220px]`} value={instrumentId} onChange={(e) => setInstrumentId(e.target.value)}>
               {reported.map((m) => (
@@ -163,10 +157,10 @@ export default function CotView() {
                 </option>
               ))}
               {notReported.length > 0 && (
-                <optgroup label="Not in CFTC COT reports">
+                <optgroup label={t('cot.notInCftc')}>
                   {notReported.map((m) => (
                     <option key={m.instrumentId} value={m.instrumentId} disabled title={m.notes ?? 'NOT_REPORTED'}>
-                      {m.instrumentId} — NOT_REPORTED
+                      {m.instrumentId} — {t('cot.notReported')}
                     </option>
                   ))}
                 </optgroup>
@@ -174,8 +168,8 @@ export default function CotView() {
             </select>
           </div>
           <div>
-            <span className={labelClass}>Report type</span>
-            <div className="flex gap-1 bg-[#0B0E14] border border-[#263244] rounded-md p-1" role="group" aria-label="Report type">
+            <span className={labelClass}>{t('cot.reportType')}</span>
+            <div className="flex gap-1 bg-[#0B0E14] border border-[#263244] rounded-md p-1" role="group" aria-label={t('cot.reportType')}>
               {(['DISAGGREGATED', 'LEGACY'] as const).map((rt) => {
                 const available = mapping?.reportTypes.includes(rt) ?? false;
                 return (
@@ -185,6 +179,7 @@ export default function CotView() {
                     aria-pressed={reportType === rt}
                     disabled={!available}
                     onClick={() => setReportType(rt)}
+                    title={t(`cot.rt.${rt}`)}
                     className={`px-2.5 py-1 text-[11px] font-mono rounded ${
                       reportType === rt ? 'bg-[#6366F1] text-white' : 'text-[#E5E7EB]/70 hover:text-white'
                     } disabled:opacity-30`}
@@ -197,25 +192,29 @@ export default function CotView() {
           </div>
           <NumberField
             id="cot-lookback"
-            label="COT Index lookback (weeks)"
+            label={t('cot.lookback')}
             value={lookback}
             onChange={setLookback}
             min={MIN_COT_LOOKBACK_WEEKS}
             max={MAX_COT_LOOKBACK_WEEKS}
-            hint={`${MIN_COT_LOOKBACK_WEEKS}–${MAX_COT_LOOKBACK_WEEKS}, default ${DEFAULT_COT_LOOKBACK_WEEKS}`}
+            hint={t('cot.lookbackHint', { min: MIN_COT_LOOKBACK_WEEKS, max: MAX_COT_LOOKBACK_WEEKS, def: DEFAULT_COT_LOOKBACK_WEEKS })}
           />
-          <NumberField id="cot-maxmissing" label="Max missing weeks" value={maxMissing} onChange={setMaxMissing} min={0} max={52} hint="per Index window" />
+          <NumberField id="cot-maxmissing" label={t('cot.maxMissing')} value={maxMissing} onChange={setMaxMissing} min={0} max={52} hint={t('cot.maxMissingHint')} />
         </div>
         {paramError && <Notice tone="error">{paramError}</Notice>}
         {mapping?.evidence && (
           <p className="text-[11px] font-mono text-[#E5E7EB]/55">
-            CFTC market: {mapping.evidence.marketAndExchangeNames} · code {mapping.cftcContractMarketCode} · mapping checked {mapping.evidence.checkedOn}
+            {t('cot.evidence', {
+              names: mapping.evidence.marketAndExchangeNames,
+              code: mapping.cftcContractMarketCode,
+              checked: fmtDate(mapping.evidence.checkedOn),
+            })}
           </p>
         )}
         {mapping?.notes && <Notice tone="info">{mapping.notes}</Notice>}
         {notReported.length > 0 && (
           <details className="text-xs text-[#E5E7EB]/70">
-            <summary className="cursor-pointer">Instruments not covered by CFTC COT ({notReported.length})</summary>
+            <summary className="cursor-pointer">{t('cot.notCovered', { n: notReported.length })}</summary>
             <ul className="mt-2 space-y-1.5">
               {notReported.map((m) => (
                 <li key={m.instrumentId}>
@@ -229,7 +228,7 @@ export default function CotView() {
 
       {mapping?.status === 'REPORTED' && <SyncPanel instrumentId={mapping.instrumentId} onSynced={() => setReloadToken((t) => t + 1)} />}
 
-      {loading && <p className="text-xs text-[#E5E7EB]/55">Loading COT reports…</p>}
+      {loading && <p className="text-xs text-[#E5E7EB]/55">{t('cot.loading')}</p>}
       {error && <Notice tone="error">{error}</Notice>}
       {data && <CotResults data={data} />}
     </div>
@@ -237,6 +236,7 @@ export default function CotView() {
 }
 
 function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced: () => void }) {
+  const t = useT();
   const [token, setToken] = useState(readAdminToken);
   const [from, setFrom] = useState('');
   const [busy, setBusy] = useState(false);
@@ -257,13 +257,13 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
           tone: 'warn',
           text:
             e.httpStatus === 401
-              ? `401 Unauthorized — admin token missing or not accepted. ${e.message}`
-              : `403 Forbidden — this token is not allowed to run a sync (or admin sync is disabled on the server). ${e.message}`,
+              ? tr('cot.sync.401', { msg: e.message })
+              : tr('cot.sync.403', { msg: e.message }),
         });
       } else if (e instanceof ApiError) {
         setErr({ tone: 'error', text: `${e.code} (HTTP ${e.httpStatus}): ${e.message}` });
       } else {
-        setErr({ tone: 'error', text: e instanceof Error ? e.message : 'Sync failed.' });
+        setErr({ tone: 'error', text: e instanceof Error ? e.message : tr('cot.sync.failed') });
       }
     } finally {
       setBusy(false);
@@ -271,12 +271,12 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
   }, [instrumentId, token, from, onSynced]);
 
   return (
-    <Panel title="Sync from CFTC (admin)" subtitle="Fetches reports from the official CFTC source and stores them. The token is kept in this browser tab's sessionStorage only.">
+    <Panel title={t('cot.sync.title')} subtitle={t('cot.sync.subtitle')}>
       <div className="flex flex-wrap items-end gap-4">
         <div>
           <label htmlFor="cot-token" className={labelClass}>
             <KeyRound className="w-3 h-3 inline mr-1" aria-hidden="true" />
-            Admin token
+            {t('cot.sync.token')}
           </label>
           <input
             id="cot-token"
@@ -292,7 +292,7 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
         </div>
         <div>
           <label htmlFor="cot-from" className={labelClass}>
-            From (optional)
+            {t('cot.sync.from')}
           </label>
           <input id="cot-from" type="date" className={`${inputClass} font-mono`} value={from} onChange={(e) => setFrom(e.target.value)} />
         </div>
@@ -303,21 +303,31 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
           className="inline-flex items-center gap-2 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/85 rounded-md text-xs font-medium text-white disabled:opacity-50"
         >
           <UploadCloud className={`w-3.5 h-3.5 ${busy ? 'animate-pulse' : ''}`} aria-hidden="true" />
-          {busy ? 'Syncing…' : `Sync ${instrumentId}`}
+          {busy ? t('cot.sync.syncing') : t('cot.sync.btn', { id: instrumentId })}
         </button>
       </div>
       {err && <Notice tone={err.tone}>{err.text}</Notice>}
       {result && (
         <div className="space-y-2 text-xs">
           <p className="font-mono">
-            Sync status: <span className={result.status === 'SUCCESS' ? 'text-[#22C55E]' : result.status === 'PARTIAL' ? 'text-[#F59E0B]' : 'text-[#EF4444]'}>{result.status}</span>{' '}
-            · code {result.cftcContractMarketCode}
+            {t('cot.sync.status')} <span className={result.status === 'SUCCESS' ? 'text-[#22C55E]' : result.status === 'PARTIAL' ? 'text-[#F59E0B]' : 'text-[#EF4444]'}>{result.status}</span>{' '}
+            · {t('cot.sync.code', { code: result.cftcContractMarketCode })}
           </p>
           <div className="overflow-x-auto">
             <table className="text-[11px] font-mono min-w-[640px]">
               <thead>
                 <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
-                  {['Type', 'Status', 'From', 'Fetched at', 'Received', 'Accepted', 'Rejected', 'Ins/Upd/Same', 'Message'].map((h) => (
+                  {[
+                    t('cot.sync.h.type'),
+                    t('cot.sync.h.status'),
+                    t('cot.sync.h.from'),
+                    t('cot.sync.h.fetched'),
+                    t('cot.sync.h.received'),
+                    t('cot.sync.h.accepted'),
+                    t('cot.sync.h.rejected'),
+                    t('cot.sync.h.ius'),
+                    t('cot.sync.h.message'),
+                  ].map((h) => (
                     <th key={h} className="py-1.5 px-2 text-left font-medium">
                       {h}
                     </th>
@@ -360,6 +370,7 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
 }
 
 function CotResults({ data }: { data: CotQueryResponse }) {
+  const t = useT();
   const a = data.analytics;
   const cats = categoriesFor(data.reportType);
   const rows = a.rows;
@@ -369,23 +380,23 @@ function CotResults({ data }: { data: CotQueryResponse }) {
   const netLines = useMemo<ChartLine[]>(
     () =>
       showValues
-        ? cats.map((c, i) => ({ name: CATEGORY_LABEL[c], color: CHART_COLORS[i], points: rows.map((r) => ({ t: r.reportDate, v: r.categories[c]?.net ?? null })) }))
+        ? cats.map((c, i) => ({ name: categoryLabel(c), color: CHART_COLORS[i], points: rows.map((r) => ({ t: r.reportDate, v: r.categories[c]?.net ?? null })) }))
         : [],
-    [showValues, cats, rows]
+    [showValues, cats, rows, t]
   );
   const pctLines = useMemo<ChartLine[]>(
     () =>
       showValues
-        ? cats.map((c, i) => ({ name: CATEGORY_LABEL[c], color: CHART_COLORS[i], points: rows.map((r) => ({ t: r.reportDate, v: r.categories[c]?.netPctOi ?? null })) }))
+        ? cats.map((c, i) => ({ name: categoryLabel(c), color: CHART_COLORS[i], points: rows.map((r) => ({ t: r.reportDate, v: r.categories[c]?.netPctOi ?? null })) }))
         : [],
-    [showValues, cats, rows]
+    [showValues, cats, rows, t]
   );
   const idxLines = useMemo<ChartLine[]>(
     () =>
       a.status === 'OK'
-        ? cats.map((c, i) => ({ name: CATEGORY_LABEL[c], color: CHART_COLORS[i], points: rows.map((r) => ({ t: r.reportDate, v: r.categories[c]?.cotIndex ?? null })) }))
+        ? cats.map((c, i) => ({ name: categoryLabel(c), color: CHART_COLORS[i], points: rows.map((r) => ({ t: r.reportDate, v: r.categories[c]?.cotIndex ?? null })) }))
         : [],
-    [a.status, cats, rows]
+    [a.status, cats, rows, t]
   );
 
   const recent = rows.slice(-RECENT_WEEKS).reverse();
@@ -393,56 +404,59 @@ function CotResults({ data }: { data: CotQueryResponse }) {
 
   return (
     <div className="space-y-4">
-      <Panel title="Provenance & timing">
+      <Panel title={t('cot.prov.title')}>
         <dl className="grid gap-2 text-xs md:grid-cols-2">
           <div>
-            <dt className="text-[#E5E7EB]/55">Source(s) actually used</dt>
+            <dt className="text-[#E5E7EB]/55">{t('cot.prov.sources')}</dt>
             <dd className="font-mono text-[11px] text-white break-all">
-              {data.provenance.sources.length ? data.provenance.sources.map((s) => <div key={s}>{s}</div>) : '— (no stored reports)'}
+              {data.provenance.sources.length ? data.provenance.sources.map((s) => <div key={s}>{s}</div>) : t('cot.prov.noReports')}
             </dd>
           </div>
           <div>
-            <dt className="text-[#E5E7EB]/55">Fetched at (latest stored fetch)</dt>
+            <dt className="text-[#E5E7EB]/55">{t('cot.prov.fetchedAt')}</dt>
             <dd className="font-mono text-white">{data.provenance.fetchedAt ?? '—'}</dd>
-            <dt className="text-[#E5E7EB]/55 mt-1">API retrieved at</dt>
+            <dt className="text-[#E5E7EB]/55 mt-1">{t('cot.prov.retrievedAt')}</dt>
             <dd className="font-mono text-white">{data.retrievedAt}</dd>
           </div>
         </dl>
         <Notice tone="warn">
-          <p className="font-semibold">Look-ahead notice</p>
+          <p className="font-semibold">{t('cot.lookahead.title')}</p>
           {latest ? (
             <p>
-              Latest report as-of <span className="font-mono">{latest.reportDate}</span> (positions at Tuesday close); typical public release{' '}
-              <span className="font-mono">{latest.expectedReleaseDate}</span> 15:30 ET (estimate — holidays/shutdowns delay it)
-              {latest.expectedReleaseDate > todayIso ? ' — that date is in the future, so this report may not be public yet by the typical schedule.' : '.'}
+              {t('cot.lookahead.1')} <span className="font-mono">{fmtDate(latest.reportDate)}</span> {t('cot.lookahead.2')}{' '}
+              <span className="font-mono">{fmtDate(latest.expectedReleaseDate)}</span> {t('cot.lookahead.3')}
+              {latest.expectedReleaseDate > todayIso ? t('cot.lookahead.future') : '.'}
             </p>
           ) : null}
           <p>{data.timingNotice}</p>
         </Notice>
       </Panel>
 
-      <Panel title="Analytics status" subtitle={`${data.reportType} · ${data.count} stored report(s) · lookback ${a.lookbackWeeks} weeks · max missing ${a.maxMissingWeeks}`}>
-        <StatusBlock label="COT analytics" status={a.status} reason={a.reason} warnings={a.warnings} />
-        {rows.length === 0 && a.status !== 'INVALID_INPUT' && <Notice tone="info">No reports stored for this market and report type. Run a sync (admin) to fetch them from CFTC.</Notice>}
+      <Panel
+        title={t('cot.an.title')}
+        subtitle={t('cot.an.subtitle', { rt: data.reportType, n: data.count, lb: a.lookbackWeeks, mm: a.maxMissingWeeks })}
+      >
+        <StatusBlock label={t('cot.an.label')} status={a.status} reason={a.reason} warnings={a.warnings} />
+        {rows.length === 0 && a.status !== 'INVALID_INPUT' && <Notice tone="info">{t('cot.an.noReports')}</Notice>}
         {a.gaps.length > 0 && (
           <div>
-            <p className="text-xs text-[#F59E0B] font-medium mb-1">Weekly gaps ({a.gaps.length}) — not interpolated</p>
+            <p className="text-xs text-[#F59E0B] font-medium mb-1">{t('cot.gaps.title', { n: a.gaps.length })}</p>
             <div className="overflow-x-auto">
               <table className="text-[11px] font-mono">
                 <thead>
                   <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
-                    <th className="py-1 pr-3 text-left font-medium">After</th>
-                    <th className="py-1 px-3 text-left font-medium">Before</th>
-                    <th className="py-1 px-3 text-right font-medium">Days</th>
-                    <th className="py-1 px-3 text-right font-medium">Missing weeks</th>
-                    <th className="py-1 px-3 text-left font-medium">Kind</th>
+                    <th className="py-1 pr-3 text-left font-medium">{t('cot.gaps.after')}</th>
+                    <th className="py-1 px-3 text-left font-medium">{t('cot.gaps.before')}</th>
+                    <th className="py-1 px-3 text-right font-medium">{t('cot.gaps.days')}</th>
+                    <th className="py-1 px-3 text-right font-medium">{t('cot.gaps.missing')}</th>
+                    <th className="py-1 px-3 text-left font-medium">{t('cot.gaps.kind')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#263244]/70">
                   {a.gaps.map((g) => (
                     <tr key={`${g.after}-${g.before}`}>
-                      <td className="py-1 pr-3">{g.after}</td>
-                      <td className="py-1 px-3">{g.before}</td>
+                      <td className="py-1 pr-3">{fmtDate(g.after)}</td>
+                      <td className="py-1 px-3">{fmtDate(g.before)}</td>
                       <td className="py-1 px-3 text-right">{g.days}</td>
                       <td className="py-1 px-3 text-right">{g.missingWeeks ?? '—'}</td>
                       <td className="py-1 px-3">{g.kind}</td>
@@ -454,7 +468,7 @@ function CotResults({ data }: { data: CotQueryResponse }) {
           </div>
         )}
         <details className="text-[11px] text-[#E5E7EB]/60">
-          <summary className="cursor-pointer">Formulas</summary>
+          <summary className="cursor-pointer">{t('cot.formulas')}</summary>
           <ul className="mt-1 space-y-0.5 font-mono">
             {Object.entries(a.formula).map(([k, v]) => (
               <li key={k}>
@@ -466,12 +480,24 @@ function CotResults({ data }: { data: CotQueryResponse }) {
       </Panel>
 
       {showValues && latest && (
-        <Panel title={`Latest report · ${latest.reportDate}`} subtitle={`Open interest ${fmtInt(latest.openInterest)} contracts`}>
+        <Panel
+          title={t('cot.latest.title', { date: fmtDate(latest.reportDate) })}
+          subtitle={t('cot.latest.subtitle', { oi: fmtInt(latest.openInterest) })}
+        >
           <div className="overflow-x-auto">
             <table className="w-full text-xs font-mono min-w-[720px]">
               <thead>
                 <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
-                  {['Category', 'Long', 'Short', 'Spread', 'Net', 'WoW Δ net', 'Net % OI', `COT Index (${a.lookbackWeeks}w)`].map((h) => (
+                  {[
+                    t('cot.col.category'),
+                    t('cot.col.long'),
+                    t('cot.col.short'),
+                    t('cot.col.spread'),
+                    t('cot.col.net'),
+                    t('cot.col.wow'),
+                    t('cot.col.netPct'),
+                    t('cot.col.index', { n: a.lookbackWeeks }),
+                  ].map((h) => (
                     <th key={h} className="py-1.5 px-2 text-right first:text-left font-medium">
                       {h}
                     </th>
@@ -483,13 +509,13 @@ function CotResults({ data }: { data: CotQueryResponse }) {
                   const v = latest.categories[c];
                   return (
                     <tr key={c}>
-                      <td className="py-1.5 px-2 text-white">{CATEGORY_LABEL[c]}</td>
+                      <td className="py-1.5 px-2 text-white">{categoryLabel(c)}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">{fmtInt(v?.long)}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">{fmtInt(v?.short)}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">{fmtInt(v?.spread)}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums text-white">{fmtSigned(v?.net)}</td>
-                      <td className="py-1.5 px-2 text-right tabular-nums">{v?.netChangeWoW === null ? <span title="previous report not exactly 7 days earlier">— (gap)</span> : fmtSigned(v?.netChangeWoW)}</td>
-                      <td className="py-1.5 px-2 text-right tabular-nums">{v?.netPctOi === null || v?.netPctOi === undefined ? '—' : `${v.netPctOi.toFixed(1)}%`}</td>
+                      <td className="py-1.5 px-2 text-right tabular-nums">{v?.netChangeWoW === null ? <span title={t('cot.gapTitle')}>— {t('cot.gap')}</span> : fmtSigned(v?.netChangeWoW)}</td>
+                      <td className="py-1.5 px-2 text-right tabular-nums">{v?.netPctOi === null || v?.netPctOi === undefined ? '—' : `${fmtFixed(v.netPctOi, 1)}%`}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">{a.status === 'OK' && v?.cotIndex !== null && v?.cotIndex !== undefined ? v.cotIndex.toFixed(0) : '—'}</td>
                     </tr>
                   );
@@ -502,32 +528,34 @@ function CotResults({ data }: { data: CotQueryResponse }) {
 
       {showValues && (
         <>
-          <Panel title="Net positions by category (contracts)">
-            <TimeSeriesChart lines={netLines} valueFormatter={intFmt} referenceLines={ZERO} ariaLabel="COT net positions chart" />
+          <Panel title={t('cot.chart.net')}>
+            <TimeSeriesChart lines={netLines} valueFormatter={intFmt} referenceLines={ZERO} ariaLabel={t('cot.chart.netAria')} />
           </Panel>
-          <Panel title="Net % of open interest">
-            <TimeSeriesChart lines={pctLines} valueFormatter={pctFmt} referenceLines={ZERO} height={220} ariaLabel="COT net percent of open interest chart" />
+          <Panel title={t('cot.chart.pct')}>
+            <TimeSeriesChart lines={pctLines} valueFormatter={pctFmt} referenceLines={ZERO} height={220} ariaLabel={t('cot.chart.pctAria')} />
           </Panel>
-          <Panel title={`COT Index (${a.lookbackWeeks}-week lookback)`} subtitle="0 = net at the window low, 100 = at the window high. Null where the window is incomplete or flat.">
+          <Panel title={t('cot.chart.index', { n: a.lookbackWeeks })} subtitle={t('cot.chart.indexSub')}>
             {a.status === 'OK' ? (
-              <TimeSeriesChart lines={idxLines} valueFormatter={idxFmt} referenceLines={INDEX_BANDS} height={220} ariaLabel="COT Index chart" />
+              <TimeSeriesChart lines={idxLines} valueFormatter={idxFmt} referenceLines={INDEX_BANDS} height={220} ariaLabel={t('cot.chart.indexAria')} />
             ) : (
               <Notice tone="warn">
-                COT Index not shown — status {a.status}. {a.reason}
+                {t('cot.chart.indexHidden', { status: a.status, reason: a.reason })}
               </Notice>
             )}
           </Panel>
-          <Panel title={`Recent ${Math.min(RECENT_WEEKS, recent.length)} weeks`} subtitle="Net positions with week-over-week change (— (gap) when the previous report is not exactly 7 days earlier).">
+          <Panel title={t('cot.recent.title', { n: Math.min(RECENT_WEEKS, recent.length) })} subtitle={t('cot.recent.subtitle')}>
             <div className="overflow-x-auto">
               <table className="w-full text-[11px] font-mono min-w-[860px]">
                 <thead>
                   <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
-                    <th className="py-1.5 px-2 text-left font-medium">Report date</th>
-                    <th className="py-1.5 px-2 text-left font-medium">Release (est.)</th>
-                    <th className="py-1.5 px-2 text-right font-medium">OI</th>
+                    <th className="py-1.5 px-2 text-left font-medium">{t('cot.recent.date')}</th>
+                    <th className="py-1.5 px-2 text-left font-medium">{t('cot.recent.release')}</th>
+                    <th className="py-1.5 px-2 text-right font-medium" title={t('term.openInterest')}>
+                      {t('cot.recent.oi')}
+                    </th>
                     {cats.map((c) => (
                       <th key={c} className="py-1.5 px-2 text-right font-medium">
-                        {CATEGORY_LABEL[c]} net / Δ
+                        {t('cot.recent.netDelta', { cat: categoryLabel(c) })}
                       </th>
                     ))}
                   </tr>
@@ -535,8 +563,8 @@ function CotResults({ data }: { data: CotQueryResponse }) {
                 <tbody className="divide-y divide-[#263244]/70">
                   {recent.map((r) => (
                     <tr key={r.reportDate}>
-                      <td className="py-1.5 px-2 text-white">{r.reportDate}</td>
-                      <td className="py-1.5 px-2 text-[#E5E7EB]/60">{r.expectedReleaseDate}</td>
+                      <td className="py-1.5 px-2 text-white">{fmtDate(r.reportDate)}</td>
+                      <td className="py-1.5 px-2 text-[#E5E7EB]/60">{fmtDate(r.expectedReleaseDate)}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">{fmtInt(r.openInterest)}</td>
                       {cats.map((c) => {
                         const v = r.categories[c];
@@ -545,7 +573,7 @@ function CotResults({ data }: { data: CotQueryResponse }) {
                           <td key={c} className="py-1.5 px-2 text-right tabular-nums">
                             <span className="text-white">{fmtSigned(v?.net)}</span>
                             <span className={`ml-1.5 ${d === null ? 'text-[#F59E0B]/80' : d > 0 ? 'text-[#22C55E]' : d < 0 ? 'text-[#EF4444]' : 'text-[#E5E7EB]/60'}`}>
-                              {d === null ? '(gap)' : fmtSigned(d)}
+                              {d === null ? t('cot.gap') : fmtSigned(d)}
                             </span>
                           </td>
                         );

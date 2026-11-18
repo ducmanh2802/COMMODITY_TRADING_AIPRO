@@ -5,6 +5,7 @@ import { formatTimestampInZone } from '../../shared/utils/time';
 import { CsvImportPanel } from '../common/CsvImportPanel';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { CotHealthSection } from './cot/CotHealthSection';
+import { fmtInt, hasKey, useT } from '../../i18n';
 
 interface ApiSecretSpec {
   provider: string;
@@ -96,16 +97,19 @@ export function DataHealthView() {
     openInstrumentIn,
   } = useTerminal();
   const { firestoreStatus } = useAuth();
+  const t = useT();
+  /** Translate a dynamic key, falling back to the raw value when no translation exists. */
+  const tk = (key: string, fallback: string) => (hasKey(key) ? t(key) : fallback);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-white tracking-tight">
-            Data Sources & Health
+            {t('dash.dh.title')}
           </h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Server-side commodity API integrations, Vietnam MXV adapter status, Firebase persistence, and CSV historical datasets.
+            {t('dash.dh.subtitle')}
           </p>
         </div>
 
@@ -117,7 +121,7 @@ export function DataHealthView() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded-md text-xs font-medium text-white disabled:opacity-50 whitespace-nowrap"
           >
             <CloudDownload className={`w-3.5 h-3.5 ${syncing ? 'animate-pulse' : ''}`} aria-hidden="true" />
-            <span>{syncing ? 'Syncing Feeds...' : 'Sync Configured Providers'}</span>
+            <span>{syncing ? t('dash.dh.syncing') : t('dash.dh.sync')}</span>
           </button>
 
           <button
@@ -127,22 +131,22 @@ export function DataHealthView() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded-md text-xs font-medium text-white disabled:opacity-50 whitespace-nowrap"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
-            <span>Run Health Check</span>
+            <span>{t('dash.dh.healthCheck')}</span>
           </button>
         </div>
       </div>
 
       {lastSyncSummary && (
         <section
-          aria-label="Latest Sync Result"
+          aria-label={t('dash.dh.syncAria')}
           className="bg-[#111622] border border-[#6366F1]/40 rounded-lg p-4 space-y-3"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <p className="text-xs font-semibold text-white font-mono">
-              Provider Sync Completed ({formatTimestampInZone(lastSyncSummary.syncedAt, 'Asia/Ho_Chi_Minh')} ICT)
+              {t('dash.dh.syncDone', { time: formatTimestampInZone(lastSyncSummary.syncedAt, 'Asia/Ho_Chi_Minh') })}
             </p>
             <span className="text-xs font-mono text-[#22C55E]">
-              +{lastSyncSummary.totalCandlesDatasetsAdded} OHLCV series · +{lastSyncSummary.totalMacroAdded} Macro records
+              {t('dash.dh.syncAdded', { series: lastSyncSummary.totalCandlesDatasetsAdded, macro: lastSyncSummary.totalMacroAdded })}
             </span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
@@ -159,7 +163,7 @@ export function DataHealthView() {
                           : 'text-[#F59E0B]'
                     }`}
                   >
-                    {o.status}
+                    {tk(`dash.dh.conn.${o.status}`, o.status)}
                   </span>
                 </div>
                 <p className="text-[11px] text-[#E5E7EB]/70">{o.message}</p>
@@ -171,43 +175,43 @@ export function DataHealthView() {
 
       {/* System Endpoints & Platform Capabilities */}
       <section
-        aria-label="System Runtime Diagnostics"
+        aria-label={t('dash.dh.diagAria')}
         className="grid grid-cols-1 md:grid-cols-3 gap-4"
       >
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1.5">
-          <p className="text-xs text-[#E5E7EB]/60">Backend API (/api/health)</p>
+          <p className="text-xs text-[#E5E7EB]/60">{t('dash.dh.backend')}</p>
           <p className="text-lg font-mono font-semibold text-white">
-            {health ? health.status : 'CHECKING'}
+            {health ? health.status : t('dash.dh.checking')}
           </p>
           <p className="text-xs font-mono text-[#E5E7EB]/55 tabular-nums">
             {health
               ? `Node ${health.runtime.nodeVersion} · ${health.localTimeLabel}`
-              : 'Connecting to Express runtime...'}
+              : t('dash.dh.connecting')}
           </p>
         </div>
 
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1.5">
-          <p className="text-xs text-[#E5E7EB]/60">Cloud Firestore & Auth</p>
+          <p className="text-xs text-[#E5E7EB]/60">{t('dash.dh.firestore')}</p>
           <p className="text-lg font-mono font-semibold text-white">{firestoreStatus}</p>
           <p className="text-xs text-[#E5E7EB]/55">
-            Project provisioned · Owner-isolated rules active
+            {t('dash.dh.firestoreNote')}
           </p>
         </div>
 
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-1.5">
-          <p className="text-xs text-[#E5E7EB]/60">Gemini Server Integration</p>
+          <p className="text-xs text-[#E5E7EB]/60">{t('dash.dh.gemini')}</p>
           <p className="text-lg font-mono font-semibold text-white">
-            {health?.capabilities.geminiServerKeyConfigured ? 'KEY PRESENT' : 'KEY NOT SET'}
+            {health?.capabilities.geminiServerKeyConfigured ? t('dash.dh.keyPresent') : t('dash.dh.keyNotSet')}
           </p>
           <p className="text-xs text-[#E5E7EB]/55">
-            Server-side @google/genai active · No client key exposure
+            {t('dash.dh.geminiNote')}
           </p>
         </div>
       </section>
 
       {/* Server-Side Real-Time & Macro API Keys Setup Guide (Read-only Secrets reference) */}
       <section
-        aria-label="Server-Side Commodity API Secrets Guide"
+        aria-label={t('dash.dh.secretsAria')}
         className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
       >
         <div className="px-4 py-3 border-b border-[#263244] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -215,10 +219,10 @@ export function DataHealthView() {
             <KeyRound className="w-4 h-4 text-[#6366F1] shrink-0 mt-0.5" aria-hidden="true" />
             <div>
               <h2 className="text-sm font-semibold text-white">
-                Real-Time & Standard Commodity API Keys (Server-Side Secrets)
+                {t('dash.dh.secretsTitle')}
               </h2>
               <p className="text-xs text-[#E5E7EB]/60 mt-0.5">
-                Configure any of these environment variable names in AI Studio <span className="font-mono text-white">Settings &gt; Secrets</span> (never exposed to browser client).
+                {t('dash.dh.secretsHint1')} <span className="font-mono text-white">Settings &gt; Secrets</span> {t('dash.dh.secretsHint2')}
               </p>
             </div>
           </div>
@@ -228,11 +232,11 @@ export function DataHealthView() {
           <table className="w-full text-left border-collapse min-w-[860px]">
             <thead>
               <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
-                <th className="py-2.5 px-4 font-medium">Provider</th>
-                <th className="py-2.5 px-3 font-medium">Server Env Secret Name</th>
-                <th className="py-2.5 px-3 font-medium">Latency & Tier</th>
-                <th className="py-2.5 px-3 font-medium">Commodity Coverage</th>
-                <th className="py-2.5 px-4 font-medium text-right">Status</th>
+                <th className="py-2.5 px-4 font-medium">{t('dash.dh.colProvider')}</th>
+                <th className="py-2.5 px-3 font-medium">{t('dash.dh.colSecret')}</th>
+                <th className="py-2.5 px-3 font-medium">{t('dash.dh.colLatency')}</th>
+                <th className="py-2.5 px-3 font-medium">{t('dash.dh.colCoverage')}</th>
+                <th className="py-2.5 px-4 font-medium text-right">{t('common.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#263244]/70 text-xs">
@@ -241,19 +245,19 @@ export function DataHealthView() {
                 return (
                   <tr key={spec.secretName} className="hover:bg-[#172033]/40">
                     <td className="py-2.5 px-4">
-                      <div className="font-medium text-white">{spec.provider}</div>
+                      <div className="font-medium text-white">{spec.providerId === 'YAHOO_UNOFFICIAL' ? t('dash.dh.yahooName') : spec.provider}</div>
                       <div className="text-[11px] font-mono text-[#E5E7EB]/45">{spec.officialDoc}</div>
                     </td>
                     <td className="py-2.5 px-3 font-mono text-[#6366F1]">{spec.secretName}</td>
-                    <td className="py-2.5 px-3 text-[#E5E7EB]/75">{spec.latencyAndTier}</td>
-                    <td className="py-2.5 px-3 text-[#E5E7EB]/75">{spec.commodityCoverage}</td>
+                    <td className="py-2.5 px-3 text-[#E5E7EB]/75">{tk(`dash.dh.tier.${spec.providerId}`, spec.latencyAndTier)}</td>
+                    <td className="py-2.5 px-3 text-[#E5E7EB]/75">{tk(`dash.dh.cov.${spec.providerId}`, spec.commodityCoverage)}</td>
                     <td className="py-2.5 px-4 text-right font-mono">
                       <span
                         className={
                           liveState?.credentialsConfigured ? 'text-[#22C55E]' : 'text-[#E5E7EB]/50'
                         }
                       >
-                        {liveState?.credentialsConfigured ? 'CONFIGURED' : 'NOT_SET'}
+                        {liveState?.credentialsConfigured ? t('dash.dh.configured') : t('dash.dh.notSet')}
                       </span>
                     </td>
                   </tr>
@@ -269,38 +273,38 @@ export function DataHealthView() {
 
       {/* Imported Historical Datasets */}
       <section
-        aria-label="Imported Historical Datasets"
+        aria-label={t('dash.dh.datasetsAria')}
         className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
       >
         <div className="px-4 py-3 border-b border-[#263244] flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-white">Validated Historical & Synced OHLCV Datasets</h2>
+            <h2 className="text-sm font-semibold text-white">{t('dash.dh.datasetsTitle')}</h2>
             <p className="text-xs text-[#E5E7EB]/55 mt-0.5">
-              Synced API or imported CSV series available for Multi-Timeframe Charts, Technical Engine, Scanner, and Backtests.
+              {t('dash.dh.datasetsSub')}
             </p>
           </div>
           <span className="font-mono text-xs text-[#E5E7EB]/65 tabular-nums">
-            {datasets.length} dataset(s)
+            {t('dash.dh.datasetCount', { n: datasets.length })}
           </span>
         </div>
 
         {datasets.length === 0 ? (
           <div className="p-6 text-xs text-[#E5E7EB]/60 font-mono">
-            DATA_UNAVAILABLE — No historical CSV or synced API OHLCV datasets loaded yet.
+            {t('dash.dh.noDatasets')}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[760px]">
               <thead>
                 <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
-                  <th className="py-2.5 px-4 font-medium">Symbol</th>
-                  <th className="py-2.5 px-3 font-medium">Exchange</th>
-                  <th className="py-2.5 px-3 font-medium">TF</th>
-                  <th className="py-2.5 px-3 font-medium text-right">Bars</th>
-                  <th className="py-2.5 px-3 font-medium">Range (ICT)</th>
-                  <th className="py-2.5 px-3 font-medium">Source</th>
-                  <th className="py-2.5 px-3 font-medium">Status</th>
-                  <th className="py-2.5 px-4 font-medium text-right">Action</th>
+                  <th className="py-2.5 px-4 font-medium">{t('common.symbol')}</th>
+                  <th className="py-2.5 px-3 font-medium">{t('common.exchange')}</th>
+                  <th className="py-2.5 px-3 font-medium">{t('dash.dh.colTf')}</th>
+                  <th className="py-2.5 px-3 font-medium text-right">{t('dash.dh.colBars')}</th>
+                  <th className="py-2.5 px-3 font-medium">{t('dash.dh.colRange')}</th>
+                  <th className="py-2.5 px-3 font-medium">{t('common.source')}</th>
+                  <th className="py-2.5 px-3 font-medium">{t('common.status')}</th>
+                  <th className="py-2.5 px-4 font-medium text-right">{t('dash.dh.colAction')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#263244]/70 text-xs">
@@ -310,7 +314,7 @@ export function DataHealthView() {
                     <td className="py-2.5 px-3 font-mono text-[#E5E7EB]/85">{ds.exchange}</td>
                     <td className="py-2.5 px-3 font-mono text-[#E5E7EB]">{ds.timeframe}</td>
                     <td className="py-2.5 px-3 font-mono text-right tabular-nums text-white">
-                      {ds.barCount}
+                      {fmtInt(ds.barCount)}
                     </td>
                     <td className="py-2.5 px-3 font-mono tabular-nums text-[#E5E7EB]/65">
                       {formatTimestampInZone(ds.earliestTimestamp, 'Asia/Ho_Chi_Minh')} →{' '}
@@ -326,7 +330,7 @@ export function DataHealthView() {
                         onClick={() => openInstrumentIn(ds.symbol, 'charts')}
                         className="px-2.5 py-1 bg-[#172033] hover:bg-[#6366F1] border border-[#263244] rounded text-[11px] font-medium text-white transition-colors"
                       >
-                        Open Chart
+                        {t('dash.dh.openChart')}
                       </button>
                     </td>
                   </tr>
@@ -339,13 +343,13 @@ export function DataHealthView() {
 
       {/* Provider Adapters Table */}
       <section
-        aria-label="Market Data Provider Adapters"
+        aria-label={t('dash.dh.adaptersAria')}
         className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
       >
         <div className="px-4 py-3 border-b border-[#263244]">
-          <h2 className="text-sm font-semibold text-white">MarketDataProvider Adapters</h2>
+          <h2 className="text-sm font-semibold text-white">{t('dash.dh.adaptersTitle')}</h2>
           <p className="text-xs text-[#E5E7EB]/55 mt-0.5">
-            Providers without authorized credentials fail closed with DATA_UNAVAILABLE rather than simulating prices.
+            {t('dash.dh.adaptersSub')}
           </p>
         </div>
 
@@ -353,13 +357,13 @@ export function DataHealthView() {
           <table className="w-full text-left border-collapse min-w-[820px]">
             <thead>
               <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
-                <th className="py-3 px-4 font-medium">Provider</th>
-                <th className="py-3 px-3 font-medium">Exchanges</th>
-                <th className="py-3 px-3 font-medium">Connection</th>
-                <th className="py-3 px-3 font-medium">Credentials</th>
-                <th className="py-3 px-3 font-medium">Capabilities</th>
-                <th className="py-3 px-3 font-medium">Checked (ICT)</th>
-                <th className="py-3 px-4 font-medium">Diagnostic Detail</th>
+                <th className="py-3 px-4 font-medium">{t('dash.dh.colProvider')}</th>
+                <th className="py-3 px-3 font-medium">{t('dash.dh.colExchanges')}</th>
+                <th className="py-3 px-3 font-medium">{t('dash.dh.colConnection')}</th>
+                <th className="py-3 px-3 font-medium">{t('dash.dh.colCredentials')}</th>
+                <th className="py-3 px-3 font-medium">{t('dash.dh.colCapabilities')}</th>
+                <th className="py-3 px-3 font-medium">{t('dash.dh.colChecked')}</th>
+                <th className="py-3 px-4 font-medium">{t('dash.dh.colDiag')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#263244]/70 text-xs">
@@ -379,10 +383,10 @@ export function DataHealthView() {
                     )}
                   </td>
                   <td className="py-3 px-3 font-mono text-[#E5E7EB]/75">
-                    {p.credentialsConfigured ? 'CONFIGURED' : 'NOT_SET'}
+                    {p.credentialsConfigured ? t('dash.dh.configured') : t('dash.dh.notSet')}
                   </td>
                   <td className="py-3 px-3 font-mono text-[#E5E7EB]/70">
-                    {[p.supportsRealtime ? 'RT' : null, p.supportsHistorical ? 'HIST' : null]
+                    {[p.supportsRealtime ? t('dash.dh.capRt') : null, p.supportsHistorical ? t('dash.dh.capHist') : null]
                       .filter(Boolean)
                       .join(' / ')}
                   </td>

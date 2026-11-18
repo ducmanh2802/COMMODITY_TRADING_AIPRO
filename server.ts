@@ -45,10 +45,27 @@ async function startServer(): Promise<void> {
     app.use(vite.middlewares);
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  // Listen only after the API app (incl. the SQLite DB, opened synchronously in createApiApp) and
+  // the Vite middleware are ready, so the first browser request never hits a half-initialised server.
+  //
+  // HOST unset → Node's default dual-stack bind (`::`, accepting IPv4 too; falls back to 0.0.0.0
+  // without IPv6). Binding only 0.0.0.0 made `http://localhost:PORT` try ::1 first and wait for the
+  // refused connection to time out (~2 s per attempt on Windows): every API call took 4–5 s.
+  const host = process.env.HOST?.trim() || undefined;
+  const onListening = () => {
     console.log(
-      `COMMODITY TRADING AI PRO (${isProduction ? 'production' : 'development'}) listening on http://0.0.0.0:${PORT}`,
+      `COMMODITY TRADING AI PRO (${isProduction ? 'production' : 'development'}) listening on http://localhost:${PORT}` +
+        (host ? ` (bound to ${host})` : ' (IPv4 + IPv6)'),
     );
+  };
+  const server = host ? app.listen(PORT, host, onListening) : app.listen(PORT, onListening);
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    console.error(
+      err.code === 'EADDRINUSE'
+        ? `Port ${PORT} is already in use (another server instance?). Stop it or set PORT=...`
+        : `Server error: ${err.message}`,
+    );
+    process.exit(1);
   });
 }
 

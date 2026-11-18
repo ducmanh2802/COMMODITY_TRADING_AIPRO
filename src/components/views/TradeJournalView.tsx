@@ -16,6 +16,7 @@ import { useTerminal } from '../../contexts/TerminalContext';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
 import type { ExchangeCode, InstrumentDefinition, Timeframe } from '../../shared/types/instrument';
 import { computeJournalExit, localDateTimeToIso, type JournalExitResult } from './journal/journalMath';
+import { fmtFixed, fmtNum, useT } from '../../i18n';
 
 interface JournalDoc {
   id: string;
@@ -78,6 +79,7 @@ interface JournalAnalyticsResponse {
 export function TradeJournalView() {
   const { user, authReady, signInWithGoogle } = useAuth();
   const { instruments, timeframe } = useTerminal();
+  const t = useT();
 
   const [entries, setEntries] = useState<JournalDoc[]>([]);
   const [analytics, setAnalytics] = useState<JournalAnalyticsResponse | null>(null);
@@ -199,7 +201,7 @@ export function TradeJournalView() {
     if (!user || !user.emailVerified) return;
     const inst = selectedInstrument;
     if (!inst) {
-      setError('Select an instrument.');
+      setError(t('jr.selectInst'));
       return;
     }
 
@@ -209,17 +211,17 @@ export function TradeJournalView() {
     const qty = Math.trunc(Number(positionSize));
     const costs = tradingCosts === '' ? 0 : Number(tradingCosts);
     if (!(ep > 0 && sl > 0 && tp > 0 && qty >= 1)) {
-      setError('Entry, SL, TP must be positive and position size >= 1.');
+      setError(t('jr.invalidInputs'));
       return;
     }
     if (!(costs >= 0)) {
-      setError('Trading costs must be 0 or more.');
+      setError(t('jr.costsNonNeg'));
       return;
     }
     // Entry time: user-entered; for an OPEN trade left blank it is the logging time.
     const entryIso = localDateTimeToIso(entryTime) ?? (status === 'OPEN' ? new Date().toISOString() : null);
     if (!entryIso) {
-      setError('Enter the entry time for a CLOSED trade.');
+      setError(t('jr.needEntryTime'));
       return;
     }
     let exitIso = '';
@@ -227,15 +229,15 @@ export function TradeJournalView() {
     if (status === 'CLOSED') {
       const iso = localDateTimeToIso(exitTime);
       if (!iso) {
-        setError('Enter the exit time for a CLOSED trade.');
+        setError(t('jr.needExitTime'));
         return;
       }
       if (Date.parse(iso) < Date.parse(entryIso)) {
-        setError('Exit time is before entry time.');
+        setError(t('jr.exitBeforeEntry'));
         return;
       }
       if (!formExit || !formExit.ok) {
-        setError(formExit && !formExit.ok ? formExit.reason : 'Enter the exit price.');
+        setError(formExit && !formExit.ok ? formExit.reason : t('jr.needExitPrice'));
         return;
       }
       exitIso = iso;
@@ -279,7 +281,7 @@ export function TradeJournalView() {
       try {
         handleFirestoreError(err, OperationType.CREATE, docPath);
       } catch (wrapped) {
-        setError(wrapped instanceof Error ? wrapped.message : 'Failed to log trade.');
+        setError(wrapped instanceof Error ? wrapped.message : t('jr.logFailed'));
       }
     } finally {
       setSaving(false);
@@ -305,15 +307,15 @@ export function TradeJournalView() {
     if (!closing || !closingEntry || closingEntry.status === 'CLOSED') return;
     const exitIso = localDateTimeToIso(closing.exitTime);
     if (!exitIso) {
-      setClosing({ ...closing, error: 'Enter the exit time.' });
+      setClosing({ ...closing, error: t('jr.needExitTimeShort') });
       return;
     }
     if (Date.parse(exitIso) < Date.parse(closingEntry.entryTimestamp)) {
-      setClosing({ ...closing, error: 'Exit time is before the entry time.' });
+      setClosing({ ...closing, error: t('jr.exitBeforeEntry') });
       return;
     }
     if (!closingExit || !closingExit.ok) {
-      setClosing({ ...closing, error: closingExit && !closingExit.ok ? closingExit.reason : 'Enter the exit price.' });
+      setClosing({ ...closing, error: closingExit && !closingExit.ok ? closingExit.reason : t('jr.needExitPrice') });
       return;
     }
     const docPath = `tradeJournal/${closingEntry.id}`;
@@ -334,7 +336,7 @@ export function TradeJournalView() {
       try {
         handleFirestoreError(err, OperationType.UPDATE, docPath);
       } catch (wrapped) {
-        setClosing((c) => (c ? { ...c, busy: false, error: wrapped instanceof Error ? wrapped.message : 'Failed to close entry.' } : c));
+        setClosing((c) => (c ? { ...c, busy: false, error: wrapped instanceof Error ? wrapped.message : t('jr.closeFailed') } : c));
       }
     }
   };
@@ -352,17 +354,17 @@ export function TradeJournalView() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">Trade Journal & Analytics</h1>
+          <h1 className="text-xl font-semibold text-white tracking-tight">{t('jr.titleGuest')}</h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Private, owner-isolated futures trade journal with deterministic win rate, expectancy, and attribution.
+            {t('jr.subtitleGuest')}
           </p>
         </div>
 
         <section className="bg-[#111622] border border-[#263244] rounded-lg p-8 text-center space-y-3">
           <BookOpen className="w-8 h-8 text-[#6366F1] mx-auto" aria-hidden="true" />
-          <h2 className="text-sm font-semibold text-white">Sign In Required for Trade Journal</h2>
+          <h2 className="text-sm font-semibold text-white">{t('jr.signInTitle')}</h2>
           <p className="text-xs text-[#E5E7EB]/65 max-w-md mx-auto">
-            Journal entries persist strictly under your authenticated Firebase UID in Cloud Firestore.
+            {t('jr.signInBody')}
           </p>
           <button
             type="button"
@@ -370,7 +372,7 @@ export function TradeJournalView() {
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md"
           >
             <LogIn className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Sign In with Google</span>
+            <span>{t('jr.signInGoogle')}</span>
           </button>
         </section>
       </div>
@@ -380,48 +382,48 @@ export function TradeJournalView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-white tracking-tight">Trade Journal & Attribution</h1>
+        <h1 className="text-xl font-semibold text-white tracking-tight">{t('jr.title')}</h1>
         <p className="text-sm text-[#E5E7EB]/65 mt-1">
-          Log executed trades, track R-multiples, and compute deterministic expectancy and strategy attribution.
+          {t('jr.subtitle')}
         </p>
       </div>
 
       {/* Analytics Strip */}
       <section className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 text-xs font-mono tabular-nums">
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-3">
-          <span className="text-[#E5E7EB]/55 font-sans block">Net Realized PnL</span>
+          <span className="text-[#E5E7EB]/55 font-sans block">{t('jr.netPnl')}</span>
           <span className={`text-base font-bold ${(analytics?.netRealizedPnl ?? 0) >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-            ${(analytics?.netRealizedPnl ?? 0).toFixed(2)}
+            ${fmtFixed(analytics?.netRealizedPnl ?? 0, 2)}
           </span>
         </div>
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-3">
-          <span className="text-[#E5E7EB]/55 font-sans block">Win Rate</span>
+          <span className="text-[#E5E7EB]/55 font-sans block">{t('jr.winRate')}</span>
           <span className="text-base font-bold text-white">
-            {(analytics?.winRatePct ?? 0).toFixed(1)}%
+            {fmtFixed(analytics?.winRatePct ?? 0, 1)}%
           </span>
         </div>
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-3">
-          <span className="text-[#E5E7EB]/55 font-sans block">Profit Factor</span>
+          <span className="text-[#E5E7EB]/55 font-sans block">{t('jr.profitFactor')}</span>
           <span className="text-base font-bold text-white">
             {analytics?.profitFactor !== null && analytics?.profitFactor !== undefined
-              ? analytics.profitFactor.toFixed(2)
-              : 'N/A'}
+              ? fmtFixed(analytics.profitFactor, 2)
+              : t('common.na')}
           </span>
         </div>
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-3">
-          <span className="text-[#E5E7EB]/55 font-sans block">Expectancy</span>
+          <span className="text-[#E5E7EB]/55 font-sans block">{t('jr.expectancy')}</span>
           <span className="text-base font-bold text-white">
-            ${(analytics?.expectancyUsd ?? 0).toFixed(2)}
+            ${fmtFixed(analytics?.expectancyUsd ?? 0, 2)}
           </span>
         </div>
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-3">
-          <span className="text-[#E5E7EB]/55 font-sans block">Max Drawdown</span>
+          <span className="text-[#E5E7EB]/55 font-sans block">{t('jr.maxDd')}</span>
           <span className="text-base font-bold text-[#EF4444]">
-            ${(analytics?.maxDrawdownUsd ?? 0).toFixed(2)}
+            ${fmtFixed(analytics?.maxDrawdownUsd ?? 0, 2)}
           </span>
         </div>
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-3">
-          <span className="text-[#E5E7EB]/55 font-sans block">Closed / Open</span>
+          <span className="text-[#E5E7EB]/55 font-sans block">{t('jr.closedOpen')}</span>
           <span className="text-base font-bold text-white">
             {analytics?.totalClosedTrades ?? 0} / {analytics?.openTrades ?? 0}
           </span>
@@ -433,11 +435,11 @@ export function TradeJournalView() {
         onSubmit={(e) => void handleLogTrade(e)}
         className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3"
       >
-        <h2 className="text-sm font-semibold text-white">Log Trade Entry</h2>
+        <h2 className="text-sm font-semibold text-white">{t('jr.logEntry')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <div>
             <label htmlFor="jrn-sym" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Instrument
+              {t('jr.instrument')}
             </label>
             <select
               id="jrn-sym"
@@ -445,17 +447,17 @@ export function TradeJournalView() {
               onChange={(e) => setInstrumentId(e.target.value)}
               className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
             >
-              <option value="">Select…</option>
+              <option value="">{t('jr.selectPh')}</option>
               {instruments.map((i) => (
                 <option key={i.id} value={i.id}>
-                  {i.exchange}:{i.exchangeSymbol} · {i.productName} ({i.specification.verificationStatus})
+                  {i.exchange}:{i.exchangeSymbol} · {i.productName} ({i.specification.verificationStatus === 'VERIFIED' ? t('verify.VERIFIED') : i.specification.verificationStatus === 'UNVERIFIED' ? t('verify.UNVERIFIED') : i.specification.verificationStatus})
                 </option>
               ))}
             </select>
           </div>
           <div>
             <label htmlFor="jrn-dir" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Direction & TF
+              {t('jr.dirTf')}
             </label>
             <div className="flex gap-1.5">
               <select
@@ -464,62 +466,62 @@ export function TradeJournalView() {
                 onChange={(e) => setDirection(e.target.value as 'LONG' | 'SHORT')}
                 className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-2 text-xs font-mono text-white"
               >
-                <option value="LONG">LONG</option>
-                <option value="SHORT">SHORT</option>
+                <option value="LONG">{t('jr.dir.LONG')}</option>
+                <option value="SHORT">{t('jr.dir.SHORT')}</option>
               </select>
               <select
-                aria-label="Timeframe"
+                aria-label={t('jr.timeframe')}
                 value={tf}
                 onChange={(e) => setTf(e.target.value as Timeframe)}
                 className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-2 text-xs font-mono text-white"
               >
-                {(['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'] as Timeframe[]).map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                {(['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'] as Timeframe[]).map((x) => (
+                  <option key={x} value={x}>{x}</option>
                 ))}
               </select>
             </div>
           </div>
           <div>
             <label htmlFor="jrn-strat" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Strategy Tag
+              {t('jr.strategyTag')}
             </label>
             <input
               id="jrn-strat"
               type="text"
               value={strategy}
-              placeholder="e.g. TREND_FOLLOWING"
+              placeholder={t('jr.strategyPh')}
               onChange={(e) => setStrategy(e.target.value)}
               className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
             />
           </div>
           <div>
             <label htmlFor="jrn-entry" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Entry / SL / TP
+              {t('jr.entrySlTp')}
             </label>
             <div className="flex gap-1">
               <input
                 id="jrn-entry"
                 type="number"
                 step="any"
-                placeholder="Entry"
+                placeholder={t('jr.entryPh')}
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
                 className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-1.5 py-2 text-xs font-mono text-white"
               />
               <input
-                aria-label="Stop loss"
+                aria-label={t('term.stopLoss')}
                 type="number"
                 step="any"
-                placeholder="SL"
+                placeholder={t('jr.slPh')}
                 value={stopLoss}
                 onChange={(e) => setStopLoss(e.target.value)}
                 className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-1.5 py-2 text-xs font-mono text-white"
               />
               <input
-                aria-label="Take profit"
+                aria-label={t('term.takeProfit')}
                 type="number"
                 step="any"
-                placeholder="TP"
+                placeholder={t('jr.tpPh')}
                 value={takeProfit}
                 onChange={(e) => setTakeProfit(e.target.value)}
                 className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-1.5 py-2 text-xs font-mono text-white"
@@ -528,7 +530,7 @@ export function TradeJournalView() {
           </div>
           <div>
             <label htmlFor="jrn-size" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Size / Status
+              {t('jr.sizeStatus')}
             </label>
             <div className="flex gap-1.5">
               <input
@@ -540,24 +542,24 @@ export function TradeJournalView() {
                 className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded px-2 py-2 text-xs font-mono text-white"
               />
               <select
-                aria-label="Trade status"
+                aria-label={t('jr.tradeStatus')}
                 value={status}
                 onChange={(e) => setStatus(e.target.value as 'OPEN' | 'CLOSED')}
                 className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded px-2 py-2 text-xs font-mono text-white"
               >
-                <option value="OPEN">OPEN</option>
-                <option value="CLOSED">CLOSED</option>
+                <option value="OPEN">{t('jr.status.OPEN')}</option>
+                <option value="CLOSED">{t('jr.status.CLOSED')}</option>
               </select>
             </div>
           </div>
           <div>
-            <span className="block text-xs text-[#E5E7EB]/65 mb-1">Net PnL / R (computed)</span>
+            <span className="block text-xs text-[#E5E7EB]/65 mb-1">{t('jr.computed')}</span>
             <div className="text-xs font-mono py-2 text-[#E5E7EB]/80" aria-live="polite">
               {status === 'OPEN'
-                ? '— (open trade)'
+                ? t('jr.openTrade')
                 : formExit?.ok
-                  ? `${formExit.realizedPnl.toFixed(2)} ${formExit.currency} · ${formExit.resultInR.toFixed(2)}R`
-                  : 'Needs exit price & verified spec'}
+                  ? `${fmtFixed(formExit.realizedPnl, 2)} ${formExit.currency} · ${fmtFixed(formExit.resultInR, 2)}R`
+                  : t('jr.needsExit')}
             </div>
           </div>
         </div>
@@ -565,8 +567,8 @@ export function TradeJournalView() {
         <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 items-center">
           <input
             type="datetime-local"
-            aria-label="Entry time (local)"
-            title="Entry time (local). Blank for an OPEN trade = now."
+            aria-label={t('jr.entryTime')}
+            title={t('jr.entryTimeTitle')}
             value={entryTime}
             onChange={(e) => setEntryTime(e.target.value)}
             className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs font-mono text-white"
@@ -575,8 +577,8 @@ export function TradeJournalView() {
             type="number"
             step="any"
             min="0"
-            aria-label="Exit price"
-            placeholder="Exit price"
+            aria-label={t('jr.exitPrice')}
+            placeholder={t('jr.exitPrice')}
             disabled={status === 'OPEN'}
             value={exitPrice}
             onChange={(e) => setExitPrice(e.target.value)}
@@ -584,7 +586,7 @@ export function TradeJournalView() {
           />
           <input
             type="datetime-local"
-            aria-label="Exit time (local)"
+            aria-label={t('jr.exitTime')}
             disabled={status === 'OPEN'}
             value={exitTime}
             onChange={(e) => setExitTime(e.target.value)}
@@ -594,8 +596,8 @@ export function TradeJournalView() {
             type="number"
             step="any"
             min="0"
-            aria-label="Trading costs"
-            placeholder="Trading costs ($)"
+            aria-label={t('jr.costs')}
+            placeholder={t('jr.costsPh')}
             value={tradingCosts}
             onChange={(e) => setTradingCosts(e.target.value)}
             className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs font-mono text-white"
@@ -604,7 +606,7 @@ export function TradeJournalView() {
             type="text"
             value={rationale}
             onChange={(e) => setRationale(e.target.value)}
-            placeholder="Setup rationale & post-trade notes..."
+            placeholder={t('jr.rationalePh')}
             maxLength={1000}
             className="sm:col-span-2 bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs text-white"
           />
@@ -621,8 +623,7 @@ export function TradeJournalView() {
             </p>
           ))}
         <p className="text-[11px] text-[#E5E7EB]/45">
-          Realized PnL = ticks x tick value x contracts - costs, from the Instrument Master spec (refused when the spec is not
-          VERIFIED). R = signed move / |entry - stop|.
+          {t('jr.formula')}
         </p>
         {error && <p className="text-xs font-mono text-[#EF4444]">{error}</p>}
 
@@ -633,7 +634,7 @@ export function TradeJournalView() {
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{saving ? 'Logging...' : 'Save Journal Entry'}</span>
+            <span>{saving ? t('jr.logging') : t('jr.save')}</span>
           </button>
         </div>
       </form>
@@ -641,23 +642,23 @@ export function TradeJournalView() {
       {/* Journal Ledger Table */}
       <section className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-[#263244]">
-          <h2 className="text-sm font-semibold text-white">Journal Entries ({entries.length})</h2>
+          <h2 className="text-sm font-semibold text-white">{t('jr.entries', { n: entries.length })}</h2>
         </div>
         {entries.length === 0 ? (
-          <div className="p-6 text-xs font-mono text-[#E5E7EB]/60">No journal entries logged yet.</div>
+          <div className="p-6 text-xs font-mono text-[#E5E7EB]/60">{t('jr.empty')}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[780px]">
               <thead>
                 <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
-                  <th className="py-2.5 px-4">Symbol</th>
-                  <th className="py-2.5 px-3">Strategy</th>
-                  <th className="py-2.5 px-3">Dir / TF</th>
-                  <th className="py-2.5 px-3 text-right">Size</th>
-                  <th className="py-2.5 px-3 text-right">Net PnL</th>
+                  <th className="py-2.5 px-4">{t('jr.col.symbol')}</th>
+                  <th className="py-2.5 px-3">{t('jr.col.strategy')}</th>
+                  <th className="py-2.5 px-3">{t('jr.col.dirTf')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('jr.col.size')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('jr.col.netPnl')}</th>
                   <th className="py-2.5 px-3 text-right">R</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-4 text-right">Actions</th>
+                  <th className="py-2.5 px-3">{t('common.status')}</th>
+                  <th className="py-2.5 px-4 text-right">{t('jr.col.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#263244]/70 text-xs font-mono tabular-nums">
@@ -666,14 +667,14 @@ export function TradeJournalView() {
                     <td className="py-2.5 px-4 text-white">{e.instrument}</td>
                     <td className="py-2.5 px-3 text-[#E5E7EB]/85">{e.strategy}</td>
                     <td className={`py-2.5 px-3 ${e.direction === 'LONG' ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                      {e.direction} · {e.timeframe}
+                      {t(`jr.dir.${e.direction}`)} · {e.timeframe}
                     </td>
                     <td className="py-2.5 px-3 text-right text-white">{e.positionSize}</td>
                     <td className={`py-2.5 px-3 text-right ${e.realizedPnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                      ${e.realizedPnl.toFixed(2)}
+                      ${fmtFixed(e.realizedPnl, 2)}
                     </td>
-                    <td className="py-2.5 px-3 text-right text-white">{e.resultInR.toFixed(2)}R</td>
-                    <td className="py-2.5 px-3 text-[#E5E7EB]">{e.status}</td>
+                    <td className="py-2.5 px-3 text-right text-white">{fmtFixed(e.resultInR, 2)}R</td>
+                    <td className="py-2.5 px-3 text-[#E5E7EB]">{t(`jr.status.${e.status}`)}</td>
                     <td className="py-2.5 px-4 text-right space-x-2">
                       {e.status === 'OPEN' && (
                         <button
@@ -691,13 +692,13 @@ export function TradeJournalView() {
                           }
                           className="px-2 py-1 bg-[#172033] border border-[#263244] rounded text-[11px] text-white"
                         >
-                          Close
+                          {t('jr.close')}
                         </button>
                       )}
                       <button
                         type="button"
                         onClick={() => void handleDelete(e)}
-                        aria-label="Delete entry"
+                        aria-label={t('jr.deleteEntry')}
                         className="p-1 text-[#EF4444] hover:bg-[#EF4444]/15 rounded inline-flex align-middle"
                       >
                         <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -712,25 +713,30 @@ export function TradeJournalView() {
       </section>
 
       {closing && closingEntry && (
-        <section aria-label="Close journal entry" className="bg-[#111622] border border-[#6366F1]/50 rounded-lg p-4 space-y-3">
+        <section aria-label={t('jr.closeSection')} className="bg-[#111622] border border-[#6366F1]/50 rounded-lg p-4 space-y-3">
           <h2 className="text-sm font-semibold text-white">
-            Close {closingEntry.instrument} {closingEntry.direction} x{closingEntry.positionSize} (entry {closingEntry.entryPrice}, stop{' '}
-            {closingEntry.stopLoss})
+            {t('jr.closeTitle', {
+              sym: closingEntry.instrument,
+              dir: closingEntry.direction,
+              n: closingEntry.positionSize,
+              entry: fmtNum(closingEntry.entryPrice),
+              stop: fmtNum(closingEntry.stopLoss),
+            })}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <input
               type="number"
               step="any"
               min="0"
-              aria-label="Close exit price"
-              placeholder="Exit price"
+              aria-label={t('jr.closeExitPrice')}
+              placeholder={t('jr.exitPrice')}
               value={closing.exitPrice}
               onChange={(ev) => setClosing({ ...closing, exitPrice: ev.target.value, error: null })}
               className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs font-mono text-white"
             />
             <input
               type="datetime-local"
-              aria-label="Close exit time (local)"
+              aria-label={t('jr.closeExitTime')}
               value={closing.exitTime}
               onChange={(ev) => setClosing({ ...closing, exitTime: ev.target.value, error: null })}
               className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs font-mono text-white"
@@ -739,16 +745,16 @@ export function TradeJournalView() {
               type="number"
               step="any"
               min="0"
-              aria-label="Close trading costs"
-              placeholder="Trading costs"
+              aria-label={t('jr.closeCosts')}
+              placeholder={t('jr.costs')}
               value={closing.tradingCosts}
               onChange={(ev) => setClosing({ ...closing, tradingCosts: ev.target.value, error: null })}
               className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs font-mono text-white"
             />
             <input
               type="text"
-              aria-label="Close notes"
-              placeholder="Post-trade notes"
+              aria-label={t('jr.closeNotes')}
+              placeholder={t('jr.postNotesPh')}
               maxLength={1000}
               value={closing.notes}
               onChange={(ev) => setClosing({ ...closing, notes: ev.target.value })}
@@ -757,10 +763,15 @@ export function TradeJournalView() {
           </div>
           <p className="text-xs font-mono text-[#E5E7EB]/80" aria-live="polite">
             {closingExit?.ok
-              ? `Realized: ${closingExit.realizedPnl.toFixed(2)} ${closingExit.currency} (gross ${closingExit.grossPnl.toFixed(2)}) · ${closingExit.resultInR.toFixed(2)}R`
+              ? t('jr.realized', {
+                  pnl: fmtFixed(closingExit.realizedPnl, 2),
+                  cur: closingExit.currency,
+                  gross: fmtFixed(closingExit.grossPnl, 2),
+                  r: fmtFixed(closingExit.resultInR, 2),
+                })
               : closingExit && closing.exitPrice !== ''
                 ? closingExit.reason
-                : 'Enter the exit price and time.'}
+                : t('jr.enterExit')}
           </p>
           {closingExit?.ok &&
             closingExit.warnings.map((w) => (
@@ -775,7 +786,7 @@ export function TradeJournalView() {
               onClick={() => setClosing(null)}
               className="px-3 py-1.5 border border-[#263244] rounded-md text-xs text-[#E5E7EB]/80"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="button"
@@ -783,7 +794,7 @@ export function TradeJournalView() {
               onClick={() => void handleCloseEntry()}
               className="px-3 py-1.5 bg-[#6366F1] rounded-md text-xs text-white disabled:opacity-40"
             >
-              {closing.busy ? 'Saving…' : 'Record exit'}
+              {closing.busy ? t('jr.savingClose') : t('jr.recordExit')}
             </button>
           </div>
         </section>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FileSpreadsheet, Trash2, Upload } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { Timeframe } from '../../shared/types/instrument';
+import { useT } from '../../i18n';
 
 const TIMEFRAMES: Timeframe[] = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'];
 
@@ -18,6 +19,7 @@ export function CsvImportPanel({
 }: CsvImportPanelProps) {
   const { instruments, datasets, selectedSymbol, timeframe, refreshBackendData, setSelectedSymbol, setTimeframe } =
     useTerminal();
+  const t = useT();
 
   const [symbol, setSymbol] = useState(defaultSymbol || selectedSymbol || 'GC');
   const [importTf, setImportTf] = useState<Timeframe>(defaultTimeframe || timeframe || 'H4');
@@ -50,7 +52,7 @@ export function CsvImportPanel({
   const handleImport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!csvContent.trim()) {
-      setFeedback({ type: 'err', text: 'Select a CSV file or paste OHLCV CSV rows first.' });
+      setFeedback({ type: 'err', text: t('data.csv.needContent') });
       return;
     }
 
@@ -71,7 +73,7 @@ export function CsvImportPanel({
       const data = await res.json();
       if (!res.ok) {
         const details = Array.isArray(data.details) ? ` (${data.details.slice(0, 3).join('; ')})` : '';
-        setFeedback({ type: 'err', text: `${data.message ?? 'Import failed'}${details}` });
+        setFeedback({ type: 'err', text: `${data.message ?? t('data.csv.failed')}${details}` });
         return;
       }
 
@@ -80,13 +82,18 @@ export function CsvImportPanel({
       await refreshBackendData();
       setFeedback({
         type: 'ok',
-        text: `Imported ${data.dataset.barCount} validated ${data.dataset.timeframe} bars for ${data.dataset.symbol} (${data.dataset.status}).`,
+        text: t('data.csv.imported', {
+          n: data.dataset.barCount,
+          tf: data.dataset.timeframe,
+          symbol: data.dataset.symbol,
+          status: data.dataset.status,
+        }),
       });
       onImported?.(symbol, importTf);
     } catch (err) {
       setFeedback({
         type: 'err',
-        text: err instanceof Error ? err.message : 'Network error importing CSV.',
+        text: err instanceof Error ? err.message : t('data.csv.networkError'),
       });
     } finally {
       setSubmitting(false);
@@ -98,16 +105,16 @@ export function CsvImportPanel({
     setFeedback(null);
     try {
       const res = await fetch('/api/market/candles', { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to clear imported datasets.');
+      if (!res.ok) throw new Error(t('data.csv.clearFailed'));
       await refreshBackendData();
       setFeedback({
         type: 'ok',
-        text: 'Cleared all imported historical datasets. Terminal reverted to fail-closed DATA_UNAVAILABLE state.',
+        text: t('data.csv.cleared'),
       });
     } catch (err) {
       setFeedback({
         type: 'err',
-        text: err instanceof Error ? err.message : 'Failed to clear datasets.',
+        text: err instanceof Error ? err.message : t('data.csv.clearFailedShort'),
       });
     } finally {
       setClearing(false);
@@ -116,15 +123,15 @@ export function CsvImportPanel({
 
   return (
     <section
-      aria-label="Historical CSV OHLCV Importer"
+      aria-label={t('data.csv.title')}
       className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-4"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#263244] pb-3">
         <div>
-          <h2 className="text-sm font-semibold text-white">Historical OHLCV CSV Importer</h2>
+          <h2 className="text-sm font-semibold text-white">{t('data.csv.title')}</h2>
           <p className="text-xs text-[#E5E7EB]/60 mt-0.5">
-            Upload verified historical OHLCV datasets. Imported candles are tagged{' '}
-            <span className="font-mono text-[#6366F1]">HISTORICAL</span> and validated strictly against OHLC geometry and monotonic timestamps.
+            {t('data.csv.subtitle1')}{' '}
+            <span className="font-mono text-[#6366F1]">HISTORICAL</span> {t('data.csv.subtitle2')}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -134,7 +141,7 @@ export function CsvImportPanel({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded-md text-xs text-[#E5E7EB] whitespace-nowrap"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-[#6366F1]" aria-hidden="true" />
-            <span>Header Template</span>
+            <span>{t('data.csv.template')}</span>
           </button>
           {datasets.length > 0 && (
             <button
@@ -144,7 +151,7 @@ export function CsvImportPanel({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#EF4444]/15 border border-[#263244] hover:border-[#EF4444]/40 rounded-md text-xs text-[#EF4444] disabled:opacity-50 whitespace-nowrap"
             >
               <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>{clearing ? 'Clearing...' : 'Clear Datasets'}</span>
+              <span>{clearing ? t('data.csv.clearing') : t('data.csv.clear')}</span>
             </button>
           )}
         </div>
@@ -154,7 +161,7 @@ export function CsvImportPanel({
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div>
             <label htmlFor="csv-symbol" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Instrument
+              {t('data.instrument')}
             </label>
             <select
               id="csv-symbol"
@@ -172,7 +179,7 @@ export function CsvImportPanel({
 
           <div>
             <label htmlFor="csv-timeframe" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Timeframe
+              {t('data.timeframe')}
             </label>
             <select
               id="csv-timeframe"
@@ -190,7 +197,7 @@ export function CsvImportPanel({
 
           <div>
             <label htmlFor="csv-source" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Source Attribution
+              {t('data.csv.source')}
             </label>
             <input
               id="csv-source"
@@ -204,7 +211,7 @@ export function CsvImportPanel({
 
           <div>
             <label htmlFor="csv-file-input" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              CSV File (.csv / .txt)
+              {t('data.csv.file')}
             </label>
             <input
               id="csv-file-input"
@@ -218,7 +225,7 @@ export function CsvImportPanel({
 
         <div>
           <label htmlFor="csv-textarea" className="block text-xs text-[#E5E7EB]/65 mb-1">
-            CSV Payload (Required columns: timestamp, open, high, low, close; optional: volume, openInterest)
+            {t('data.csv.payload')}
           </label>
           <textarea
             id="csv-textarea"
@@ -241,7 +248,7 @@ export function CsvImportPanel({
             </p>
           ) : (
             <span className="text-xs text-[#E5E7EB]/50">
-              Minimum 35–55 closed bars recommended for technical indicators and strategy backtests.
+              {t('data.csv.minBars')}
             </span>
           )}
 
@@ -251,7 +258,7 @@ export function CsvImportPanel({
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50 whitespace-nowrap"
           >
             <Upload className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{submitting ? 'Validating & Importing...' : 'Validate & Import CSV'}</span>
+            <span>{submitting ? t('data.csv.submitting') : t('data.csv.submit')}</span>
           </button>
         </div>
       </form>

@@ -6,6 +6,7 @@ import type { AiAnalystOutput } from '../../shared/types/analysis';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { InstrumentToolbar } from '../common/InstrumentToolbar';
+import { fmtFixed, useT } from '../../i18n';
 
 export function AiAnalystView() {
   const {
@@ -18,6 +19,7 @@ export function AiAnalystView() {
     syncProviderFeeds,
   } = useTerminal();
   const { settings } = useAuth();
+  const t = useT();
   const activeInstrument = instruments.find((i) => i.exchangeSymbol === selectedSymbol) ?? null;
 
   const [analysis, setAnalysis] = useState<AiAnalystOutput | null>(null);
@@ -50,11 +52,11 @@ export function AiAnalystView() {
       });
       const json = await res.json();
       if (!res.ok) {
-        throw new Error(json.message ?? 'AI Analyst invocation failed.');
+        throw new Error(json.message ?? t('ai.err.invoke'));
       }
       setAnalysis(json.analysis);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to run AI Analyst.');
+      setError(err instanceof Error ? err.message : t('ai.err.run'));
     } finally {
       setLoading(false);
     }
@@ -76,16 +78,16 @@ export function AiAnalystView() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-white tracking-tight">
-            AI Commodity Analyst ({selectedSymbol} · {timeframe})
+            {t('ai.title', { symbol: selectedSymbol, tf: timeframe })}
           </h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Server-side Gemini analysis grounded strictly in verified technical indicators, macro releases, and deterministic risk limits.
+            {t('ai.subtitle')}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <span className="font-mono text-xs text-[#E5E7EB]/65">
-            Gemini Key: {health?.capabilities.geminiServerKeyConfigured ? 'CONFIGURED' : 'NOT SET'}
+            {t('ai.geminiKey')}: {health?.capabilities.geminiServerKeyConfigured ? t('ai.keyConfigured') : t('ai.keyNotSet')}
           </span>
           {analysis && <DataStatusBadge status={analysis.dataQuality.status} />}
         </div>
@@ -100,7 +102,7 @@ export function AiAnalystView() {
             className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50 whitespace-nowrap"
           >
             <Bot className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{loading ? 'Analyzing...' : 'Run Gemini Analysis'}</span>
+            <span>{loading ? t('ai.analyzing') : t('ai.run')}</span>
           </button>
         }
       />
@@ -113,7 +115,7 @@ export function AiAnalystView() {
 
       {activeInstrument?.commodityProfile && (
         <section
-          aria-label="Commodity Fundamental Context"
+          aria-label={t('ai.fundContext')}
           className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2.5 text-xs"
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -133,8 +135,8 @@ export function AiAnalystView() {
             {activeInstrument.commodityProfile.vietnamMarketRelevance}
           </p>
           <div className="flex flex-wrap gap-4 text-[11px] text-[#E5E7EB]/70">
-            <span>Mùa vụ: {activeInstrument.commodityProfile.seasonalPattern}</span>
-            <span>Tỷ giá: {activeInstrument.commodityProfile.fxSensitivity}</span>
+            <span>{t('ai.seasonal')}: {activeInstrument.commodityProfile.seasonalPattern}</span>
+            <span>{t('ai.fx')}: {activeInstrument.commodityProfile.fxSensitivity}</span>
           </div>
         </section>
       )}
@@ -142,9 +144,11 @@ export function AiAnalystView() {
       {!analysis ? (
         <section className="bg-[#111622] border border-[#263244] rounded-lg p-8 text-center space-y-3">
           <Bot className="w-8 h-8 text-[#6366F1] mx-auto" aria-hidden="true" />
-          <h2 className="text-sm font-semibold text-white">Ready for Structured Commodity Assessment</h2>
+          <h2 className="text-sm font-semibold text-white">{t('ai.ready')}</h2>
           <p className="text-xs text-[#E5E7EB]/65 max-w-lg mx-auto leading-relaxed">
-            Click <span className="text-white font-medium">Run Gemini Analysis</span> to evaluate {selectedSymbol} ({timeframe}). If validated market data is unavailable, the analyst fails closed to <span className="font-mono text-[#F59E0B]">NO_TRADE</span> without fabricating price targets.
+            {t('ai.readyHint1')} <span className="text-white font-medium">{t('ai.run')}</span>{' '}
+            {t('ai.readyHint2', { symbol: selectedSymbol, tf: timeframe })}{' '}
+            <span className="font-mono text-[#F59E0B]">NO_TRADE</span> ({t('ai.noTradeShort')}) {t('ai.readyHint3')}
           </p>
           <div className="pt-2 flex flex-wrap justify-center gap-2">
             <button
@@ -153,7 +157,7 @@ export function AiAnalystView() {
               disabled={syncing}
               className="px-4 py-2 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] text-white text-xs font-medium rounded-md disabled:opacity-50"
             >
-              {syncing ? 'Syncing...' : `Sync ${selectedSymbol} API Data`}
+              {syncing ? t('ai.syncing') : t('ai.sync', { symbol: selectedSymbol })}
             </button>
             <button
               type="button"
@@ -161,7 +165,7 @@ export function AiAnalystView() {
               disabled={loading}
               className="px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
             >
-              {loading ? 'Running Analysis...' : 'Run Gemini Analysis'}
+              {loading ? t('ai.running') : t('ai.run')}
             </button>
           </div>
         </section>
@@ -170,7 +174,7 @@ export function AiAnalystView() {
           {/* Top Action & Confidence Header */}
           <section className="bg-[#111622] border border-[#263244] rounded-lg p-5 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <p className="text-xs text-[#E5E7EB]/55">Recommended Action</p>
+              <p className="text-xs text-[#E5E7EB]/55">{t('ai.recAction')}</p>
               <p
                 className={`text-xl font-mono font-bold mt-1 ${
                   analysis.action === 'BUY' || analysis.action === 'STRONG_BUY'
@@ -180,42 +184,42 @@ export function AiAnalystView() {
                       : 'text-[#F59E0B]'
                 }`}
               >
-                {analysis.action}
+                <span title={analysis.action}>{t(`ai.action.${analysis.action}`)}</span>
               </p>
               <p className="text-[11px] font-mono text-[#E5E7EB]/50 mt-0.5">
-                Market Status: {analysis.marketStatus}
+                {t('ai.marketStatus')}: {analysis.marketStatus}
               </p>
             </div>
 
             <div>
-              <p className="text-xs text-[#E5E7EB]/55">Analytical Confidence</p>
+              <p className="text-xs text-[#E5E7EB]/55">{t('ai.confidence')}</p>
               <p className="text-xl font-mono font-bold text-white tabular-nums mt-1">
                 {analysis.confidence}%
               </p>
               <p className="text-[11px] text-[#E5E7EB]/50 mt-0.5">
-                Not a statistical win-rate guarantee
+                {t('ai.confidenceNote')}
               </p>
             </div>
 
             <div>
-              <p className="text-xs text-[#E5E7EB]/55">Deterministic R:R</p>
+              <p className="text-xs text-[#E5E7EB]/55">{t('ai.rr')}</p>
               <p className="text-xl font-mono font-bold text-white tabular-nums mt-1">
-                {analysis.riskReward !== null ? `${analysis.riskReward.toFixed(2)}R` : 'NO_SETUP'}
+                {analysis.riskReward !== null ? `${fmtFixed(analysis.riskReward, 2)}R` : t('ai.noSetup')}
               </p>
               <p className="text-[11px] font-mono text-[#E5E7EB]/50 mt-0.5">
-                Source: {analysis.dataQuality.source}
+                {t('common.source')}: {analysis.dataQuality.source}
               </p>
             </div>
 
             <div>
-              <p className="text-xs text-[#E5E7EB]/55">Data Quality & Timestamp</p>
+              <p className="text-xs text-[#E5E7EB]/55">{t('ai.dqTs')}</p>
               <div className="mt-1.5">
                 <DataStatusBadge status={analysis.dataQuality.status} />
               </div>
               <p className="text-[11px] font-mono text-[#E5E7EB]/50 mt-1">
                 {analysis.dataQuality.timestamp
                   ? formatTimestampInZone(analysis.dataQuality.timestamp, 'Asia/Ho_Chi_Minh')
-                  : 'NO_MARKET_TS'}
+                  : t('ai.noTs')}
               </p>
             </div>
           </section>
@@ -225,7 +229,7 @@ export function AiAnalystView() {
               <div className="flex items-center gap-2.5 text-xs text-[#E5E7EB]">
                 <ShieldAlert className="w-4 h-4 text-[#F59E0B] shrink-0" aria-hidden="true" />
                 <span>
-                  Analysis failed closed because no validated OHLCV data exists for {selectedSymbol} ({timeframe}).
+                  {t('ai.failedClosed', { symbol: selectedSymbol, tf: timeframe })}
                 </span>
               </div>
               <button
@@ -233,7 +237,7 @@ export function AiAnalystView() {
                 onClick={() => setActiveModule('charts')}
                 className="px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md whitespace-nowrap"
               >
-                Import CSV Data
+                {t('ai.importCsv')}
               </button>
             </div>
           )}
@@ -242,20 +246,20 @@ export function AiAnalystView() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3">
               <h2 className="text-sm font-semibold text-white border-b border-[#263244] pb-2">
-                Trend & Regime Assessment
+                {t('ai.trendRegime')}
               </h2>
               <div className="grid grid-cols-3 gap-2 text-xs font-mono">
                 <div className="bg-[#0B0E14] border border-[#263244] rounded p-2">
-                  <span className="text-[#E5E7EB]/50 block text-[11px]">Main</span>
-                  <span className="text-white">{trend.mainTrend ?? 'UNCERTAIN'}</span>
+                  <span className="text-[#E5E7EB]/50 block text-[11px]">{t('ai.main')}</span>
+                  <span className="text-white">{trend.mainTrend ?? t('ai.uncertain')}</span>
                 </div>
                 <div className="bg-[#0B0E14] border border-[#263244] rounded p-2">
-                  <span className="text-[#E5E7EB]/50 block text-[11px]">Short</span>
-                  <span className="text-white">{trend.shortTermTrend ?? 'UNCERTAIN'}</span>
+                  <span className="text-[#E5E7EB]/50 block text-[11px]">{t('ai.short')}</span>
+                  <span className="text-white">{trend.shortTermTrend ?? t('ai.uncertain')}</span>
                 </div>
                 <div className="bg-[#0B0E14] border border-[#263244] rounded p-2">
-                  <span className="text-[#E5E7EB]/50 block text-[11px]">Regime</span>
-                  <span className="text-white">{trend.regime ?? 'N/A'}</span>
+                  <span className="text-[#E5E7EB]/50 block text-[11px]">{t('ai.regime')}</span>
+                  <span className="text-white">{trend.regime ?? t('common.na')}</span>
                 </div>
               </div>
               <p className="text-xs text-[#E5E7EB]/85 leading-relaxed">{trend.summary}</p>
@@ -263,39 +267,39 @@ export function AiAnalystView() {
 
             <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3">
               <h2 className="text-sm font-semibold text-white border-b border-[#263244] pb-2">
-                Deterministic Trade Levels (AI-Locked)
+                {t('ai.levels')}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono tabular-nums">
                 <div className="bg-[#0B0E14] border border-[#263244] rounded p-3">
-                  <span className="text-[#E5E7EB]/50 block">Entry Zone</span>
+                  <span className="text-[#E5E7EB]/50 block">{t('sig.entryZone')}</span>
                   <span className="text-white font-semibold mt-1 block">
                     {entry.low !== null && entry.low !== undefined && entry.high !== null && entry.high !== undefined
-                      ? `${entry.low.toFixed(2)} – ${entry.high.toFixed(2)}`
-                      : 'NONE'}
+                      ? `${fmtFixed(entry.low, 2)} – ${fmtFixed(entry.high, 2)}`
+                      : t('common.none')}
                   </span>
                   <span className="text-[11px] text-[#E5E7EB]/50 block mt-0.5">{entry.basis}</span>
                 </div>
                 <div className="bg-[#0B0E14] border border-[#263244] rounded p-3">
-                  <span className="text-[#E5E7EB]/50 block">Stop Loss</span>
+                  <span className="text-[#E5E7EB]/50 block">{t('term.stopLoss')}</span>
                   <span className="text-[#EF4444] font-semibold mt-1 block">
                     {stopLoss.price !== null && stopLoss.price !== undefined
-                      ? stopLoss.price.toFixed(2)
-                      : 'NONE'}
+                      ? fmtFixed(stopLoss.price, 2)
+                      : t('common.none')}
                   </span>
                   <span className="text-[11px] text-[#E5E7EB]/50 block mt-0.5">{stopLoss.basis}</span>
                 </div>
                 <div className="bg-[#0B0E14] border border-[#263244] rounded p-3">
-                  <span className="text-[#E5E7EB]/50 block">Take Profits</span>
+                  <span className="text-[#E5E7EB]/50 block">{t('ai.takeProfits')}</span>
                   {takeProfits.length > 0 ? (
                     <div className="mt-1 space-y-0.5">
                       {takeProfits.map((tp, idx) => (
                         <div key={idx} className="text-[#22C55E]">
-                          {tp.level ?? `TP${idx + 1}`}: {typeof tp.price === 'number' ? tp.price.toFixed(2) : 'N/A'}
+                          {tp.level ?? `TP${idx + 1}`}: {typeof tp.price === 'number' ? fmtFixed(tp.price, 2) : t('common.na')}
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <span className="text-[#E5E7EB]/55 mt-1 block">NONE</span>
+                    <span className="text-[#E5E7EB]/55 mt-1 block">{t('common.none')}</span>
                   )}
                 </div>
               </div>
@@ -305,25 +309,25 @@ export function AiAnalystView() {
           {/* Scenarios & Evidence */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2 text-xs">
-              <h2 className="text-sm font-semibold text-[#22C55E]">Bullish Scenario</h2>
-              <p><span className="text-[#E5E7EB]/55">Trigger:</span> {bull.trigger}</p>
-              <p><span className="text-[#E5E7EB]/55">Target Context:</span> {bull.targetContext}</p>
-              <p><span className="text-[#E5E7EB]/55">Invalidation:</span> {bull.invalidation}</p>
+              <h2 className="text-sm font-semibold text-[#22C55E]">{t('ai.bull')}</h2>
+              <p><span className="text-[#E5E7EB]/55">{t('ai.trigger')}:</span> {bull.trigger}</p>
+              <p><span className="text-[#E5E7EB]/55">{t('ai.targetCtx')}:</span> {bull.targetContext}</p>
+              <p><span className="text-[#E5E7EB]/55">{t('sig.invalidation')}:</span> {bull.invalidation}</p>
             </section>
 
             <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2 text-xs">
-              <h2 className="text-sm font-semibold text-[#EF4444]">Bearish Scenario</h2>
-              <p><span className="text-[#E5E7EB]/55">Trigger:</span> {bear.trigger}</p>
-              <p><span className="text-[#E5E7EB]/55">Target Context:</span> {bear.targetContext}</p>
-              <p><span className="text-[#E5E7EB]/55">Invalidation:</span> {bear.invalidation}</p>
+              <h2 className="text-sm font-semibold text-[#EF4444]">{t('ai.bear')}</h2>
+              <p><span className="text-[#E5E7EB]/55">{t('ai.trigger')}:</span> {bear.trigger}</p>
+              <p><span className="text-[#E5E7EB]/55">{t('ai.targetCtx')}:</span> {bear.targetContext}</p>
+              <p><span className="text-[#E5E7EB]/55">{t('sig.invalidation')}:</span> {bear.invalidation}</p>
             </section>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs">
             <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2">
-              <h2 className="text-sm font-semibold text-white">Technical Evidence</h2>
+              <h2 className="text-sm font-semibold text-white">{t('ai.techEvidence')}</h2>
               {analysis.technicalEvidence.length === 0 ? (
-                <p className="text-[#E5E7EB]/55 font-mono">NONE</p>
+                <p className="text-[#E5E7EB]/55 font-mono">{t('common.none')}</p>
               ) : (
                 <ul className="list-disc pl-4 space-y-1 text-[#E5E7EB]/80">
                   {analysis.technicalEvidence.map((item, idx) => (
@@ -334,9 +338,9 @@ export function AiAnalystView() {
             </section>
 
             <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2">
-              <h2 className="text-sm font-semibold text-white">Fundamental Evidence</h2>
+              <h2 className="text-sm font-semibold text-white">{t('ai.fundEvidence')}</h2>
               {analysis.fundamentalEvidence.length === 0 ? (
-                <p className="text-[#E5E7EB]/55 font-mono">NO SOURCED MACRO RECORDS</p>
+                <p className="text-[#E5E7EB]/55 font-mono">{t('ai.noMacro')}</p>
               ) : (
                 <ul className="list-disc pl-4 space-y-1 text-[#E5E7EB]/80">
                   {analysis.fundamentalEvidence.map((item, idx) => (
@@ -347,7 +351,7 @@ export function AiAnalystView() {
             </section>
 
             <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2">
-              <h2 className="text-sm font-semibold text-[#F59E0B]">Invalidation & Risk Warnings</h2>
+              <h2 className="text-sm font-semibold text-[#F59E0B]">{t('ai.warnings')}</h2>
               <ul className="list-disc pl-4 space-y-1 text-[#E5E7EB]/80">
                 {analysis.invalidationConditions.map((c, idx) => (
                   <li key={`inv-${idx}`}>{c}</li>

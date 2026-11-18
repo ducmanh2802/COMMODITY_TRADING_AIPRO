@@ -3,6 +3,7 @@ import { ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { AccountCurrency } from '../../shared/types/risk';
+import { fmtFixed, fmtInt, fmtNum, useT } from '../../i18n';
 
 interface RiskCalculationResponse {
   valid: boolean;
@@ -29,6 +30,7 @@ interface RiskCalculationResponse {
 export function RiskManagementView() {
   const { instruments, selectedSymbol, setSelectedSymbol } = useTerminal();
   const { settings } = useAuth();
+  const t = useT();
 
   const [accountEquity, setAccountEquity] = useState(String(settings.accountEquity));
   const [accountCurrency, setAccountCurrency] = useState<AccountCurrency>(settings.accountCurrency);
@@ -75,15 +77,14 @@ export function RiskManagementView() {
       };
       if (res.ok && json.status === 'CURRENT' && typeof json.rate === 'number') {
         setFxRate(String(Math.round(json.rate)));
-        setFxNotice(`Verified ${json.source}: 1 USD = ${Math.round(json.rate).toLocaleString()} VND`);
+        setFxNotice(t('risk.fxVerified', { source: json.source ?? '', rate: fmtInt(json.rate) }));
       } else {
         setFxNotice(
-          json.reason ??
-            'DATA_UNAVAILABLE — Configure TWELVEDATA_API_KEY or ALPHAVANTAGE_API_KEY in Secrets or enter verified FX manually.'
+          json.reason ?? t('risk.fxUnavailable')
         );
       }
     } catch {
-      setFxNotice('Failed to query /api/market/fx/usdvnd.');
+      setFxNotice(t('risk.fxFailed'));
     } finally {
       setFxFetching(false);
     }
@@ -92,18 +93,18 @@ export function RiskManagementView() {
   const handleCalculate = async (e: React.FormEvent) => {
     e.preventDefault();
     const missing = [
-      [entryPrice, 'entry price'],
-      [stopLossPrice, 'stop loss'],
-      [commission, 'commission'],
-      [exchangeFee, 'exchange fee'],
-      [brokerageFee, 'broker fee'],
-      [slippageTicks, 'slippage ticks'],
+      [entryPrice, t('risk.f.entry')],
+      [stopLossPrice, t('risk.f.stop')],
+      [commission, t('risk.f.commission')],
+      [exchangeFee, t('risk.f.exchangeFee')],
+      [brokerageFee, t('risk.f.brokerFee')],
+      [slippageTicks, t('risk.f.slippage')],
     ]
       .filter(([v]) => v.trim() === '' || !Number.isFinite(Number(v)))
       .map(([, label]) => label);
     if (missing.length > 0) {
       setOutput(null);
-      setError(`Enter ${missing.join(', ')} (use 0 for no fee/slippage). Values are user-provided; none are assumed.`);
+      setError(t('risk.missing', { fields: missing.join(', ') }));
       return;
     }
     setLoading(true);
@@ -141,11 +142,11 @@ export function RiskManagementView() {
       });
       const json = await res.json();
       if (!res.ok) {
-        throw new Error(json.message ?? 'Risk calculation failed validation.');
+        throw new Error(json.message ?? t('risk.failedValidation'));
       }
       setOutput(json);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to calculate risk.');
+      setError(err instanceof Error ? err.message : t('risk.failed'));
     } finally {
       setLoading(false);
     }
@@ -155,10 +156,10 @@ export function RiskManagementView() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-white tracking-tight">
-          Deterministic Risk Management & Sizing
+          {t('risk.title')}
         </h1>
         <p className="text-sm text-[#E5E7EB]/65 mt-1">
-          Server-side tick sizing, fee/slippage inclusion, portfolio exposure limits, and strict rejection of unverified specs or missing FX conversions.
+          {t('risk.subtitle')}
         </p>
       </div>
 
@@ -170,7 +171,7 @@ export function RiskManagementView() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
               <label htmlFor="risk-symbol" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Commodity Contract
+                {t('risk.contract')}
               </label>
               <select
                 id="risk-symbol"
@@ -180,7 +181,7 @@ export function RiskManagementView() {
               >
                 {instruments.map((inst) => (
                   <option key={inst.id} value={inst.exchangeSymbol}>
-                    {inst.exchange}:{inst.exchangeSymbol} · {inst.productName} ({inst.specification.verificationStatus})
+                    {inst.exchange}:{inst.exchangeSymbol} · {inst.productName} ({inst.specification.verificationStatus === 'VERIFIED' ? t('verify.VERIFIED') : inst.specification.verificationStatus === 'UNVERIFIED' ? t('verify.UNVERIFIED') : inst.specification.verificationStatus})
                   </option>
                 ))}
               </select>
@@ -188,7 +189,7 @@ export function RiskManagementView() {
 
             <div>
               <label htmlFor="risk-currency" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Account Currency
+                {t('risk.accountCurrency')}
               </label>
               <select
                 id="risk-currency"
@@ -205,7 +206,7 @@ export function RiskManagementView() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label htmlFor="risk-equity" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Account Equity ({accountCurrency})
+                {t('risk.equity', { cur: accountCurrency })}
               </label>
               <input
                 id="risk-equity"
@@ -219,7 +220,7 @@ export function RiskManagementView() {
 
             <div>
               <label htmlFor="risk-pct" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Risk Per Trade (%)
+                {t('risk.riskPct')}
               </label>
               <input
                 id="risk-pct"
@@ -233,7 +234,7 @@ export function RiskManagementView() {
 
             <div>
               <label htmlFor="risk-max-contracts" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Max Contracts Cap
+                {t('risk.maxContracts')}
               </label>
               <input
                 id="risk-max-contracts"
@@ -249,13 +250,13 @@ export function RiskManagementView() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label htmlFor="risk-entry" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Entry Price
+                {t('risk.entry')}
               </label>
               <input
                 id="risk-entry"
                 type="number"
                 step="any"
-                placeholder="Entry"
+                placeholder={t('risk.entryPh')}
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -264,13 +265,13 @@ export function RiskManagementView() {
 
             <div>
               <label htmlFor="risk-sl" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Stop Loss Price
+                {t('risk.stop')}
               </label>
               <input
                 id="risk-sl"
                 type="number"
                 step="any"
-                placeholder="Stop"
+                placeholder={t('risk.stopPh')}
                 value={stopLossPrice}
                 onChange={(e) => setStopLossPrice(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -279,13 +280,13 @@ export function RiskManagementView() {
 
             <div>
               <label htmlFor="risk-tp" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Take Profit Price (Optional)
+                {t('risk.tp')}
               </label>
               <input
                 id="risk-tp"
                 type="number"
                 step="any"
-                placeholder="Optional"
+                placeholder={t('risk.optional')}
                 value={takeProfitPrice}
                 onChange={(e) => setTakeProfitPrice(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -296,13 +297,13 @@ export function RiskManagementView() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
               <label htmlFor="risk-comm" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Commission / Ctr
+                {t('risk.commission')}
               </label>
               <input
                 id="risk-comm"
                 type="number"
                 step="any"
-                placeholder="Your broker, e.g. 0"
+                placeholder={t('risk.commissionPh')}
                 value={commission}
                 onChange={(e) => setCommission(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -310,13 +311,13 @@ export function RiskManagementView() {
             </div>
             <div>
               <label htmlFor="risk-exfee" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Exchange Fee / Ctr
+                {t('risk.exFee')}
               </label>
               <input
                 id="risk-exfee"
                 type="number"
                 step="any"
-                placeholder="Exchange schedule"
+                placeholder={t('risk.exFeePh')}
                 value={exchangeFee}
                 onChange={(e) => setExchangeFee(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -324,13 +325,13 @@ export function RiskManagementView() {
             </div>
             <div>
               <label htmlFor="risk-brkfee" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Broker Fee / Ctr
+                {t('risk.brkFee')}
               </label>
               <input
                 id="risk-brkfee"
                 type="number"
                 step="any"
-                placeholder="Your broker"
+                placeholder={t('risk.brkFeePh')}
                 value={brokerageFee}
                 onChange={(e) => setBrokerageFee(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -338,13 +339,13 @@ export function RiskManagementView() {
             </div>
             <div>
               <label htmlFor="risk-slip" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Slippage (Ticks)
+                {t('risk.slippage')}
               </label>
               <input
                 id="risk-slip"
                 type="number"
                 step="0.5"
-                placeholder="Ticks, e.g. 0"
+                placeholder={t('risk.slippagePh')}
                 value={slippageTicks}
                 onChange={(e) => setSlippageTicks(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
@@ -355,7 +356,7 @@ export function RiskManagementView() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-[#263244]">
             <div>
               <label htmlFor="risk-open-pos" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Open Positions / Max
+                {t('risk.openPos')}
               </label>
               <div className="flex gap-1.5">
                 <input
@@ -367,7 +368,7 @@ export function RiskManagementView() {
                   className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-1.5 text-xs font-mono text-white"
                 />
                 <input
-                  aria-label="Max open positions"
+                  aria-label={t('risk.maxOpenPos')}
                   type="number"
                   min="1"
                   value={maxOpenPositions}
@@ -379,7 +380,7 @@ export function RiskManagementView() {
 
             <div>
               <label htmlFor="risk-port-pct" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Open Risk% / Max%
+                {t('risk.openRisk')}
               </label>
               <div className="flex gap-1.5">
                 <input
@@ -391,7 +392,7 @@ export function RiskManagementView() {
                   className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-1.5 text-xs font-mono text-white"
                 />
                 <input
-                  aria-label="Max portfolio risk pct"
+                  aria-label={t('risk.maxPortRisk')}
                   type="number"
                   step="0.5"
                   value={maxPortfolioRiskPct}
@@ -403,7 +404,7 @@ export function RiskManagementView() {
 
             <div>
               <label htmlFor="risk-daily-lim" className="block text-xs text-[#E5E7EB]/65 mb-1">
-                Daily Loss Limit (%)
+                {t('risk.dailyLimit')}
               </label>
               <input
                 id="risk-daily-lim"
@@ -418,7 +419,7 @@ export function RiskManagementView() {
             <div>
               <div className="flex items-center justify-between gap-2 mb-1">
                 <label htmlFor="risk-fx" className="block text-xs text-[#E5E7EB]/65">
-                  FX Rate ({activeInstrument?.specification.tradingCurrency ?? 'USD'}→{accountCurrency})
+                  {t('risk.fxRate', { from: activeInstrument?.specification.tradingCurrency ?? 'USD', to: accountCurrency })}
                 </label>
                 {accountCurrency === 'VND' && (
                   <button
@@ -427,7 +428,7 @@ export function RiskManagementView() {
                     disabled={fxFetching}
                     className="text-[11px] font-mono text-[#6366F1] hover:underline disabled:opacity-50"
                   >
-                    {fxFetching ? 'Fetching...' : 'Fetch Live USD/VND'}
+                    {fxFetching ? t('risk.fetching') : t('risk.fetchFx')}
                   </button>
                 )}
               </div>
@@ -435,7 +436,7 @@ export function RiskManagementView() {
                 id="risk-fx"
                 type="number"
                 step="any"
-                placeholder={needsFx ? 'Required' : '1.0'}
+                placeholder={needsFx ? t('risk.required') : '1.0'}
                 value={fxRate}
                 onChange={(e) => setFxRate(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
@@ -456,7 +457,7 @@ export function RiskManagementView() {
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
             >
               <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>{loading ? 'Calculating...' : 'Calculate Position Size'}</span>
+              <span>{loading ? t('risk.calculating') : t('risk.calculate')}</span>
             </button>
           </div>
         </form>
@@ -464,12 +465,12 @@ export function RiskManagementView() {
         {/* Risk Engine Output */}
         <section className="bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-4">
           <h2 className="text-sm font-semibold text-white border-b border-[#263244] pb-2">
-            Deterministic Sizing Result
+            {t('risk.result')}
           </h2>
 
           {!output ? (
             <p className="text-xs text-[#E5E7EB]/60 font-mono">
-              Configure account equity, contract, and stop distance, then run calculation.
+              {t('risk.emptyHint')}
             </p>
           ) : (
             <div className="space-y-3 text-xs font-mono tabular-nums">
@@ -477,7 +478,7 @@ export function RiskManagementView() {
                 <div className="bg-[#0B0E14] border border-[#EF4444]/40 rounded-md p-4 space-y-2">
                   <div className="flex items-center gap-2 font-semibold text-[#EF4444]">
                     <ShieldAlert className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span>CALCULATION REJECTED (FAIL-CLOSED)</span>
+                    <span>{t('risk.rejected')}</span>
                   </div>
                   <ul className="list-disc pl-4 space-y-1 text-[#E5E7EB]/85 font-sans">
                     {output.rejectionReasons.map((r, i) => (
@@ -491,13 +492,13 @@ export function RiskManagementView() {
                 <>
                   {output.valid && (
                     <div className="bg-[#0B0E14] border border-[#22C55E]/40 rounded-md p-3">
-                      <span className="text-[#E5E7EB]/60 block">Recommended Contracts</span>
+                      <span className="text-[#E5E7EB]/60 block">{t('risk.recommended')}</span>
                       <span className="text-2xl font-bold text-[#22C55E]">
                         {output.recommendedContracts}
                       </span>
                       {output.cappedByLimits && (
                         <span className="block text-[11px] text-[#F59E0B] mt-0.5">
-                          Capped by max contracts limit
+                          {t('risk.capped')}
                         </span>
                       )}
                     </div>
@@ -505,52 +506,52 @@ export function RiskManagementView() {
 
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">Risk Budget</span>
+                      <span className="text-[#E5E7EB]/60">{t('risk.budget')}</span>
                       <span className="text-white">
-                        {output.riskBudget.toLocaleString()} {output.accountCurrency}
+                        {fmtNum(output.riskBudget)} {output.accountCurrency}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">Ticks at Risk</span>
-                      <span className="text-white">{output.ticksAtRisk?.toFixed(2)}</span>
+                      <span className="text-[#E5E7EB]/60">{t('risk.ticksAtRisk')}</span>
+                      <span className="text-white">{fmtFixed(output.ticksAtRisk, 2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">Gross Risk / Contract</span>
+                      <span className="text-[#E5E7EB]/60">{t('risk.grossRisk')}</span>
                       <span className="text-white">
-                        {output.grossRiskPerContract?.toFixed(2)} {output.contractCurrency}
+                        {fmtFixed(output.grossRiskPerContract, 2)} {output.contractCurrency}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">Costs + Slippage / Ctr</span>
+                      <span className="text-[#E5E7EB]/60">{t('risk.costs')}</span>
                       <span className="text-white">
-                        {output.estimatedCostsPerContract?.toFixed(2)} {output.contractCurrency}
+                        {fmtFixed(output.estimatedCostsPerContract, 2)} {output.contractCurrency}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">Risk / Ctr ({output.accountCurrency})</span>
+                      <span className="text-[#E5E7EB]/60">{t('risk.riskPerCtr', { cur: output.accountCurrency })}</span>
                       <span className="text-white">
-                        {output.riskPerContractInAccountCurrency?.toLocaleString()} {output.accountCurrency}
+                        {fmtNum(output.riskPerContractInAccountCurrency)} {output.accountCurrency}
                       </span>
                     </div>
                     <div className="flex justify-between border-t border-[#263244] pt-2">
-                      <span className="text-[#E5E7EB]/60">Max Loss Estimate</span>
+                      <span className="text-[#E5E7EB]/60">{t('risk.maxLoss')}</span>
                       <span className="text-[#EF4444]">
-                        {output.maxLossEstimate?.toLocaleString()} {output.accountCurrency}
+                        {fmtNum(output.maxLossEstimate)} {output.accountCurrency}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">Reward : Risk</span>
+                      <span className="text-[#E5E7EB]/60">{t('risk.rr')}</span>
                       <span className="text-[#22C55E]">
-                        {output.riskRewardRatio !== null ? `${output.riskRewardRatio.toFixed(2)}R` : 'N/A'}
+                        {output.riskRewardRatio !== null ? `${fmtFixed(output.riskRewardRatio, 2)}R` : t('common.na')}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">Projected Portfolio Risk</span>
-                      <span className="text-white">{output.projectedPortfolioRiskPct?.toFixed(2)}%</span>
+                      <span className="text-[#E5E7EB]/60">{t('risk.projected')}</span>
+                      <span className="text-white">{fmtFixed(output.projectedPortfolioRiskPct, 2)}%</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">Exchange Margin Status</span>
-                      <span className="text-[#F59E0B]">{output.marginStatus}</span>
+                      <span className="text-[#E5E7EB]/60">{t('risk.marginStatus')}</span>
+                      <span className="text-[#F59E0B]">{t(`risk.margin.${output.marginStatus}`)}</span>
                     </div>
                   </div>
                 </>

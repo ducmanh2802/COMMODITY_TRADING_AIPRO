@@ -85,7 +85,7 @@ export const DEFAULT_PROVIDER_CONFIGS: readonly UnconfiguredProviderConfig[] = [
   {
     providerId: 'CSV_HISTORICAL',
     providerName: 'Historical CSV OHLCV Importer',
-    exchanges: ['MXV', 'CBOT', 'CME', 'COMEX', 'NYMEX', 'ICE'],
+    exchanges: ['MXV', 'CBOT', 'CME', 'COMEX', 'NYMEX', 'ICE', 'SGX'],
     envKeyNames: [],
     supportsRealtime: false,
     supportsHistorical: true,
@@ -102,6 +102,9 @@ export const DEFAULT_EXCHANGE_ROUTING: Readonly<Record<string, ProviderId>> = {
   COMEX: 'CME_GROUP',
   NYMEX: 'NYMEX_ENERGY',
   ICE: 'ICE_FUTURES',
+  // T26: no free/licensed SGX feed is integrated. SGX instruments get prices only from imported CSV
+  // history; otherwise the CSV provider fails closed (UNAVAILABLE).
+  SGX: 'CSV_HISTORICAL',
 };
 
 /** Config-driven REST adapters (owner's ConfigurableRestFeedAdapter): providerId → env var names. */
@@ -125,6 +128,11 @@ export interface ProviderRegistryOptions {
   externalAdapters?: boolean;
   /** Options for the Yahoo UNOFFICIAL adapter (tests inject fetch/sleep). Active only with YAHOO_ENABLED=true. */
   yahoo?: YahooAdapterOptions;
+  /**
+   * Max time a quote request waits for a Yahoo refresh before answering from cache / stored history
+   * (stale-while-revalidate; the refresh continues in the background). Default 250 ms.
+   */
+  yahooQuoteWaitMs?: number;
 }
 
 export class ProviderRegistry {
@@ -143,10 +151,12 @@ export class ProviderRegistry {
   private readonly quoteTtlMs = 60_000;
   private readonly candleRepository: ICandleRepository | null;
   private readonly persistCandles: PersistProviderCandles | undefined;
+  private readonly yahooQuoteWaitMs: number;
 
   constructor(options: ProviderRegistryOptions = {}) {
     const configs = options.configs ?? DEFAULT_PROVIDER_CONFIGS;
     const routing = options.routing ?? DEFAULT_EXCHANGE_ROUTING;
+    this.yahooQuoteWaitMs = options.yahooQuoteWaitMs ?? 250;
     this.candleRepository = options.candles ?? null;
     this.persistCandles = options.candles ? createProviderCandlePersister(options.candles) : undefined;
 
@@ -239,6 +249,11 @@ export class ProviderRegistry {
     });
   }
 
+  /** Resolves when background Yahoo quote refreshes have settled (tests). */
+  async waitForBackgroundRefreshes(): Promise<void> {
+    await this.yahoo.waitForBackgroundRefreshes();
+  }
+
   getProviderById(providerId: ProviderId): MarketDataProvider | null {
     return this.providersById.get(providerId) ?? null;
   }
@@ -289,7 +304,8 @@ export class ProviderRegistry {
       {
         // T30: lowest priority, UNOFFICIAL delayed quotes; opt-in via YAHOO_ENABLED=true.
         enabled: this.providersById.has('YAHOO_UNOFFICIAL') && isYahooEnabled() && this.yahoo.supports(instrument),
-        fn: () => this.yahoo.getQuoteForInstrument(instrument),
+        // Stale-while-revalidate: never blocks a page load on the 1 req/s Yahoo queue.
+        fn: async () => (await this.yahoo.getQuoteStaleWhileRevalidate(instrument, this.yahooQuoteWaitMs)).quote,
         unofficial: true,
       },
     ];
@@ -299,6 +315,9 @@ export class ProviderRegistry {
       if (!candidate.enabled) continue;
       const q = await candidate.fn();
       if (q.price !== null && (q.status === 'CURRENT' || q.status === 'DELAYED')) {
+        // Yahoo has its own cache that re-evaluates freshness from the market timestamp on every read;
+        // caching it here would keep a DELAYED label for 60 s after it turned STALE.
+        if (candidate.unofficial) return { quote: q, staleFallback: null };
         this.liveQuoteCache.set(instrument.exchangeSymbol, {
           quote: q,
           expiresAtMs: Date.now() + this.quoteTtlMs,

@@ -1,5 +1,6 @@
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { Timeframe } from '../../shared/types/instrument';
+import { useT } from '../../i18n';
 
 const TIMEFRAMES: Timeframe[] = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'];
 
@@ -10,13 +11,14 @@ interface InstrumentToolbarProps {
 
 export function InstrumentToolbar({ showTimeframe = true, rightSlot }: InstrumentToolbarProps) {
   const { instruments, selectedSymbol, setSelectedSymbol, timeframe, setTimeframe } = useTerminal();
+  const t = useT();
 
   return (
     <div className="bg-[#111622] border border-[#263244] rounded-lg p-3 flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-3">
         <div>
           <label htmlFor="toolbar-symbol-select" className="sr-only">
-            Select commodity contract
+            {t('chart.toolbar.selectContract')}
           </label>
           <select
             id="toolbar-symbol-select"

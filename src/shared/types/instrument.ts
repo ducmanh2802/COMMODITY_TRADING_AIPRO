@@ -10,7 +10,8 @@ export type ExchangeCode =
   | 'CME'
   | 'COMEX'
   | 'NYMEX'
-  | 'ICE';
+  | 'ICE'
+  | 'SGX';
 
 export type Timeframe = 'M1' | 'M5' | 'M15' | 'M30' | 'H1' | 'H4' | 'D1' | 'W1';
 
@@ -38,12 +39,34 @@ export interface ContractSpecification {
   verificationStatus: SpecificationStatus;
 }
 
+/** Physical units used by MXV contract sizes (normalized; see server/services/mxvEstimator.ts). */
+export type MxvContractSizeUnit = 'bushel' | 'short ton' | 'lb' | 'cwt' | 'metric ton' | 'troy oz';
+
+/**
+ * MXV's own contract specification, as read on the MXV product page (`sourceUrl`). Only present when
+ * the page was read; MXV contracts can differ from the linked international contract (mini/micro).
+ */
+export interface MxvContractSpec {
+  contractSize: number;
+  contractSizeUnit: MxvContractSizeUnit;
+  /** Minimum tick as shown by MXV, in `quotationUnit`. */
+  minimumTick: number;
+  /** Quotation unit as shown on the MXV page, e.g. 'cents/bushel'. */
+  quotationUnit: string;
+  /** Linked foreign exchange label exactly as MXV shows it (CBOT, ICEUS, ICEEU, COMEX, NYMEX, SGX). */
+  linkedExchangeLabel: string;
+  sourceUrl: string;
+  checkedOn: string;
+}
+
 export interface MvxInstrumentMapping {
   mxvSymbol: string | null;
   internationalSymbol: string;
   internationalExchange: ExchangeCode;
   mappingStatus: MvxMappingStatus;
   notes: string;
+  /** Optional (T32): MXV contract size etc. read on the MXV product page. */
+  mxvContractSpec?: MxvContractSpec;
 }
 
 export interface CommodityAnalysisProfile {

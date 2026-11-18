@@ -15,6 +15,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
 import type { ExchangeCode, ProductCategory } from '../../shared/types/instrument';
+import { fmtFixed, fmtInt, fmtNum, useT } from '../../i18n';
 
 interface PositionRecord {
   id: string;
@@ -50,6 +51,7 @@ interface PortfolioAnalysisResponse {
 export function PortfolioView() {
   const { user, authReady, signInWithGoogle } = useAuth();
   const { instruments } = useTerminal();
+  const t = useT();
 
   const [positions, setPositions] = useState<PositionRecord[]>([]);
   const [analysis, setAnalysis] = useState<PortfolioAnalysisResponse | null>(null);
@@ -157,7 +159,7 @@ export function PortfolioView() {
     if (!user || !user.emailVerified) return;
     const inst = selectedInst;
     if (!inst) {
-      setError('Select an instrument.');
+      setError(t('pf.selectInst'));
       return;
     }
 
@@ -167,7 +169,7 @@ export function PortfolioView() {
     const qty = Math.trunc(Number(contracts));
 
     if (!(entry > 0 && sl > 0 && tp > 0 && qty >= 1)) {
-      setError('Contracts >= 1 and positive Entry / SL / TP prices are required.');
+      setError(t('pf.invalidInputs'));
       return;
     }
     // Margin: verified spec x contracts, otherwise the user's own figure (stored marginVerified=false).
@@ -179,7 +181,7 @@ export function PortfolioView() {
     } else {
       const userMargin = Number(estimatedMargin);
       if (estimatedMargin.trim() === '' || !(userMargin >= 0)) {
-        setError('No verified margin for this instrument — enter your broker margin (USD, total for the position).');
+        setError(t('pf.noVerifiedMargin'));
         return;
       }
       margin = userMargin;
@@ -214,7 +216,7 @@ export function PortfolioView() {
       try {
         handleFirestoreError(err, OperationType.CREATE, posPath);
       } catch (wrapped) {
-        setError(wrapped instanceof Error ? wrapped.message : 'Failed to save position.');
+        setError(wrapped instanceof Error ? wrapped.message : t('pf.saveFailed'));
       }
     } finally {
       setSaving(false);
@@ -248,17 +250,17 @@ export function PortfolioView() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">Portfolio & Exposure</h1>
+          <h1 className="text-xl font-semibold text-white tracking-tight">{t('pf.title')}</h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Manual futures position tracking and deterministic exposure analytics. Not synchronized with any live broker.
+            {t('pf.subtitleGuest')}
           </p>
         </div>
 
         <section className="bg-[#111622] border border-[#263244] rounded-lg p-8 text-center space-y-3">
           <Briefcase className="w-8 h-8 text-[#6366F1] mx-auto" aria-hidden="true" />
-          <h2 className="text-sm font-semibold text-white">Sign In Required for Private Portfolio Persistence</h2>
+          <h2 className="text-sm font-semibold text-white">{t('pf.signInTitle')}</h2>
           <p className="text-xs text-[#E5E7EB]/65 max-w-md mx-auto">
-            Portfolio positions are stored privately under your verified Firebase account in Cloud Firestore with owner-only security rules.
+            {t('pf.signInBody')}
           </p>
           <button
             type="button"
@@ -266,7 +268,7 @@ export function PortfolioView() {
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md"
           >
             <LogIn className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Sign In with Google</span>
+            <span>{t('pf.signInGoogle')}</span>
           </button>
         </section>
       </div>
@@ -277,9 +279,9 @@ export function PortfolioView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">Portfolio & Exposure</h1>
+          <h1 className="text-xl font-semibold text-white tracking-tight">{t('pf.title')}</h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Manual position ledger stored in Cloud Firestore. Not broker-synced; exchange margin values marked ESTIMATED unless clearing-verified.
+            {t('pf.subtitle')}
           </p>
         </div>
       </div>
@@ -287,34 +289,34 @@ export function PortfolioView() {
       {/* Deterministic Exposure Metrics */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-mono tabular-nums">
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-4">
-          <span className="text-[#E5E7EB]/55 font-sans block">Open Positions</span>
+          <span className="text-[#E5E7EB]/55 font-sans block">{t('pf.openPositions')}</span>
           <span className="text-xl font-bold text-white mt-1 block">
             {analysis?.openPositionCount ?? 0}
           </span>
         </div>
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-4">
-          <span className="text-[#E5E7EB]/55 font-sans block">Open Stop-Loss Risk</span>
+          <span className="text-[#E5E7EB]/55 font-sans block">{t('pf.openRisk')}</span>
           <span className="text-xl font-bold text-[#EF4444] mt-1 block">
-            ${(analysis?.totalEstimatedRiskUsd ?? 0).toFixed(2)}
+            ${fmtFixed(analysis?.totalEstimatedRiskUsd ?? 0, 2)}
           </span>
         </div>
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-4">
-          <span className="text-[#E5E7EB]/55 font-sans block">Verified Margin</span>
+          <span className="text-[#E5E7EB]/55 font-sans block">{t('pf.verifiedMargin')}</span>
           <span className="text-xl font-bold text-[#22C55E] mt-1 block">
-            ${(analysis?.verifiedMarginUsd ?? 0).toFixed(2)}
+            ${fmtFixed(analysis?.verifiedMarginUsd ?? 0, 2)}
           </span>
         </div>
         <div className="bg-[#111622] border border-[#263244] rounded-lg p-4">
-          <span className="text-[#E5E7EB]/55 font-sans block">User-Estimated Margin</span>
+          <span className="text-[#E5E7EB]/55 font-sans block">{t('pf.userMargin')}</span>
           <span className="text-xl font-bold text-[#F59E0B] mt-1 block">
-            ${(analysis?.unverifiedMarginUsd ?? 0).toFixed(2)}
+            ${fmtFixed(analysis?.unverifiedMarginUsd ?? 0, 2)}
           </span>
         </div>
       </section>
 
       {analysis && analysis.correlationWarnings.length > 0 && (
         <div className="bg-[#111622] border border-[#F59E0B]/40 rounded-lg p-4 text-xs space-y-1">
-          <p className="font-mono font-semibold text-[#F59E0B]">CORRELATION / CONCENTRATION WARNINGS</p>
+          <p className="font-mono font-semibold text-[#F59E0B]">{t('pf.warnings')}</p>
           {analysis.correlationWarnings.map((w, i) => (
             <p key={i} className="text-[#E5E7EB]/85">{w}</p>
           ))}
@@ -326,11 +328,11 @@ export function PortfolioView() {
         onSubmit={(e) => void handleAddPosition(e)}
         className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-4"
       >
-        <h2 className="text-sm font-semibold text-white">Record Manual Position</h2>
+        <h2 className="text-sm font-semibold text-white">{t('pf.record')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-7 gap-3 items-end">
           <div className="lg:col-span-2">
             <label htmlFor="pos-inst" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Instrument
+              {t('pf.instrument')}
             </label>
             <select
               id="pos-inst"
@@ -338,7 +340,7 @@ export function PortfolioView() {
               onChange={(e) => setSelectedInstId(e.target.value)}
               className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
             >
-              <option value="">Select instrument…</option>
+              <option value="">{t('pf.selectPh')}</option>
               {instruments.map((i) => (
                 <option key={i.id} value={i.id}>
                   {i.id} · {i.productName}
@@ -348,7 +350,7 @@ export function PortfolioView() {
           </div>
           <div>
             <label htmlFor="pos-dir" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Direction
+              {t('pf.direction')}
             </label>
             <select
               id="pos-dir"
@@ -356,13 +358,13 @@ export function PortfolioView() {
               onChange={(e) => setDirection(e.target.value as 'LONG' | 'SHORT')}
               className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
             >
-              <option value="LONG">LONG</option>
-              <option value="SHORT">SHORT</option>
+              <option value="LONG">{t('pf.dir.LONG')}</option>
+              <option value="SHORT">{t('pf.dir.SHORT')}</option>
             </select>
           </div>
           <div>
             <label htmlFor="pos-qty" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Contracts
+              {t('pf.contracts')}
             </label>
             <input
               id="pos-qty"
@@ -375,32 +377,32 @@ export function PortfolioView() {
           </div>
           <div>
             <label htmlFor="pos-entry" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              Entry / SL / TP
+              {t('pf.entrySlTp')}
             </label>
             <div className="flex gap-1">
               <input
                 id="pos-entry"
                 type="number"
                 step="any"
-                placeholder="Entry"
+                placeholder={t('pf.entryPh')}
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
                 className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-1.5 py-2 text-xs font-mono text-white"
               />
               <input
-                aria-label="Stop Loss"
+                aria-label={t('term.stopLoss')}
                 type="number"
                 step="any"
-                placeholder="SL"
+                placeholder={t('pf.slPh')}
                 value={stopLoss}
                 onChange={(e) => setStopLoss(e.target.value)}
                 className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-1.5 py-2 text-xs font-mono text-white"
               />
               <input
-                aria-label="Take Profit"
+                aria-label={t('term.takeProfit')}
                 type="number"
                 step="any"
-                placeholder="TP"
+                placeholder={t('pf.tpPh')}
                 value={takeProfit}
                 onChange={(e) => setTakeProfit(e.target.value)}
                 className="w-1/3 bg-[#0B0E14] border border-[#263244] rounded px-1.5 py-2 text-xs font-mono text-white"
@@ -409,11 +411,11 @@ export function PortfolioView() {
           </div>
           <div>
             <label htmlFor="pos-margin" className="block text-xs text-[#E5E7EB]/65 mb-1">
-              {verifiedMarginPerContract !== null ? 'Margin (VERIFIED spec)' : 'Margin USD (user-provided)'}
+              {verifiedMarginPerContract !== null ? t('pf.marginVerifiedLabel') : t('pf.marginUserLabel')}
             </label>
             {verifiedMarginPerContract !== null ? (
               <p id="pos-margin" className="py-2 text-xs font-mono text-[#22C55E]">
-                {verifiedMarginPerContract} USD x contracts
+                {t('pf.marginPerCtr', { v: fmtNum(verifiedMarginPerContract) })}
               </p>
             ) : (
               <input
@@ -421,8 +423,8 @@ export function PortfolioView() {
                 type="number"
                 min="0"
                 step="any"
-                placeholder="Your broker margin"
-                title="No verified margin in the Instrument Master — value is stored as user-provided (marginVerified=false)."
+                placeholder={t('pf.marginPh')}
+                title={t('pf.marginTitle')}
                 value={estimatedMargin}
                 onChange={(e) => setEstimatedMargin(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
@@ -435,14 +437,14 @@ export function PortfolioView() {
             className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{saving ? 'Saving...' : 'Add Position'}</span>
+            <span>{saving ? t('pf.saving') : t('pf.add')}</span>
           </button>
         </div>
         <input
           type="text"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Optional thesis or execution notes..."
+          placeholder={t('pf.notesPh')}
           maxLength={500}
           className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs text-white"
         />
@@ -452,23 +454,23 @@ export function PortfolioView() {
       {/* Positions Ledger */}
       <section className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-[#263244] flex justify-between items-center">
-          <h2 className="text-sm font-semibold text-white">Recorded Positions ({positions.length})</h2>
-          <span className="text-xs font-mono text-[#E5E7EB]/50">Not Live Broker Synced</span>
+          <h2 className="text-sm font-semibold text-white">{t('pf.recorded', { n: positions.length })}</h2>
+          <span className="text-xs font-mono text-[#E5E7EB]/50">{t('pf.notSynced')}</span>
         </div>
         {positions.length === 0 ? (
-          <div className="p-6 text-xs font-mono text-[#E5E7EB]/60">No manual positions recorded yet.</div>
+          <div className="p-6 text-xs font-mono text-[#E5E7EB]/60">{t('pf.empty')}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[780px]">
               <thead>
                 <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
-                  <th className="py-2.5 px-4">Contract</th>
-                  <th className="py-2.5 px-3">Dir</th>
-                  <th className="py-2.5 px-3 text-right">Qty</th>
-                  <th className="py-2.5 px-3 text-right">Entry / SL / TP</th>
-                  <th className="py-2.5 px-3 text-right">Margin</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-4 text-right">Actions</th>
+                  <th className="py-2.5 px-4">{t('pf.col.contract')}</th>
+                  <th className="py-2.5 px-3">{t('pf.col.dir')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('pf.col.qty')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('pf.entrySlTp')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('pf.col.margin')}</th>
+                  <th className="py-2.5 px-3">{t('common.status')}</th>
+                  <th className="py-2.5 px-4 text-right">{t('pf.col.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#263244]/70 text-xs font-mono tabular-nums">
@@ -478,16 +480,16 @@ export function PortfolioView() {
                       {pos.instrumentId} <span className="text-[#E5E7EB]/55 font-sans">({pos.productName})</span>
                     </td>
                     <td className={`py-2.5 px-3 ${pos.direction === 'LONG' ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                      {pos.direction}
+                      {t(`pf.dir.${pos.direction}`)}
                     </td>
                     <td className="py-2.5 px-3 text-right text-white">{pos.contracts}</td>
                     <td className="py-2.5 px-3 text-right text-[#E5E7EB]">
-                      {pos.entryPrice} / {pos.stopLoss} / {pos.takeProfit}
+                      {fmtNum(pos.entryPrice)} / {fmtNum(pos.stopLoss)} / {fmtNum(pos.takeProfit)}
                     </td>
                     <td className="py-2.5 px-3 text-right text-[#F59E0B]">
-                      ${pos.estimatedMargin.toFixed(0)} ({pos.marginVerified ? 'VERIFIED' : 'USER_PROVIDED'})
+                      ${fmtInt(pos.estimatedMargin)} ({pos.marginVerified ? t('verify.VERIFIED') : t('pf.userProvided')})
                     </td>
-                    <td className="py-2.5 px-3 text-[#E5E7EB]">{pos.status}</td>
+                    <td className="py-2.5 px-3 text-[#E5E7EB]">{t(`pf.status.${pos.status}`)}</td>
                     <td className="py-2.5 px-4 text-right space-x-2">
                       {pos.status === 'OPEN' && (
                         <button
@@ -495,13 +497,13 @@ export function PortfolioView() {
                           onClick={() => void handleClosePosition(pos)}
                           className="px-2 py-1 bg-[#172033] border border-[#263244] rounded text-[11px] text-white"
                         >
-                          Mark Closed
+                          {t('pf.markClosed')}
                         </button>
                       )}
                       <button
                         type="button"
                         onClick={() => void handleDeletePosition(pos)}
-                        aria-label="Delete position"
+                        aria-label={t('pf.delete')}
                         className="p-1 text-[#EF4444] hover:bg-[#EF4444]/15 rounded inline-flex align-middle"
                       >
                         <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />

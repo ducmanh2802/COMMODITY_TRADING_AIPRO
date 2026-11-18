@@ -2,6 +2,7 @@ import { ShieldAlert } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { AppModuleId } from '../../shared/types/risk';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { hasKey, useT } from '../../i18n';
 
 interface PhaseModulePlaceholderProps {
   moduleId: AppModuleId;
@@ -10,6 +11,7 @@ interface PhaseModulePlaceholderProps {
 export function PhaseModulePlaceholder({ moduleId }: PhaseModulePlaceholderProps) {
   const { modules, roadmap, setActiveModule } = useTerminal();
   const descriptor = modules.find((m) => m.id === moduleId);
+  const t = useT();
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -21,11 +23,11 @@ export function PhaseModulePlaceholder({ moduleId }: PhaseModulePlaceholderProps
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
             {descriptor
               ? descriptor.summary
-              : 'Module architectural specification.'}
+              : t('dash.ph.defaultSummary')}
           </p>
         </div>
         <span className="font-mono text-xs text-[#F59E0B] whitespace-nowrap">
-          Scheduled: Phase {descriptor?.phase ?? '2+'}
+          {t('dash.ph.scheduled', { phase: descriptor?.phase ?? '2+' })}
         </span>
       </div>
 
@@ -34,19 +36,19 @@ export function PhaseModulePlaceholder({ moduleId }: PhaseModulePlaceholderProps
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-[#F59E0B]">
             <ShieldAlert className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <h2 className="text-sm font-semibold text-white">Fail-Closed Operational Contract</h2>
+            <h2 className="text-sm font-semibold text-white">{t('dash.ph.contract')}</h2>
           </div>
           <DataStatusBadge status="UNAVAILABLE" />
         </div>
 
         <p className="text-xs text-[#E5E7EB]/75 leading-relaxed">
           {descriptor?.failClosedBehavior ??
-            'DATA_UNAVAILABLE — No verified market data available. This module is not operational until its deterministic backend engine and tests are implemented.'}
+            t('dash.ph.defaultFail')}
         </p>
 
         {descriptor && descriptor.dependencies.length > 0 && (
           <div className="pt-2 border-t border-[#263244]">
-            <p className="text-xs text-[#E5E7EB]/55 mb-1.5">Required Upstream Dependencies</p>
+            <p className="text-xs text-[#E5E7EB]/55 mb-1.5">{t('dash.ph.deps')}</p>
             <p className="text-xs font-mono text-[#E5E7EB]/85">
               {descriptor.dependencies.join(' · ')}
             </p>
@@ -57,13 +59,13 @@ export function PhaseModulePlaceholder({ moduleId }: PhaseModulePlaceholderProps
       {/* Active Development Roadmap Context */}
       <section className="bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-white">Incremental Build Roadmap</h2>
+          <h2 className="text-sm font-semibold text-white">{t('dash.ph.roadmap')}</h2>
           <button
             type="button"
             onClick={() => setActiveModule('overview')}
             className="text-xs text-[#6366F1] hover:text-[#6366F1]/80 whitespace-nowrap"
           >
-            Return to Overview
+            {t('dash.ph.back')}
           </button>
         </div>
 
@@ -75,7 +77,7 @@ export function PhaseModulePlaceholder({ moduleId }: PhaseModulePlaceholderProps
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold text-white">
-                  Phase {item.phase}: {item.title}
+                  {t('dash.ph.phase', { phase: item.phase, title: item.title })}
                 </span>
                 <span
                   className={`font-mono text-[11px] ${
@@ -86,7 +88,7 @@ export function PhaseModulePlaceholder({ moduleId }: PhaseModulePlaceholderProps
                         : 'text-[#E5E7EB]/50'
                   }`}
                 >
-                  {item.status}
+                  {hasKey(`dash.phase.${item.status}`) ? t(`dash.phase.${item.status}` as 'dash.phase.ACTIVE') : item.status}
                 </span>
               </div>
               <ul className="space-y-1 text-xs text-[#E5E7EB]/65">

@@ -221,6 +221,10 @@ export class YahooFinanceAdapter implements MarketDataProvider {
   private readonly now: () => number;
   private readonly sleep: (ms: number) => Promise<void>;
   private readonly quoteCache = new Map<string, { quote: MarketQuote; expiresAtMs: number }>();
+  /** In-flight background quote refreshes by Yahoo symbol (stale-while-revalidate dedupe). */
+  private readonly inflight = new Map<string, Promise<MarketQuote | null>>();
+  /** Per-symbol "do not refresh before" time after a failed background refresh (one TTL). */
+  private readonly failedUntil = new Map<string, number>();
   /** Serialises outgoing requests so spacing holds even under Promise.all callers. */
   private queue: Promise<void> = Promise.resolve();
   private lastRequestAtMs = Number.NEGATIVE_INFINITY;
@@ -422,6 +426,122 @@ export class YahooFinanceAdapter implements MarketDataProvider {
     this.lastSyncAt = quote.retrievedAt;
     this.lastError = null;
     return quote;
+  }
+
+  /**
+   * Stale-while-revalidate quote read for request paths (GET /api/market/quotes). A fresh cached
+   * quote is returned at once. Otherwise one background refresh per Yahoo symbol is started (deduped;
+   * the polite 1 req/s queue still applies) and awaited for at most `waitMs`. If it has not finished,
+   * the last cached quote is returned with its freshness re-evaluated from the MARKET timestamp (so it
+   * honestly turns STALE as it ages), or, with no cache yet, an UNAVAILABLE placeholder. Callers never
+   * wait for the whole Yahoo queue.
+   */
+  async getQuoteStaleWhileRevalidate(
+    inst: InstrumentDefinition,
+    waitMs: number
+  ): Promise<{ quote: MarketQuote; refreshPending: boolean }> {
+    const mapping = YahooFinanceAdapter.mappingFor(inst.exchangeSymbol);
+    if (!isYahooEnabled() || !mapping || !yahooUnitConversion(mapping.expectedCurrency, inst.specification.quotationUnit).ok) {
+      // No network involved: the regular path returns the disabled/unsupported quote immediately.
+      return { quote: await this.getQuoteForInstrument(inst), refreshPending: false };
+    }
+    const cached = this.quoteCache.get(mapping.yahooSymbol);
+    if (cached && cached.expiresAtMs > this.now()) {
+      return { quote: { ...cached.quote, status: this.freshnessFor(cached.quote, mapping) }, refreshPending: false };
+    }
+
+    let refresh = this.inflight.get(mapping.yahooSymbol);
+    const backoffUntil = this.failedUntil.get(mapping.yahooSymbol) ?? Number.NEGATIVE_INFINITY;
+    if (!refresh && backoffUntil > this.now()) {
+      // Recent failure: do not hammer Yahoo on every page load; serve what we have, labelled honestly.
+      const reason = `Yahoo refresh paused after failure: ${this.lastError ?? 'unknown error'}`;
+      if (cached) {
+        return {
+          quote: {
+            ...cached.quote,
+            status: this.freshnessFor(cached.quote, mapping),
+            statusReason: `${cached.quote.statusReason ?? ''} ${reason}; showing last cached value.`.trim(),
+          },
+          refreshPending: false,
+        };
+      }
+      return {
+        quote: createUnavailableQuote({
+          symbol: inst.exchangeSymbol,
+          exchange: inst.exchange,
+          contractMonth: null,
+          currency: inst.specification.tradingCurrency,
+          unit: inst.specification.quotationUnit,
+          source: `${this.providerId}:${mapping.yahooSymbol}`,
+          reason: `DATA_UNAVAILABLE — ${reason}.`,
+        }),
+        refreshPending: false,
+      };
+    }
+    if (!refresh) {
+      refresh = this.getQuoteForInstrument(inst)
+        .catch((err: unknown) => {
+          this.lastError = err instanceof Error ? err.message : 'Yahoo refresh failed';
+          return null;
+        })
+        .then((q) => {
+          if (!q || q.price === null) this.failedUntil.set(mapping.yahooSymbol, this.now() + this.quoteTtlMs);
+          else this.failedUntil.delete(mapping.yahooSymbol);
+          return q;
+        })
+        .finally(() => this.inflight.delete(mapping.yahooSymbol));
+      this.inflight.set(mapping.yahooSymbol, refresh);
+    }
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<'timeout'>((resolve) => {
+      timer = setTimeout(() => resolve('timeout'), Math.max(0, waitMs));
+      timer.unref?.();
+    });
+    const settled = await Promise.race([refresh, timeout]);
+    clearTimeout(timer);
+    if (settled !== 'timeout' && settled !== null) {
+      // A failed refresh keeps the previous good quote (re-labelled by age) rather than blanking it.
+      if (settled.price === null && cached) {
+        return {
+          quote: {
+            ...cached.quote,
+            status: this.freshnessFor(cached.quote, mapping),
+            statusReason: `${cached.quote.statusReason ?? ''} Last refresh failed (${settled.statusReason ?? 'unknown'}); showing last cached value.`.trim(),
+          },
+          refreshPending: false,
+        };
+      }
+      return { quote: settled, refreshPending: false };
+    }
+
+    if (cached) {
+      return {
+        quote: {
+          ...cached.quote,
+          status: this.freshnessFor(cached.quote, mapping),
+          statusReason: `${cached.quote.statusReason ?? ''} Cached value (retrieved ${cached.quote.retrievedAt}); refreshing in background.`.trim(),
+        },
+        refreshPending: true,
+      };
+    }
+    return {
+      quote: createUnavailableQuote({
+        symbol: inst.exchangeSymbol,
+        exchange: inst.exchange,
+        contractMonth: null,
+        currency: inst.specification.tradingCurrency,
+        unit: inst.specification.quotationUnit,
+        source: `${this.providerId}:${mapping.yahooSymbol}`,
+        reason: 'DATA_UNAVAILABLE — Yahoo (UNOFFICIAL) quote is being fetched in the background; refresh shortly.',
+      }),
+      refreshPending: true,
+    };
+  }
+
+  /** Resolves when all background refreshes started so far have settled (tests / graceful shutdown). */
+  async waitForBackgroundRefreshes(): Promise<void> {
+    await Promise.all([...this.inflight.values()]);
   }
 
   private freshnessFor(quote: MarketQuote, mapping: YahooSymbolMapping): DataQualityStatus {

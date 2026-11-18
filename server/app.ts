@@ -8,6 +8,7 @@ import { ProviderRegistry } from './providers/registry.ts';
 import { registerDataRoutes } from './routes/dataRoutes.ts';
 import { registerContractRoutes } from './routes/contracts.ts';
 import { registerCotRoutes } from './routes/cot.ts';
+import { registerMxvEstimateRoutes } from './routes/mxvEstimate.ts';
 import type { ICandleRepository } from './storage/candleRepository.ts';
 import { getDefaultCandleRepository } from './storage/sqliteCandleRepository.ts';
 import type { ProviderHealth } from '../src/shared/types/market.ts';
@@ -36,7 +37,7 @@ import { loadEngineCandles, type EngineCandleResult } from './services/engineCan
 
 const TimeframeEnum = z.enum(['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1']);
 const CategoryEnum = z.enum(['AGRICULTURE', 'SOFT_COMMODITIES', 'METALS', 'ENERGY']);
-const ExchangeEnum = z.enum(['MXV', 'CBOT', 'CME', 'COMEX', 'NYMEX', 'ICE']);
+const ExchangeEnum = z.enum(['MXV', 'CBOT', 'CME', 'COMEX', 'NYMEX', 'ICE', 'SGX']);
 const StrategyIdEnum = z.enum([
   'TREND_FOLLOWING',
   'EMA_PULLBACK',
@@ -520,6 +521,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   });
   registerContractRoutes(app, { instruments: instrumentRepository });
   registerCotRoutes(app);
+  registerMxvEstimateRoutes(app, { instruments: instrumentRepository, providers: providerRegistry });
 
 
   // Phase 2 (owner, legacy): in-memory CSV datasets & OHLCV candles.

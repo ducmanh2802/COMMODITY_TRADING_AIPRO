@@ -21,6 +21,7 @@ import {
 } from '../../../shared/analytics';
 import type { MarketCandle } from '../../../shared/types/market';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
+import { fmtDate, fmtInt, useT } from '../../../i18n';
 import { CandleChart, type LineSpec, type LowerPaneSpec } from './CandleChart';
 
 type LowerIndicator = 'NONE' | 'RSI' | 'MACD' | 'ATR';
@@ -107,6 +108,7 @@ function NumInput({
 
 export function ChartsView() {
   const { instruments } = useTerminal();
+  const t = useT();
   const [datasets, setDatasets] = useState<DatasetRecord[]>([]);
   const [datasetsError, setDatasetsError] = useState<string | null>(null);
   const [datasetsLoading, setDatasetsLoading] = useState(true);
@@ -128,7 +130,7 @@ export function ChartsView() {
     fetchDatasets(ctrl.signal)
       .then(setDatasets)
       .catch((err: unknown) => {
-        if (!ctrl.signal.aborted) setDatasetsError(err instanceof Error ? err.message : 'Failed to load datasets.');
+        if (!ctrl.signal.aborted) setDatasetsError(err instanceof Error ? err.message : t('chart.err.datasets'));
       })
       .finally(() => {
         if (!ctrl.signal.aborted) setDatasetsLoading(false);
@@ -170,7 +172,7 @@ export function ChartsView() {
       .then(setData)
       .catch((err: unknown) => {
         if (ctrl.signal.aborted) return;
-        setCandlesError(err instanceof ApiError || err instanceof Error ? err.message : 'Failed to load candles.');
+        setCandlesError(err instanceof ApiError || err instanceof Error ? err.message : t('chart.err.candles'));
       })
       .finally(() => {
         if (!ctrl.signal.aborted) setCandlesLoading(false);
@@ -272,9 +274,9 @@ export function ChartsView() {
     <div className="space-y-5">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">Charts</h1>
+          <h1 className="text-xl font-semibold text-white tracking-tight">{t('chart.title')}</h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Imported historical OHLCV with client-side indicators from the deterministic analytics library.
+            {t('chart.subtitle')}
           </p>
         </div>
         <button
@@ -283,7 +285,7 @@ export function ChartsView() {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-[#263244] text-[#E5E7EB]/80 hover:text-white hover:bg-[#172033] w-fit"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${datasetsLoading || candlesLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
-          Reload
+          {t('chart.reload')}
         </button>
       </div>
 
@@ -291,7 +293,7 @@ export function ChartsView() {
       <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 flex flex-wrap items-end gap-4">
         <div>
           <label htmlFor="ch-instrument" className="block text-xs font-medium text-[#E5E7EB]/75 mb-1">
-            Instrument
+            {t('chart.instrument')}
           </label>
           <select
             id="ch-instrument"
@@ -300,7 +302,7 @@ export function ChartsView() {
             disabled={instrumentOptions.length === 0}
             className={`${selectCls} min-w-[220px]`}
           >
-            {instrumentOptions.length === 0 && <option value="">No imported data</option>}
+            {instrumentOptions.length === 0 && <option value="">{t('chart.noImported')}</option>}
             {instrumentOptions.map((id) => (
               <option key={id} value={id}>
                 {instrumentLabel(id)}
@@ -310,7 +312,7 @@ export function ChartsView() {
         </div>
         <div>
           <label htmlFor="ch-contract" className="block text-xs font-medium text-[#E5E7EB]/75 mb-1">
-            Contract
+            {t('term.contract')}
           </label>
           <select
             id="ch-contract"
@@ -328,7 +330,7 @@ export function ChartsView() {
         </div>
         <div>
           <label htmlFor="ch-tf" className="block text-xs font-medium text-[#E5E7EB]/75 mb-1">
-            Timeframe
+            {t('chart.timeframe')}
           </label>
           <select
             id="ch-tf"
@@ -359,30 +361,35 @@ export function ChartsView() {
             <Info className="w-4 h-4 text-[#6366F1] shrink-0 mt-px" aria-hidden="true" />
             <div className="space-y-1">
               <p>
-                <span className="font-semibold text-white">Historical data, not a live price.</span>{' '}
-                {data.count.toLocaleString()} bars
-                {data.truncated && ` (latest of ${data.totalInRange.toLocaleString()} — truncated)`} · unit{' '}
+                <span className="font-semibold text-white">{t('chart.histNotLive')}</span>{' '}
+                {t('chart.bars', { n: fmtInt(data.count) })}
+                {data.truncated && ` ${t('chart.truncated', { n: fmtInt(data.totalInRange) })}`} · {t('common.unit').toLowerCase()}{' '}
                 <span className="font-mono text-white">{data.priceUnit ?? 'UNKNOWN'}</span>
                 {data.continuousAdjustment && data.continuousAdjustment !== 'NONE' && (
                   <>
                     {' '}
-                    · adjustment <span className="font-mono text-white">{data.continuousAdjustment}</span>
+                    · {t('chart.adjustment')} <span className="font-mono text-white">{data.continuousAdjustment}</span>
                   </>
                 )}
-                {incompleteDropped > 0 && ` · ${incompleteDropped} incomplete bar(s) hidden`}
+                {incompleteDropped > 0 && ` · ${t('chart.incompleteHidden', { n: incompleteDropped })}`}
               </p>
               {data.provenance.map((p) => (
                 <p key={p.datasetId} className="font-mono text-[11px] text-[#E5E7EB]/70">
-                  Source “{p.sourceLabel}” · <span className="text-[#F59E0B]">{p.sourceQuality}</span> · source TZ {p.timezone} ·{' '}
+                  {t('common.source')} “{p.sourceLabel}” ·{' '}
+                  <span className="text-[#F59E0B]" title={p.sourceQuality === 'UNOFFICIAL' ? t('quality.UNOFFICIAL.desc') : undefined}>
+                    {p.sourceQuality}
+                    {p.sourceQuality === 'UNOFFICIAL' ? ` (${t('quality.UNOFFICIAL')})` : ''}
+                  </span>{' '}
+                  · {t('chart.sourceTz')} {p.timezone} ·{' '}
                   {formatStoredTimestamp(p.firstTimestamp, data.timeframe)} → {formatStoredTimestamp(p.lastTimestamp, data.timeframe)} · sha256{' '}
-                  {p.checksum.slice(0, 12)}… · imported {p.importedAt.slice(0, 10)}
+                  {p.checksum.slice(0, 12)}… · {t('chart.importedOn')} {fmtDate(p.importedAt.slice(0, 10))}
                 </p>
               ))}
               <p className="text-[11px] text-[#E5E7EB]/55">
-                Timestamps: {data.timestampConvention}{' '}
+                {t('chart.timestamps')}: {data.timestampConvention}{' '}
                 {data.timeframe === 'D1' || data.timeframe === 'W1'
-                  ? 'Shown as the session date (no timezone shift).'
-                  : 'Shown in UTC.'}
+                  ? t('chart.tsSession')
+                  : t('chart.tsUtc')}
               </p>
             </div>
           </div>
@@ -395,46 +402,46 @@ export function ChartsView() {
           <input type="checkbox" checked={settings.smaOn} onChange={(e) => set('smaOn', e.target.checked)} className="accent-[#F59E0B]" />
           SMA
         </label>
-        <NumInput label="period" value={settings.smaPeriod} onChange={(v) => set('smaPeriod', v)} />
+        <NumInput label={t('chart.period')} value={settings.smaPeriod} onChange={(v) => set('smaPeriod', v)} />
         <label className="inline-flex items-center gap-2 text-xs text-[#E5E7EB]/85">
           <input type="checkbox" checked={settings.emaOn} onChange={(e) => set('emaOn', e.target.checked)} className="accent-[#38BDF8]" />
           EMA
         </label>
-        <NumInput label="period" value={settings.emaPeriod} onChange={(v) => set('emaPeriod', v)} />
+        <NumInput label={t('chart.period')} value={settings.emaPeriod} onChange={(v) => set('emaPeriod', v)} />
         <label className="inline-flex items-center gap-2 text-xs text-[#E5E7EB]/85">
           <input type="checkbox" checked={settings.bbOn} onChange={(e) => set('bbOn', e.target.checked)} className="accent-[#A78BFA]" />
           Bollinger
         </label>
-        <NumInput label="period" value={settings.bbPeriod} onChange={(v) => set('bbPeriod', v)} />
+        <NumInput label={t('chart.period')} value={settings.bbPeriod} onChange={(v) => set('bbPeriod', v)} />
         <NumInput label="k" value={settings.bbK} step={0.5} min={0.5} onChange={(v) => set('bbK', v)} />
         <span className="hidden md:block w-px h-6 bg-[#263244]" aria-hidden="true" />
         <label className="inline-flex items-center gap-2 text-xs text-[#E5E7EB]/85">
-          Lower pane
+          {t('chart.lowerPane')}
           <select
             value={settings.lower}
             onChange={(e) => set('lower', e.target.value as LowerIndicator)}
             className={`${selectCls} py-1`}
           >
-            <option value="NONE">None</option>
+            <option value="NONE">{t('common.none')}</option>
             <option value="RSI">RSI</option>
             <option value="MACD">MACD</option>
             <option value="ATR">ATR</option>
           </select>
         </label>
-        {settings.lower === 'RSI' && <NumInput label="period" value={settings.rsiPeriod} onChange={(v) => set('rsiPeriod', v)} />}
-        {settings.lower === 'ATR' && <NumInput label="period" value={settings.atrPeriod} onChange={(v) => set('atrPeriod', v)} />}
+        {settings.lower === 'RSI' && <NumInput label={t('chart.period')} value={settings.rsiPeriod} onChange={(v) => set('rsiPeriod', v)} />}
+        {settings.lower === 'ATR' && <NumInput label={t('chart.period')} value={settings.atrPeriod} onChange={(v) => set('atrPeriod', v)} />}
         {settings.lower === 'MACD' && (
           <>
-            <NumInput label="fast" value={settings.macdFast} onChange={(v) => set('macdFast', v)} />
-            <NumInput label="slow" value={settings.macdSlow} onChange={(v) => set('macdSlow', v)} />
-            <NumInput label="signal" value={settings.macdSignal} onChange={(v) => set('macdSignal', v)} />
+            <NumInput label={t('chart.fast')} value={settings.macdFast} onChange={(v) => set('macdFast', v)} />
+            <NumInput label={t('chart.slow')} value={settings.macdSlow} onChange={(v) => set('macdSlow', v)} />
+            <NumInput label={t('chart.signal')} value={settings.macdSignal} onChange={(v) => set('macdSignal', v)} />
           </>
         )}
       </div>
 
       {/* Indicator status: never draw a failed indicator */}
       {computed.reports.length > 0 && (
-        <ul className="space-y-1" aria-label="Indicator status">
+        <ul className="space-y-1" aria-label={t('chart.indicatorStatus')}>
           {computed.reports.map((r) => (
               <li key={r.name} className="flex items-start gap-2 text-xs">
                 {r.status === 'OK' && r.warnings.length === 0 ? (
@@ -445,7 +452,7 @@ export function ChartsView() {
                 <span className="font-mono text-white">{r.name}</span>
                 <span className={`font-mono ${r.status === 'OK' ? 'text-[#22C55E]' : 'text-[#F59E0B]'}`}>{r.status}</span>
                 <span className="text-[#E5E7EB]/70">
-                  {r.status !== 'OK' ? `${r.reason ?? ''} — not drawn.` : ''} {r.warnings.join('; ')}
+                  {r.status !== 'OK' ? `${r.reason ?? ''} — ${t('chart.notDrawn')}` : ''} {r.warnings.join('; ')}
                 </span>
               </li>
             ))}
@@ -465,17 +472,17 @@ export function ChartsView() {
         ) : (
           <div className="h-[460px] flex flex-col items-center justify-center gap-3 text-center px-6">
             {candlesLoading || datasetsLoading ? (
-              <p className="text-xs text-[#E5E7EB]/55">Loading…</p>
+              <p className="text-xs text-[#E5E7EB]/55">{t('common.loading')}</p>
             ) : (
               <>
                 <DataStatusBadge status="UNAVAILABLE" />
-                <p className="text-sm text-white">DATA_UNAVAILABLE — no validated historical candles.</p>
+                <p className="text-sm text-white">{t('chart.noCandles')}</p>
                 <p className="text-xs text-[#E5E7EB]/55 max-w-md">
                   {unavailable && data?.reason
                     ? data.reason
                     : datasets.length === 0
-                      ? 'No datasets have been imported. Use Data Import to load a CSV; nothing is simulated.'
-                      : 'Select an imported series above.'}
+                      ? t('chart.noDatasets')
+                      : t('chart.selectSeries')}
                 </p>
               </>
             )}

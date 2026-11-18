@@ -403,6 +403,28 @@ export const INSTRUMENT_CALENDAR_SPECS: Record<string, InstrumentCalendarSpec> =
     calendarStatus: 'UNVERIFIED',
     notes: ['Listing horizon not verified.'],
   },
+  'SGX:FEF': {
+    instrumentId: 'SGX:FEF',
+    listedMonthsText: 'Monthly contracts; per MXV up to four calendar years from the current year (not verified on sgx.com)',
+    listing: { type: 'ALL_MONTHS', horizon: null },
+    lastTradingDay: {
+      kind: 'ENCODED',
+      anchor: { type: 'LAST_BUSINESS_DAY', monthOffset: 0 },
+      businessDaysBefore: 0,
+      ruleText: 'Last business day of the contract month.',
+      sourceUrl: 'https://en.mxv.com.vn/product/metals/iron-ore.html',
+      businessDayCalendar: 'SGX business days (Singapore public holidays)',
+      interpretation: 'Applied with the bundled SG_PUBLIC (published, Ministry of Manpower) calendar.',
+    },
+    firstNoticeDay: {
+      kind: 'UNAVAILABLE',
+      reason: 'Index futures: no delivery notice period in the source.',
+      sourceUrl: null,
+    },
+    holidayCalendars: ['SG_PUBLIC'],
+    calendarStatus: 'UNVERIFIED',
+    notes: ['Listing horizon not modeled; LTD rule read on the MXV FEF page, not on sgx.com.'],
+  },
   'NYMEX:CL': {
     instrumentId: 'NYMEX:CL',
     listedMonthsText: 'All months (F-Z) consecutively for the current year plus the next five years',

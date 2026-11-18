@@ -1,4 +1,5 @@
 import { Suspense, lazy } from 'react';
+import { useT } from '../../../i18n';
 
 /**
  * Lazily-loaded Data Import and Charts views. Each view (and lightweight-charts, used only by Charts)
@@ -8,7 +9,8 @@ const DataImportView = lazy(() => import('./DataImportView'));
 const ChartsView = lazy(() => import('../charts/ChartsView'));
 
 function ViewFallback() {
-  return <p className="text-xs text-[#E5E7EB]/55 py-10 text-center">Loading module…</p>;
+  const t = useT();
+  return <p className="text-xs text-[#E5E7EB]/55 py-10 text-center">{t('data.loadingModule')}</p>;
 }
 
 export function LazyDataImportView() {

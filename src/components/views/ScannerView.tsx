@@ -4,6 +4,7 @@ import { useTerminal } from '../../contexts/TerminalContext';
 import type { TradeScannerOpportunity } from '../../shared/types/analysis';
 import type { ExchangeCode, ProductCategory, Timeframe, TradingStyle } from '../../shared/types/instrument';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { fmtFixed, useT } from '../../i18n';
 
 interface ScannerApiResponse {
   scannedAt: string;
@@ -15,6 +16,7 @@ interface ScannerApiResponse {
 
 export function ScannerView() {
   const { instruments, timeframe, tradingStyle, openInstrumentIn } = useTerminal();
+  const t = useT();
 
   const [category, setCategory] = useState<'ALL' | ProductCategory>('ALL');
   const [exchange, setExchange] = useState<'ALL' | ExchangeCode>('ALL');
@@ -51,10 +53,10 @@ export function ScannerView() {
         body: JSON.stringify(payload),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.message ?? 'Scanner execution failed.');
+      if (!res.ok) throw new Error(json.message ?? t('scan.err.exec'));
       setResult(json);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to run scanner.');
+      setError(err instanceof Error ? err.message : t('scan.err.run'));
     } finally {
       setLoading(false);
     }
@@ -63,9 +65,9 @@ export function ScannerView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-white tracking-tight">AI Trade Scanner</h1>
+        <h1 className="text-xl font-semibold text-white tracking-tight">{t('scan.title')}</h1>
         <p className="text-sm text-[#E5E7EB]/65 mt-1">
-          Deterministic multi-market setup scanner across {instruments.length} commodity instruments (MXV &amp; International). Instruments without validated OHLCV data are skipped honestly.
+          {t('scan.subtitle', { n: instruments.length })}
         </p>
       </div>
 
@@ -76,7 +78,7 @@ export function ScannerView() {
       >
         <div>
           <label htmlFor="scan-category" className="block text-xs text-[#E5E7EB]/65 mb-1">
-            Category
+            {t('scan.category')}
           </label>
           <select
             id="scan-category"
@@ -84,17 +86,17 @@ export function ScannerView() {
             onChange={(e) => setCategory(e.target.value as 'ALL' | ProductCategory)}
             className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
           >
-            <option value="ALL">All</option>
-            <option value="AGRICULTURE">Agriculture</option>
-            <option value="SOFT_COMMODITIES">Softs</option>
-            <option value="METALS">Metals</option>
-            <option value="ENERGY">Energy</option>
+            <option value="ALL">{t('common.all')}</option>
+            <option value="AGRICULTURE">{t('scan.cat.AGRICULTURE')}</option>
+            <option value="SOFT_COMMODITIES">{t('scan.cat.SOFT_COMMODITIES')}</option>
+            <option value="METALS">{t('scan.cat.METALS')}</option>
+            <option value="ENERGY">{t('scan.cat.ENERGY')}</option>
           </select>
         </div>
 
         <div>
           <label htmlFor="scan-exchange" className="block text-xs text-[#E5E7EB]/65 mb-1">
-            Exchange
+            {t('common.exchange')}
           </label>
           <select
             id="scan-exchange"
@@ -102,7 +104,7 @@ export function ScannerView() {
             onChange={(e) => setExchange(e.target.value as 'ALL' | ExchangeCode)}
             className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
           >
-            <option value="ALL">All</option>
+            <option value="ALL">{t('common.all')}</option>
             <option value="CBOT">CBOT</option>
             <option value="CME">CME</option>
             <option value="COMEX">COMEX</option>
@@ -114,7 +116,7 @@ export function ScannerView() {
 
         <div>
           <label htmlFor="scan-style" className="block text-xs text-[#E5E7EB]/65 mb-1">
-            Trading Style
+            {t('scan.style')}
           </label>
           <select
             id="scan-style"
@@ -122,16 +124,16 @@ export function ScannerView() {
             onChange={(e) => setStyle(e.target.value as TradingStyle)}
             className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
           >
-            <option value="SCALPING">SCALPING</option>
-            <option value="INTRADAY">INTRADAY</option>
-            <option value="SWING">SWING</option>
-            <option value="POSITION">POSITION</option>
+            <option value="SCALPING">{t('scan.style.SCALPING')}</option>
+            <option value="INTRADAY">{t('scan.style.INTRADAY')}</option>
+            <option value="SWING">{t('scan.style.SWING')}</option>
+            <option value="POSITION">{t('scan.style.POSITION')}</option>
           </select>
         </div>
 
         <div>
           <label htmlFor="scan-tf" className="block text-xs text-[#E5E7EB]/65 mb-1">
-            Timeframe
+            {t('chart.timeframe')}
           </label>
           <select
             id="scan-tf"
@@ -139,9 +141,9 @@ export function ScannerView() {
             onChange={(e) => setTf(e.target.value as Timeframe)}
             className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
           >
-            {(['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'] as Timeframe[]).map((t) => (
-              <option key={t} value={t}>
-                {t}
+            {(['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'] as Timeframe[]).map((tfo) => (
+              <option key={tfo} value={tfo}>
+                {tfo}
               </option>
             ))}
           </select>
@@ -149,7 +151,7 @@ export function ScannerView() {
 
         <div>
           <label htmlFor="scan-rr" className="block text-xs text-[#E5E7EB]/65 mb-1">
-            Min R:R
+            {t('scan.minRR')}
           </label>
           <input
             id="scan-rr"
@@ -164,7 +166,7 @@ export function ScannerView() {
 
         <div>
           <label htmlFor="scan-score" className="block text-xs text-[#E5E7EB]/65 mb-1">
-            Min Score (0–100)
+            {t('scan.minScore')}
           </label>
           <input
             id="scan-score"
@@ -183,19 +185,19 @@ export function ScannerView() {
           className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
         >
           <Radar className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>{loading ? 'Scanning...' : 'Scan Markets'}</span>
+          <span>{loading ? t('scan.scanning') : t('scan.scan')}</span>
         </button>
 
         <div className="sm:col-span-2 lg:col-span-7 flex items-center gap-3 pt-1">
           <label htmlFor="scan-atr" className="text-xs text-[#E5E7EB]/55">
-            Optional Max ATR % Volatility Filter:
+            {t('scan.maxAtr')}
           </label>
           <input
             id="scan-atr"
             type="number"
             step="0.1"
             min="0"
-            placeholder="e.g. 3.5"
+            placeholder={t('scan.atrPlaceholder')}
             value={maxAtrPct}
             onChange={(e) => setMaxAtrPct(e.target.value)}
             className="w-28 bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1 text-xs font-mono text-white tabular-nums"
@@ -214,7 +216,7 @@ export function ScannerView() {
           <section className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b border-[#263244] flex items-center justify-between">
               <h2 className="text-sm font-semibold text-white">
-                Ranked Opportunities ({result.opportunities.length})
+                {t('scan.ranked', { n: result.opportunities.length })}
               </h2>
               <span className="font-mono text-xs text-[#E5E7EB]/55">
                 {result.tradingStyle} · {result.timeframe}
@@ -223,22 +225,22 @@ export function ScannerView() {
 
             {result.opportunities.length === 0 ? (
               <div className="p-6 text-xs font-mono text-[#E5E7EB]/65">
-                NO_CONFIRMED_SETUPS — Zero setups satisfied filters with verified market data.
+                {t('scan.noSetups')}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[880px]">
                   <thead>
                     <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
-                      <th className="py-2.5 px-4 font-medium">Instrument</th>
-                      <th className="py-2.5 px-3 font-medium">Strategy</th>
-                      <th className="py-2.5 px-3 font-medium">Dir</th>
-                      <th className="py-2.5 px-3 font-medium text-right">Score</th>
-                      <th className="py-2.5 px-3 font-medium text-right">Entry Zone</th>
-                      <th className="py-2.5 px-3 font-medium text-right">Stop Loss</th>
+                      <th className="py-2.5 px-4 font-medium">{t('chart.instrument')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('sig.col.strategy')}</th>
+                      <th className="py-2.5 px-3 font-medium">{t('scan.col.dir')}</th>
+                      <th className="py-2.5 px-3 font-medium text-right">{t('sig.score')}</th>
+                      <th className="py-2.5 px-3 font-medium text-right">{t('sig.entryZone')}</th>
+                      <th className="py-2.5 px-3 font-medium text-right">{t('term.stopLoss')}</th>
                       <th className="py-2.5 px-3 font-medium text-right">R:R</th>
-                      <th className="py-2.5 px-3 font-medium">Quality</th>
-                      <th className="py-2.5 px-4 font-medium text-right">Action</th>
+                      <th className="py-2.5 px-3 font-medium">{t('scan.col.quality')}</th>
+                      <th className="py-2.5 px-4 font-medium text-right">{t('scan.col.action')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#263244]/70 text-xs font-mono tabular-nums">
@@ -253,19 +255,19 @@ export function ScannerView() {
                             opp.direction === 'LONG' ? 'text-[#22C55E]' : 'text-[#EF4444]'
                           }`}
                         >
-                          {opp.direction}
+                          {opp.direction === 'LONG' ? t('term.long') : opp.direction === 'SHORT' ? t('term.short') : opp.direction}
                         </td>
                         <td className="py-2.5 px-3 text-right text-white">{opp.setupQualityScore}</td>
                         <td className="py-2.5 px-3 text-right text-[#E5E7EB]">
                           {opp.entryZone
-                            ? `${opp.entryZone[0].toFixed(2)}–${opp.entryZone[1].toFixed(2)}`
-                            : 'N/A'}
+                            ? `${fmtFixed(opp.entryZone[0], 2)}–${fmtFixed(opp.entryZone[1], 2)}`
+                            : t('common.na')}
                         </td>
                         <td className="py-2.5 px-3 text-right text-[#EF4444]">
-                          {opp.stopLoss !== null ? opp.stopLoss.toFixed(2) : 'N/A'}
+                          {opp.stopLoss !== null ? fmtFixed(opp.stopLoss, 2) : t('common.na')}
                         </td>
                         <td className="py-2.5 px-3 text-right text-[#22C55E]">
-                          {opp.riskReward !== null ? `${opp.riskReward.toFixed(2)}R` : 'N/A'}
+                          {opp.riskReward !== null ? `${fmtFixed(opp.riskReward, 2)}R` : t('common.na')}
                         </td>
                         <td className="py-2.5 px-3">
                           <DataStatusBadge status={opp.dataQuality} compact />
@@ -276,7 +278,7 @@ export function ScannerView() {
                             onClick={() => openInstrumentIn(opp.instrument, 'charts')}
                             className="px-2.5 py-1 bg-[#172033] hover:bg-[#6366F1] border border-[#263244] rounded text-[11px] text-white"
                           >
-                            Chart
+                            {t('scan.chartBtn')}
                           </button>
                         </td>
                       </tr>
@@ -289,10 +291,10 @@ export function ScannerView() {
 
           <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2">
             <h2 className="text-sm font-semibold text-white">
-              Skipped / Unavailable Instruments ({result.unavailableInstruments.length})
+              {t('scan.skipped', { n: result.unavailableInstruments.length })}
             </h2>
             <p className="text-xs text-[#E5E7EB]/60">
-              Fail-closed transparency: instruments without validated historical or authorized live data are never fabricated.
+              {t('scan.skippedNote')}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
               {result.unavailableInstruments.map((u) => (

@@ -7,12 +7,14 @@ import { useMemo, useState } from 'react';
 import type { SeriesOption } from '../../../api/analysisApi';
 import { cumulativeReturn, drawdown, totalReturn } from '../../../shared/analytics';
 import { CHART_COLORS, type ChartLine, TimeSeriesChart } from './TimeSeriesChart';
+import { fmtFixed, fmtInt, useT } from '../../../i18n';
 import { Notice, Panel, SeriesIntegrity, SeriesSelect, StatusBlock, fmtDate, fmtNum, fmtPct, useLoadedSeries, useOptionMap } from './shared';
 
-const pctFmt = (v: number) => `${v.toFixed(1)}%`;
+const pctFmt = (v: number) => `${fmtFixed(v, 1)}%`;
 const ZERO = [0];
 
 export function DrawdownTab({ options }: { options: SeriesOption[] }) {
+  const t = useT();
   const byKey = useOptionMap(options);
   const [key, setKey] = useState('');
   const option = byKey.get(key);
@@ -28,56 +30,59 @@ export function DrawdownTab({ options }: { options: SeriesOption[] }) {
   const cumLines = useMemo<ChartLine[]>(
     () =>
       res && res.cum.status === 'OK'
-        ? [{ name: 'Cumulative return', color: CHART_COLORS[1], points: res.cum.timestamps.map((t, i) => ({ t, v: res.cum.values[i] === null ? null : (res.cum.values[i] as number) * 100 })) }]
+        ? [{ name: t('an.dd.cumulative'), color: CHART_COLORS[1], points: res.cum.timestamps.map((ts, i) => ({ t: ts, v: res.cum.values[i] === null ? null : (res.cum.values[i] as number) * 100 })) }]
         : [],
-    [res]
+    [res, t]
   );
   const ddLines = useMemo<ChartLine[]>(
     () =>
       res && res.dd.status === 'OK'
-        ? [{ name: 'Drawdown', color: CHART_COLORS[6], points: res.dd.timestamps.map((t, i) => ({ t, v: res.dd.values[i] === null ? null : (res.dd.values[i] as number) * 100 })) }]
+        ? [{ name: t('an.dd.drawdown'), color: CHART_COLORS[6], points: res.dd.timestamps.map((ts, i) => ({ t: ts, v: res.dd.values[i] === null ? null : (res.dd.values[i] as number) * 100 })) }]
         : [],
-    [res]
+    [res, t]
   );
 
   const m = res?.dd.status === 'OK' ? res.dd.max : null;
 
   return (
     <div className="space-y-4">
-      <Panel title="Returns & drawdown" subtitle="Cumulative return c[i] = p[i]/p[0] − 1; drawdown dd[i] = p[i]/max(p[0..i]) − 1. Gaps are not filled.">
+      <Panel title={t('an.dd.title')} subtitle={t('an.dd.subtitle')}>
         <div className="flex flex-wrap items-end gap-4">
-          <SeriesSelect id="dd-series" label="Series" options={options} value={key} onChange={setKey} />
+          <SeriesSelect id="dd-series" label={t('an.series')} options={options} value={key} onChange={setKey} />
         </div>
-        {loading && <p className="text-xs text-[#E5E7EB]/55">Loading candles…</p>}
+        {loading && <p className="text-xs text-[#E5E7EB]/55">{t('an.loadingCandles')}</p>}
         {error && <Notice tone="error">{error}</Notice>}
         {s && <SeriesIntegrity s={s} />}
       </Panel>
 
       {res && (
         <>
-          <Panel title="Summary">
+          <Panel title={t('an.summary')}>
             <div className="grid gap-3 md:grid-cols-3">
-              <StatusBlock label="Cumulative return" status={res.cum.status} reason={res.cum.reason} warnings={res.cum.warnings} />
-              <StatusBlock label="Total return" status={res.total.status} reason={res.total.reason} warnings={res.total.warnings} />
-              <StatusBlock label="Drawdown" status={res.dd.status} reason={res.dd.reason} warnings={res.dd.warnings} />
+              <StatusBlock label={t('an.dd.cumulative')} status={res.cum.status} reason={res.cum.reason} warnings={res.cum.warnings} />
+              <StatusBlock label={t('an.dd.total')} status={res.total.status} reason={res.total.reason} warnings={res.total.warnings} />
+              <StatusBlock label={t('an.dd.drawdown')} status={res.dd.status} reason={res.dd.reason} warnings={res.dd.warnings} />
             </div>
             <dl className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              <Stat label="Total return" value={res.total.status === 'OK' ? fmtPct(res.total.value) : '—'} />
-              <Stat label="Observations" value={res.cum.status === 'OK' ? String(res.cum.timestamps.length) : '—'} />
-              <Stat label="Max drawdown" value={m ? fmtPct(m.maxDrawdown) : '—'} tone={m && m.maxDrawdown < 0 ? 'neg' : undefined} />
-              <Stat label="Recovered" value={m ? (m.maxDrawdown === 0 ? 'n/a (no drawdown)' : m.recoveryT ? fmtDate(m.recoveryT) : 'not recovered') : '—'} />
-              <Stat label="Peak" value={m ? `${fmtDate(m.peakT)} @ ${fmtNum(m.peakValue, 4)}` : '—'} />
-              <Stat label="Trough" value={m ? `${fmtDate(m.troughT)} @ ${fmtNum(m.troughValue, 4)}` : '—'} />
+              <Stat label={t('an.dd.total')} value={res.total.status === 'OK' ? fmtPct(res.total.value) : '—'} />
+              <Stat label={t('an.dd.observations')} value={res.cum.status === 'OK' ? fmtInt(res.cum.timestamps.length) : '—'} />
+              <Stat label={t('an.dd.maxDrawdown')} value={m ? fmtPct(m.maxDrawdown) : '—'} tone={m && m.maxDrawdown < 0 ? 'neg' : undefined} />
+              <Stat
+                label={t('an.dd.recovered')}
+                value={m ? (m.maxDrawdown === 0 ? t('an.dd.noDrawdown') : m.recoveryT ? fmtDate(m.recoveryT) : t('an.dd.notRecovered')) : '—'}
+              />
+              <Stat label={t('an.dd.peak')} value={m ? `${fmtDate(m.peakT)} @ ${fmtNum(m.peakValue, 4)}` : '—'} />
+              <Stat label={t('an.dd.trough')} value={m ? `${fmtDate(m.troughT)} @ ${fmtNum(m.troughValue, 4)}` : '—'} />
             </dl>
           </Panel>
           {cumLines.length > 0 && (
-            <Panel title="Cumulative return (%)">
-              <TimeSeriesChart lines={cumLines} valueFormatter={pctFmt} referenceLines={ZERO} ariaLabel="Cumulative return chart" />
+            <Panel title={t('an.dd.cumChart')}>
+              <TimeSeriesChart lines={cumLines} valueFormatter={pctFmt} referenceLines={ZERO} ariaLabel={t('an.dd.cumAria')} />
             </Panel>
           )}
           {ddLines.length > 0 && (
-            <Panel title="Drawdown (%)">
-              <TimeSeriesChart lines={ddLines} valueFormatter={pctFmt} height={200} ariaLabel="Drawdown chart" />
+            <Panel title={t('an.dd.ddChart')}>
+              <TimeSeriesChart lines={ddLines} valueFormatter={pctFmt} height={200} ariaLabel={t('an.dd.ddAria')} />
             </Panel>
           )}
         </>
