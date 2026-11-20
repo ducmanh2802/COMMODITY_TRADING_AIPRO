@@ -115,6 +115,53 @@ test('FredMacroAdapter parses official Public CSV without API key and handles HT
   fundamentalStore.clearAll();
 });
 
+test('FredMacroAdapter.syncPublicCommodityBenchmarks syncs daily DCOILBRENTEU quote for BRN and IMF GLOBAL_SD benchmarks', async () => {
+  const { fundamentalStore } = await import('./fundamentalService.ts');
+  fundamentalStore.clearAll();
+
+  const mockCsvFetch = async (url: string | URL | Request): Promise<Response> => {
+    const s = String(url);
+    if (s.includes('DCOILBRENTEU')) {
+      return new Response('observation_date,DCOILBRENTEU\n2026-11-16,91.80\n2026-11-17,.\n2026-11-18,92.94\n', { status: 200 });
+    }
+    if (s.includes('PCOFFROBUSDM')) {
+      return new Response('observation_date,PCOFFROBUSDM\n2026-08-01,162.10\n2026-09-01,167.51\n', { status: 200 });
+    }
+    if (s.includes('PCOTTINDUSDM')) {
+      return new Response('<html>503</html>', { status: 503 });
+    }
+    if (s.includes('PRUBBUSDM')) {
+      return new Response('observation_date,PRUBBUSDM\n2026-09-01,125.08\n', { status: 200 });
+    }
+    return new Response('observation_date,PIORECRUSDM\n2026-09-01,100.44\n', { status: 200 });
+  };
+
+  const fred = new FredMacroAdapter(mockCsvFetch as typeof fetch);
+  const res = await fred.syncPublicCommodityBenchmarks();
+  assert.equal(res.synced, 4);
+  assert.match(res.error ?? '', /503/);
+
+  const brnQuote = fred.getBenchmarkQuote('BRN');
+  assert.ok(brnQuote);
+  assert.equal(brnQuote.price, 92.94);
+  assert.equal(brnQuote.unit, 'USD/barrel');
+  assert.equal(brnQuote.status, 'HISTORICAL');
+  assert.equal(brnQuote.sourceQuality, 'OFFICIAL');
+  assert.equal(brnQuote.timestamp, '2026-11-18T00:00:00.000Z');
+
+  // Monthly IMF benchmarks must NEVER be fabricated into live futures quotes
+  assert.equal(fred.getBenchmarkQuote('RC'), null);
+  assert.equal(fred.getBenchmarkQuote('JRU'), null);
+
+  const sdRecords = fundamentalStore.listRecords({ category: 'GLOBAL_SD' });
+  assert.equal(sdRecords.length, 4);
+  const robusta = sdRecords.find((r) => r.dataset === 'IMF_FRED_ROBUSTA_BENCHMARK');
+  assert.equal(robusta?.actualValue, 167.51);
+  assert.deepEqual(robusta?.relatedSymbols, ['RC']);
+
+  fundamentalStore.clearAll();
+});
+
 test('YahooFinanceAdapter supports explicit 5y/10y historicalRange while defaulting to 2y and failing closed on API errors', async () => {
   await withEnv({ YAHOO_ENABLED: 'true' }, async () => {
     const seenUrls: string[] = [];

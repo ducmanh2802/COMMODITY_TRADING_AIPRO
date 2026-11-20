@@ -68,7 +68,7 @@ export function CommodityHeroImage({
         width={COMMODITY_IMAGE_WIDTH}
         height={COMMODITY_IMAGE_HEIGHT}
         loading={priority ? 'eager' : 'lazy'}
-        decoding="async"
+        decoding={priority ? 'sync' : 'async'}
         onError={() => setErrored(true)}
         className={`w-full h-full object-cover ${imgClassName}`}
       />

@@ -41,6 +41,13 @@ async function startServer(): Promise<void> {
       res.sendFile(indexHtml);
     });
   } else {
+    // Guard against any /api/* path falling through to Vite's SPA index.html fallback.
+    app.use('/api', (_req, res) => {
+      res.status(404).json({
+        error: 'NOT_FOUND',
+        message: 'Requested API endpoint does not exist.',
+      });
+    });
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: {
@@ -68,17 +75,42 @@ async function startServer(): Promise<void> {
   if (isSchedulerEnabled()) {
     try {
       const registry = app.locals.providerRegistry as
-        | { getProviderById?: (id: string) => { syncMacroSeries?: () => Promise<{ synced: number; error?: string }> } | null }
+        | {
+            getProviderById?: (id: string) => {
+              syncMacroSeries?: () => Promise<{ synced: number; error?: string }>;
+              syncPublicCsvMacroSeries?: () => Promise<{ synced: number; error?: string }>;
+            } | null;
+          }
         | undefined;
-      const fred = registry?.getProviderById?.('FRED_MACRO');
+      const fred = registry?.getProviderById?.('FRED_MACRO') as
+        | {
+            syncMacroSeries?: () => Promise<{ synced: number; error?: string }>;
+            syncPublicCsvMacroSeries?: () => Promise<{ synced: number; error?: string }>;
+            syncPublicCommodityBenchmarks?: () => Promise<{ synced: number; error?: string }>;
+          }
+        | null
+        | undefined;
       scheduler = new Scheduler(
         buildSchedulerJobs({
           cot: () => (cotService ??= new CotService()),
           macro,
           fredSync: fred?.syncMacroSeries ? () => fred.syncMacroSeries!() : null,
+          fredPublicSync: fred?.syncPublicCsvMacroSeries
+            ? async () => {
+                const macroRes = await fred.syncPublicCsvMacroSeries!();
+                const benchRes = fred.syncPublicCommodityBenchmarks
+                  ? await fred.syncPublicCommodityBenchmarks()
+                  : { synced: 0 };
+                return {
+                  synced: macroRes.synced + benchRes.synced,
+                  error: macroRes.error ?? benchRes.error,
+                };
+              }
+            : null,
         }),
       );
       scheduler.start();
+      void scheduler.runJob('fred-public-macro');
     } catch (err) {
       console.error('Scheduler failed to start (continuing without it):', err instanceof Error ? err.message : 'unknown error');
     }

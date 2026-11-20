@@ -11,6 +11,7 @@ import {
 } from '../services/cycleAiService.ts';
 import type { ICandleRepository } from '../storage/candleRepository.ts';
 import type { IInstrumentRepository } from '../services/repository.ts';
+import { compareCommoditiesByPotential } from '../../src/shared/utils/commoditySort.ts';
 
 export interface CycleRoutesDeps {
   instruments: Pick<IInstrumentRepository, 'list' | 'findBySymbol'>;
@@ -92,7 +93,7 @@ export function registerCycleRoutes(app: Express, deps: CycleRoutesDeps): void {
           }
           return true;
         })
-        .sort((a, b) => (b.bottomScore ?? -1) - (a.bottomScore ?? -1));
+        .sort(compareCommoditiesByPotential);
 
       res.json({
         generatedAt: overview.generatedAt,

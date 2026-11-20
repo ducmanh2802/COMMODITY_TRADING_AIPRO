@@ -79,10 +79,10 @@ const SERVER_API_SECRETS: ApiSecretSpec[] = [
     providerId: 'USDA_QUICKSTATS',
   },
   {
-    provider: 'FRED Economic Data (Macro Cycle)',
+    provider: 'FRED Economic Data (Macro & Spot)',
     secretName: 'FRED_API_KEY (hoặc Public CSV 0-key)',
     latencyAndTier: 'Official Fed St. Louis (Public CSV 0-key hoặc JSON API 120 req/min)',
-    commodityCoverage: 'DXY Broad Dollar (DTWEXBGS), Fed Funds (FEDFUNDS), US 10Y Yield (DGS10), CPI (CPIAUCSL)',
+    commodityCoverage: 'Brent Spot FOB hàng ngày (DCOILBRENTEU → BRN), DXY, Fed Funds, 10Y, CPI & IMF Monthly (RC/CT/JRU/TIO)',
     officialDoc: 'fred.stlouisfed.org',
     providerId: 'FRED_MACRO',
   },
@@ -98,7 +98,7 @@ const SERVER_API_SECRETS: ApiSecretSpec[] = [
     provider: 'Yahoo Finance (UNOFFICIAL)',
     secretName: 'YAHOO_ENABLED=true',
     latencyAndTier: 'Delayed ~10–30m (Free, 2y–10y D1 continuous, personal use only)',
-    commodityCoverage: 'ZC ZS ZM ZL ZW ZR KC SB CC HG GC SI PL CL NG (không hỗ trợ RC, BRN, TIO, JRU, CT)',
+    commodityCoverage: 'ZC ZS ZM ZL ZW ZR KC SB CC HG GC SI PL CL NG (15 mã; không hỗ trợ RC, BRN futures, TIO, JRU, CT)',
     officialDoc: 'finance.yahoo.com',
     providerId: 'YAHOO_UNOFFICIAL',
   },
@@ -608,7 +608,7 @@ export function DataHealthView() {
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-[11px] shrink-0">
                         <span className={ex.requiresPaidLicense ? 'text-[#F59E0B]' : 'text-[#22C55E]'}>
-                          {ex.accessTier}
+                          {label('fr.dh.tier.', ex.accessTier)}
                         </span>
                         <span className="text-[#E5E7EB]/60">
                           {ex.publicApiAvailable ? t('fr.dh.publicApi') : t('fr.dh.keyOrCsv')}

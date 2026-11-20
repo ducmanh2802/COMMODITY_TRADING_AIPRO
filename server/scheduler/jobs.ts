@@ -46,6 +46,8 @@ export interface SchedulerDeps {
   macro?: MacroSchedulerService | null;
   /** Owner's FRED adapter sync (called as-is). */
   fredSync?: (() => Promise<{ synced: number; error?: string }>) | null;
+  /** Official FRED Public CSV macro sync (no API key required). */
+  fredPublicSync?: (() => Promise<{ synced: number; error?: string }>) | null;
   env?: Record<string, string | undefined>;
   now?: () => Date;
 }
@@ -128,6 +130,19 @@ export function buildSchedulerJobs(deps: SchedulerDeps): SchedulerJob[] {
       async run() {
         const r = await fredSync();
         if (r.error) throw new Error(r.error);
+      },
+    });
+  }
+  if (deps.fredPublicSync) {
+    const fredPublicSync = deps.fredPublicSync;
+    jobs.push({
+      id: 'fred-public-macro',
+      description: 'FRED Public CSV macro sync (daily, 0 key required)',
+      next: (n) => new Date(n.getTime() + DAY),
+      runOnStart: true,
+      async run() {
+        const r = await fredPublicSync();
+        if (r.synced === 0 && r.error) throw new Error(r.error);
       },
     });
   }

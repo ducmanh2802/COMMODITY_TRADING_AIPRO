@@ -1,24 +1,20 @@
-import { Suspense, lazy, type ComponentType } from 'react';
+import type { ComponentType } from 'react';
+import { lazyWithRetry } from '../common/lazyWithRetry';
 
 /**
- * Lazily-loaded module views (owner modules from origin/main). Each view is split into its own chunk so
- * the entry bundle only carries the shell (layout, contexts, Overview). Views keep their named exports;
- * `lazyNamed` adapts them to React.lazy's default-export contract.
+ * Lazily-loaded module views with automatic retry & scoped error recovery so transient dev-server
+ * restarts or dep pre-bundling never leave a stuck broken import.
  */
 function lazyNamed<M, K extends keyof M, P extends object = M[K] extends ComponentType<infer Q> ? Q & object : object>(
   load: () => Promise<M>,
   name: K
 ): ComponentType<P> {
-  const Lazy = lazy(async () => ({ default: (await load())[name] as unknown as ComponentType<P> }));
-  function LazyView(props: P) {
-    return (
-      <Suspense fallback={<p className="text-xs text-[#E5E7EB]/55 py-10 text-center">Loading module…</p>}>
-        <Lazy {...props} />
-      </Suspense>
-    );
-  }
-  LazyView.displayName = `Lazy(${String(name)})`;
-  return LazyView;
+  return lazyWithRetry(
+    load,
+    (mod) => mod[name] as unknown as ComponentType<P>,
+    'Đang tải mô-đun…',
+    `Lazy(${String(name)})`
+  );
 }
 
 export const LazyMarketWatchView = lazyNamed(() => import('./MarketWatchView'), 'MarketWatchView');

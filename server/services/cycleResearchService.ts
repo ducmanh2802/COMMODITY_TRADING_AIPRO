@@ -11,6 +11,7 @@ import type {
   TailoredSupplyDemandItem,
 } from '../../src/shared/types/cycle.ts';
 import { getTailoredSupplyDemandBlueprint } from '../../src/shared/data/commodityResearchCatalog.ts';
+import { sortCommoditiesByPotential } from '../../src/shared/utils/commoditySort.ts';
 import { buildVietnamEconomicCalendar } from '../../src/shared/utils/vietnamCalendar.ts';
 import {
   CYCLE_PHASE_LABELS_VI,
@@ -506,14 +507,8 @@ export function createCycleResearchService(deps: CycleServiceDeps) {
     const bottomCandidateCount = summaries.filter((s) => (s.bottomScore ?? 0) >= 70).length;
     const unavailableCount = summaries.filter((s) => s.cyclePhase === 'DATA_UNAVAILABLE').length;
 
-    const opportunityRadar = [...summaries]
-      .sort((a, b) => {
-        const ao = a.opportunityScore ?? -1;
-        const bo = b.opportunityScore ?? -1;
-        if (bo !== ao) return bo - ao;
-        return Number(b.instrument.isMvxListed) - Number(a.instrument.isMvxListed);
-      })
-      .slice(0, 10);
+    const sortedSummaries = sortCommoditiesByPotential(summaries);
+    const opportunityRadar = sortedSummaries.slice(0, 10);
 
     const dataNotices: string[] = [];
     if (withPriceData === 0) {
@@ -541,7 +536,7 @@ export function createCycleResearchService(deps: CycleServiceDeps) {
         unavailableCount,
       },
       opportunityRadar,
-      commodities: summaries,
+      commodities: sortedSummaries,
       macroTracker,
       dataNotices,
     };

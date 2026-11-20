@@ -372,34 +372,52 @@ export class YahooFinanceAdapter implements MarketDataProvider {
       this.lastError = fetched.error;
       return unavailable(`Yahoo request failed: ${fetched.error}`, source);
     }
-    const meta = fetched.result.meta ?? {};
-    const invalid = (reason: string): MarketQuote => {
-      this.lastError = reason;
-      return { ...unavailable(reason, source), status: 'INVALID' };
-    };
-    if (meta.exchangeName !== mapping.expectedExchangeName) {
-      return invalid(
-        `Yahoo ${mapping.yahooSymbol} returned exchange "${meta.exchangeName ?? 'missing'}", expected "${mapping.expectedExchangeName}"; refused.`
-      );
+    const parsedQuote = this.buildValidatedQuoteFromMeta(fetched.result.meta, inst, mapping);
+    if (!parsedQuote.ok) {
+      this.lastError = parsedQuote.reason;
+      return { ...unavailable(parsedQuote.reason, source), status: 'INVALID' };
     }
-    if (meta.currency !== mapping.expectedCurrency) {
-      return invalid(
-        `Yahoo ${mapping.yahooSymbol} returned currency "${meta.currency ?? 'missing'}", expected "${mapping.expectedCurrency}"; refused (unit cannot be confirmed).`
-      );
+    this.quoteCache.set(mapping.yahooSymbol, { quote: parsedQuote.quote, expiresAtMs: this.now() + this.quoteTtlMs });
+    this.failedUntil.delete(mapping.yahooSymbol);
+    this.lastSyncAt = parsedQuote.quote.retrievedAt;
+    this.lastError = null;
+    return parsedQuote.quote;
+  }
+
+  private buildValidatedQuoteFromMeta(
+    meta: YahooChartMeta | undefined,
+    inst: InstrumentDefinition,
+    mapping: YahooSymbolMapping
+  ): { ok: true; quote: MarketQuote } | { ok: false; reason: string } {
+    const m = meta ?? {};
+    const currency = inst.specification.tradingCurrency;
+    const unit = inst.specification.quotationUnit;
+    const source = `${this.providerId}:${mapping.yahooSymbol}`;
+    if (m.exchangeName !== mapping.expectedExchangeName) {
+      return {
+        ok: false,
+        reason: `Yahoo ${mapping.yahooSymbol} returned exchange "${m.exchangeName ?? 'missing'}", expected "${mapping.expectedExchangeName}"; refused.`,
+      };
     }
-    const rawPrice = meta.regularMarketPrice;
-    const rawTime = meta.regularMarketTime;
+    if (m.currency !== mapping.expectedCurrency) {
+      return {
+        ok: false,
+        reason: `Yahoo ${mapping.yahooSymbol} returned currency "${m.currency ?? 'missing'}", expected "${mapping.expectedCurrency}"; refused (unit cannot be confirmed).`,
+      };
+    }
+    const rawPrice = m.regularMarketPrice;
+    const rawTime = m.regularMarketTime;
     if (typeof rawPrice !== 'number' || !Number.isFinite(rawPrice) || rawPrice <= 0) {
-      return invalid(`Yahoo ${mapping.yahooSymbol} returned no valid regularMarketPrice.`);
+      return { ok: false, reason: `Yahoo ${mapping.yahooSymbol} returned no valid regularMarketPrice.` };
     }
     if (typeof rawTime !== 'number' || !Number.isFinite(rawTime) || rawTime <= 0) {
-      return invalid(`Yahoo ${mapping.yahooSymbol} returned no regularMarketTime (market timestamp).`);
+      return { ok: false, reason: `Yahoo ${mapping.yahooSymbol} returned no regularMarketTime (market timestamp).` };
     }
-    const unitConv = yahooUnitConversion(meta.currency, unit);
-    if (!unitConv.ok) return invalid(unitConv.reason);
+    const unitConv = yahooUnitConversion(m.currency, unit);
+    if (!unitConv.ok) return { ok: false, reason: unitConv.reason };
 
     const timestamp = new Date(rawTime * 1000).toISOString();
-    const vol = meta.regularMarketVolume;
+    const vol = m.regularMarketVolume;
     const quote: MarketQuote = {
       symbol: inst.exchangeSymbol,
       exchange: inst.exchange,
@@ -419,15 +437,12 @@ export class YahooFinanceAdapter implements MarketDataProvider {
       delayMinutes: mapping.delayMinutes,
       sourceQuality: 'UNOFFICIAL',
       contract: YAHOO_CONTRACT_LABEL,
-      tradingPeriod: meta.currentTradingPeriod?.regular
-        ? { start: meta.currentTradingPeriod.regular.start ?? null, end: meta.currentTradingPeriod.regular.end ?? null }
+      tradingPeriod: m.currentTradingPeriod?.regular
+        ? { start: m.currentTradingPeriod.regular.start ?? null, end: m.currentTradingPeriod.regular.end ?? null }
         : null,
     };
     quote.status = this.freshnessFor(quote, mapping);
-    this.quoteCache.set(mapping.yahooSymbol, { quote, expiresAtMs: this.now() + this.quoteTtlMs });
-    this.lastSyncAt = quote.retrievedAt;
-    this.lastError = null;
-    return quote;
+    return { ok: true, quote };
   }
 
   /**
@@ -498,7 +513,6 @@ export class YahooFinanceAdapter implements MarketDataProvider {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<'timeout'>((resolve) => {
       timer = setTimeout(() => resolve('timeout'), Math.max(0, waitMs));
-      timer.unref?.();
     });
     const settled = await Promise.race([refresh, timeout]);
     clearTimeout(timer);
@@ -592,6 +606,15 @@ export class YahooFinanceAdapter implements MarketDataProvider {
     if (!validation.valid) {
       this.lastError = validation.errors.join('; ');
       return { candles: [], status: 'INVALID', reason: this.lastError };
+    }
+    // Warm quoteCache from validated chart metadata so startup history sync also delivers live delayed quotes without extra API calls.
+    const warmedQuote = this.buildValidatedQuoteFromMeta(fetched.result.meta, inst, mapping);
+    if (warmedQuote.ok) {
+      this.quoteCache.set(mapping.yahooSymbol, {
+        quote: warmedQuote.quote,
+        expiresAtMs: this.now() + this.quoteTtlMs,
+      });
+      this.failedUntil.delete(mapping.yahooSymbol);
     }
     this.lastSyncAt = new Date(this.now()).toISOString();
     this.lastError = null;

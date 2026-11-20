@@ -1,10 +1,10 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { InstrumentDefinition, Timeframe, TradingStyle } from '../shared/types/instrument';
 import type { DataQualityStatus, MarketQuote, MarketScope, ProviderHealth } from '../shared/types/market';
 import type { FullDataHealthReport } from '../shared/types/dataHealth';
 import type { AppModuleId, PhaseModuleDescriptor } from '../shared/types/risk';
 import type { RoadmapPhase } from '../shared/architecture';
-import { safeReadJson } from '../shared/utils/http';
+import { fetchJsonWithRetry, safeReadJson } from '../shared/utils/http';
 
 export interface BackendHealthPayload {
   status: string;
@@ -117,6 +117,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [syncing, setSyncing] = useState(false);
   const [lastSyncSummary, setLastSyncSummary] = useState<SyncResultSummary | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const warmupPollsRef = useRef(0);
 
   const refreshBackendData = useCallback(async () => {
     setLoading(true);
@@ -137,9 +138,8 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       const results = await Promise.all(
         endpoints.map(async (path) => {
           try {
-            const res = await fetch(path);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return await safeReadJson<any>(res);
+            return await fetchJsonWithRetry<any>(path);
           } catch (err) {
             failures.push(`${path} → ${err instanceof Error ? err.message : 'network error'}`);
             return null;
@@ -220,6 +220,27 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void refreshBackendData();
   }, [refreshBackendData]);
+
+  // When Yahoo delayed feeds are enabled, the polite 1 req/s background queue and 10y warm-up fill
+  // quotes/datasets over ~16s after cold start. Poll up to 5 times cleanly so live-delayed prices
+  // appear automatically without manual reload or endless polling.
+  useEffect(() => {
+    const yahooConnected = providers.some(
+      (p) => p.providerId === 'YAHOO_UNOFFICIAL' && p.connectionState === 'CONNECTED'
+    );
+    if (!yahooConnected) return;
+    const populatedQuotes = Object.values(quotesBySymbol).filter((q) => q.price !== null).length;
+    if ((populatedQuotes >= 15 && datasets.length >= 15) || warmupPollsRef.current >= 5) return;
+
+    const delayMs = warmupPollsRef.current === 0 ? 2_500 : 4_000;
+    const timer = window.setTimeout(() => {
+      warmupPollsRef.current += 1;
+      void refreshBackendData();
+    }, delayMs);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [providers, quotesBySymbol, datasets.length, refreshBackendData]);
 
   const openInstrumentIn = useCallback((symbol: string, module: AppModuleId) => {
     setSelectedSymbol(symbol);

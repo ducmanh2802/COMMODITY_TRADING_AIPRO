@@ -64,6 +64,9 @@ export default defineConfig(() => {
         },
       },
     },
+    optimizeDeps: {
+      include: ['lightweight-charts', 'lucide-react', 'zod'],
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.

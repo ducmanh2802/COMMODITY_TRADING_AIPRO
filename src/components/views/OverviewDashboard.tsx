@@ -12,7 +12,8 @@ import { DataStatusBadge } from '../common/DataStatusBadge';
 import { Term } from '../common/Term';
 import { fmtClock, fmtPrice, hasPrice, plainUnit } from '../common/quoteFormat';
 import { fmtFixed, fmtNum, hasKey, useT } from '../../i18n';
-import { safeReadJson } from '../../shared/utils/http';
+import { fetchJsonWithRetry } from '../../shared/utils/http';
+import { sortCommoditiesByPotential } from '../../shared/utils/commoditySort';
 
 interface OverviewTechSummary {
   status: string;
@@ -25,7 +26,6 @@ interface OverviewTechSummary {
 type HeatmapHorizon = 'w1' | 'm1' | 'm3' | 'm6' | 'y1';
 const HEATMAP_HORIZONS: HeatmapHorizon[] = ['w1', 'm1', 'm3', 'm6', 'y1'];
 
-const SPOTLIGHT_PRIORITY_IDS = ['ICE:RC', 'MXV:JRU', 'CBOT:ZC', 'CBOT:ZS', 'NYMEX:CL', 'COMEX:GC'];
 const CATEGORY_ORDER: ProductCategory[] = ['AGRICULTURE', 'SOFT_COMMODITIES', 'METALS', 'ENERGY'];
 
 function getHeatmapTone(val: number | null): string {
@@ -114,16 +114,23 @@ export function OverviewDashboard() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     async function loadSecondary() {
       try {
-        const [techRes, fundRes, cycleRes] = await Promise.all([
-          fetch(`/api/technical/${encodeURIComponent(selectedSymbol)}?timeframe=${timeframe}`),
-          fetch('/api/fundamental/records'),
-          fetch('/api/cycle/overview'),
+        const [tj, fj, cj] = await Promise.all([
+          fetchJsonWithRetry<{ snapshot?: { status?: string; marketStructure?: { mainTrend?: string; marketRegime?: string }; atr14?: number | null; rsi14?: number | null } }>(
+            `/api/technical/${encodeURIComponent(selectedSymbol)}?timeframe=${timeframe}`,
+            { signal: controller.signal }
+          ).catch(() => null),
+          fetchJsonWithRetry<{ records?: unknown[]; news?: unknown[] }>('/api/fundamental/records', {
+            signal: controller.signal,
+          }).catch(() => null),
+          fetchJsonWithRetry<CycleMarketOverview>('/api/cycle/overview', {
+            signal: controller.signal,
+          }).catch(() => null),
         ]);
         if (cancelled) return;
-        if (techRes.ok) {
-          const tj = await safeReadJson<{ snapshot?: { status?: string; marketStructure?: { mainTrend?: string; marketRegime?: string }; atr14?: number | null; rsi14?: number | null } }>(techRes);
+        if (tj) {
           const snap = tj.snapshot;
           setTechSummary({
             status: snap?.status ?? 'UNAVAILABLE',
@@ -133,13 +140,11 @@ export function OverviewDashboard() {
             rsi14: snap?.rsi14 ?? null,
           });
         }
-        if (fundRes.ok) {
-          const fj = await safeReadJson<{ records?: unknown[]; news?: unknown[] }>(fundRes);
+        if (fj) {
           setMacroCount(Array.isArray(fj.records) ? fj.records.length : 0);
           setNewsCount(Array.isArray(fj.news) ? fj.news.length : 0);
         }
-        if (cycleRes.ok) {
-          const cj = await safeReadJson<CycleMarketOverview>(cycleRes);
+        if (cj) {
           setCycleOverview(cj);
         }
       } catch {
@@ -149,8 +154,9 @@ export function OverviewDashboard() {
     void loadSecondary();
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [selectedSymbol, timeframe, datasets.length]);
+  }, [selectedSymbol, timeframe, datasets.length, Object.keys(quotesBySymbol).filter((k) => quotesBySymbol[k]?.price !== null).length]);
 
   const filteredInstruments = useMemo(
     () =>
@@ -171,12 +177,37 @@ export function OverviewDashboard() {
     [instruments, marketScope, searchQuery]
   );
 
+  const sortedCycleCommodities = useMemo(
+    () => sortCommoditiesByPotential(cycleOverview?.commodities ?? []),
+    [cycleOverview]
+  );
+
+  const potentialRankById = useMemo(() => {
+    const map = new Map<string, number>();
+    sortedCycleCommodities.forEach((item, index) => {
+      map.set(item.instrument.id, index);
+    });
+    return map;
+  }, [sortedCycleCommodities]);
+
   const groups = useMemo(
     () =>
-      CATEGORY_ORDER.map((cat) => ({ cat, items: filteredInstruments.filter((i) => i.category === cat) })).filter(
-        (g) => g.items.length > 0
-      ),
-    [filteredInstruments]
+      CATEGORY_ORDER.map((cat) => {
+        const items = filteredInstruments
+          .filter((i) => i.category === cat)
+          .sort((a, b) => {
+            const ra = potentialRankById.get(a.id);
+            const rb = potentialRankById.get(b.id);
+            if (ra !== undefined && rb !== undefined && ra !== rb) return ra - rb;
+            const pa = hasPrice(quotesBySymbol[a.exchangeSymbol]);
+            const pb = hasPrice(quotesBySymbol[b.exchangeSymbol]);
+            if (pa !== pb) return pa ? -1 : 1;
+            if (a.isMvxListed !== b.isMvxListed) return a.isMvxListed ? -1 : 1;
+            return a.exchangeSymbol.localeCompare(b.exchangeSymbol);
+          });
+        return { cat, items };
+      }).filter((g) => g.items.length > 0),
+    [filteredInstruments, potentialRankById, quotesBySymbol]
   );
 
   const activeInstrument =
@@ -189,13 +220,10 @@ export function OverviewDashboard() {
   const overallStatus = health?.capabilities.marketDataOverallStatus ?? 'UNAVAILABLE';
   const worldCount = cycleOverview?.commodities.length ?? instruments.length;
 
-  const spotlightCommodities = (() => {
-    const list = cycleOverview?.commodities ?? [];
-    const prioritized = SPOTLIGHT_PRIORITY_IDS.map((id) => list.find((c) => c.instrument.id === id)).filter(
-      (c): c is NonNullable<typeof c> => Boolean(c)
-    );
-    return prioritized.length > 0 ? prioritized : list.slice(0, 6);
-  })();
+  const spotlightCommodities = useMemo(
+    () => sortedCycleCommodities.slice(0, 6),
+    [sortedCycleCommodities]
+  );
 
   const breadth = cycleOverview?.marketBreadth;
 
@@ -316,34 +344,56 @@ export function OverviewDashboard() {
         </button>
       </div>
 
-      {/* Gentle empty state: only when there are no prices at all */}
+      {/* Gentle empty state or active warm-up notice when no prices have landed yet */}
       {!loading && !anyPriceAtAll && (
-        <section className={`${card} border-[#6366F1]/40 space-y-3`}>
-          <h2 className="text-base font-semibold text-white">{t('fr.ov.empty.title')}</h2>
-          <p className="text-sm text-[#E5E7EB]/75 leading-relaxed">{t('fr.ov.empty.body')}</p>
-          <ol className="list-decimal pl-5 space-y-1 text-sm text-[#E5E7EB]/75">
-            <li>{t('fr.ov.empty.step1')}</li>
-            <li>{t('fr.ov.empty.step2')}</li>
-          </ol>
-          <div className="flex flex-wrap gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => setActiveModule('data-import')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded-md text-xs font-medium text-white"
-            >
-              <Upload className="w-3.5 h-3.5" aria-hidden="true" />
-              {t('fr.ov.empty.import')}
-            </button>
+        providers.some((p) => p.providerId === 'YAHOO_UNOFFICIAL' && p.connectionState === 'CONNECTED') ? (
+          <section className={`${card} border-[#6366F1]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
+            <div className="space-y-1">
+              <h2 className="text-sm font-semibold text-white inline-flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-[#818CF8] animate-spin" aria-hidden="true" />
+                <span>Đang đồng bộ giá hàng hóa thực tế (Yahoo Finance 15m delayed)...</span>
+              </h2>
+              <p className="text-xs text-[#E5E7EB]/65">
+                Hệ thống đang nạp 15 hàng hóa hỗ trợ theo tốc độ an toàn (~15 giây sau khi khởi động). Bạn cũng có thể bấm &quot;Cập nhật giá&quot; bất kỳ lúc nào.
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => setActiveModule('data-health')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded-md text-xs font-medium text-[#E5E7EB]"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded-md text-xs font-medium text-[#E5E7EB] whitespace-nowrap self-start sm:self-auto"
             >
               <Database className="w-3.5 h-3.5" aria-hidden="true" />
               {t('fr.ov.empty.health')}
             </button>
-          </div>
-        </section>
+          </section>
+        ) : (
+          <section className={`${card} border-[#6366F1]/40 space-y-3`}>
+            <h2 className="text-base font-semibold text-white">{t('fr.ov.empty.title')}</h2>
+            <p className="text-sm text-[#E5E7EB]/75 leading-relaxed">{t('fr.ov.empty.body')}</p>
+            <ol className="list-decimal pl-5 space-y-1 text-sm text-[#E5E7EB]/75">
+              <li>{t('fr.ov.empty.step1')}</li>
+              <li>{t('fr.ov.empty.step2')}</li>
+            </ol>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setActiveModule('data-import')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded-md text-xs font-medium text-white"
+              >
+                <Upload className="w-3.5 h-3.5" aria-hidden="true" />
+                {t('fr.ov.empty.import')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveModule('data-health')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded-md text-xs font-medium text-[#E5E7EB]"
+              >
+                <Database className="w-3.5 h-3.5" aria-hidden="true" />
+                {t('fr.ov.empty.health')}
+              </button>
+            </div>
+          </section>
+        )
       )}
 
       {/* A. Market breadth by cycle */}

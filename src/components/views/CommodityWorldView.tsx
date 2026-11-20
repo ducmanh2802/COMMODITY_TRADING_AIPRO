@@ -13,7 +13,8 @@ import type {
 import { CommodityHeroImage } from '../common/CommodityHeroImage';
 import { CyclePhaseBadge, getBottomScoreAccent } from '../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../common/DataStatusBadge';
-import { safeReadJson } from '../../shared/utils/http';
+import { fetchJsonWithRetry } from '../../shared/utils/http';
+import { sortCommoditiesByPotential } from '../../shared/utils/commoditySort';
 
 const GROUP_FILTERS: CommodityGroupFilter[] = [
   'ALL',
@@ -24,7 +25,11 @@ const GROUP_FILTERS: CommodityGroupFilter[] = [
 ];
 
 export function CommodityWorldView() {
-  const { openInstrumentIn, datasets } = useTerminal();
+  const { openInstrumentIn, datasets, quotesBySymbol } = useTerminal();
+  const pricedQuotesCount = useMemo(
+    () => Object.values(quotesBySymbol).filter((q) => q?.price !== null).length,
+    [quotesBySymbol]
+  );
   const [overview, setOverview] = useState<CycleMarketOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,28 +37,30 @@ export function CommodityWorldView() {
   const [mxvOnly, setMxvOnly] = useState(false);
   const [query, setQuery] = useState('');
 
-  const fetchWorld = async () => {
+  const fetchWorld = async (signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/cycle/overview');
-      const json = await safeReadJson<CycleMarketOverview>(res);
+      const json = await fetchJsonWithRetry<CycleMarketOverview>('/api/cycle/overview', { signal });
       setOverview(json);
     } catch (err) {
+      if (signal?.aborted) return;
       setError(err instanceof Error ? err.message : 'Không thể tải dữ liệu Living Commodity World.');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   };
 
   useEffect(() => {
-    void fetchWorld();
-  }, [datasets.length]);
+    const controller = new AbortController();
+    void fetchWorld(controller.signal);
+    return () => controller.abort();
+  }, [datasets.length, pricedQuotesCount]);
 
   const filteredItems = useMemo(() => {
     const items = overview?.commodities ?? [];
     const q = query.trim().toLowerCase();
-    return items.filter((item) => {
+    const filtered = items.filter((item) => {
       if (groupFilter !== 'ALL' && item.instrument.category !== groupFilter) return false;
       if (mxvOnly && !item.instrument.isMvxListed) return false;
       if (q) {
@@ -70,6 +77,7 @@ export function CommodityWorldView() {
       }
       return true;
     });
+    return sortCommoditiesByPotential(filtered);
   }, [overview, groupFilter, mxvOnly, query]);
 
   return (
@@ -80,7 +88,7 @@ export function CommodityWorldView() {
             Thế giới Hàng hóa Sống (Living Commodity World)
           </h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Danh mục 20 hàng hóa phái sinh MXV &amp; quốc tế với hình ảnh thực tế riêng biệt, định vị chu kỳ giá và điểm tìm đáy.
+            Danh mục {overview?.commodities.length ?? 21} hàng hóa phái sinh MXV &amp; quốc tế · tự động xếp các hàng hóa tiềm năng (điểm cơ hội &amp; chu kỳ cao) lên đầu danh sách.
           </p>
         </div>
 
@@ -114,7 +122,7 @@ export function CommodityWorldView() {
                     : 'text-[#E5E7EB]/70 hover:text-white hover:bg-[#172033]'
                 }`}
               >
-                {COMMODITY_GROUP_LABELS_VI[group]}
+                {group === 'ALL' ? `Tất cả (${overview?.commodities.length ?? 21})` : COMMODITY_GROUP_LABELS_VI[group]}
               </button>
             );
           })}
@@ -149,8 +157,15 @@ export function CommodityWorldView() {
       </section>
 
       {error && (
-        <div className="bg-[#111622] border border-[#EF4444]/40 rounded-lg p-4 text-xs text-[#EF4444]">
-          Không thể tải dữ liệu Thế giới Hàng hóa: {error}
+        <div className="bg-[#111622] border border-[#EF4444]/40 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#FCA5A5]">
+          <span>Không thể tải dữ liệu Thế giới Hàng hóa: {error}</span>
+          <button
+            type="button"
+            onClick={() => void fetchWorld()}
+            className="px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded text-xs font-medium text-white whitespace-nowrap self-start sm:self-auto"
+          >
+            Thử lại ngay
+          </button>
         </div>
       )}
 
@@ -170,10 +185,11 @@ export function CommodityWorldView() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filteredItems.map((item) => (
+          {filteredItems.map((item, idx) => (
             <CommodityWorldCard
               key={item.instrument.id}
               item={item}
+              priority={idx < 6}
               onSelect={() => openInstrumentIn(item.instrument.exchangeSymbol, 'commodity-profile')}
             />
           ))}
@@ -185,9 +201,11 @@ export function CommodityWorldView() {
 
 function CommodityWorldCard({
   item,
+  priority,
   onSelect,
 }: {
   item: CommodityCycleSummary;
+  priority: boolean;
   onSelect: () => void;
 }) {
   const { instrument, quote, cyclePhase, bottomScore, bottomClassification, returns } = item;
@@ -207,6 +225,7 @@ function CommodityWorldCard({
           symbol={instrument.id}
           name={nameVi}
           category={instrument.category}
+          priority={priority}
           className="w-full h-full"
           imgClassName="transition-transform duration-300 group-hover:scale-[1.04]"
         />
@@ -238,8 +257,13 @@ function CommodityWorldCard({
           </div>
 
           <div className="text-right shrink-0">
-            <p className="text-sm sm:text-base font-mono font-semibold text-white tabular-nums">
-              {quote.price !== null ? quote.price.toFixed(2) : 'DATA_UNAVAILABLE'}
+            <p
+              title={quote.price === null ? 'DATA_UNAVAILABLE' : undefined}
+              className={`font-mono font-semibold tabular-nums ${
+                quote.price !== null ? 'text-sm sm:text-base text-white' : 'text-xs sm:text-sm text-[#E5E7EB]/85'
+              }`}
+            >
+              {quote.price !== null ? quote.price.toFixed(2) : 'Chưa có giá'}
             </p>
             <p className="text-[11px] font-mono text-[#E5E7EB]/75">
               {quote.price !== null ? quote.unit : 'Chưa có feed'}

@@ -467,3 +467,29 @@ test('T33: Yahoo history backfills 10y then refreshes incrementally; engineCandl
     assert.equal((await registry.syncYahooHistory([zc])).enabled, false);
   });
 });
+
+test('getCandles warms quoteCache on valid metadata and skips cache on invalid exchange/currency', async () => {
+  await withEnv({ YAHOO_ENABLED: 'true' }, async () => {
+    const h = harness(() => json(fixture()));
+    const adapter = new YahooFinanceAdapter(h.options);
+
+    const candleRes = await adapter.getCandles('ZC', 'D1', undefined, undefined, { range: '2y' });
+    assert.equal(candleRes.status, 'HISTORICAL');
+    assert.equal(h.calls.length, 1);
+
+    // Subsequent getQuote hits warmed quoteCache with zero additional network requests
+    const quoteRes = await adapter.getQuote('ZC');
+    assert.equal(quoteRes.price, 448.75);
+    assert.equal(quoteRes.status, 'DELAYED');
+    assert.equal(h.calls.length, 1, 'getQuote served from cache warmed by getCandles');
+
+    // Invalid exchange in meta -> candles still invalid/or quote NOT warmed
+    const bad = harness(() => json(variant('ZC=F', 'NYM', 'USX', 448.75)));
+    const badAdapter = new YahooFinanceAdapter(bad.options);
+    await badAdapter.getCandles('ZC', 'D1');
+    assert.equal(bad.calls.length, 1);
+    const qAfterBad = await badAdapter.getQuote('ZC');
+    assert.equal(bad.calls.length, 2, 'invalid meta did not warm quoteCache');
+    assert.equal(qAfterBad.status, 'INVALID');
+  });
+});

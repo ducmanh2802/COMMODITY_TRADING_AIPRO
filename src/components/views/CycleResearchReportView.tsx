@@ -4,7 +4,7 @@ import { useTerminal } from '../../contexts/TerminalContext';
 import { getCommodityVisual } from '../../shared/data/commodityVisuals';
 import type { DailyResearchReportPayload } from '../../shared/types/cycle';
 import { CyclePhaseBadge, getBottomScoreAccent } from '../common/CyclePhaseBadge';
-import { safeReadJson } from '../../shared/utils/http';
+import { fetchJsonWithRetry, safeReadJson } from '../../shared/utils/http';
 
 export function CycleResearchReportView() {
   const { openInstrumentIn } = useTerminal();
@@ -15,12 +15,14 @@ export function CycleResearchReportView() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     async function loadBase() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/cycle/report');
-        const json = await safeReadJson<DailyResearchReportPayload>(res);
+        const json = await fetchJsonWithRetry<DailyResearchReportPayload>('/api/cycle/report', {
+          signal: controller.signal,
+        });
         if (!cancelled) setReport(json);
       } catch (err) {
         if (!cancelled) {
@@ -33,6 +35,7 @@ export function CycleResearchReportView() {
     void loadBase();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, []);
 

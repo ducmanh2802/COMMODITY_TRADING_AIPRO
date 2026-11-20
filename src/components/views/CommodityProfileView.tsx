@@ -19,7 +19,7 @@ import type { MarketCandle } from '../../shared/types/market';
 import { CommodityHeroImage } from '../common/CommodityHeroImage';
 import { CyclePhaseBadge, getBottomScoreAccent } from '../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../common/DataStatusBadge';
-import { safeReadJson } from '../../shared/utils/http';
+import { fetchJsonWithRetry, safeReadJson } from '../../shared/utils/http';
 
 type ChartHorizon = '1Y' | '3Y' | '5Y' | '10Y' | 'ALL';
 
@@ -46,25 +46,25 @@ export function CommodityProfileView() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     async function loadProfile() {
       setLoading(true);
       setError(null);
       setVerdict(null);
       try {
-        const [profRes, candleRes] = await Promise.all([
-          fetch(`/api/cycle/profile/${encodeURIComponent(selectedSymbol)}`),
-          fetch(`/api/market/candles/${encodeURIComponent(selectedSymbol)}?timeframe=D1`),
+        const [profJson, candleJson] = await Promise.all([
+          fetchJsonWithRetry<CommodityProfileDossier>(
+            `/api/cycle/profile/${encodeURIComponent(selectedSymbol)}`,
+            { signal: controller.signal }
+          ),
+          fetchJsonWithRetry<{ candles?: MarketCandle[] }>(
+            `/api/market/candles/${encodeURIComponent(selectedSymbol)}?timeframe=D1`,
+            { signal: controller.signal }
+          ).catch(() => null),
         ]);
         if (cancelled) return;
-        const profJson = await safeReadJson<CommodityProfileDossier>(profRes);
         setDossier(profJson);
-
-        if (candleRes.ok) {
-          const cj = await safeReadJson<{ candles?: MarketCandle[] }>(candleRes);
-          setCandles(Array.isArray(cj.candles) ? cj.candles : []);
-        } else {
-          setCandles([]);
-        }
+        setCandles(Array.isArray(candleJson?.candles) ? candleJson.candles : []);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Không thể tải hồ sơ hàng hóa.');
@@ -76,6 +76,7 @@ export function CommodityProfileView() {
     void loadProfile();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [selectedSymbol, datasets.length]);
 

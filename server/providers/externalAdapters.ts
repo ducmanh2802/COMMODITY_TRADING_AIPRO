@@ -1690,9 +1690,14 @@ export class FredMacroAdapter implements MarketDataProvider {
   private readonly fetchFn: FetchLike;
   private lastSyncAt: string | null = null;
   private lastError: string | null = null;
+  private readonly benchmarkQuotes = new Map<string, MarketQuote>();
 
   constructor(fetchFn: FetchLike = globalThis.fetch) {
     this.fetchFn = fetchFn;
+  }
+
+  getBenchmarkQuote(symbol: string): MarketQuote | null {
+    return this.benchmarkQuotes.get(symbol.trim().toUpperCase()) ?? null;
   }
 
   private getApiKey(): string {
@@ -1700,10 +1705,12 @@ export class FredMacroAdapter implements MarketDataProvider {
   }
 
   async getInstruments(): Promise<string[]> {
-    return [];
+    return ['BRN'];
   }
 
   async getQuote(symbol: string): Promise<MarketQuote> {
+    const benchmark = this.getBenchmarkQuote(symbol);
+    if (benchmark) return benchmark;
     return createUnavailableQuote({
       symbol,
       exchange: 'MACRO',
@@ -1711,7 +1718,7 @@ export class FredMacroAdapter implements MarketDataProvider {
       currency: 'USD',
       unit: 'INDEX',
       source: this.providerId,
-      reason: 'FRED_MACRO provides macro cycle series rather than tradable futures quotes.',
+      reason: 'FRED_MACRO provides macro cycle series & Brent spot FOB benchmark rather than streaming intraday futures.',
     });
   }
 
@@ -1889,13 +1896,151 @@ export class FredMacroAdapter implements MarketDataProvider {
     return { synced, error: lastErr };
   }
 
+  /**
+   * Syncs official 0-key FRED Public CSV commodity benchmarks verified live:
+   * - DCOILBRENTEU: EIA Europe Brent Crude Spot FOB (Daily, USD/barrel) -> maps cleanly to ICE:BRN daily close
+   * - IMF monthly benchmarks (PCOFFROBUSDM, PCOTTINDUSDM, PRUBBUSDM, PIORECRUSDM) -> stored as GLOBAL_SD fundamentals only
+   */
+  async syncPublicCommodityBenchmarks(): Promise<{ synced: number; error?: string }> {
+    const defs: Array<{
+      id: string;
+      dataset: string;
+      unit: string;
+      relatedSymbols: string[];
+      quoteSymbol?: string;
+      quoteLabel?: string;
+    }> = [
+      {
+        id: 'DCOILBRENTEU',
+        dataset: 'EIA_FRED_BRENT_SPOT_FOB',
+        unit: 'USD/barrel',
+        relatedSymbols: ['BRN'],
+        quoteSymbol: 'BRN',
+        quoteLabel: 'EIA/FRED Europe Brent Crude Spot FOB (daily official close; benchmark reference for BRN)',
+      },
+      {
+        id: 'PCOFFROBUSDM',
+        dataset: 'IMF_FRED_ROBUSTA_BENCHMARK',
+        unit: 'cents/lb',
+        relatedSymbols: ['RC'],
+      },
+      {
+        id: 'PCOTTINDUSDM',
+        dataset: 'IMF_FRED_COTTON_BENCHMARK',
+        unit: 'cents/lb',
+        relatedSymbols: ['CT'],
+      },
+      {
+        id: 'PRUBBUSDM',
+        dataset: 'IMF_FRED_RUBBER_BENCHMARK',
+        unit: 'cents/lb',
+        relatedSymbols: ['JRU'],
+      },
+      {
+        id: 'PIORECRUSDM',
+        dataset: 'IMF_FRED_IRON_ORE_BENCHMARK',
+        unit: 'USD/MT',
+        relatedSymbols: ['TIO'],
+      },
+    ];
+
+    let synced = 0;
+    let lastErr: string | undefined;
+
+    for (const def of defs) {
+      try {
+        const url = `https://fred.stlouisfed.org/graph/fredgraph.csv?id=${encodeURIComponent(def.id)}`;
+        const res = await this.fetchFn(url, { signal: AbortSignal.timeout(12_000) });
+        if (!res.ok) {
+          lastErr = `HTTP ${res.status} for FRED benchmark CSV ${def.id}`;
+          continue;
+        }
+        const text = await res.text();
+        const lines = text.trim().split(/\r?\n/);
+        if (
+          lines.length < 2 ||
+          (!lines[0].toUpperCase().includes('DATE') && !lines[0].toUpperCase().includes('OBSERVATION_DATE'))
+        ) {
+          lastErr = `Unexpected FRED benchmark CSV header for ${def.id}`;
+          continue;
+        }
+        const validObs: Array<{ date: string; val: number }> = [];
+        for (let i = 1; i < lines.length; i++) {
+          const [rawDate, rawVal] = lines[i].split(',');
+          const d = rawDate?.trim();
+          if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) continue;
+          if (!rawVal || rawVal.trim() === '.' || rawVal.trim() === '') continue;
+          const v = Number(rawVal.trim());
+          if (Number.isFinite(v) && v > 0) validObs.push({ date: d, val: v });
+        }
+        if (validObs.length === 0) {
+          lastErr = `No valid numeric rows in FRED benchmark CSV for ${def.id}`;
+          continue;
+        }
+        const latest = validObs[validObs.length - 1];
+        const prev = validObs.length >= 2 ? validObs[validObs.length - 2] : null;
+        const impact =
+          prev && latest.val > prev.val ? 'BULLISH' : prev && latest.val < prev.val ? 'BEARISH' : 'SIDEWAYS';
+        const retrievedIso = new Date().toISOString();
+
+        fundamentalStore.addRecord({
+          dataset: def.dataset,
+          source: `FRED Public CSV (${def.id})`,
+          publicationTimestamp: retrievedIso,
+          observationDate: latest.date,
+          dataPeriod: latest.date,
+          category: 'GLOBAL_SD',
+          relatedSymbols: def.relatedSymbols,
+          actualValue: latest.val,
+          previousValue: prev ? prev.val : null,
+          forecastValue: null,
+          unit: def.unit,
+          revisionStatus: 'FINAL',
+          impactAssessment: impact,
+        });
+
+        if (def.quoteSymbol) {
+          this.benchmarkQuotes.set(def.quoteSymbol, {
+            symbol: def.quoteSymbol,
+            exchange: 'ICE',
+            contractMonth: null,
+            price: latest.val,
+            bid: null,
+            ask: null,
+            volume: null,
+            openInterest: null,
+            currency: 'USD',
+            unit: def.unit,
+            source: `FRED_MACRO:${def.id}`,
+            sourceQuality: 'OFFICIAL',
+            timestamp: `${latest.date}T00:00:00.000Z`,
+            retrievedAt: retrievedIso,
+            status: 'HISTORICAL',
+            statusReason: `${def.quoteLabel ?? def.dataset} (${latest.date}, official close).`,
+          });
+        }
+        synced += 1;
+      } catch (err) {
+        lastErr = sanitizeExternalText(err instanceof Error ? err.message : 'FRED benchmark CSV failed');
+      }
+    }
+
+    if (synced > 0) {
+      this.lastSyncAt = new Date().toISOString();
+      this.lastError = null;
+    } else if (lastErr) {
+      this.lastError = lastErr;
+    }
+    return { synced, error: lastErr };
+  }
+
   async getProviderStatus(): Promise<ProviderHealth> {
     const configured = Boolean(this.getApiKey()) || Boolean(this.lastSyncAt);
     const hasKey = Boolean(this.getApiKey());
     return {
       providerId: this.providerId,
       name: this.providerName,
-      exchanges: ['MACRO'],
+      exchanges: ['MACRO', 'ICE'],
       connectionState: !configured ? 'UNCONFIGURED' : this.lastError ? 'DEGRADED' : 'CONNECTED',
       dataStatus: configured && !this.lastError ? 'HISTORICAL' : 'UNAVAILABLE',
       credentialsConfigured: hasKey,
@@ -1904,14 +2049,21 @@ export class FredMacroAdapter implements MarketDataProvider {
       lastCheckedAt: new Date().toISOString(),
       lastSuccessfulSyncAt: this.lastSyncAt,
       requiredEnvVars: ['FRED_API_KEY (tùy chọn — có Public CSV miễn phí không cần key)'],
-      supportedScopes: ['DXY Broad USD', 'Fed Funds Rate', 'US 10Y Yield', 'US CPI Inflation'],
+      supportedScopes: [
+        'DXY Broad USD',
+        'Fed Funds Rate',
+        'US 10Y Yield',
+        'US CPI Inflation',
+        'Brent Spot FOB (DCOILBRENTEU)',
+        'IMF Monthly Benchmarks (RC/CT/JRU/TIO)',
+      ],
       lastError: this.lastError,
       message: hasKey
         ? this.lastError
           ? `Last sync issue: ${this.lastError}`
-          : 'FRED_API_KEY configured on server.'
+          : 'FRED_API_KEY configured on server (+ DCOILBRENTEU & IMF CSV benchmarks).'
         : this.lastSyncAt
-          ? 'Synced via official FRED Public CSV (fredgraph.csv, no API key required).'
+          ? 'Synced via official FRED Public CSV (fredgraph.csv, no API key required: DXY, Fed Funds, 10Y, CPI, Brent Spot & IMF benchmarks).'
           : 'Supports official FRED Public CSV (0 key) when Sync Public Macro is enabled, or set FRED_API_KEY for JSON API.',
     };
   }
@@ -2269,36 +2421,39 @@ export async function syncConfiguredProviders(options: {
     }
   }
 
-  // 9. Federal Reserve Economic Data (FRED) macro sync (API key OR explicit public CSV)
+  // 9. Federal Reserve Economic Data (FRED) macro & commodity benchmark sync (API key OR explicit public CSV)
   if (options.fred) {
     if (envPresent('FRED_API_KEY')) {
       const fredRes = await options.fred.syncMacroSeries();
-      totalMacroAdded += fredRes.synced;
+      const benchRes = await options.fred.syncPublicCommodityBenchmarks();
+      totalMacroAdded += fredRes.synced + benchRes.synced;
       outcomes.push({
         providerId: 'FRED_MACRO',
         providerName: options.fred.providerName,
-        status: fredRes.synced > 0 ? 'CONNECTED' : 'DEGRADED',
+        status: fredRes.synced + benchRes.synced > 0 ? 'CONNECTED' : 'DEGRADED',
         candlesSynced: 0,
-        macroSynced: fredRes.synced,
-        symbolsUpdated: [],
-        message: `Synced ${fredRes.synced} FRED macro cycle series (API JSON).`,
-        error: fredRes.error,
+        macroSynced: fredRes.synced + benchRes.synced,
+        symbolsUpdated: options.fred.getBenchmarkQuote('BRN') ? ['BRN'] : [],
+        message: `Synced ${fredRes.synced} FRED macro series & ${benchRes.synced} Brent/IMF benchmarks.`,
+        error: fredRes.error ?? benchRes.error,
       });
     } else if (options.includePublicMacro || envPresent('FRED_PUBLIC_CSV_ENABLED')) {
       const fredCsvRes = await options.fred.syncPublicCsvMacroSeries();
-      totalMacroAdded += fredCsvRes.synced;
+      const benchRes = await options.fred.syncPublicCommodityBenchmarks();
+      const totalSynced = fredCsvRes.synced + benchRes.synced;
+      totalMacroAdded += totalSynced;
       outcomes.push({
         providerId: 'FRED_MACRO',
         providerName: options.fred.providerName,
-        status: fredCsvRes.synced > 0 ? 'CONNECTED' : 'DEGRADED',
+        status: totalSynced > 0 ? 'CONNECTED' : 'DEGRADED',
         candlesSynced: 0,
-        macroSynced: fredCsvRes.synced,
-        symbolsUpdated: [],
+        macroSynced: totalSynced,
+        symbolsUpdated: options.fred.getBenchmarkQuote('BRN') ? ['BRN'] : [],
         message:
-          fredCsvRes.synced > 0
-            ? `Synced ${fredCsvRes.synced} FRED macro cycle series via official Public CSV (no key required).`
-            : fredCsvRes.error ?? 'FRED Public CSV sync failed.',
-        error: fredCsvRes.error,
+          totalSynced > 0
+            ? `Synced ${fredCsvRes.synced} macro series + ${benchRes.synced} Brent/IMF benchmarks via official FRED Public CSV (0 key).`
+            : fredCsvRes.error ?? benchRes.error ?? 'FRED Public CSV sync failed.',
+        error: fredCsvRes.error ?? benchRes.error,
       });
     } else {
       outcomes.push({

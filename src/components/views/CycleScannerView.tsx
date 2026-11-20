@@ -10,7 +10,8 @@ import type {
 import { CommodityHeroImage } from '../common/CommodityHeroImage';
 import { CyclePhaseBadge, getBottomScoreAccent } from '../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../common/DataStatusBadge';
-import { safeReadJson } from '../../shared/utils/http';
+import { fetchJsonWithRetry } from '../../shared/utils/http';
+import { sortCommoditiesByPotential } from '../../shared/utils/commoditySort';
 
 export function CycleScannerView() {
   const { openInstrumentIn } = useTerminal();
@@ -32,9 +33,12 @@ export function CycleScannerView() {
       if (minScore > 0) qs.set('minBottomScore', String(minScore));
       if (mxvOnly) qs.set('mxvOnly', 'true');
 
-      const res = await fetch(`/api/cycle/scanner?${qs.toString()}`);
-      const json = await safeReadJson<{ commodities?: CommodityCycleSummary[] }>(res);
-      setResults(Array.isArray(json.commodities) ? json.commodities : []);
+      const json = await fetchJsonWithRetry<{ commodities?: CommodityCycleSummary[] }>(
+        `/api/cycle/scanner?${qs.toString()}`
+      );
+      setResults(
+        Array.isArray(json.commodities) ? sortCommoditiesByPotential(json.commodities) : []
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Lỗi quét Cycle Hunter.');
     } finally {
@@ -55,7 +59,7 @@ export function CycleScannerView() {
             <span>Bộ lọc Săn Chu kỳ &amp; Vùng Đáy (Cycle Hunter Scanner)</span>
           </h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            Xếp hạng toàn bộ 20 hàng hóa theo Giai đoạn Chu kỳ, Điểm tạo đáy (0–100), Định giá lịch sử và Cung–Cầu.
+            Tự động xếp các hàng hóa tiềm năng nhất (điểm cơ hội &amp; tạo đáy 0–100) lên đầu danh sách.
           </p>
         </div>
       </div>

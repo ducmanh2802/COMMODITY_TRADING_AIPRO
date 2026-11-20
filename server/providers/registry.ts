@@ -366,6 +366,16 @@ export class ProviderRegistry {
       return candidates[0];
     }
 
+    // 2.5. Official FRED commodity spot benchmark when synced via FRED Public CSV (e.g., DCOILBRENTEU daily spot for BRN).
+    const fredBenchmark = this.fred.getBenchmarkQuote(instrument.exchangeSymbol);
+    if (fredBenchmark) {
+      return {
+        ...fredBenchmark,
+        exchange: instrument.exchange,
+        contractMonth: instrument.contractMonth,
+      };
+    }
+
     // 3. Fail closed via the explicitly routed provider.
     const provider = this.getProviderForExchange(instrument.exchange);
     if (!provider) {

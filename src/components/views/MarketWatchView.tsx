@@ -1,8 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { ProductCategory } from '../../shared/types/instrument';
+import type { CommodityCycleSummary, CycleMarketOverview } from '../../shared/types/cycle';
 import { formatTimestampInZone } from '../../shared/utils/time';
+import { fetchJsonWithRetry } from '../../shared/utils/http';
+import { sortCommoditiesByPotential } from '../../shared/utils/commoditySort';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { fmtNum, useT } from '../../i18n';
 import { fmtPrice, hasPrice, plainUnit } from '../common/quoteFormat';
@@ -19,6 +22,7 @@ export function MarketWatchView() {
   const {
     instruments,
     quotesBySymbol,
+    datasets,
     marketScope,
     searchQuery,
     setSearchQuery,
@@ -27,10 +31,39 @@ export function MarketWatchView() {
   } = useTerminal();
   const t = useT();
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | ProductCategory>('ALL');
+  const [cycleOverview, setCycleOverview] = useState<CycleMarketOverview | null>(null);
+
+  const pricedCount = useMemo(
+    () => Object.values(quotesBySymbol).filter((q) => hasPrice(q)).length,
+    [quotesBySymbol]
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchJsonWithRetry<CycleMarketOverview>('/api/cycle/overview', { signal: controller.signal })
+      .then((json) => {
+        if (!controller.signal.aborted) setCycleOverview(json);
+      })
+      .catch(() => {
+        // Fail-soft: table falls back to price-first + MVX sorting when cycle overview is unavailable
+      });
+    return () => controller.abort();
+  }, [datasets.length, pricedCount]);
+
+  const { rankById, summaryById } = useMemo(() => {
+    const ranks = new Map<string, number>();
+    const summaries = new Map<string, CommodityCycleSummary>();
+    const sorted = sortCommoditiesByPotential(cycleOverview?.commodities ?? []);
+    sorted.forEach((item, index) => {
+      ranks.set(item.instrument.id, index);
+      summaries.set(item.instrument.id, item);
+    });
+    return { rankById: ranks, summaryById: summaries };
+  }, [cycleOverview]);
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return instruments.filter((inst) => {
+    const list = instruments.filter((inst) => {
       if (marketScope === 'MXV' && !inst.isMvxListed) return false;
       if (marketScope === 'INTERNATIONAL' && inst.exchange === 'MXV') return false;
       if (categoryFilter !== 'ALL' && inst.category !== categoryFilter) return false;
@@ -42,7 +75,17 @@ export function MarketWatchView() {
       }
       return true;
     });
-  }, [instruments, marketScope, categoryFilter, searchQuery]);
+    return [...list].sort((a, b) => {
+      const ra = rankById.get(a.id);
+      const rb = rankById.get(b.id);
+      if (ra !== undefined && rb !== undefined && ra !== rb) return ra - rb;
+      const pa = hasPrice(quotesBySymbol[a.exchangeSymbol]);
+      const pb = hasPrice(quotesBySymbol[b.exchangeSymbol]);
+      if (pa !== pb) return pa ? -1 : 1;
+      if (a.isMvxListed !== b.isMvxListed) return a.isMvxListed ? -1 : 1;
+      return a.exchangeSymbol.localeCompare(b.exchangeSymbol);
+    });
+  }, [instruments, marketScope, categoryFilter, searchQuery, rankById, quotesBySymbol]);
 
   return (
     <div className="space-y-5">
@@ -127,6 +170,7 @@ export function MarketWatchView() {
               ) : (
                 filtered.map((inst) => {
                   const quote = quotesBySymbol[inst.exchangeSymbol];
+                  const cycleSummary = summaryById.get(inst.id);
                   return (
                     <tr key={inst.id} className="hover:bg-[#172033]/40 transition-colors">
                       <td className="py-2.5 px-4 whitespace-nowrap">
@@ -135,9 +179,11 @@ export function MarketWatchView() {
                         </div>
                         <div className="text-[11px] text-[#E5E7EB]/50">
                           {inst.productName}
-                          {inst.commodityProfile?.contractMonths
-                            ? t('dash.mw.months', { months: inst.commodityProfile.contractMonths.join(',') })
-                            : ''}
+                          {cycleSummary?.opportunityScore != null
+                            ? ` · Cơ hội ${cycleSummary.opportunityScore}/100`
+                            : inst.commodityProfile?.contractMonths
+                              ? t('dash.mw.months', { months: inst.commodityProfile.contractMonths.join(',') })
+                              : ''}
                         </div>
                       </td>
                       <td className="py-2.5 px-3 text-[#E5E7EB]/70 whitespace-nowrap">
