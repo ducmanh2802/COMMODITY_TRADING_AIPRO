@@ -69,7 +69,7 @@ export async function generateEightQuestionVerdict(
       model: 'gemini-4-hydrogen',
       status: 'AI_UNCONFIGURED',
       message:
-        'GEMINI_API_KEY chưa được cấu hình trên server. Hãy thêm key vào Settings > Secrets để kích hoạt AI Verdict.',
+        'Chưa có khoá Gemini nên AI Verdict tạm tắt. Lấy khoá miễn phí tại aistudio.google.com/apikey, thêm dòng GEMINI_API_KEY=... vào file .env rồi khởi động lại server. Bảng "Đánh giá các mã" vẫn có nhận xét miễn phí theo công thức.',
       answers: null,
     };
   }

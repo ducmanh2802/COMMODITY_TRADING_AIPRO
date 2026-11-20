@@ -31,3 +31,25 @@ export function hasPrice(q: MarketQuote | undefined): q is MarketQuote & { price
 export function fmtPrice(price: number): string {
   return fmtNum(price, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 }
+
+/** "09/2026" for a monthly period (YYYY-MM), "17/11/2026" for a daily one (YYYY-MM-DD). */
+export function fmtBenchmarkPeriod(period: string): string {
+  const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(period);
+  if (!m) return period;
+  return m[3] ? `${m[3]}/${m[2]}/${m[1]}` : `${m[2]}/${m[1]}`;
+}
+
+/**
+ * Plain-language reason for a quote with no live price (replaces raw provider text such as
+ * "DATA_UNAVAILABLE — ICE_API_KEY not configured..."). Technical detail stays in `quote.statusReason`
+ * and is meant for tooltips only. Null when there is nothing to explain.
+ */
+export function friendlyQuoteReason(t: TFunction, q: MarketQuote | undefined): string | null {
+  if (!q) return null;
+  if (q.kind === 'BENCHMARK' && q.benchmark) {
+    const key = q.benchmark.periodicity === 'MONTHLY' ? 'fr.reason.BENCHMARK_MONTHLY' : 'fr.reason.BENCHMARK_DAILY';
+    return t(key, { period: fmtBenchmarkPeriod(q.benchmark.period) });
+  }
+  if (q.status === 'UNAVAILABLE' || q.price === null) return t('fr.reason.NO_FREE_SOURCE');
+  return null;
+}

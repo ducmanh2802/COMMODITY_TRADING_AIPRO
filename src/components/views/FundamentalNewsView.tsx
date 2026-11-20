@@ -6,6 +6,7 @@ import type { FundamentalMacroRecord, MarketDirection } from '../../shared/types
 import type { DataQualityStatus } from '../../shared/types/market';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { MacroRecordCards } from '../common/MacroRecordCards';
 import { MacroDataPanel } from '../common/MacroDataPanel';
 import { VietnamEconomicCalendar } from '../common/VietnamEconomicCalendar';
 import { hasKey, tr, useT } from '../../i18n';
@@ -379,32 +380,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
               {t('news.macro.empty')}
             </div>
           ) : (
-            <div className="divide-y divide-[#263244]/70">
-              {records.map((r) => (
-                <div key={r.id} className="p-4 space-y-1 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-white">{r.dataset}</span>
-                    <span className="font-mono text-[#6366F1]">{codeLabel('news.dir.', r.impactAssessment)}</span>
-                  </div>
-                  <p className="font-mono text-[#E5E7EB]/75">
-                    {t('news.macro.values', {
-                      actual: r.actualValue ?? t('common.na'),
-                      unit: r.unit,
-                      prev: r.previousValue ?? t('common.na'),
-                      fcst: r.forecastValue ?? t('common.na'),
-                    })}
-                  </p>
-                  <p className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-[#E5E7EB]/60">
-                    <DataStatusBadge status={recordStatusFromPublication(r.publicationTimestamp)} compact />
-                    <span>{codeLabel('news.rev.', r.revisionStatus)}</span>
-                    <span>{t('news.macro.period', { period: r.dataPeriod })}</span>
-                  </p>
-                  <p className="text-[11px] font-mono text-[#E5E7EB]/50">
-                    {t('news.sourceLine', { source: r.source, time: formatTimestampInZone(r.publicationTimestamp, 'Asia/Ho_Chi_Minh') })}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <MacroRecordCards records={records} />
           )}
         </section>
 

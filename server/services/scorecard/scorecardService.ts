@@ -136,7 +136,7 @@ export function computeScorecard(x: ScorecardInputs): Scorecard {
     price = { value: null, status: 'UNAVAILABLE', source: quote?.source ?? 'NONE', sourceQuality: null, asOf: null, changePct: null, note: x.quoteError ?? quote?.statusReason ?? 'No quote and no stored history.' };
   }
   // Day change only from two stored closes (never invented): last close vs previous close, when price is the last bar.
-  if (price.status === 'HISTORICAL' && n >= 2 && closes[n - 2] > 0) price.changePct = closes[n - 1] / closes[n - 2] - 1;
+  if (price.status === 'HISTORICAL' && !(hasQuote && quote?.kind === 'BENCHMARK') && n >= 2 && closes[n - 2] > 0) price.changePct = closes[n - 1] / closes[n - 2] - 1;
 
   const used = dimensions.filter((d) => d.status === 'OK').map((d) => d.id);
   const excluded = dimensions.filter((d) => d.status !== 'OK').map((d) => d.id) as ScorecardDimensionId[];

@@ -8,6 +8,7 @@ import type {
   ProviderHealth,
   ProviderId,
 } from '../../src/shared/types/market.ts';
+import { FRED_BENCHMARK_DEFS, buildBenchmarkQuote, parseFredCsv } from './fredBenchmarks.ts';
 import { evaluateDataFreshness } from '../../src/shared/utils/time.ts';
 import type { PersistOutcome, PersistProviderCandles } from './syncPersistence.ts';
 import {
@@ -1773,14 +1774,8 @@ export class FredMacroAdapter implements MarketDataProvider {
 
         const latest = validObs[0];
         const prev = validObs[1];
-        const impact =
-          def.id === 'DTWEXBGS' || def.id === 'FEDFUNDS' || def.id === 'DGS10'
-            ? prev && latest.val < prev.val
-              ? 'BULLISH'
-              : prev && latest.val > prev.val
-                ? 'BEARISH'
-                : 'SIDEWAYS'
-            : 'SIDEWAYS';
+        // Research-only: no auto direction label from an up/down move (T32).
+        const impact = 'UNCERTAIN' as const;
 
         fundamentalStore.addRecord({
           dataset: def.dataset,
@@ -1857,14 +1852,8 @@ export class FredMacroAdapter implements MarketDataProvider {
         }
         const latest = validObs[validObs.length - 1];
         const prev = validObs.length >= 2 ? validObs[validObs.length - 2] : null;
-        const impact =
-          def.id === 'DTWEXBGS' || def.id === 'FEDFUNDS' || def.id === 'DGS10'
-            ? prev && latest.val < prev.val
-              ? 'BULLISH'
-              : prev && latest.val > prev.val
-                ? 'BEARISH'
-                : 'SIDEWAYS'
-            : 'SIDEWAYS';
+        // Research-only: no auto direction label from an up/down move (T32).
+        const impact = 'UNCERTAIN' as const;
 
         fundamentalStore.addRecord({
           dataset: def.dataset,
@@ -1902,122 +1891,45 @@ export class FredMacroAdapter implements MarketDataProvider {
    * - IMF monthly benchmarks (PCOFFROBUSDM, PCOTTINDUSDM, PRUBBUSDM, PIORECRUSDM) -> stored as GLOBAL_SD fundamentals only
    */
   async syncPublicCommodityBenchmarks(): Promise<{ synced: number; error?: string }> {
-    const defs: Array<{
-      id: string;
-      dataset: string;
-      unit: string;
-      relatedSymbols: string[];
-      quoteSymbol?: string;
-      quoteLabel?: string;
-    }> = [
-      {
-        id: 'DCOILBRENTEU',
-        dataset: 'EIA_FRED_BRENT_SPOT_FOB',
-        unit: 'USD/barrel',
-        relatedSymbols: ['BRN'],
-        quoteSymbol: 'BRN',
-        quoteLabel: 'EIA/FRED Europe Brent Crude Spot FOB (daily official close; benchmark reference for BRN)',
-      },
-      {
-        id: 'PCOFFROBUSDM',
-        dataset: 'IMF_FRED_ROBUSTA_BENCHMARK',
-        unit: 'cents/lb',
-        relatedSymbols: ['RC'],
-      },
-      {
-        id: 'PCOTTINDUSDM',
-        dataset: 'IMF_FRED_COTTON_BENCHMARK',
-        unit: 'cents/lb',
-        relatedSymbols: ['CT'],
-      },
-      {
-        id: 'PRUBBUSDM',
-        dataset: 'IMF_FRED_RUBBER_BENCHMARK',
-        unit: 'cents/lb',
-        relatedSymbols: ['JRU'],
-      },
-      {
-        id: 'PIORECRUSDM',
-        dataset: 'IMF_FRED_IRON_ORE_BENCHMARK',
-        unit: 'USD/MT',
-        relatedSymbols: ['TIO'],
-      },
-    ];
-
     let synced = 0;
     let lastErr: string | undefined;
 
-    for (const def of defs) {
+    for (const def of FRED_BENCHMARK_DEFS) {
       try {
-        const url = `https://fred.stlouisfed.org/graph/fredgraph.csv?id=${encodeURIComponent(def.id)}`;
+        const url = `https://fred.stlouisfed.org/graph/fredgraph.csv?id=${encodeURIComponent(def.seriesId)}`;
         const res = await this.fetchFn(url, { signal: AbortSignal.timeout(12_000) });
         if (!res.ok) {
-          lastErr = `HTTP ${res.status} for FRED benchmark CSV ${def.id}`;
+          lastErr = `HTTP ${res.status} for FRED benchmark CSV ${def.seriesId}`;
           continue;
         }
-        const text = await res.text();
-        const lines = text.trim().split(/\r?\n/);
-        if (
-          lines.length < 2 ||
-          (!lines[0].toUpperCase().includes('DATE') && !lines[0].toUpperCase().includes('OBSERVATION_DATE'))
-        ) {
-          lastErr = `Unexpected FRED benchmark CSV header for ${def.id}`;
-          continue;
-        }
-        const validObs: Array<{ date: string; val: number }> = [];
-        for (let i = 1; i < lines.length; i++) {
-          const [rawDate, rawVal] = lines[i].split(',');
-          const d = rawDate?.trim();
-          if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) continue;
-          if (!rawVal || rawVal.trim() === '.' || rawVal.trim() === '') continue;
-          const v = Number(rawVal.trim());
-          if (Number.isFinite(v) && v > 0) validObs.push({ date: d, val: v });
-        }
+        const validObs = parseFredCsv(await res.text());
         if (validObs.length === 0) {
-          lastErr = `No valid numeric rows in FRED benchmark CSV for ${def.id}`;
+          lastErr = `No valid numeric rows in FRED benchmark CSV for ${def.seriesId}`;
           continue;
         }
         const latest = validObs[validObs.length - 1];
         const prev = validObs.length >= 2 ? validObs[validObs.length - 2] : null;
-        const impact =
-          prev && latest.val > prev.val ? 'BULLISH' : prev && latest.val < prev.val ? 'BEARISH' : 'SIDEWAYS';
-        const retrievedIso = new Date().toISOString();
+        const now = new Date();
 
         fundamentalStore.addRecord({
           dataset: def.dataset,
-          source: `FRED Public CSV (${def.id})`,
-          publicationTimestamp: retrievedIso,
+          source: `FRED Public CSV (${def.seriesId})`,
+          publicationTimestamp: now.toISOString(),
           observationDate: latest.date,
           dataPeriod: latest.date,
           category: 'GLOBAL_SD',
-          relatedSymbols: def.relatedSymbols,
+          relatedSymbols: def.symbols,
           actualValue: latest.val,
           previousValue: prev ? prev.val : null,
           forecastValue: null,
-          unit: def.unit,
+          unit: def.nativeUnit,
           revisionStatus: 'FINAL',
-          impactAssessment: impact,
+          // Research-only: no auto direction label from an up/down move (T32).
+          impactAssessment: 'UNCERTAIN',
         });
 
-        if (def.quoteSymbol) {
-          this.benchmarkQuotes.set(def.quoteSymbol, {
-            symbol: def.quoteSymbol,
-            exchange: 'ICE',
-            contractMonth: null,
-            price: latest.val,
-            bid: null,
-            ask: null,
-            volume: null,
-            openInterest: null,
-            currency: 'USD',
-            unit: def.unit,
-            source: `FRED_MACRO:${def.id}`,
-            sourceQuality: 'OFFICIAL',
-            timestamp: `${latest.date}T00:00:00.000Z`,
-            retrievedAt: retrievedIso,
-            status: 'HISTORICAL',
-            statusReason: `${def.quoteLabel ?? def.dataset} (${latest.date}, official close).`,
-          });
+        for (const symbol of def.symbols) {
+          this.benchmarkQuotes.set(symbol, buildBenchmarkQuote(def, symbol, latest, now));
         }
         synced += 1;
       } catch (err) {
@@ -2032,6 +1944,30 @@ export class FredMacroAdapter implements MarketDataProvider {
       this.lastError = lastErr;
     }
     return { synced, error: lastErr };
+  }
+
+  private benchmarkRefresh: Promise<unknown> | null = null;
+  private benchmarkNextTryMs = 0;
+
+  /**
+   * Fire-and-forget refresh used when a quote is requested but no benchmark is cached yet (the scheduler may
+   * be off). Deduplicated; retries at most every 6 h after success / 10 min after failure. Off under tests
+   * unless FRED_PUBLIC_CSV_ENABLED=true; FRED_PUBLIC_CSV_ENABLED=false disables it.
+   */
+  ensureBenchmarksInBackground(): void {
+    const flag = getEnvTrimmed('FRED_PUBLIC_CSV_ENABLED').toLowerCase();
+    if (flag === 'false' || (flag !== 'true' && process.env.NODE_ENV === 'test')) return;
+    if (this.benchmarkRefresh || Date.now() < this.benchmarkNextTryMs) return;
+    this.benchmarkRefresh = this.syncPublicCommodityBenchmarks()
+      .then((r) => {
+        this.benchmarkNextTryMs = Date.now() + (r.synced > 0 ? 6 * 3_600_000 : 600_000);
+      })
+      .catch(() => {
+        this.benchmarkNextTryMs = Date.now() + 600_000;
+      })
+      .finally(() => {
+        this.benchmarkRefresh = null;
+      });
   }
 
   async getProviderStatus(): Promise<ProviderHealth> {

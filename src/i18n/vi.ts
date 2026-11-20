@@ -10,6 +10,8 @@ import * as macro from './dict/macro';
 import * as friendly from './dict/friendly';
 import * as brief from './dict/brief';
 import * as scorecard from './dict/scorecard';
+import * as fedpulse from './dict/fedpulse';
+import * as nav2 from './dict/nav2';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
@@ -25,6 +27,8 @@ export const vi = {
   ...friendly.vi,
   ...brief.vi,
   ...scorecard.vi,
+  ...fedpulse.vi,
+  ...nav2.vi,
 };
 
 export type TKey = keyof typeof vi;

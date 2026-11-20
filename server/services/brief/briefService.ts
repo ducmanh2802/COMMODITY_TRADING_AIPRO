@@ -370,7 +370,8 @@ export async function buildAnalysisBrief(deps: BriefDeps, idOrSymbol: string): P
     quoteAsOf = quote.timestamp;
     quoteQuality = quote.sourceQuality ?? qualityFromSource(quote.source, quote.status === 'HISTORICAL' ? 'USER_PROVIDED' : 'LICENSED_VENDOR');
     const session = quoteSessionDate(quote, spec.tradingHoursTimezone);
-    const prevBar = session ? [...bars].reverse().find((b) => b.timestamp.slice(0, 10) < session) : null;
+    // A monthly/daily benchmark is not a futures price: never diff it against futures candles.
+    const prevBar = session && quote.kind !== 'BENCHMARK' ? [...bars].reverse().find((b) => b.timestamp.slice(0, 10) < session) : null;
     if (prevBar) {
       prevClose = prevBar.close;
       prevCloseDate = prevBar.timestamp.slice(0, 10);

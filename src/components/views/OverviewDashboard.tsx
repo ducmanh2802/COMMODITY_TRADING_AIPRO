@@ -14,7 +14,7 @@ import { CommodityHeroImage } from '../common/CommodityHeroImage';
 import { CyclePhaseBadge, getBottomScoreAccent } from '../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { Term } from '../common/Term';
-import { fmtClock, fmtPrice, hasPrice, plainUnit } from '../common/quoteFormat';
+import { fmtClock, fmtPrice, friendlyQuoteReason, hasPrice, plainUnit } from '../common/quoteFormat';
 import { fmtFixed, fmtNum, hasKey, useT } from '../../i18n';
 import { fetchJsonWithRetry } from '../../shared/utils/http';
 import { sortCommoditiesByPotential } from '../../shared/utils/commoditySort';
@@ -72,7 +72,9 @@ function PriceCard({ inst, quote, onOpen }: { inst: InstrumentDefinition; quote:
       ) : (
         <div>
           <p className="text-[28px] font-semibold text-[var(--faint)] leading-none">—</p>
-          <p className="text-xs text-[var(--muted)] mt-1.5">{t('fr.ov.noPrice')}</p>
+          <p className="text-xs text-[var(--muted)] mt-1.5" title={quote?.statusReason}>
+            {friendlyQuoteReason(t, quote) ?? t('fr.ov.noPrice')}
+          </p>
         </div>
       )}
       <div className="mt-auto pt-3 border-t border-[var(--border)]/70 flex flex-col gap-1">
@@ -81,8 +83,14 @@ function PriceCard({ inst, quote, onOpen }: { inst: InstrumentDefinition; quote:
           compact
           sourceQuality={quote?.sourceQuality}
           delayMinutes={quote?.delayMinutes}
+          kind={quote?.kind}
         />
-        {priced && (
+        {priced && quote.kind === 'BENCHMARK' && (
+          <p className="text-[11px] text-[var(--faint)]" title={quote.statusReason}>
+            {friendlyQuoteReason(t, quote)}
+          </p>
+        )}
+        {priced && quote.kind !== 'BENCHMARK' && (
           <p className="text-[11px] text-[var(--faint)]">{clock ? t('fr.updatedAt', { time: clock }) : t('fr.noTime')}</p>
         )}
       </div>
@@ -502,6 +510,7 @@ export function OverviewDashboard() {
                         compact
                         sourceQuality={item.quote.sourceQuality}
                         delayMinutes={item.quote.delayMinutes}
+                        kind={item.quote.kind}
                       />
                     </span>
                   </div>
@@ -674,6 +683,7 @@ export function OverviewDashboard() {
                               compact
                               sourceQuality={item.quote.sourceQuality}
                               delayMinutes={item.quote.delayMinutes}
+                              kind={item.quote.kind}
                             />
                           </div>
                         </td>

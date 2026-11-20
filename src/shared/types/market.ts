@@ -55,6 +55,23 @@ export interface MarketQuote {
   contract?: string;
   /** Provider's current regular trading period (epoch seconds), when reported. */
   tradingPeriod?: { start: number | null; end: number | null } | null;
+  /** 'BENCHMARK' = a monthly/daily reference series (e.g. IMF via FRED), NOT a futures quote. Absent = futures/market quote. */
+  kind?: 'FUTURES' | 'BENCHMARK';
+  /** Machine code for the status reason; the UI maps it to friendly text (i18n `fr.reason.<code>`). */
+  reasonCode?: string;
+  /** Present when kind === 'BENCHMARK'. */
+  benchmark?: {
+    seriesId: string;
+    publisher: string;
+    periodicity: 'MONTHLY' | 'DAILY';
+    /** 'YYYY-MM' for monthly, 'YYYY-MM-DD' for daily. */
+    period: string;
+    nativeValue: number;
+    nativeUnit: string;
+    /** Stated exact unit conversion applied to `price`, or null when price is in the native unit. */
+    conversion: string | null;
+    url: string;
+  };
 }
 
 export type SourceQualityLabel = 'OFFICIAL' | 'LICENSED_VENDOR' | 'UNOFFICIAL';

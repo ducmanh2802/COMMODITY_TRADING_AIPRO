@@ -109,7 +109,7 @@ test('FredMacroAdapter parses official Public CSV without API key and handles HT
   const dxy = recs.find((r) => r.dataset === 'FRED_DXY_BROAD_USD');
   assert.equal(dxy?.actualValue, 125.9);
   assert.equal(dxy?.previousValue, 126.4);
-  assert.equal(dxy?.impactAssessment, 'BULLISH');
+  assert.equal(dxy?.impactAssessment, 'UNCERTAIN'); // research-only: no auto direction label
   assert.equal(dxy?.observationDate, '2026-11-13');
 
   fundamentalStore.clearAll();
@@ -149,9 +149,20 @@ test('FredMacroAdapter.syncPublicCommodityBenchmarks syncs daily DCOILBRENTEU qu
   assert.equal(brnQuote.sourceQuality, 'OFFICIAL');
   assert.equal(brnQuote.timestamp, '2026-11-18T00:00:00.000Z');
 
-  // Monthly IMF benchmarks must NEVER be fabricated into live futures quotes
-  assert.equal(fred.getBenchmarkQuote('RC'), null);
-  assert.equal(fred.getBenchmarkQuote('JRU'), null);
+  // Monthly IMF benchmarks are labelled benchmarks: never CURRENT/DELAYED, never a futures quote.
+  const rc = fred.getBenchmarkQuote('RC');
+  assert.ok(rc);
+  assert.equal(rc.kind, 'BENCHMARK');
+  assert.ok(rc.status === 'HISTORICAL' || rc.status === 'STALE');
+  assert.equal(rc.unit, 'USD/MT'); // 167.51 cents/lb x 22.0462 (exact conversion, stated in benchmark.conversion)
+  assert.equal(rc.price, 3692.96);
+  const jru = fred.getBenchmarkQuote('JRU');
+  assert.ok(jru);
+  assert.equal(jru.unit, 'cents/lb'); // no exact JPY/kg conversion: native unit kept
+  assert.equal(jru.benchmark?.periodicity, 'MONTHLY');
+  assert.equal(fred.getBenchmarkQuote('CT'), null); // HTTP 503 -> nothing fabricated
+  assert.ok(fred.getBenchmarkQuote('TIO'));
+  assert.ok(fred.getBenchmarkQuote('FEF'));
 
   const sdRecords = fundamentalStore.listRecords({ category: 'GLOBAL_SD' });
   assert.equal(sdRecords.length, 4);

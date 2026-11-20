@@ -11,6 +11,7 @@ import { registerCotRoutes } from './routes/cot.ts';
 import { registerCycleRoutes } from './routes/cycleRoutes.ts';
 import { registerBriefRoutes } from './routes/brief.ts';
 import { registerScorecardRoutes } from './routes/scorecard.ts';
+import { registerMarketPulseRoutes } from './routes/marketPulse.ts';
 import { ScorecardService } from './services/scorecard/scorecardService.ts';
 import { YahooFinanceAdapter, isYahooEnabled } from './providers/yahooAdapter.ts';
 import { registerMxvEstimateRoutes } from './routes/mxvEstimate.ts';
@@ -665,6 +666,11 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
             isYahooEnabled() && yahooProvider.supports(inst) ? yahooProvider.getCandles(inst.exchangeSymbol, 'D1') : null
         : null,
     getCot: getAiCot,
+  });
+  // "Tình hình tài chính thế giới": FRED macro (OFFICIAL) + commodity breadth/volatility from stored/Yahoo daily history.
+  registerMarketPulseRoutes(app, {
+    listInstruments: () => instrumentRepository.list({}),
+    getHistory: (inst) => scorecardService.history(inst),
   });
   registerScorecardRoutes(app, {
     service: scorecardService,

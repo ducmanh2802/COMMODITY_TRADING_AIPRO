@@ -9,6 +9,8 @@ interface DataStatusBadgeProps {
   sourceQuality?: string;
   /** Optional declared source delay in minutes, used in the DELAYED label ("Giá trễ ~N phút"). */
   delayMinutes?: number | null;
+  /** 'BENCHMARK' = monthly/daily reference series, never a futures price: gets its own label. */
+  kind?: 'FUTURES' | 'BENCHMARK';
 }
 
 /** Technical code (shown only in the tooltip) and colours per status. */
@@ -25,13 +27,14 @@ const STATUS_META: Record<DataQualityStatus, { code: string; text: string; dot: 
  * Friendly data-quality badge: coloured dot + plain-language label; a one-sentence explanation
  * (and the raw technical code) live in the tooltip. UNOFFICIAL sources always get a visible tag.
  */
-export function DataStatusBadge({ status, compact = false, sourceQuality, delayMinutes }: DataStatusBadgeProps) {
+export function DataStatusBadge({ status, compact = false, sourceQuality, delayMinutes, kind }: DataStatusBadgeProps) {
   const t = useT();
   const key = STATUS_META[status] ? status : 'UNAVAILABLE';
   const meta = STATUS_META[key];
   const hasDelay = key === 'DELAYED' && typeof delayMinutes === 'number' && delayMinutes > 0;
-  const label = hasDelay ? t('fr.status.DELAYED.n', { n: delayMinutes }) : t(`fr.status.${key}`);
-  const desc = t(`fr.status.${key}.desc`);
+  const isBench = kind === 'BENCHMARK';
+  const label = isBench ? t('fr.status.BENCHMARK') : hasDelay ? t('fr.status.DELAYED.n', { n: delayMinutes }) : t(`fr.status.${key}`);
+  const desc = isBench ? t('fr.status.BENCHMARK.desc') : t(`fr.status.${key}.desc`);
   const showQuality = sourceQuality === 'UNOFFICIAL';
   const title = `${desc}${showQuality ? ` ${t('fr.unofficial.desc')}` : ''} (${t('fr.status.code', { code: meta.code })})`;
 

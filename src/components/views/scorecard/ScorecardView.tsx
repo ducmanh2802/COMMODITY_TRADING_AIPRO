@@ -47,7 +47,7 @@ const COLS: Array<{ key: SortKey; label: TKey }> = [
 const CATEGORIES = ['AGRICULTURE', 'SOFT_COMMODITIES', 'METALS', 'ENERGY'] as const;
 
 /** "Đánh giá các mã": descriptive scorecard of every instrument (GET /api/scorecard). */
-export function ScorecardView() {
+export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchangeSymbol: string) => void } = {}) {
   const { t, lang } = useI18n();
   const [data, setData] = useState<ScorecardListResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +55,11 @@ export function ScorecardView() {
   const [category, setCategory] = useState<string>('ALL');
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'name', dir: 'asc' });
   const [openId, setOpenId] = useState<string | null>(null);
+
+  const pick = (instrumentId: string, exchangeSymbol: string) => {
+    if (onOpenInstrument) onOpenInstrument(exchangeSymbol);
+    else setOpenId(instrumentId);
+  };
 
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -174,11 +179,11 @@ export function ScorecardView() {
                   <tr
                     key={c.instrumentId}
                     tabIndex={0}
-                    onClick={() => setOpenId(c.instrumentId)}
+                    onClick={() => pick(c.instrumentId, c.exchangeSymbol)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        setOpenId(c.instrumentId);
+                        pick(c.instrumentId, c.exchangeSymbol);
                       }
                     }}
                     className="border-b border-[var(--border)]/60 hover:bg-[var(--surface-2)] cursor-pointer focus:outline-none focus:bg-[var(--surface-2)]"

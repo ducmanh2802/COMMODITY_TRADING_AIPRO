@@ -12,7 +12,7 @@ import { fetchJsonWithRetry } from '../../shared/utils/http';
 import { sortCommoditiesByPotential } from '../../shared/utils/commoditySort';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { fmtNum, useT } from '../../i18n';
-import { fmtPrice, hasPrice, plainUnit } from '../common/quoteFormat';
+import { fmtPrice, friendlyQuoteReason, hasPrice, plainUnit } from '../common/quoteFormat';
 
 const CATEGORIES: Array<'ALL' | ProductCategory> = [
   'ALL',
@@ -226,7 +226,7 @@ export function MarketWatchView() {
                             <div className="text-[11px] text-[#E5E7EB]/50">{plainUnit(t, quote)}</div>
                           </>
                         ) : (
-                          <span className="text-[#E5E7EB]/45" title={t('fr.status.UNAVAILABLE.desc')}>
+                          <span className="text-[#E5E7EB]/45" title={`${friendlyQuoteReason(t, quote) ?? t('fr.status.UNAVAILABLE.desc')}${quote?.statusReason ? ` (${quote.statusReason})` : ''}`}>
                             {t('fr.status.UNAVAILABLE')}
                           </span>
                         )}
@@ -242,7 +242,9 @@ export function MarketWatchView() {
                           : '—'}
                       </td>
                       <td className="py-2.5 px-3 tabular-nums text-[#E5E7EB]/60 whitespace-nowrap">
-                        {quote?.timestamp
+                        {quote?.kind === 'BENCHMARK' && quote.benchmark
+                          ? friendlyQuoteReason(t, quote)
+                          : quote?.timestamp
                           ? formatTimestampInZone(quote.timestamp, 'Asia/Ho_Chi_Minh')
                           : t('fr.noTime')}
                       </td>
@@ -253,6 +255,7 @@ export function MarketWatchView() {
                             compact
                             sourceQuality={quote?.sourceQuality}
                             delayMinutes={quote?.delayMinutes}
+                            kind={quote?.kind}
                           />
                         </div>
                       </td>

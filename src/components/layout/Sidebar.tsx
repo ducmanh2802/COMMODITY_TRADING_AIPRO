@@ -1,25 +1,9 @@
 import { useState } from 'react';
-import {
-  Activity,
-  CandlestickChart,
-  FileText,
-  Globe,
-  BookOpenText,
-  Image,
-  ListChecks,
-  Layers,
-  LayoutDashboard,
-  Newspaper,
-  PanelLeftClose,
-  PanelLeftOpen,
-  ShieldCheck,
-  Target,
-  TrendingUp,
-  X,
-} from 'lucide-react';
+import { Globe, GraduationCap, LayoutDashboard, NotebookPen, PanelLeftClose, PanelLeftOpen, Target, TrendingUp, X } from 'lucide-react';
 import type { AppModuleId } from '../../shared/types/risk';
 import { useTerminal } from '../../contexts/TerminalContext';
-import { useT } from '../../i18n';
+import { useT, type TKey } from '../../i18n';
+import { ADVANCED_ITEMS, SETTINGS_ITEMS, sectionOf, type SectionId } from './navMap';
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -28,51 +12,33 @@ interface SidebarProps {
 
 interface NavItem {
   id: AppModuleId;
+  section: SectionId;
+  labelKey: TKey;
   Icon: typeof LayoutDashboard;
 }
 
-interface NavGroup {
-  id: string;
-  labelKey: 'nav.groupMarket' | 'nav.groupCycleAi' | 'nav.groupOperations';
-  items: NavItem[];
-}
-
-/**
- * Focused, logically grouped navigation containing only essential daily workflows
- * (rarely used or redundant legacy sub-views are removed from the sidebar).
- */
-const NAV_GROUPS: NavGroup[] = [
-  {
-    id: 'markets',
-    labelKey: 'nav.groupMarket',
-    items: [
-      { id: 'overview', Icon: LayoutDashboard },
-      { id: 'commodity-world', Icon: Image },
-      { id: 'markets', Icon: Globe },
-    ],
-  },
-  {
-    id: 'cycle-ai',
-    labelKey: 'nav.groupCycleAi',
-    items: [
-      { id: 'cycle-hunter', Icon: Target },
-      { id: 'commodity-profile', Icon: Layers },
-      { id: 'research-report', Icon: FileText },
-      { id: 'charts', Icon: CandlestickChart },
-      { id: 'scorecard', Icon: ListChecks },
-      { id: 'brief', Icon: BookOpenText },
-    ],
-  },
-  {
-    id: 'operations',
-    labelKey: 'nav.groupOperations',
-    items: [
-      { id: 'news', Icon: Newspaper },
-      { id: 'risk', Icon: ShieldCheck },
-      { id: 'data-health', Icon: Activity },
-    ],
-  },
+/** Four main sections; each opens a hub whose tabs hold the original views (see navMap.ts). */
+const MAIN_ITEMS: NavItem[] = [
+  { id: 'market-hub', section: 'markets', labelKey: 'n2.sec.markets', Icon: Globe },
+  { id: 'analysis-hub', section: 'analysis', labelKey: 'n2.sec.analysis', Icon: Target },
+  { id: 'learn', section: 'academy', labelKey: 'n2.sec.academy', Icon: GraduationCap },
+  { id: 'mine-hub', section: 'mine', labelKey: 'n2.sec.mine', Icon: NotebookPen },
 ];
+
+const SMALL_KEY: Partial<Record<AppModuleId, TKey>> = {
+  settings: 'n2.item.settings',
+  'data-health': 'n2.item.data-health',
+  'data-import': 'n2.item.data-import',
+  overview: 'n2.item.overview',
+  backtest: 'n2.item.backtest',
+  'term-structure': 'n2.item.term-structure',
+  scanner: 'n2.item.scanner',
+  signals: 'n2.item.signals',
+  portfolio: 'n2.item.portfolio',
+  technical: 'n2.item.technical',
+  explorer: 'n2.item.explorer',
+  analysis: 'n2.item.analysis',
+};
 
 const COLLAPSE_KEY = 'ctap.sidebar.collapsed';
 
@@ -103,6 +69,28 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   const handleSelect = (id: AppModuleId) => {
     setActiveModule(id);
     onCloseMobile();
+  };
+
+  const currentSection = sectionOf(activeModule);
+
+  const smallButton = (id: AppModuleId) => {
+    const key = SMALL_KEY[id];
+    if (!key) return null;
+    const isActive = activeModule === id;
+    return (
+      <li key={id}>
+        <button
+          type="button"
+          onClick={() => handleSelect(id)}
+          aria-current={isActive ? 'page' : undefined}
+          className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors ${
+            isActive ? 'bg-[var(--accent-soft)] text-white' : 'text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
+          }`}
+        >
+          {t(key)}
+        </button>
+      </li>
+    );
   };
 
   // `rail` = icon-only mode; only applies on desktop (the mobile drawer is always full width).
@@ -148,59 +136,52 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
-          {NAV_GROUPS.map((group, groupIndex) => (
-            <section key={group.id} aria-labelledby={`nav-group-${group.id}`}>
-              <h2
-                id={`nav-group-${group.id}`}
-                className={`px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--faint)] ${
-                  rail ? 'lg:sr-only' : ''
-                }`}
-              >
-                {t(group.labelKey)}
-              </h2>
-              {rail && groupIndex > 0 && (
-                <div className="hidden lg:block mx-2 mb-2 border-t border-[var(--border)]" aria-hidden="true" />
-              )}
-              <ul className="space-y-0.5">
-                {group.items.map((item) => {
-                  const Icon = item.Icon;
-                  const isActive = activeModule === item.id;
-                  const label = t(`nav.${item.id}`);
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4" aria-label={t('nav.ariaLabel')}>
+          <ul className="space-y-0.5">
+            {MAIN_ITEMS.map((item) => {
+              const Icon = item.Icon;
+              const isActive = currentSection === item.section;
+              const label = t(item.labelKey);
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(item.id)}
+                    aria-current={isActive ? 'page' : undefined}
+                    title={rail ? label : undefined}
+                    className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm transition-colors whitespace-nowrap ${
+                      rail ? 'lg:justify-center lg:px-0' : ''
+                    } ${
+                      isActive
+                        ? 'bg-[var(--accent-soft)] text-white font-medium'
+                        : 'text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
+                    }`}
+                  >
+                    {isActive && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r bg-[var(--accent)]" aria-hidden="true" />
+                    )}
+                    <Icon className={`w-[18px] h-[18px] shrink-0 ${isActive ? 'text-[var(--accent-text)]' : ''}`} aria-hidden="true" />
+                    <span className={`truncate ${rail ? 'lg:sr-only' : ''}`}>{label}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
 
-                  return (
-                    <li key={item.id}>
-                      <button
-                        type="button"
-                        onClick={() => handleSelect(item.id)}
-                        aria-current={isActive ? 'page' : undefined}
-                        title={rail ? label : undefined}
-                        className={`relative w-full flex items-center gap-3 px-3 py-2.5 lg:py-2 rounded-[10px] text-sm transition-colors whitespace-nowrap ${
-                          rail ? 'lg:justify-center lg:px-0' : ''
-                        } ${
-                          isActive
-                            ? 'bg-[var(--accent-soft)] text-white font-medium'
-                            : 'text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
-                        }`}
-                      >
-                        {isActive && (
-                          <span
-                            className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r bg-[var(--accent)]"
-                            aria-hidden="true"
-                          />
-                        )}
-                        <Icon
-                          className={`w-[18px] h-[18px] shrink-0 ${isActive ? 'text-[var(--accent-text)]' : ''}`}
-                          aria-hidden="true"
-                        />
-                        <span className={`truncate ${rail ? 'lg:sr-only' : ''}`}>{label}</span>
-                      </button>
-                    </li>
-                  );
-                })}
+          <div className={`space-y-2 pt-3 border-t border-[var(--border)] ${rail ? 'lg:hidden' : ''}`}>
+            <h2 className="px-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--faint)]">{t('n2.sec.settings')}</h2>
+            <ul className="space-y-0.5">
+              {SETTINGS_ITEMS.map((id) => smallButton(id))}
+            </ul>
+            <details open={currentSection === 'advanced'} className="group">
+              <summary className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--faint)] cursor-pointer hover:text-white list-none">
+                {t('n2.sec.advanced')}
+              </summary>
+              <ul className="space-y-0.5 mt-1">
+                {ADVANCED_ITEMS.map((id) => smallButton(id))}
               </ul>
-            </section>
-          ))}
+            </details>
+          </div>
         </nav>
 
         <div className="px-3 py-3 border-t border-[var(--border)] flex items-center gap-2">

@@ -368,6 +368,7 @@ export class ProviderRegistry {
 
     // 2.5. Official FRED commodity spot benchmark when synced via FRED Public CSV (e.g., DCOILBRENTEU daily spot for BRN).
     const fredBenchmark = this.fred.getBenchmarkQuote(instrument.exchangeSymbol);
+    if (!fredBenchmark) this.fred.ensureBenchmarksInBackground();
     if (fredBenchmark) {
       return {
         ...fredBenchmark,
@@ -398,6 +399,8 @@ export class ProviderRegistry {
     return {
       ...quote,
       ...(yahooNote ? { statusReason: `${quote.statusReason ?? 'DATA_UNAVAILABLE'}${yahooNote}` } : {}),
+      // Friendly text is mapped client-side from this code; statusReason keeps the technical detail.
+      reasonCode: quote.status === 'UNAVAILABLE' ? 'NO_FREE_SOURCE' : quote.reasonCode,
       exchange: instrument.exchange,
       contractMonth: instrument.contractMonth,
       currency: instrument.specification.tradingCurrency,

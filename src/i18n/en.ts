@@ -10,6 +10,8 @@ import * as macro from './dict/macro';
 import * as friendly from './dict/friendly';
 import * as brief from './dict/brief';
 import * as scorecard from './dict/scorecard';
+import * as fedpulse from './dict/fedpulse';
+import * as nav2 from './dict/nav2';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
@@ -26,4 +28,6 @@ export const en: Record<TKey, string> = {
   ...friendly.en,
   ...brief.en,
   ...scorecard.en,
+  ...fedpulse.en,
+  ...nav2.en,
 };

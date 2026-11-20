@@ -103,7 +103,7 @@ interface TerminalContextValue {
 const TerminalContext = createContext<TerminalContextValue | null>(null);
 
 export function TerminalProvider({ children }: { children: React.ReactNode }) {
-  const [activeModule, setActiveModule] = useState<AppModuleId>('overview');
+  const [activeModule, setActiveModule] = useState<AppModuleId>('market-hub');
   // Focus primarily on Vietnam MXV commodities by default (Cà phê Robusta · ICE:RC / MXV:LRC)
   const [selectedSymbol, setSelectedSymbol] = useState<string>('RC');
   const [marketScope, setMarketScope] = useState<MarketScope>('MXV');

@@ -101,7 +101,11 @@ export type AppModuleId =
   | 'data-health'
   | 'data-import'
   | 'settings'
-  | 'learn';
+  | 'learn'
+  | 'market-hub'
+  | 'analysis-hub'
+  | 'instrument'
+  | 'mine-hub';
 
 export interface PhaseModuleDescriptor {
   id: AppModuleId;
