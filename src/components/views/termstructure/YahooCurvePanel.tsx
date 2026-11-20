@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { errorMessage, fetchYahooCurve, type YahooCurveResponseDto } from '../../../api/contractsApi';
+import { useTerminal } from '../../../contexts/TerminalContext';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { fmtDate, fmtNum, useT } from '../../../i18n';
 
@@ -73,6 +74,7 @@ function CurveBody({ data }: { data: Ok }) {
 /** Live Yahoo per-contract curve (UNOFFICIAL). Labels every point with contract code, Yahoo symbol and bar time. */
 export function YahooCurvePanel({ instrumentId }: { instrumentId: string }) {
   const t = useT();
+  const { setActiveModule } = useTerminal();
   const [state, setState] = useState<
     { s: 'loading' } | { s: 'error'; message: string } | { s: 'ok'; data: YahooCurveResponseDto }
   >({ s: 'loading' });
@@ -101,7 +103,16 @@ export function YahooCurvePanel({ instrumentId }: { instrumentId: string }) {
         </div>
       )}
       {state.s === 'ok' && state.data.status !== 'UNAVAILABLE' && <CurveBody data={state.data} />}
-      <p className="text-[11px] text-[#E5E7EB]/50">{t('ts.yc.csvHint')}</p>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[11px] text-[#E5E7EB]/50">{t('ts.yc.csvHint')}</p>
+        <button
+          type="button"
+          onClick={() => setActiveModule('data-import')}
+          className="text-[11px] font-medium text-[#38BDF8] hover:underline whitespace-nowrap"
+        >
+          {t('ts.yc.importCsv')}
+        </button>
+      </div>
     </section>
   );
 }

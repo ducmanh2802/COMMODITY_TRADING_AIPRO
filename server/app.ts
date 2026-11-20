@@ -21,6 +21,7 @@ import { ScorecardService } from './services/scorecard/scorecardService.ts';
 import { YahooFinanceAdapter, isYahooEnabled } from './providers/yahooAdapter.ts';
 import { registerMxvEstimateRoutes } from './routes/mxvEstimate.ts';
 import { registerMacroRoutes, type MacroServiceLike } from './routes/macro.ts';
+import { registerFxRoutes } from './routes/fx.ts';
 import type { ICandleRepository } from './storage/candleRepository.ts';
 import { getDefaultCandleRepository } from './storage/sqliteCandleRepository.ts';
 import type { ProviderHealth } from '../src/shared/types/market.ts';
@@ -650,6 +651,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   });
   registerMxvEstimateRoutes(app, { instruments: instrumentRepository, providers: providerRegistry });
   registerMacroRoutes(app, { service: options.macro });
+  registerFxRoutes(app);
   app.locals.providerRegistry = providerRegistry;
   app.get('/api/scheduler/status', (_req: Request, res: Response) => {
     res.json(options.schedulerStatus ? options.schedulerStatus() : { enabled: false, jobs: [] });

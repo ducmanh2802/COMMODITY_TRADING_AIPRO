@@ -30,7 +30,9 @@ const MAP: Partial<Record<AppModuleId, Resolved>> = {
   'mine-hub': { hub: 'mine-hub' },
   journal: { hub: 'mine-hub', tab: 'journal' },
   paper: { hub: 'mine-hub', tab: 'paper' },
+  'paper-trade': { hub: 'mine-hub', tab: 'paper' },
   risk: { hub: 'mine-hub', tab: 'risk' },
+  hedge: { hub: 'mine-hub', tab: 'hedge' },
 };
 
 export function resolveModule(id: AppModuleId): Resolved | null {

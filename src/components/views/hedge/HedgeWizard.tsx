@@ -373,7 +373,7 @@ export function HedgeWizard() {
             <button type="button" className="px-5 py-3 rounded-lg text-base font-medium border border-[var(--border)] text-[var(--text)] hover:bg-[var(--surface-2)]" onClick={() => setActiveModule('learn')}>
               {t('hd.s5.learn')}
             </button>
-            <button type="button" className="px-5 py-3 rounded-lg text-base font-medium border border-[var(--border)] text-[var(--text)] hover:bg-[var(--surface-2)]" onClick={() => setActiveModule('portfolio')}>
+            <button type="button" className="px-5 py-3 rounded-lg text-base font-medium border border-[var(--border)] text-[var(--text)] hover:bg-[var(--surface-2)]" onClick={() => setActiveModule('paper-trade')}>
               {t('hd.s5.paper')}
             </button>
             <button type="button" className="px-5 py-3 rounded-lg text-base font-medium border border-[var(--border)] text-[var(--text)] hover:bg-[var(--surface-2)]" onClick={() => setStep(1)}>

@@ -85,6 +85,7 @@ export interface CotAnalyticsRow {
   reportDate: string;
   expectedReleaseDate: string;
   openInterest: number;
+  openInterestChange4w: number | null;
   categories: Partial<Record<CotCategory, CotCategoryAnalytics>>;
 }
 
@@ -115,6 +116,7 @@ export const COT_FORMULAS = {
   net: 'long - short (spreading excluded)',
   netPctOi: 'net / openInterest * 100',
   netChangeWoW: 'net(t) - net(t - 7 days); null if the previous report is not exactly 7 days earlier',
+  openInterestChange4w: 'openInterest(t) - openInterest(t - 28 days); null if the report 28 days earlier is missing',
   cotIndex:
     '(net(t) - min(net in window)) / (max(net in window) - min(net in window)) * 100; window = reports with reportDate in (t - 7*N days, t]; requires >= N - maxMissingWeeks reports; null if max = min',
   timing:
@@ -293,8 +295,20 @@ export function analyzeCot(
     reportDate: r.reportDate,
     expectedReleaseDate: expectedReleaseDate(r.reportDate),
     openInterest: r.openInterest,
+    openInterestChange4w: null,
     categories: {},
   }));
+  // Compute 4-week open interest change (28 calendar days)
+  const oiValues = rows.map((r) => r.openInterest);
+  for (let i = 0; i < rows.length; i += 1) {
+    const curMs = parseIsoDate(dates[i]) as number;
+    const targetMs = curMs - 28 * DAY_MS;
+    const targetDate = toIsoDate(targetMs);
+    const j = dates.indexOf(targetDate);
+    if (j >= 0) {
+      outRows[i].openInterestChange4w = oiValues[i] - oiValues[j];
+    }
+  }
   let zeroOi = 0;
   for (const r of rows) if (r.openInterest <= 0) zeroOi += 1;
   if (zeroOi > 0) warnings.push(`${zeroOi} report(s) with zero open interest; netPctOi is null there.`);

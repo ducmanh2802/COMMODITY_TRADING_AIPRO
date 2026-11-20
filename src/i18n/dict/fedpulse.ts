@@ -47,6 +47,16 @@ export const vi = {
   'pulse.why': 'Vì sao quan trọng?',
   'pulse.disclaimerLabel': 'Lưu ý',
   'pulse.warnings': 'Một số nguồn không tải được: {v}',
+  'fx.title': 'Tỷ giá ngoại tệ liên quan hàng hoá',
+  'fx.subtitle': '5 cặp tiền tệ quan trọng cho nông sản, kim loại, năng lượng. Nguồn ECB (CHÍNH THỨC) và FRED (CHÍNH THỨC).',
+  'fx.loading': 'Đang tải tỷ giá…',
+  'fx.error': 'Không tải được tỷ giá: {msg}',
+  'fx.retry': 'Thử lại',
+  'fx.generatedAt': 'Cập nhật lúc {v}',
+  'fx.change1w': '1 tuần',
+  'fx.change1m': '1 tháng',
+  'fx.disclaimer': 'Lưu ý',
+  'fx.disclaimerText': 'Tỷ giá tham khảo từ ECB (ngày) và FRED (H.10). Chỉ dùng cho nghiên cứu, không phải khuyến nghị giao dịch.',
 };
 
 export const en: Record<keyof typeof vi, string> = {
@@ -97,4 +107,14 @@ export const en: Record<keyof typeof vi, string> = {
   'pulse.why': 'Why does it matter?',
   'pulse.disclaimerLabel': 'Note',
   'pulse.warnings': 'Some sources failed to load: {v}',
+  'fx.title': 'Commodity-relevant FX rates',
+  'fx.subtitle': '5 key currency pairs for agriculture, metals, energy. Sources: ECB (OFFICIAL) and FRED (OFFICIAL).',
+  'fx.loading': 'Loading FX rates…',
+  'fx.error': 'Could not load FX rates: {msg}',
+  'fx.retry': 'Retry',
+  'fx.generatedAt': 'Updated {v}',
+  'fx.change1w': '1 week',
+  'fx.change1m': '1 month',
+  'fx.disclaimer': 'Note',
+  'fx.disclaimerText': 'Reference rates from ECB (daily) and FRED (H.10). For research only, not trading advice.',
 };

@@ -143,6 +143,7 @@ export const vi = {
     'Giá đóng cửa ngày của từng tháng hợp đồng riêng lẻ từ Yahoo Finance: không chính thức, có độ trễ, không phải giá thanh toán của sàn; các tháng xa có thể ít thanh khoản. Ngày giao dịch cuối do lịch hợp đồng của ứng dụng tính. Cần YAHOO_ENABLED=true.',
   'ts.yc.csvHint':
     'Muốn đường cong theo ngày lịch sử hoặc dữ liệu chính thức: nhập CSV từng hợp đồng (Dữ liệu > Nhập CSV, mã dạng ZCH27) rồi chọn ngày ở trên.',
+  'ts.yc.importCsv': 'Nhập CSV hợp đồng',
   'ts.yc.loading': 'Đang tải đường cong Yahoo...',
   'ts.yc.asOf': 'Giá ngày {date} (lấy lúc {fetched})',
   'ts.yc.symbol': 'Mã Yahoo',
@@ -464,6 +465,7 @@ export const en: Record<keyof typeof vi, string> = {
     'Daily close of each individual contract month from Yahoo Finance: unofficial, delayed, not an exchange settlement; far months may be illiquid. Last trading days are computed by the app calendar. Requires YAHOO_ENABLED=true.',
   'ts.yc.csvHint':
     'For historical-date curves or official data: import per-contract CSVs (Data > Import CSV, codes like ZCH27), then pick the date above.',
+  'ts.yc.importCsv': 'Import contract CSV',
   'ts.yc.loading': 'Loading Yahoo curve...',
   'ts.yc.asOf': 'Prices of {date} (fetched {fetched})',
   'ts.yc.symbol': 'Yahoo symbol',

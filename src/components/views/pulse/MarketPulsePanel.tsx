@@ -8,6 +8,7 @@ import { Card } from '../../ui/Card';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
 import { Heatmap } from '../../ui/viz/Heatmap';
+import { FxPanel } from './FxPanel';
 
 const signed = (v: number | null, d = 2, suffix = ''): string => (v === null ? '-' : `${v > 0 ? '+' : ''}${fmtFixed(v, d)}${suffix}`);
 const tone = (v: number | null): string =>
@@ -320,6 +321,8 @@ export function MarketPulsePanel() {
           </Card>
         </div>
       </section>
+
+      <FxPanel />
 
       <Explanations items={data.explanations} lang={l} />
       {data.warnings.length > 0 && <p className="text-[11px] text-[var(--faint)]">{t('pulse.warnings', { v: data.warnings.join('; ') })}</p>}

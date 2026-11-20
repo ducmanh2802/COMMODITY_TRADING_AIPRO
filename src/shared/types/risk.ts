@@ -99,6 +99,8 @@ export type AppModuleId =
   | 'backtest'
   | 'journal'
   | 'paper'
+  | 'paper-trade'
+  | 'hedge'
   | 'news'
   | 'data-health'
   | 'data-import'

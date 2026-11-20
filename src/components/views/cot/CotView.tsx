@@ -586,6 +586,65 @@ function CotResults({ data }: { data: CotQueryResponse }) {
           </Panel>
         </>
       )}
+
+      {showValues && (
+        <OpenInterestPanel data={data} />
+      )}
     </div>
+  );
+}
+
+/** T49: weekly total open interest (last 26 reports) with the 4-week change, as an SVG bar chart. */
+function OpenInterestPanel({ data }: { data: CotQueryResponse }) {
+  const t = useT();
+  const rows = data.analytics.rows.slice(-26);
+  if (rows.length === 0) return null;
+  const latest = rows[rows.length - 1];
+  const max = Math.max(...rows.map((r) => r.openInterest), 1);
+  const W = 520;
+  const H = 120;
+  const gap = 2;
+  const bw = W / rows.length - gap;
+  const ch = latest.openInterestChange4w;
+  return (
+    <Panel title={t('cot.oi.title')} subtitle={t('cot.oi.subtitle')}>
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 mb-3">
+        <div>
+          <span className="text-[11px] text-[#E5E7EB]/60">{t('cot.oi.chartTitle')}</span>
+          <div className="text-xl font-semibold text-white tabular-nums">{fmtIntDisplay(latest.openInterest)}</div>
+          <div className="text-[11px] text-[#E5E7EB]/50">{fmtDate(latest.reportDate)}</div>
+        </div>
+        <div>
+          <span className="text-[11px] text-[#E5E7EB]/60">{t('cot.oi.change4w')}</span>
+          <div
+            className={`text-xl font-semibold tabular-nums ${
+              ch === null ? 'text-[#E5E7EB]/50' : ch > 0 ? 'text-[#22C55E]' : ch < 0 ? 'text-[#EF4444]' : 'text-[#E5E7EB]'
+            }`}
+          >
+            {ch === null ? '—' : `${ch > 0 ? '+' : ''}${fmtIntDisplay(ch)}`}
+          </div>
+        </div>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-32" role="img" aria-label={t('cot.oi.chartTitle')}>
+        {rows.map((r, i) => {
+          const h = Math.max(1, (r.openInterest / max) * (H - 4));
+          const up = r.openInterestChange4w !== null && r.openInterestChange4w > 0;
+          return (
+            <rect
+              key={r.reportDate}
+              x={i * (bw + gap)}
+              y={H - h}
+              width={Math.max(1, bw)}
+              height={h}
+              rx={1.5}
+              className={up ? 'fill-[#22C55E]/70' : 'fill-[#60A5FA]/60'}
+            >
+              <title>{`${fmtDate(r.reportDate)}: ${fmtIntDisplay(r.openInterest)}`}</title>
+            </rect>
+          );
+        })}
+      </svg>
+      <p className="mt-2 text-xs text-[#E5E7EB]/70">{t('cot.oi.explanation')}</p>
+    </Panel>
   );
 }

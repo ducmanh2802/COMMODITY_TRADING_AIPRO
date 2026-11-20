@@ -154,3 +154,17 @@ Ký hiệu: **P0** = chặn mọi việc khác · **P1** = lõi nghiên cứu ·
 
 Ghi chú phạm vi: app **chỉ mô phỏng giao dịch** cho mục đích học tập; không kết nối sàn/môi giới thật.
 | sau T58 | T63 | **Cuộc đua giao dịch thử** theo mùa (tháng): đăng ký bằng Google, cùng vốn ảo, xếp hạng theo % lãi **và** điểm kỷ luật (cắt lỗ, rủi ro ≤2%/lệnh, sụt vốn tối đa), tên hiển thị ẩn danh tuỳ chọn, chống gian lận (chỉ khớp giá server, không sửa lệnh quá khứ), huy hiệu | Bảng xếp hạng chạy, rules Firestore + test |
+
+### Wave 8 — Bổ sung (2026-11-21)
+| ID | Task | Vì sao |
+|---|---|---|
+| T66 | Cài app lên điện thoại (PWA): biểu tượng màn hình chính, chạy khi mạng yếu, xem lại dữ liệu đã tải | Người dùng nông thôn hay dùng điện thoại |
+| T67 | Gửi thông báo Radar/Cảnh báo giá qua Telegram (bot miễn phí) và email | Không cần mở app vẫn biết |
+| T68 | Kiểm thử chiến lược có cấu hình tuỳ chỉnh + mẫu sẵn (xu hướng, lướt sóng, mùa vụ), mở thẳng từ bài học | Bài Cấp 7 cần |
+| T69 | So sánh 2 mã / chênh lệch giá (ngô–lúa mì, dầu đậu–dầu cọ, Brent–WTI) bằng biểu đồ | Học về spread |
+| T70 | Bài kiểm tra cuối mỗi cấp + chứng nhận hoàn thành (PDF) | Phục vụ hướng kinh doanh giáo dục |
+| T71 | Nhật ký kỷ luật trong Giao dịch thử: ghi lý do vào lệnh, cảm xúc, có theo kế hoạch không → nhận xét tự động hằng tuần | Sửa thói quen xấu trước khi dùng tiền thật |
+| T72 | Cài đặt cỡ chữ (to/rất to), giao diện sáng/tối, độ tương phản cao | Người lớn tuổi dễ đọc |
+| T73 | Xuất/nhập dữ liệu cá nhân (lệnh thử, ghi chú) ra CSV/Excel; sao lưu | Giữ dữ liệu của mình |
+| T74 | Theo dõi lỗi & hiệu năng khi chạy thật (log có cấu trúc, trang trạng thái hệ thống) | Chuẩn bị deploy |
+| T75 | Hình minh hoạ & sơ đồ trong bài học (cách đọc nến, ký quỹ, phòng hộ) | Dễ hiểu hơn chữ |
