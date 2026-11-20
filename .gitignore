@@ -11,3 +11,7 @@ coverage/
 
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# Playwright output
+test-results/
+playwright-report/
