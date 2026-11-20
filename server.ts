@@ -115,6 +115,14 @@ async function startServer(): Promise<void> {
       console.error('Scheduler failed to start (continuing without it):', err instanceof Error ? err.message : 'unknown error');
     }
   }
+  if (isSchedulerEnabled()) {
+    // Pre-compute scorecard / market-pulse / cycle overview after startup and then on a timer, so requests are served
+    // from memory (stale-while-revalidate). Never blocks listen(); failures are swallowed (refresh() never rejects).
+    const warmers = (app.locals.warmers ?? []) as Array<{ name: string; refresh: () => Promise<void> }>;
+    const warmAll = () => Promise.all(warmers.map((w) => w.refresh()));
+    setTimeout(() => void warmAll(), 500).unref();
+    setInterval(() => void warmAll(), 5 * 60_000 + 5_000).unref();
+  }
   const server = host ? app.listen(PORT, host, onListening) : app.listen(PORT, onListening);
   server.on('error', (err: NodeJS.ErrnoException) => {
     console.error(

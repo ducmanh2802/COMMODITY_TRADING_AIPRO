@@ -5,7 +5,12 @@ export interface SupplyDemandBlueprintItem {
   unit: string;
   datasetKeywords: string[];
   sourceHint: string;
+  /** Descriptive ("thường hỗ trợ giá khi…"), never a trade instruction. */
   bullishWhen: string;
+  /** T60: which live data slot (server/services/supplyDemandOverlay.ts) feeds this row, if any. */
+  slot?: 'WASDE' | 'ETHANOL' | 'EXPORT' | 'COST' | 'STU' | 'EIA_CRUDE';
+  /** T60: official web page for rows that have no machine-readable feed. */
+  link?: string;
 }
 
 const CORN_SD: SupplyDemandBlueprintItem[] = [
@@ -16,6 +21,7 @@ const CORN_SD: SupplyDemandBlueprintItem[] = [
     unit: 'Million Bushels / MT',
     datasetKeywords: ['CORN', 'WASDE', 'ENDING_STOCKS', 'ZC'],
     sourceHint: 'USDA WASDE Monthly',
+    slot: 'WASDE',
     bullishWhen: 'Giảm hoặc thấp hơn dự báo đồng thuận thị trường',
   },
   {
@@ -25,6 +31,7 @@ const CORN_SD: SupplyDemandBlueprintItem[] = [
     unit: '000 bbl/day',
     datasetKeywords: ['ETHANOL', 'EIA_ETHANOL'],
     sourceHint: 'EIA Weekly Petroleum/Ethanol',
+    slot: 'ETHANOL',
     bullishWhen: 'Sản lượng nghiền ngô cho Ethanol duy trì trên mức bình quân 5 năm',
   },
   {
@@ -34,6 +41,7 @@ const CORN_SD: SupplyDemandBlueprintItem[] = [
     unit: 'Million MT',
     datasetKeywords: ['CONAB', 'SAFRINHA', 'BRAZIL_CORN'],
     sourceHint: 'CONAB Brazil / USDA Brazil',
+    link: 'https://www.conab.gov.br/info-agro/safras/graos',
     bullishWhen: 'Khô hạn giai đoạn thụ phấn làm giảm ước tính sản lượng',
   },
   {
@@ -43,20 +51,52 @@ const CORN_SD: SupplyDemandBlueprintItem[] = [
     unit: '000 MT/week',
     datasetKeywords: ['CORN_EXPORT', 'EXPORT_SALES'],
     sourceHint: 'USDA FAS Weekly Exports',
+    slot: 'EXPORT',
     bullishWhen: 'Tăng tốc vượt tiến độ trung bình mùa vụ',
   },
   {
     id: 'fertilizer_crush_cost',
     label: 'Input & Production Cost Floor',
-    labelVi: 'Chi phí phân bón & giá hòa vốn',
+    labelVi: 'Chi phí sản xuất đầy đủ / giá hòa vốn',
     unit: 'USD/bushel',
     datasetKeywords: ['CORN_COST', 'UREA', 'FERTILIZER'],
     sourceHint: 'USDA ERS Cost of Production',
+    slot: 'COST',
     bullishWhen: 'Giá thị trường rơi xuống vùng chi phí sản xuất cận biên',
   },
 ];
 
 const SOY_COMPLEX_SD: SupplyDemandBlueprintItem[] = [
+  {
+    id: 'usda_wasde_ending_stocks',
+    label: 'USDA WASDE U.S. Soybean Ending Stocks',
+    labelVi: 'Tồn kho cuối kỳ đậu tương Mỹ (USDA WASDE)',
+    unit: 'Million Bushels',
+    datasetKeywords: ['SOYBEAN', 'WASDE', 'ENDING_STOCKS'],
+    sourceHint: 'USDA WASDE Monthly',
+    slot: 'WASDE',
+    bullishWhen: 'Giảm so với dự báo tháng trước hoặc thấp hơn kỳ vọng thị trường',
+  },
+  {
+    id: 'us_export_sales',
+    label: 'US Weekly Export Shipments',
+    labelVi: 'Xuất khẩu đậu tương Mỹ (theo tuần)',
+    unit: 'MT/week',
+    datasetKeywords: ['SOY_EXPORT', 'EXPORT_SALES'],
+    sourceHint: 'USDA FAS Export Sales',
+    slot: 'EXPORT',
+    bullishWhen: 'Tiến độ xuất khẩu vượt mức trung bình mùa vụ',
+  },
+  {
+    id: 'production_cost_breakeven',
+    label: 'Production Cost Floor',
+    labelVi: 'Chi phí sản xuất đầy đủ / giá hòa vốn',
+    unit: 'USD/bushel',
+    datasetKeywords: ['SOY_COST'],
+    sourceHint: 'USDA ERS Cost of Production',
+    slot: 'COST',
+    bullishWhen: 'Giá thị trường tiến sát hoặc thấp hơn chi phí sản xuất bình quân',
+  },
   {
     id: 'soy_crush_margin',
     label: 'NOPA Soy Crush & Board Margin',
@@ -73,6 +113,7 @@ const SOY_COMPLEX_SD: SupplyDemandBlueprintItem[] = [
     unit: 'Million MT',
     datasetKeywords: ['BRAZIL_SOY', 'ARGENTINA_SOY', 'CONAB'],
     sourceHint: 'CONAB / Bolsa de Cereales / WASDE',
+    link: 'https://www.conab.gov.br/info-agro/safras/graos',
     bullishWhen: 'La Niña hoặc khô hạn cắt giảm ước tính thu hoạch',
   },
   {
@@ -95,16 +136,47 @@ const SOY_COMPLEX_SD: SupplyDemandBlueprintItem[] = [
   },
   {
     id: 'stocks_to_use',
-    label: 'Global Stocks-to-Use Ratio',
-    labelVi: 'Tỷ lệ Tồn kho / Tiêu thụ toàn cầu',
+    label: 'U.S. Soybean Stocks-to-Use Ratio',
+    labelVi: 'Tỷ lệ tồn kho / tiêu thụ đậu tương Mỹ',
     unit: '%',
     datasetKeywords: ['WASDE', 'SOY', 'STOCKS_TO_USE'],
     sourceHint: 'USDA WASDE',
+    slot: 'STU',
     bullishWhen: 'Tỷ lệ thu hẹp về vùng thắt chặt nguồn cung',
   },
 ];
 
 const WHEAT_RICE_SD: SupplyDemandBlueprintItem[] = [
+  {
+    id: 'usda_wasde_ending_stocks',
+    label: 'USDA WASDE U.S. Wheat Ending Stocks',
+    labelVi: 'Tồn kho cuối kỳ lúa mì Mỹ (USDA WASDE)',
+    unit: 'Million Bushels',
+    datasetKeywords: ['WHEAT', 'WASDE', 'ENDING_STOCKS'],
+    sourceHint: 'USDA WASDE Monthly',
+    slot: 'WASDE',
+    bullishWhen: 'Giảm so với dự báo tháng trước hoặc thấp hơn kỳ vọng thị trường',
+  },
+  {
+    id: 'us_export_sales',
+    label: 'US Weekly Export Shipments',
+    labelVi: 'Xuất khẩu lúa mì Mỹ (theo tuần)',
+    unit: 'MT/week',
+    datasetKeywords: ['WHEAT_EXPORT', 'EXPORT_SALES'],
+    sourceHint: 'USDA FAS Export Sales',
+    slot: 'EXPORT',
+    bullishWhen: 'Tiến độ xuất khẩu vượt mức trung bình mùa vụ',
+  },
+  {
+    id: 'production_cost_breakeven',
+    label: 'Production Cost Floor',
+    labelVi: 'Chi phí sản xuất đầy đủ / giá hòa vốn',
+    unit: 'USD/bushel',
+    datasetKeywords: ['WHEAT_COST'],
+    sourceHint: 'USDA ERS Cost of Production',
+    slot: 'COST',
+    bullishWhen: 'Giá thị trường tiến sát hoặc thấp hơn chi phí sản xuất bình quân',
+  },
   {
     id: 'black_sea_corridor',
     label: 'Black Sea & Major Exporter Stocks',
@@ -151,6 +223,7 @@ const COFFEE_SD: SupplyDemandBlueprintItem[] = [
     unit: 'Bags / Lots',
     datasetKeywords: ['ICE_COFFEE', 'CERTIFIED_STOCKS', 'ROBUSTA_STOCKS', 'ARABICA_STOCKS'],
     sourceHint: 'ICE Futures Europe / US Daily',
+    link: 'https://www.ice.com/report/46',
     bullishWhen: 'Tồn kho rút liên tục về vùng thấp kỷ lục nhiều năm',
   },
   {
@@ -169,6 +242,7 @@ const COFFEE_SD: SupplyDemandBlueprintItem[] = [
     unit: 'Million Bags',
     datasetKeywords: ['CONAB', 'BRAZIL_COFFEE', 'MINAS_GERAIS'],
     sourceHint: 'CONAB / Somar / ICO',
+    link: 'https://www.conab.gov.br/info-agro/safras/graos',
     bullishWhen: 'Nhiệt độ cao/hạn hán giai đoạn phân hóa mầm hoa',
   },
   {
@@ -229,6 +303,7 @@ const ENERGY_CRUDE_SD: SupplyDemandBlueprintItem[] = [
     unit: 'Million Barrels',
     datasetKeywords: ['EIA_CRUDE', 'CUSHING', 'PETROLEUM'],
     sourceHint: 'U.S. EIA Weekly Petroleum Status',
+    slot: 'EIA_CRUDE',
     bullishWhen: 'Tồn kho rút mạnh hơn dự báo trong mùa lái xe/bảo dưỡng',
   },
   {

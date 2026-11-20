@@ -28,6 +28,7 @@ import type { IInstrumentRepository } from './repository.ts';
 import type { ProviderRegistry } from '../providers/registry.ts';
 import { loadEngineCandles } from './engineCandles.ts';
 import { fundamentalStore } from './fundamentalService.ts';
+import { baselineItemHint, cotRow, enrichSupplyDemandItems, type SupplyMacroLike } from './supplyDemandOverlay.ts';
 
 export type CycleProviderRegistryLike = Pick<
   ProviderRegistry,
@@ -41,6 +42,8 @@ export interface CycleServiceDeps {
   providers: CycleProviderRegistryLike;
   candles: ICandleRepository;
   cotService?: CotQueryLike | null;
+  /** T60: macro/official-source reader for the supply/demand rows (absent → rows show friendly hints). */
+  macro?: SupplyMacroLike | null;
 }
 
 function matchSupplyDemandItems(
@@ -73,7 +76,8 @@ function matchSupplyDemandItems(
         previousValue: null,
         period: null,
         impact: 'UNAVAILABLE',
-        notes: `DATA_UNAVAILABLE — Chưa có bản ghi thực tế (${bp.sourceHint}). Tăng giá khi: ${bp.bullishWhen}.`,
+        supportHintVi: `Thường hỗ trợ giá khi: ${bp.bullishWhen}.`,
+        ...baselineItemHint(bp),
       };
     }
 
@@ -91,7 +95,11 @@ function matchSupplyDemandItems(
       previousValue: matched.previousValue,
       period: matched.dataPeriod,
       impact: matched.impactAssessment,
-      notes: `Nguồn: ${matched.source} (${matched.revisionStatus}). Bullish khi: ${bp.bullishWhen}.`,
+      notes: `Nguồn: ${matched.source} (${matched.revisionStatus}).`,
+      state: 'OK',
+      asOf: matched.dataPeriod,
+      sourceName: matched.source,
+      supportHintVi: `Thường hỗ trợ giá khi: ${bp.bullishWhen}.`,
     };
   });
 
@@ -100,7 +108,7 @@ function matchSupplyDemandItems(
       items,
       bias: 'DATA_UNAVAILABLE',
       biasScore: null,
-      evidence: 'DATA_UNAVAILABLE — Chưa có báo cáo Cung–Cầu (WASDE/EIA/USDA) cho mã này.',
+      evidence: 'Chưa có báo cáo Cung–Cầu tự động (WASDE/EIA/USDA) cho mã này.',
     };
   }
 
@@ -395,6 +403,14 @@ export function createCycleResearchService(deps: CycleServiceDeps) {
 
     const macroRecords = fundamentalStore.listRecords({ asOf: new Date().toISOString() });
     const sd = matchSupplyDemandItems(instrument, macroRecords);
+    sd.items = await enrichSupplyDemandItems(
+      sd.items,
+      getTailoredSupplyDemandBlueprint(instrument.id),
+      instrument.id,
+      deps.macro
+    );
+    const cotItem = cotRow(cotSnap);
+    if (cotItem) sd.items = [...sd.items, cotItem];
 
     const cycleEval = evaluateMultiTimeframeCycle({
       dailyCandles: d1Res.candles,

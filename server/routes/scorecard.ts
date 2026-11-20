@@ -34,9 +34,12 @@ export function registerScorecardRoutes(app: Express, deps: ScorecardRouteDeps):
 
   app.get('/api/scorecard', async (_req: Request, res: Response, next: NextFunction) => {
     try {
-      const scorecards = await deps.service.getAll();
+      const snap = await deps.service.listCache.get();
+      const scorecards = snap.value;
       const body: ScorecardListResponse = {
-        generatedAt: new Date().toISOString(),
+        generatedAt: snap.asOf,
+        asOf: snap.asOf,
+        stale: snap.stale,
         cacheTtlSeconds: SCORECARD_TTL_MS / 1000,
         count: scorecards.length,
         scorecards: scorecards.map(withProvider),

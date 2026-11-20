@@ -110,4 +110,8 @@ export interface ScorecardListResponse {
   count: number;
   scorecards: Scorecard[];
   disclaimer: BriefText;
+  /** ISO time the scorecards were computed (served stale-while-revalidate). */
+  asOf?: string;
+  /** true when served from an expired cache while a refresh runs in the background. */
+  stale?: boolean;
 }

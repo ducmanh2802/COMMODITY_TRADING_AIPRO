@@ -15,6 +15,7 @@ const MAP: Partial<Record<AppModuleId, Resolved>> = {
   'commodity-world': { hub: 'market-hub', tab: 'prices', sub: 'cards' },
   markets: { hub: 'market-hub', tab: 'prices', sub: 'table' },
   news: { hub: 'market-hub', tab: 'news' },
+  radar: { hub: 'market-hub', tab: 'radar' },
   fundamental: { hub: 'market-hub', tab: 'macro' },
   'analysis-hub': { hub: 'analysis-hub' },
   scorecard: { hub: 'analysis-hub', tab: 'scorecard' },
@@ -28,6 +29,7 @@ const MAP: Partial<Record<AppModuleId, Resolved>> = {
   'ai-analyst': { hub: 'instrument', tab: 'ai' },
   'mine-hub': { hub: 'mine-hub' },
   journal: { hub: 'mine-hub', tab: 'journal' },
+  paper: { hub: 'mine-hub', tab: 'paper' },
   risk: { hub: 'mine-hub', tab: 'risk' },
 };
 

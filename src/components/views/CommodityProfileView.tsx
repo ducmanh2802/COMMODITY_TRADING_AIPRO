@@ -19,6 +19,7 @@ import type { MarketCandle } from '../../shared/types/market';
 import { CommodityHeroImage } from '../common/CommodityHeroImage';
 import { CyclePhaseBadge, getBottomScoreAccent } from '../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { SupplyDemandRow } from '../common/SupplyDemandRow';
 import { fetchJsonWithRetry, safeReadJson } from '../../shared/utils/http';
 
 type ChartHorizon = '1Y' | '3Y' | '5Y' | '10Y' | 'ALL';
@@ -609,15 +610,7 @@ export function CommodityProfileView() {
 
           <div className="divide-y divide-[#263244] text-xs">
             {supplyDemandMatrix.map((item) => (
-              <div key={item.id} className="py-3 space-y-1">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium text-white">{item.labelVi}</span>
-                  <span className="text-[var(--text)] tabular-nums tabular-nums">
-                    {item.latestValue !== null ? `${item.latestValue} ${item.unit}` : 'DATA_UNAVAILABLE'}
-                  </span>
-                </div>
-                <p className="text-[11px] text-[var(--muted)]">{item.notes}</p>
-              </div>
+              <SupplyDemandRow key={item.id} item={item} />
             ))}
           </div>
         </section>

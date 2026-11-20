@@ -119,12 +119,12 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
         }
       />
 
-      <div role="note" className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+      <Card tone="warning" className="flex items-start gap-2">
         <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
         <span>
-          <strong className="font-semibold">{t('sc.disclaimer')}</strong> <span className="text-amber-200/80">{t('sc.disclaimerDetail')}</span>
+          <strong className="font-semibold">{t('sc.disclaimer')}</strong> <span className="text-[var(--warning)]/80">{t('sc.disclaimerDetail')}</span>
         </span>
-      </div>
+      </Card>
 
       <div role="group" aria-label={t('sc.filter.label')} className="flex flex-wrap gap-2">
         {['ALL', ...CATEGORIES].map((c) => (
@@ -143,12 +143,12 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200 flex flex-wrap items-center justify-between gap-2">
+        <Card tone="warning" className="flex flex-wrap items-center justify-between gap-2">
           <span>{t('sc.error', { msg: error })}</span>
           <button type="button" onClick={() => void load()} className="text-xs underline">
             {t('sc.retry')}
           </button>
-        </div>
+        </Card>
       )}
 
       {loading && !data && <SkeletonCards count={8} />}
@@ -189,7 +189,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
                     className="border-b border-[var(--border)]/60 hover:bg-[var(--surface-2)] cursor-pointer focus:outline-none focus:bg-[var(--surface-2)]"
                   >
                     <td className="px-3 py-2">
-                      <div className="font-medium text-white">{name}</div>
+                      <div className="font-medium text-[var(--text-strong)]">{name}</div>
                       <div className="text-[11px] font-mono text-[var(--faint)]">{c.exchangeSymbol} · {c.instrumentId.split(':')[0]}</div>
                     </td>
                     <td className="px-3 py-2"><DimBadge dim={dimOf(c, 'trend')} /></td>
@@ -204,7 +204,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
                     </td>
                     <td className="px-3 py-2"><Badge tone={LEVEL_TONE[c.dataQuality.level]} title={c.dataQuality.historySource ?? undefined}>{t(`sc.quality.${c.dataQuality.level}` as TKey)}</Badge></td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="tabular-nums text-white">{fmtPrice(c.price.value)}</div>
+                      <div className="tabular-nums text-[var(--text-strong)]">{fmtPrice(c.price.value)}</div>
                       <DataStatusBadge status={c.price.status as DataQualityStatus} sourceQuality={c.price.sourceQuality ?? undefined} compact />
                     </td>
                   </tr>

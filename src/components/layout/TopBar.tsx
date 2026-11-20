@@ -7,6 +7,8 @@ import type { MarketScope } from '../../shared/types/market';
 import { getVietnamClockLabel } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { LanguageSwitch } from '../common/LanguageSwitch';
+import { ModeSwitch } from '../views/simple/ModeSwitch';
+import { RadarBell } from '../radar/RadarBell';
 import { useT } from '../../i18n';
 
 interface TopBarProps {
@@ -126,6 +128,8 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           </span>
         </div>
 
+        <RadarBell />
+        <ModeSwitch />
         <LanguageSwitch />
 
         <button

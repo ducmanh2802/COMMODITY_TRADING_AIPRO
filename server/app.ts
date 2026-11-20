@@ -12,6 +12,11 @@ import { registerCycleRoutes } from './routes/cycleRoutes.ts';
 import { registerBriefRoutes } from './routes/brief.ts';
 import { registerScorecardRoutes } from './routes/scorecard.ts';
 import { registerMarketPulseRoutes } from './routes/marketPulse.ts';
+import { registerTodayRoutes } from './routes/today.ts';
+import { registerDriversRoutes } from './routes/drivers.ts';
+import { registerRadarRoutes } from './routes/radar.ts';
+import { MacroService } from './macro/service.ts';
+import type { SupplyMacroLike } from './services/supplyDemandOverlay.ts';
 import { ScorecardService } from './services/scorecard/scorecardService.ts';
 import { YahooFinanceAdapter, isYahooEnabled } from './providers/yahooAdapter.ts';
 import { registerMxvEstimateRoutes } from './routes/mxvEstimate.ts';
@@ -114,6 +119,8 @@ export interface CreateApiAppOptions {
   logWarn?: (message: string) => void;
   /** T21 macro service override (tests inject one backed by recorded fixtures; no network). */
   macro?: MacroServiceLike;
+  /** T60 supply/demand source reader for the cycle dossier (tests inject fixtures/null; default: real MacroService). */
+  supplyMacro?: SupplyMacroLike | null;
   /** T36 scheduler status provider (real server only; absent → GET /api/scheduler/status reports disabled). */
   schedulerStatus?: () => unknown;
   /**
@@ -609,7 +616,18 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
         },
       };
 
+  let lazySupplyMacro: MacroService | null = null;
   registerCycleRoutes(app, {
+    macro:
+      options.supplyMacro === undefined
+        ? {
+            getWasde: () => (lazySupplyMacro ??= new MacroService()).getWasde(),
+            getEia: () => (lazySupplyMacro ??= new MacroService()).getEia(),
+            getEthanol: () => (lazySupplyMacro ??= new MacroService()).getEthanol(),
+            getExportSales: (c) => (lazySupplyMacro ??= new MacroService()).getExportSales(c),
+            getErsCosts: (c) => (lazySupplyMacro ??= new MacroService()).getErsCosts(c),
+          }
+        : options.supplyMacro,
     instruments: instrumentRepository,
     providers: providerRegistry,
     candles: candleRepository,
@@ -668,10 +686,34 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     getCot: getAiCot,
   });
   // "Tình hình tài chính thế giới": FRED macro (OFFICIAL) + commodity breadth/volatility from stored/Yahoo daily history.
-  registerMarketPulseRoutes(app, {
+  const pulseCache = registerMarketPulseRoutes(app, {
     listInstruments: () => instrumentRepository.list({}),
     getHistory: (inst) => scorecardService.history(inst),
   });
+  const cycleCache = (app.locals.cycleOverviewCache as import('./services/swrCache.ts').SwrCache<import('../src/shared/types/cycle.ts').CycleMarketOverview> | undefined) ?? null;
+  registerTodayRoutes(app, { scorecards: scorecardService.listCache, cycle: cycleCache });
+  // Background pre-computation (server.ts runs these after startup and on a timer unless SCHEDULER_ENABLED=false).
+  app.locals.warmers = [
+    { name: 'scorecard', refresh: () => scorecardService.listCache.refresh() },
+    { name: 'market-pulse', refresh: () => pulseCache.refresh() },
+    ...(cycleCache ? [{ name: 'cycle-overview', refresh: () => cycleCache.refresh() }] : []),
+  ];
+  // "Vì sao & sắp tới" (T56): return attribution, range cones, upcoming events, seasonality.
+  let driversMacro: MacroServiceLike | null = options.macro ?? null;
+  registerDriversRoutes(app, {
+    findInstrument: (idOrSymbol) => instrumentRepository.findBySymbol(idOrSymbol),
+    listInstruments: () => instrumentRepository.list({}),
+    getHistory: (inst) => scorecardService.history(inst),
+    getWasde: () => (driversMacro ??= new MacroService()).getWasde(),
+  });
+  // "Radar thị trường sôi động" (T64): activity score + descriptive setups, precomputed like /api/today.
+  const radarCache = registerRadarRoutes(app, {
+    listInstruments: () => instrumentRepository.list({}),
+    getHistory: (inst) => scorecardService.history(inst),
+    getCycle: cycleCache ? () => cycleCache.get().then((s) => s.value) : null,
+    getWasde: () => (driversMacro ??= new MacroService()).getWasde(),
+  });
+  (app.locals.warmers as { name: string; refresh: () => Promise<void> }[]).push({ name: 'radar', refresh: () => radarCache.refresh() });
   registerScorecardRoutes(app, {
     service: scorecardService,
     rateLimiter: aiRateLimiter,

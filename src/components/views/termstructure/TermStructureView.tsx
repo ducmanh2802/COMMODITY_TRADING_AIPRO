@@ -6,6 +6,7 @@ import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { CURVE_TIMEFRAME, groupContractDatasets, loadCurveSnapshot, type CurveSnapshot } from './curveData';
 import { LineChartSvg, type ChartSeries } from './LineChartSvg';
 import { SpreadHistoryPanel } from './SpreadHistoryPanel';
+import { YahooCurvePanel } from './YahooCurvePanel';
 import { fmtDate, fmtFixed, fmtNum, tr, useT, type TFunction } from '../../../i18n';
 
 type Loadable<T> = { state: 'idle' } | { state: 'loading' } | { state: 'ok'; data: T } | { state: 'error'; message: string };
@@ -298,6 +299,8 @@ export default function TermStructureView() {
               : ''}
         </span>
       </div>
+
+      {instrument && <YahooCurvePanel instrumentId={instrument.id} />}
 
       {datasets.state === 'error' ? (
         <p className="text-xs font-mono text-[#EF4444]">{datasets.message}</p>

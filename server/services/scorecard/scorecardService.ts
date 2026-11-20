@@ -26,6 +26,7 @@ import {
   scoreVolatility,
 } from './scoring.ts';
 import { generateRulesNarrative } from './narrative.ts';
+import { SwrCache } from '../swrCache.ts';
 import { computeValuationStats, scoreValuation } from './valuation.ts';
 
 export const SCORECARD_TTL_MS = 5 * 60_000;
@@ -179,39 +180,79 @@ export class ScorecardService {
   private readonly inflight = new Map<string, Promise<Scorecard>>();
   private readonly historyCache = new Map<string, { expiresAt: number; value: ScorecardHistory }>();
 
-  constructor(private readonly deps: ScorecardDeps) {}
+  /** Stale-while-revalidate list of all scorecards (what /api/scorecard and /api/today serve). */
+  readonly listCache: SwrCache<Scorecard[]>;
+
+  constructor(private readonly deps: ScorecardDeps) {
+    this.listCache = new SwrCache<Scorecard[]>({
+      compute: () => this.getAll(),
+      ttlMs: SCORECARD_TTL_MS,
+      now: () => (this.deps.now ?? (() => new Date()))().getTime(),
+    });
+    this.onHistoryBackfilled = () => this.listCache.invalidate();
+  }
 
   clearCache(): void {
     this.cache.clear();
     this.historyCache.clear();
   }
 
+  /** Called after a background Yahoo backfill stored new history (lets callers invalidate derived caches). */
+  onHistoryBackfilled?: () => void;
+  private readonly backfilling = new Set<string>();
+  private backfillChain: Promise<void> = Promise.resolve();
+
+  /**
+   * History for one instrument. NEVER blocks on the network: stored candles (memory/SQLite) are used when present;
+   * otherwise a Yahoo (UNOFFICIAL) backfill runs in the background (sequentially, ~15 s each when rate-limited) and the
+   * caller gets an empty `NONE` history until it lands (dimensions then show UNAVAILABLE, never invented).
+   */
   async history(inst: InstrumentDefinition): Promise<ScorecardHistory> {
     const nowMs = (this.deps.now ?? (() => new Date()))().getTime();
     const hit = this.historyCache.get(inst.id);
     if (hit && hit.expiresAt > nowMs) return hit.value;
-    const value = await this.loadHistory(inst);
+    const value = await this.loadStoredHistory(inst);
     this.historyCache.set(inst.id, { expiresAt: nowMs + (value.candles.length >= 2 ? HISTORY_TTL_MS : HISTORY_FAIL_TTL_MS), value });
+    if (value.candles.length < 2) this.scheduleBackfill(inst);
     return value;
   }
 
-  private async loadHistory(inst: InstrumentDefinition): Promise<ScorecardHistory> {
+  private async loadStoredHistory(inst: InstrumentDefinition): Promise<ScorecardHistory> {
     const engine = await loadEngineCandles(this.deps.candles, inst, 'D1');
     if (engine.candles.length >= 2) {
       const source = engine.meta?.source ?? engine.candles[engine.candles.length - 1].source;
       return { candles: engine.candles, origin: engine.origin === 'SQLITE' ? 'SQLITE' : 'MEMORY', source, quality: qualityFromSource(source, 'USER_PROVIDED') };
     }
-    if (this.deps.fetchHistory) {
-      try {
-        const y = await this.deps.fetchHistory(inst);
-        if (y && y.candles.length >= 2) {
-          return { candles: y.candles, origin: 'YAHOO', source: y.candles[y.candles.length - 1].source || 'YAHOO_UNOFFICIAL', quality: 'UNOFFICIAL' };
-        }
-      } catch {
-        // fall through: no history
-      }
-    }
     return { candles: [], origin: 'NONE', source: null, quality: null };
+  }
+
+  private scheduleBackfill(inst: InstrumentDefinition): void {
+    const fetchHistory = this.deps.fetchHistory;
+    if (!fetchHistory || this.backfilling.has(inst.id)) return;
+    this.backfilling.add(inst.id);
+    this.backfillChain = this.backfillChain
+      .then(async () => {
+        try {
+          const y = await fetchHistory(inst);
+          if (y && y.candles.length >= 2) {
+            const nowMs = (this.deps.now ?? (() => new Date()))().getTime();
+            this.historyCache.set(inst.id, {
+              expiresAt: nowMs + HISTORY_TTL_MS,
+              value: { candles: y.candles, origin: 'YAHOO', source: y.candles[y.candles.length - 1].source || 'YAHOO_UNOFFICIAL', quality: 'UNOFFICIAL' },
+            });
+            this.cache.delete(inst.id);
+            this.onHistoryBackfilled?.();
+          }
+        } catch {
+          // keep the NONE entry (retried after HISTORY_FAIL_TTL_MS)
+        }
+      })
+      .finally(() => this.backfilling.delete(inst.id));
+  }
+
+  /** Resolves when queued background backfills have settled (tests / warm-up). */
+  async idle(): Promise<void> {
+    await this.backfillChain;
   }
 
   async get(inst: InstrumentDefinition): Promise<Scorecard> {
@@ -253,7 +294,7 @@ export class ScorecardService {
         out[i] = await this.get(list[i]);
       }
     };
-    await Promise.all(Array.from({ length: Math.min(4, list.length) }, worker));
+    await Promise.all(Array.from({ length: Math.min(8, list.length) }, worker));
     return out;
   }
 

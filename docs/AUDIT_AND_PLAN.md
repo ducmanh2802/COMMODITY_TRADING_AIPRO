@@ -134,3 +134,23 @@ Ký hiệu: **P0** = chặn mọi việc khác · **P1** = lõi nghiên cứu ·
 | 8 | T52 | Học viện: rà các mục "cần kiểm tra", tour nhập môn 5 bước | Danh sách đã kiểm/còn thiếu |
 | 9 | T53 | Deploy thử Cloud Run + lưu trữ bền (SQLite → Cloud SQL/Firestore hoặc GCS) | URL chạy được |
 | 10 | T54 | Chuẩn bị kiếm tiền: tài khoản, gói dịch vụ, giới hạn tính năng (chưa thanh toán) | Thiết kế + khung code |
+
+**Chèn ưu tiên sau T46 (yêu cầu 2026-11-20):**
+| Thứ tự | ID | Task | Tiêu chí xong |
+|---|---|---|---|
+| 2b | T55 | Trực quan hoá: thay khối chữ bằng biểu đồ/hình (sparkline, heatmap nhóm hàng, gauge biến động, đồng hồ chu kỳ, thanh vị trí giá 52 tuần, biểu đồ COT), chữ chỉ 1 dòng tóm tắt + "xem thêm" | Tổng quan, Phân tích mã, Tài chính thế giới chủ yếu là hình |
+| 2c | T56 | "Vì sao biến động": phân rã chuyển động (đi cùng nhóm/USD/lợi suất hay riêng lẻ; trùng ngày báo cáo EIA/WASDE/COT) + "Tương lai gần": vùng dao động thống kê 1 tuần/1 tháng từ biến động lịch sử (nón xác suất), xu hướng mùa vụ, sự kiện sắp tới — kịch bản, không dự báo chắc chắn | Mỗi mã có biểu đồ nguyên nhân + nón dao động + lịch sự kiện |
+
+**Hướng thiết kế chính (2026-11-20): "Ông nông dân 50 tuổi cũng hiểu và dùng được".** Thứ tự mới sau T46:
+| Thứ tự | ID | Task | Tiêu chí xong |
+|---|---|---|---|
+| 2b | T57 (gộp T55) | **Chế độ Dễ dùng** (mặc định): chữ to, ít số, màu đèn giao thông, biểu tượng + hình ảnh hàng hoá, đơn vị quen thuộc (đ/kg, đ/tấn, triệu đồng/hợp đồng), mỗi màn hình 1 câu hỏi ("Giá cà phê hôm nay thế nào?"), nút to; "Chế độ Chuyên sâu" giữ giao diện hiện tại; trực quan hoá T55 (heatmap, gauge, vòng chu kỳ, thanh 52 tuần) | Người mới đọc được trạng thái 1 mã trong 10 giây; kiểm thử 390px |
+| 2c | T56 | Vì sao biến động + tương lai gần (kịch bản, nón dao động) + **mùa vụ: tỷ lệ năm đúng & độ lệch** | Mỗi mã có hình nguyên nhân + nón + lịch sự kiện |
+| 2d | T58 | **Giao dịch thử** (tiền ảo): đặt mua/bán theo giá trễ, ký quỹ, lãi/lỗ quy ra VND, cắt lỗ tự động, lịch sử lệnh, bảng thành tích — không kết nối sàn thật | Mở/đóng vị thế, tính đúng lãi lỗ, lưu Firestore owner-only |
+| 2e | T59 | **Phòng hộ cho nông dân/doanh nghiệp**: trình hướng dẫn "giữ giá bán trước" (cà phê, cao su, tiêu, ngô) — nhập sản lượng (tấn) & giá mong muốn (đ/kg) → số hợp đồng, ký quỹ, kịch bản giá lên/xuống, so sánh có/không phòng hộ | Ví dụ số đúng, giải thích bằng lời đơn giản |
+| 2f | T60 | Tồn kho/tiêu thụ (WASDE stocks-to-use) & giá so với chi phí sản xuất (nguồn công khai) | Hiển thị có nguồn |
+| 2g | T61 | Hướng dẫn mở tài khoản thật qua thành viên MXV (danh sách lấy từ mxv.com.vn, cảnh báo sàn ma), trợ giúp bằng giọng nói đọc to (Web Speech API) cho tóm tắt | Có nguồn, đọc được tiếng Việt |
+| 2d+ | T62 | **Từ ngữ dân đầu tư hay dùng** (kèm giải thích dễ hiểu + ví dụ): đu đỉnh, bắt đáy, gồng lỗ, gồng lãi, cắt lỗ, chốt lời, cháy tài khoản, call margin/bị gọi ký quỹ, full margin, đòn bẩy, FOMO, hold, lướt sóng, sideway, breakout, thủng hỗ trợ, kháng cự, phe bò/phe gấu, long/short, đảo chiều, tích luỹ, phân phối, roll/chuyển kỳ, contango, backwardation, basis… — thêm vào Thuật ngữ của Học viện (tab "Từ lóng"), hiện tooltip khi gặp trong app & trong Giao dịch thử | ≥ 60 từ, mỗi từ có ví dụ đời thường |
+
+Ghi chú phạm vi: app **chỉ mô phỏng giao dịch** cho mục đích học tập; không kết nối sàn/môi giới thật.
+| sau T58 | T63 | **Cuộc đua giao dịch thử** theo mùa (tháng): đăng ký bằng Google, cùng vốn ảo, xếp hạng theo % lãi **và** điểm kỷ luật (cắt lỗ, rủi ro ≤2%/lệnh, sụt vốn tối đa), tên hiển thị ẩn danh tuỳ chọn, chống gian lận (chỉ khớp giá server, không sửa lệnh quá khứ), huy hiệu | Bảng xếp hạng chạy, rules Firestore + test |

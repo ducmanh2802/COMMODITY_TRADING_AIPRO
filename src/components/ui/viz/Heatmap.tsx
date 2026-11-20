@@ -1,0 +1,41 @@
+/** Tile heatmap of % change. Colour intensity + an explicit signed number (never colour alone). */
+export interface HeatTile {
+  id: string;
+  label: string;
+  /** % change; null = no data (grey tile). */
+  pct: number | null;
+  sub?: string;
+}
+
+export function heatColor(pct: number | null, maxAbs = 3): string {
+  if (pct === null || !Number.isFinite(pct)) return '#1D2840';
+  const k = Math.min(1, Math.abs(pct) / maxAbs);
+  const a = 0.25 + 0.6 * k;
+  return pct >= 0 ? `rgba(34,197,94,${a.toFixed(2)})` : `rgba(239,68,68,${a.toFixed(2)})`;
+}
+
+export function Heatmap({
+  tiles,
+  formatPct,
+  noDataLabel,
+  ariaLabel,
+  className = '',
+}: {
+  tiles: HeatTile[];
+  formatPct: (pct: number) => string;
+  noDataLabel: string;
+  ariaLabel: string;
+  className?: string;
+}) {
+  return (
+    <ul className={`grid grid-cols-2 sm:grid-cols-3 gap-2 ${className}`} aria-label={ariaLabel}>
+      {tiles.map((t) => (
+        <li key={t.id} className="rounded-lg border border-[var(--border)] p-3 min-h-[72px]" style={{ background: heatColor(t.pct) }}>
+          <div className="text-sm font-semibold text-white">{t.label}</div>
+          <div className="text-xl font-bold tabular-nums text-white">{t.pct === null ? noDataLabel : formatPct(t.pct)}</div>
+          {t.sub && <div className="text-xs text-white/80">{t.sub}</div>}
+        </li>
+      ))}
+    </ul>
+  );
+}

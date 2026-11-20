@@ -7,6 +7,7 @@ import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
+import { Heatmap } from '../../ui/viz/Heatmap';
 
 const signed = (v: number | null, d = 2, suffix = ''): string => (v === null ? '-' : `${v > 0 ? '+' : ''}${fmtFixed(v, d)}${suffix}`);
 const tone = (v: number | null): string =>
@@ -297,6 +298,14 @@ export function MarketPulsePanel() {
                 </tbody>
               </table>
             </div>
+            <h4 className="text-sm font-medium text-[var(--text)] pt-2">{t('sm.heat.title')}</h4>
+            <Heatmap
+              ariaLabel={t('sm.heat.aria')}
+              noDataLabel={t('sm.heat.noData')}
+              formatPct={(p) => signed(p, 1, '%')}
+              tiles={c.groups.map((g) => ({ id: g.group, label: g.label[l], pct: g.avg1d, sub: `(${g.count})` }))}
+            />
+            <p className="text-[11px] text-[var(--faint)]">{t('sm.heat.note')}</p>
             <h4 className="text-sm font-medium text-[var(--text)] pt-2">{t('pulse.volTitle')}</h4>
             <div className="space-y-3">
               {c.groups.map((g) => (

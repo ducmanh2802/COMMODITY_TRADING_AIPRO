@@ -5,13 +5,115 @@ import { SectionHeader } from '../../ui/SectionHeader';
 import { SourceLinks } from './Calculators';
 import { CURRICULUM } from './curriculum';
 import { GLOSSARY } from './glossary';
+import { filterSlang, SLANG, SLANG_TAGS, type SlangTag } from './glossarySlang';
 import { MONEY_WAYS, RISK_WARNINGS } from './learnContent';
 import { LessonPage } from './LessonPage';
 import { loadProgress, saveProgress, type LearnProgress } from './progress';
 
 type Page = { kind: 'home' } | { kind: 'lesson'; id: string } | { kind: 'glossary' } | { kind: 'extras' };
 
+function firstLetter(term: string): string {
+  return term.trim().charAt(0).toLocaleUpperCase('vi').normalize('NFD').charAt(0);
+}
+
+const chipCls = (active: boolean) =>
+  `text-xs px-2.5 py-1 rounded-full border ${active ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--muted)]'} hover:border-[var(--accent)]`;
+
+function SlangList() {
+  const [query, setQuery] = useState('');
+  const [tag, setTag] = useState<SlangTag | null>(null);
+  const [letter, setLetter] = useState<string | null>(null);
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const items = useMemo(() => {
+    const base = filterSlang(SLANG, query, tag);
+    return letter ? base.filter((s) => firstLetter(s.term) === letter) : base;
+  }, [query, tag, letter]);
+  const letters = useMemo(() => Array.from(new Set(SLANG.map((s) => firstLetter(s.term)))).sort((a, b) => a.localeCompare(b, 'vi')), []);
+  const toggle = (id: string) =>
+    setOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-[var(--muted)]">{SLANG.length} từ lóng, giải thích để hiểu. Đây không phải lời khuyên đầu tư.</p>
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Tìm từ lóng..."
+        aria-label="Tìm từ lóng"
+        className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-md px-3 py-2 text-sm"
+      />
+      <div className="flex gap-1.5 flex-wrap" role="group" aria-label="Lọc theo nhóm">
+        <button type="button" aria-pressed={tag === null} onClick={() => setTag(null)} className={chipCls(tag === null)}>
+          Tất cả
+        </button>
+        {SLANG_TAGS.map((t) => (
+          <button key={t} type="button" aria-pressed={tag === t} onClick={() => setTag(tag === t ? null : t)} className={chipCls(tag === t)}>
+            {t}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-1 flex-wrap" role="group" aria-label="Lọc theo chữ cái A đến Z">
+        <button type="button" aria-pressed={letter === null} onClick={() => setLetter(null)} className={chipCls(letter === null)}>
+          A–Z
+        </button>
+        {letters.map((l) => (
+          <button key={l} type="button" aria-pressed={letter === l} onClick={() => setLetter(letter === l ? null : l)} className={chipCls(letter === l)}>
+            {l}
+          </button>
+        ))}
+      </div>
+      {items.length === 0 && <p className="text-sm text-[var(--muted)]">Không có từ phù hợp.</p>}
+      <ul className="space-y-2">
+        {items.map((s) => {
+          const isOpen = open.has(s.id);
+          return (
+            <li key={s.id}>
+              <Card className="!p-3">
+                <button type="button" aria-expanded={isOpen} aria-controls={`slang-${s.id}`} onClick={() => toggle(s.id)} className="w-full text-left">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-[var(--text-strong)]">{s.term}</span>
+                    <span aria-hidden="true" className="text-xs text-[var(--muted)]">
+                      {isOpen ? '−' : '+'}
+                    </span>
+                  </span>
+                  <span className="block text-xs text-[var(--muted)] mt-0.5">{s.meaning}</span>
+                </button>
+                {isOpen && (
+                  <div id={`slang-${s.id}`} className="mt-2 space-y-1.5 text-xs">
+                    <p>
+                      <span className="font-semibold text-[var(--text-strong)]">Ví dụ đời thường: </span>
+                      {s.example}
+                    </p>
+                    {s.warning && (
+                      <p className="text-amber-600">
+                        <span className="font-semibold">Lưu ý: </span>
+                        {s.warning}
+                      </p>
+                    )}
+                    <p className="text-[var(--muted)]">Thuật ngữ chính thức: {s.related}</p>
+                    <p className="flex gap-1 flex-wrap">
+                      {s.tags.map((t) => (
+                        <Badge key={t}>{t}</Badge>
+                      ))}
+                    </p>
+                  </div>
+                )}
+              </Card>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function Glossary({ onBack }: { onBack: () => void }) {
+  const [tab, setTab] = useState<'formal' | 'slang'>('formal');
   const [query, setQuery] = useState('');
   const items = useMemo(() => {
     const n = query.trim().toLowerCase();
@@ -22,24 +124,38 @@ function Glossary({ onBack }: { onBack: () => void }) {
       <button type="button" onClick={onBack} className="text-xs text-[var(--accent-text)] hover:underline">
         ← Về Học viện
       </button>
-      <SectionHeader level={1} title="Thuật ngữ" subtitle={`${GLOSSARY.length} thuật ngữ. Gõ để tìm.`} />
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Tìm thuật ngữ..."
-        aria-label="Tìm thuật ngữ"
-        className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-md px-3 py-2 text-sm"
-      />
-      {items.length === 0 && <p className="text-sm text-[var(--muted)]">Không có thuật ngữ phù hợp.</p>}
-      <dl className="space-y-2">
-        {items.map((g) => (
-          <Card key={g.term} className="!p-3">
-            <dt className="text-sm font-semibold text-[var(--text-strong)]">{g.term}</dt>
-            <dd className="text-xs text-[var(--muted)] mt-0.5">{g.def}</dd>
-          </Card>
-        ))}
-      </dl>
+      <SectionHeader level={1} title="Thuật ngữ" subtitle={tab === 'formal' ? `${GLOSSARY.length} thuật ngữ. Gõ để tìm.` : 'Từ lóng & từ dân đầu tư hay dùng'} />
+      <div role="tablist" className="flex gap-2 flex-wrap">
+        <button type="button" role="tab" aria-selected={tab === 'formal'} onClick={() => setTab('formal')} className={chipCls(tab === 'formal')}>
+          Thuật ngữ chính thức
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'slang'} onClick={() => setTab('slang')} className={chipCls(tab === 'slang')}>
+          Từ lóng &amp; từ dân đầu tư hay dùng
+        </button>
+      </div>
+      {tab === 'slang' ? (
+        <SlangList />
+      ) : (
+        <>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Tìm thuật ngữ..."
+            aria-label="Tìm thuật ngữ"
+            className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-md px-3 py-2 text-sm"
+          />
+          {items.length === 0 && <p className="text-sm text-[var(--muted)]">Không có thuật ngữ phù hợp.</p>}
+          <dl className="space-y-2">
+            {items.map((g) => (
+              <Card key={g.term} className="!p-3">
+                <dt className="text-sm font-semibold text-[var(--text-strong)]">{g.term}</dt>
+                <dd className="text-xs text-[var(--muted)] mt-0.5">{g.def}</dd>
+              </Card>
+            ))}
+          </dl>
+        </>
+      )}
     </div>
   );
 }

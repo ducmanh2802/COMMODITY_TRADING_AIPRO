@@ -4,11 +4,13 @@ import { useTerminal } from '../../../contexts/TerminalContext';
 import { useI18n } from '../../../i18n';
 import type { CycleMarketOverview } from '../../../shared/types/cycle';
 import type { ScorecardListResponse } from '../../../shared/types/scorecard';
+import type { TodayResponse } from '../../../shared/types/today';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
 import { buildVietnamEconomicCalendar } from '../../../shared/utils/vietnamCalendar';
 import { Card } from '../../ui/Card';
 import { EmptyState } from '../../ui/EmptyState';
 import { SectionHeader } from '../../ui/SectionHeader';
+import { Skeleton } from '../../ui/Skeleton';
 
 interface TodayItem {
   key: string;
@@ -31,15 +33,17 @@ export function TodayPanel() {
 
   useEffect(() => {
     const ctrl = new AbortController();
-    void Promise.allSettled([
-      fetchJsonWithRetry<ScorecardListResponse>('/api/scorecard', { signal: ctrl.signal }),
-      fetchJsonWithRetry<CycleMarketOverview>('/api/cycle/overview', { signal: ctrl.signal }),
-    ]).then(([s, c]) => {
-      if (ctrl.signal.aborted) return;
-      if (s.status === 'fulfilled') setScore(s.value);
-      if (c.status === 'fulfilled') setCycle(c.value);
-      setLoading(false);
-    });
+    // One round-trip: the server serves scorecard + cycle overview from a stale-while-revalidate cache.
+    void fetchJsonWithRetry<TodayResponse>('/api/today', { signal: ctrl.signal })
+      .then((r) => {
+        if (ctrl.signal.aborted) return;
+        setScore(r.scorecard);
+        setCycle(r.cycle);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!ctrl.signal.aborted) setLoading(false);
+      });
     return () => ctrl.abort();
   }, []);
 
@@ -122,7 +126,21 @@ export function TodayPanel() {
   }, [score, cycle, lang, t]);
 
   let body: ReactNode;
-  if (loading) body = <p className="text-sm text-[var(--muted)]">{t('n2.td.loading')}</p>;
+  if (loading)
+    body = (
+      <div className="grid gap-3 md:grid-cols-2" aria-busy="true" aria-label={t('n2.td.loading')}>
+        {[0, 1, 2, 3].map((i) => (
+          <Card key={i}>
+            <Skeleton className="h-4 w-1/3 mb-3" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
   else if (sections.length === 0) body = <EmptyState icon={<Sparkles className="w-5 h-5" aria-hidden="true" />} title={t('n2.td.empty')} />;
   else
     body = (

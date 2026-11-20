@@ -12,7 +12,7 @@ export const LEVEL2: Level = {
       objective: 'Biết MXV, loại hợp đồng giao dịch và mối liên thông với sàn quốc tế.',
       body: [
         'MXV (Sở Giao dịch Hàng hoá Việt Nam) là sàn giao dịch hàng hoá tại Việt Nam, chịu sự quản lý của Bộ Công Thương.',
-        'Hợp đồng trên MXV liên thông với các sàn quốc tế như CME Group (CBOT, NYMEX, COMEX), ICE (US, Europe) và SGX. Giá tham chiếu theo các sàn gốc.',
+        'Hợp đồng trên MXV liên thông với các sàn quốc tế như CME Group (CBOT, NYMEX, COMEX), ICE, LME, SGX, OSE và Bursa Malaysia Derivatives (theo en.mxv.com.vn/overview.html, kiểm tra 20/11/2026). Giá tham chiếu theo các sàn gốc.',
         'MXV khác Sở Giao dịch Chứng khoán Hà Nội (HNX): HNX niêm yết chứng khoán phái sinh (hợp đồng tương lai VN30, trái phiếu Chính phủ), còn MXV là hàng hoá.',
         'Danh mục hợp đồng, khối lượng, quy cách của MXV có thể thay đổi; luôn xem trang chính thức của MXV.',
       ],
@@ -107,12 +107,12 @@ export const LEVEL2: Level = {
       objective: 'Phân biệt các văn bản pháp lý liên quan và biết điều gì cần kiểm tra lại.',
       body: [
         'Nghị định 158/2020/NĐ-CP quy định về chứng khoán phái sinh và thị trường chứng khoán phái sinh (HNX), không phải khung pháp lý riêng của hàng hoá MXV.',
-        'Giao dịch hàng hoá qua Sở Giao dịch Hàng hoá trước đây theo Nghị định 158/2006/NĐ-CP và 51/2018/NĐ-CP. Một nguồn báo chí nêu Nghị định 302/2026/NĐ-CP có hiệu lực từ 15/09/2026 thay thế các văn bản này.',
+        'Giao dịch hàng hoá qua Sở Giao dịch Hàng hoá trước đây theo Nghị định 158/2006/NĐ-CP và 51/2018/NĐ-CP. Nghị định 302/2026/NĐ-CP (ban hành 01/08/2026, hiệu lực 15/09/2026) quy định chi tiết Luật Thương mại về mua bán hàng hoá qua Sở Giao dịch Hàng hoá và, theo Điều 40, chấm dứt hiệu lực của NĐ 158/2006 và NĐ 51/2018 (đối chiếu trên LuatVietnam, kiểm tra 20/11/2026). Thông tư 47/2026/TT-BCT hướng dẫn thi hành.',
         'Vì văn bản pháp luật thay đổi, đừng dựa vào bài này để kết luận pháp lý: hãy kiểm tra văn bản gốc và hỏi MXV/công ty môi giới.',
       ],
       remember: ['NĐ 158/2020 là về chứng khoán phái sinh.', 'Pháp luật thay đổi: luôn đối chiếu văn bản gốc.'],
       uncertain: [
-        'Hiệu lực và nội dung Nghị định 302/2026/NĐ-CP, văn bản thay thế NĐ 158/2006 và 51/2018: cần kiểm tra lại với MXV/công ty môi giới.',
+        'Các điều khoản chi tiết của NĐ 302/2026 áp dụng cho MXV và thành viên (bản gốc trên chinhphu.vn chưa được đối chiếu trực tiếp): cần kiểm tra lại với MXV/công ty môi giới.',
         'Quy định bảo vệ tài sản khách hàng khi thành viên mất khả năng thanh toán: cần kiểm tra lại với MXV/công ty môi giới.',
       ],
       quiz: [
@@ -123,6 +123,7 @@ export const LEVEL2: Level = {
       sources: [
         SRC.mxv,
         { label: 'NĐ 158/2020/NĐ-CP', url: 'https://caselaw.vn/van-ban-phap-luat/368992-nghi-dinh-so-158-2020-nd-cp-ngay-31-12-2020-cua-chinh-phu-ve-chung-khoan-phai-sinh-va-thi-truong-chung-khoan-phai-sinh' },
+        { label: 'NĐ 302/2026/NĐ-CP (LuatVietnam, bản tiếng Anh)', url: 'https://english.luatvietnam.vn/decree-no-302-2026-nd-cp-dated-august-01-2026-of-the-government-detailing-a-number-of-articles-and-measures-for-the-implementation-of-the-commercial-442768-doc1.html' },
         { label: 'NĐ 302/2026 (LuatVietnam)', url: 'https://luatvietnam.vn/tin-van-ban-moi/tu-15-9-2026-lan-dau-tien-so-giao-dich-hang-hoa-phai-co-von-dieu-le-toi-thieu-1500-ty-dong-186-111173-article.html' },
       ],
     },

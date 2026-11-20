@@ -359,6 +359,128 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    // Paper trading (T58, learning only). Limits mirror PAPER_LIMITS in src/components/views/papertrade/paperModel.ts.
+    function isValidPaperSettings(s) {
+      return s is map
+        && s.keys().hasAll(['marginPct', 'feePerContractUsd', 'slippageTicks', 'marginCallPct', 'stopOutPct'])
+        && s.keys().hasOnly(['marginPct', 'feePerContractUsd', 'slippageTicks', 'marginCallPct', 'stopOutPct'])
+        && s.marginPct is number && s.marginPct >= 0 && s.marginPct <= 100
+        && s.feePerContractUsd is number && s.feePerContractUsd >= 0 && s.feePerContractUsd <= 1000
+        && s.slippageTicks is number && s.slippageTicks >= 0 && s.slippageTicks <= 100
+        && s.marginCallPct is number && s.marginCallPct >= 0 && s.marginCallPct <= 1000
+        && s.stopOutPct is number && s.stopOutPct >= 0 && s.stopOutPct <= 1000;
+    }
+
+    // A practice session ("Phiên giao dịch thử"): active (closedAt/finalEquityVnd null) or closed (both set).
+    function isValidPaperSession(data) {
+      return data.keys().hasAll(['userId', 'name', 'startingCapitalVnd', 'balanceVnd', 'settings', 'status', 'createdAt', 'updatedAt', 'closedAt', 'finalEquityVnd'])
+        && data.keys().hasOnly(['userId', 'name', 'startingCapitalVnd', 'balanceVnd', 'settings', 'status', 'createdAt', 'updatedAt', 'closedAt', 'finalEquityVnd'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 80
+        && data.startingCapitalVnd is number
+        && data.startingCapitalVnd >= 1000000
+        && data.startingCapitalVnd <= 1000000000000
+        && data.balanceVnd is number
+        && data.balanceVnd >= -1000000000000
+        && data.balanceVnd <= 1000000000000000
+        && isValidPaperSettings(data.settings)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && ((data.status == 'active' && data.closedAt == null && data.finalEquityVnd == null)
+          || (data.status == 'closed' && data.closedAt is timestamp && data.finalEquityVnd is number));
+    }
+
+    // Children (positions / closed trades) must belong to a session of the same owner. getAfter() so a
+    // batch may create the session and its children together (e.g. importing a local session).
+    function paperSessionAfter(sessionId) {
+      return getAfter(/databases/$(database)/documents/paperSessions/$(sessionId)).data;
+    }
+
+    function ownsPaperSession(sessionId) {
+      return isValidId(sessionId)
+        && existsAfter(/databases/$(database)/documents/paperSessions/$(sessionId))
+        && paperSessionAfter(sessionId).userId == request.auth.uid;
+    }
+
+    function isValidPaperPrice(v) {
+      return v is number && v > 0 && v <= 100000000;
+    }
+
+    function isValidPaperStop(v) {
+      return v == null || isValidPaperPrice(v);
+    }
+
+    function isValidPaperJournal(data) {
+      return data.journal is string
+        && data.journal.size() <= 1000
+        && data.researchNoteId is string
+        && data.researchNoteId.size() <= 64;
+    }
+
+    function isValidPaperPosition(data) {
+      return data.keys().hasAll(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'stopLoss', 'takeProfit', 'marginPerContractUsd', 'entryFeeVnd', 'entryFxRate', 'journal', 'researchNoteId', 'openedAt'])
+        && data.keys().hasOnly(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'stopLoss', 'takeProfit', 'marginPerContractUsd', 'entryFeeVnd', 'entryFxRate', 'journal', 'researchNoteId', 'openedAt'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.sessionId is string
+        && data.instrumentId is string
+        && data.instrumentId.size() >= 1
+        && data.instrumentId.size() <= 32
+        && data.side in ['LONG', 'SHORT']
+        && data.contracts is int
+        && data.contracts >= 1
+        && data.contracts <= 1000
+        && isValidPaperPrice(data.entryPrice)
+        && isValidPaperStop(data.stopLoss)
+        && isValidPaperStop(data.takeProfit)
+        && data.marginPerContractUsd is number
+        && data.marginPerContractUsd >= 0
+        && data.marginPerContractUsd <= 100000000
+        && data.entryFeeVnd is number
+        && data.entryFeeVnd >= 0
+        && data.entryFeeVnd <= 1000000000000
+        && data.entryFxRate is number
+        && data.entryFxRate > 0
+        && data.entryFxRate <= 1000000
+        && isValidPaperJournal(data)
+        && data.openedAt is timestamp;
+    }
+
+    function isValidPaperOrder(data) {
+      return data.keys().hasAll(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'exitPrice', 'stopLoss', 'takeProfit', 'closeReason', 'grossPnlUsd', 'feesVnd', 'pnlUsd', 'pnlVnd', 'rMultiple', 'fxRate', 'journal', 'researchNoteId', 'openedAt', 'closedAt'])
+        && data.keys().hasOnly(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'exitPrice', 'stopLoss', 'takeProfit', 'closeReason', 'grossPnlUsd', 'feesVnd', 'pnlUsd', 'pnlVnd', 'rMultiple', 'fxRate', 'journal', 'researchNoteId', 'openedAt', 'closedAt'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.sessionId is string
+        && data.instrumentId is string
+        && data.instrumentId.size() >= 1
+        && data.instrumentId.size() <= 32
+        && data.side in ['LONG', 'SHORT']
+        && data.contracts is int
+        && data.contracts >= 1
+        && data.contracts <= 1000
+        && isValidPaperPrice(data.entryPrice)
+        && isValidPaperPrice(data.exitPrice)
+        && isValidPaperStop(data.stopLoss)
+        && isValidPaperStop(data.takeProfit)
+        && data.closeReason in ['MANUAL', 'STOP_LOSS', 'TAKE_PROFIT', 'STOP_OUT']
+        && data.grossPnlUsd is number
+        && data.feesVnd is number
+        && data.feesVnd >= 0
+        && data.pnlUsd is number
+        && data.pnlVnd is number
+        && (data.rMultiple == null || data.rMultiple is number)
+        && data.fxRate is number
+        && data.fxRate > 0
+        && data.fxRate <= 1000000
+        && isValidPaperJournal(data)
+        && data.openedAt is timestamp
+        && data.closedAt is timestamp;
+    }
+
     // Users collection (PII isolated to verified owner only; list completely disabled)
     match /users/{userId} {
       allow get: if isValidId(userId) && isVerifiedOwner(userId);
@@ -494,6 +616,66 @@ service cloud.firestore {
         && incoming().updatedAt == request.time
         && incoming().diff(existing()).affectedKeys().hasOnly(['instrumentId', 'title', 'body', 'tags', 'chartContext', 'updatedAt']);
       allow delete: if isValidId(noteId) && isVerifiedUser() && existing().userId == request.auth.uid;
+    }
+
+    // Paper trading (T58): virtual money only, private to the verified owner.
+    // Practice sessions: userId/createdAt immutable; a closed session can only be renamed.
+    match /paperSessions/{sessionId} {
+      allow get: if isValidId(sessionId) && isVerifiedUser() && existing().userId == request.auth.uid;
+      allow list: if isVerifiedUser() && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(sessionId)
+        && isVerifiedUser()
+        && isValidPaperSession(incoming())
+        && incoming().createdAt <= request.time
+        && incoming().updatedAt == request.time
+        && (incoming().closedAt == null || incoming().closedAt <= request.time);
+      allow update: if isValidId(sessionId)
+        && isVerifiedUser()
+        && isValidPaperSession(incoming())
+        && existing().userId == request.auth.uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'startingCapitalVnd', 'balanceVnd', 'settings', 'status', 'closedAt', 'finalEquityVnd', 'updatedAt'])
+        && (existing().status == 'active'
+          ? (incoming().status == 'active' || incoming().closedAt == request.time)
+          : incoming().diff(existing()).affectedKeys().hasOnly(['name', 'updatedAt']));
+      allow delete: if isValidId(sessionId) && isVerifiedUser() && existing().userId == request.auth.uid;
+    }
+
+    // Open paper positions (only in an active session): immutable except stop/target levels and the journal note.
+    match /paperPositions/{positionId} {
+      allow get: if isValidId(positionId) && isVerifiedUser() && existing().userId == request.auth.uid;
+      allow list: if isVerifiedUser() && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(positionId)
+        && isVerifiedUser()
+        && isValidPaperPosition(incoming())
+        && ownsPaperSession(incoming().sessionId)
+        && paperSessionAfter(incoming().sessionId).status == 'active'
+        && incoming().openedAt <= request.time;
+      allow update: if isValidId(positionId)
+        && isVerifiedUser()
+        && isValidPaperPosition(incoming())
+        && existing().userId == request.auth.uid
+        && incoming().diff(existing()).affectedKeys().hasOnly(['stopLoss', 'takeProfit', 'journal', 'researchNoteId']);
+      allow delete: if isValidId(positionId) && isVerifiedUser() && existing().userId == request.auth.uid;
+    }
+
+    // Closed paper trades (order history): write-once, only the journal note may change afterwards.
+    match /paperOrders/{orderId} {
+      allow get: if isValidId(orderId) && isVerifiedUser() && existing().userId == request.auth.uid;
+      allow list: if isVerifiedUser() && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(orderId)
+        && isVerifiedUser()
+        && isValidPaperOrder(incoming())
+        && ownsPaperSession(incoming().sessionId)
+        && incoming().closedAt <= request.time
+        && incoming().openedAt <= incoming().closedAt;
+      allow update: if isValidId(orderId)
+        && isVerifiedUser()
+        && isValidPaperOrder(incoming())
+        && existing().userId == request.auth.uid
+        && incoming().diff(existing()).affectedKeys().hasOnly(['journal', 'researchNoteId']);
+      allow delete: if isValidId(orderId) && isVerifiedUser() && existing().userId == request.auth.uid;
     }
 
     // Append-only AuditLogs collection

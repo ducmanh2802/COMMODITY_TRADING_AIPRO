@@ -5,7 +5,8 @@ import { useTerminal } from '../../../contexts/TerminalContext';
 import type { Scorecard, ScorecardNarrative } from '../../../shared/types/scorecard';
 import { safeReadJson } from '../../../shared/utils/http';
 import { Badge } from '../../ui/Badge';
-import { DimBadge } from './shared';
+import { Card } from '../../ui/Card';
+import { DimBadge, LEVEL_TONE } from './shared';
 
 interface Props {
   card: Scorecard;
@@ -67,7 +68,7 @@ export function ScorecardDrawer({ card, onClose }: Props) {
       <aside className="relative w-full max-w-xl h-full overflow-y-auto bg-[var(--surface)] border-l border-[var(--border)] p-4 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-white truncate">{name}</h2>
+            <h2 className="text-lg font-semibold text-[var(--text-strong)] truncate">{name}</h2>
             <p className="text-xs font-mono text-[var(--faint)]">{card.instrumentId}</p>
           </div>
           <button ref={closeRef} type="button" onClick={onClose} aria-label={t('sc.detail.close')} className="p-1.5 rounded-md border border-[var(--border)] text-[var(--muted)] hover:text-white">
@@ -75,14 +76,14 @@ export function ScorecardDrawer({ card, onClose }: Props) {
           </button>
         </div>
 
-        <div role="note" className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+        <Card tone="warning" className="flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>{card.disclaimer[lang]}</span>
-        </div>
+        </Card>
 
         <section aria-labelledby="sc-narr" className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 id="sc-narr" className="text-sm font-semibold text-white">{t('sc.narr.title')}</h3>
+            <h3 id="sc-narr" className="text-sm font-semibold text-[var(--text-strong)]">{t('sc.narr.title')}</h3>
             {(card.aiProvider === 'gemini' || card.aiProvider === 'ollama') && (
               <button type="button" onClick={() => void runAi()} disabled={ai.kind === 'loading'} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-[var(--accent)] text-white disabled:opacity-60">
                 <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
@@ -103,11 +104,11 @@ export function ScorecardDrawer({ card, onClose }: Props) {
         </section>
 
         <section aria-labelledby="sc-overall" className="space-y-2">
-          <h3 id="sc-overall" className="text-sm font-semibold text-white">{t('sc.detail.overall')}</h3>
+          <h3 id="sc-overall" className="text-sm font-semibold text-[var(--text-strong)]">{t('sc.detail.overall')}</h3>
           {[card.overall.trendClarity, card.overall.volatilityRisk].map((o, i) => (
             <div key={i} className="rounded-md border border-[var(--border)] p-3">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm text-white">{o.label[lang]}</span>
+                <span className="text-sm text-[var(--text-strong)]">{o.label[lang]}</span>
                 {o.score !== null && <span className="text-sm tabular-nums text-[var(--accent-text)]">{o.score}/100</span>}
               </div>
               <p className="mt-1 text-xs text-[var(--muted)]">{o.explanation[lang]}</p>
@@ -118,11 +119,11 @@ export function ScorecardDrawer({ card, onClose }: Props) {
         </section>
 
         <section aria-labelledby="sc-dims" className="space-y-2">
-          <h3 id="sc-dims" className="text-sm font-semibold text-white">{t('sc.detail.dimensions')}</h3>
+          <h3 id="sc-dims" className="text-sm font-semibold text-[var(--text-strong)]">{t('sc.detail.dimensions')}</h3>
           {card.dimensions.map((d) => (
             <div key={d.id} className="rounded-md border border-[var(--border)] p-3 space-y-1.5">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-white">{t(`sc.dim.${d.id}` as TKey)}</span>
+                <span className="text-sm font-medium text-[var(--text-strong)]">{t(`sc.dim.${d.id}` as TKey)}</span>
                 <DimBadge dim={d} />
               </div>
               <p className="text-xs text-[var(--text)]/85">{d.explanation[lang]}</p>
@@ -139,7 +140,7 @@ export function ScorecardDrawer({ card, onClose }: Props) {
         </section>
 
         <section aria-labelledby="sc-dq" className="space-y-1">
-          <h3 id="sc-dq" className="text-sm font-semibold text-white">{t('sc.detail.dataQuality')} <Badge>{dq.label[lang]}</Badge></h3>
+          <h3 id="sc-dq" className="text-sm font-semibold text-[var(--text-strong)]">{t('sc.detail.dataQuality')} <Badge tone={LEVEL_TONE[dq.level]}>{dq.label[lang]}</Badge></h3>
           <p className="text-xs text-[var(--muted)] break-words">{t('sc.detail.quote', { status: dq.quoteStatus, src: dq.quoteSource })}</p>
           <p className="text-xs text-[var(--muted)] break-words">
             {dq.historyBars > 0

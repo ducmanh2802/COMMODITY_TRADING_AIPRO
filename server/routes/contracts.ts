@@ -7,6 +7,8 @@ import {
   instrumentRepository as defaultInstrumentRepository,
 } from '../services/instrumentRegistry.ts';
 import type { IInstrumentRepository } from '../services/repository.ts';
+import { getYahooCurve, type YahooCurveDeps } from '../services/yahooCurve.ts';
+import { isYahooEnabled } from '../providers/yahooAdapter.ts';
 
 const ParamsSchema = z.object({
   instrumentId: z.string().min(1).max(24).regex(/^[a-zA-Z0-9:_-]+$/),
@@ -24,6 +26,8 @@ export interface ContractRoutesOptions {
   instruments?: Pick<IInstrumentRepository, 'findBySymbol'>;
   /** Clock override for tests (default asOf = today's UTC date). */
   now?: () => Date;
+  /** Yahoo curve test hooks (fetch, enabled flag). */
+  yahoo?: YahooCurveDeps & { enabled?: () => boolean };
 }
 
 const DISCLAIMER =
@@ -115,6 +119,42 @@ export function createContractsRouter(options: ContractRoutesOptions = {}): expr
         disclaimer: DISCLAIMER,
         computedAt: now().toISOString(),
       });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /** T47: per-contract-month curve from Yahoo (UNOFFICIAL, delayed). Requires YAHOO_ENABLED=true. */
+  router.get('/:instrumentId/yahoo-curve', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const params = ParamsSchema.safeParse(req.params);
+      const query = z.object({ count: z.coerce.number().int().min(2).max(12).optional() }).safeParse(req.query);
+      if (!params.success || !query.success) {
+        res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Invalid yahoo-curve parameters.' });
+        return;
+      }
+      const instrument = await instruments.findBySymbol(params.data.instrumentId);
+      if (!instrument) {
+        res.status(404).json({
+          error: 'INSTRUMENT_NOT_FOUND',
+          message: `Instrument ${params.data.instrumentId} is not registered in the Instrument Master.`,
+        });
+        return;
+      }
+      if (!(options.yahoo?.enabled ?? isYahooEnabled)()) {
+        res.json({
+          status: 'UNAVAILABLE',
+          instrumentId: instrument.id,
+          source: 'Yahoo Finance (UNOFFICIAL)',
+          reason: 'Yahoo is disabled (set YAHOO_ENABLED=true). Import per-contract CSVs instead (Data > Import).',
+          fetchedAt: now().toISOString(),
+        });
+        return;
+      }
+      const calendarStatus = CONTRACT_CALENDAR_RULES[instrument.id]?.verificationStatus ?? 'UNVERIFIED';
+      res.json(
+        await getYahooCurve(instrument, query.data.count ?? 8, calendarStatus, { now: () => now().getTime(), ...options.yahoo })
+      );
     } catch (err) {
       next(err);
     }

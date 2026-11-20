@@ -16,12 +16,22 @@ import {
   VCB_XML_URL,
   type FetchLike,
 } from './sources.ts';
+import {
+  fetchEiaEthanol,
+  fetchErsCosts,
+  fetchFasExportSales,
+  type ErsCommodity,
+  type FasCommodity,
+} from './supplySources.ts';
 
 export const MACRO_TTL_MS = {
   eia: 60 * 60_000,
   wasde: 6 * 60 * 60_000,
   // Vietcombank feed asks for at most one request per 5 minutes.
   fx: 10 * 60_000,
+  ethanol: 60 * 60_000,
+  fas: 6 * 60 * 60_000,
+  ers: 24 * 60 * 60_000,
   failure: 60_000,
 } as const;
 
@@ -82,6 +92,24 @@ export class MacroService {
       MACRO_TTL_MS.wasde,
       (v) => v.status !== 'UNAVAILABLE' && v.keyNumbers.every((k) => k.value !== null),
       () => fetchWasde(this.fetchFn, this.now())
+    );
+  }
+
+  getEthanol(): Promise<MacroDatapoint> {
+    return this.cached('ethanol', MACRO_TTL_MS.ethanol, (v) => v.value !== null, () =>
+      fetchEiaEthanol(this.fetchFn, this.env.EIA_API_KEY, this.now())
+    );
+  }
+
+  getExportSales(c: FasCommodity): Promise<MacroDatapoint> {
+    return this.cached(`fas:${c}`, MACRO_TTL_MS.fas, (v) => v.value !== null, () =>
+      fetchFasExportSales(this.fetchFn, this.env.FAS_API_KEY, c, this.now())
+    );
+  }
+
+  getErsCosts(c: ErsCommodity): Promise<MacroDatapoint> {
+    return this.cached(`ers:${c}`, MACRO_TTL_MS.ers, (v) => v.value !== null, () =>
+      fetchErsCosts(this.fetchFn, c, this.now())
     );
   }
 

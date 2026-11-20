@@ -119,6 +119,24 @@ export interface TailoredSupplyDemandItem {
   period: string | null;
   impact: 'BULLISH' | 'BEARISH' | 'SIDEWAYS' | 'UNCERTAIN' | 'UNAVAILABLE';
   notes: string;
+  /** T60 friendly display. OK = has a value; NEEDS_KEY = free key missing; LINK_ONLY = web-only source; UNAVAILABLE = fetch failed / no source. */
+  state?: 'OK' | 'NEEDS_KEY' | 'LINK_ONLY' | 'UNAVAILABLE';
+  /** Value with the unit spelled out in Vietnamese, e.g. "1.758 triệu giạ (bushel)". */
+  valueText?: string;
+  /** Change vs the previous comparable reading, e.g. "−91 (−4,9%) so với dự báo tháng trước". */
+  changeText?: string | null;
+  changeDir?: 'UP' | 'DOWN' | 'FLAT' | null;
+  asOf?: string | null;
+  sourceName?: string;
+  sourceUrl?: string;
+  sourceQuality?: 'OFFICIAL' | 'LICENSED_VENDOR' | 'UNOFFICIAL' | 'BENCHMARK' | string;
+  dataStatus?: string;
+  /** Friendly Vietnamese explanation when there is no value (what key / which page). */
+  hintVi?: string;
+  /** Descriptive "Thường hỗ trợ giá khi…" text (not advice). */
+  supportHintVi?: string;
+  /** Extra labelled figures from the same source (e.g. stocks-to-use). */
+  extras?: Array<{ label: string; value: string }>;
 }
 
 export interface MacroTrackerMetric {

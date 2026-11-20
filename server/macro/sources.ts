@@ -23,18 +23,18 @@ import { sanitizeExternalText } from '../services/fundamentalService.ts';
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
-const TIMEOUT_MS = 10_000;
-const DAY_MS = 86_400_000;
+export const TIMEOUT_MS = 10_000;
+export const DAY_MS = 86_400_000;
 
 // ───────────────────────────── helpers ─────────────────────────────
 
-function errMessage(err: unknown, secret?: string): string {
+export function errMessage(err: unknown, secret?: string): string {
   let msg = err instanceof Error ? err.message : String(err);
   if (secret) msg = msg.split(secret).join('***');
   return sanitizeExternalText(msg).slice(0, 200);
 }
 
-function unavailable(
+export function unavailable(
   base: Pick<MacroDatapoint, 'id' | 'label' | 'unit' | 'sourceName' | 'sourceUrl' | 'sourceQuality' | 'fetchedAt'>,
   reason: string,
   status: DataQualityStatus = 'UNAVAILABLE'
@@ -42,7 +42,7 @@ function unavailable(
   return { ...base, value: null, asOf: null, releasedAt: null, status, reason };
 }
 
-function isIsoDate(s: unknown): s is string {
+export function isIsoDate(s: unknown): s is string {
   return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
 }
 
@@ -85,7 +85,7 @@ interface EiaRow {
 }
 
 /** Weekly stocks: week-ending date older than 16 days means at least one weekly release was missed. */
-function eiaStatus(period: string, now: Date): DataQualityStatus {
+export function eiaStatus(period: string, now: Date): DataQualityStatus {
   return now.getTime() - Date.parse(`${period}T00:00:00Z`) > 16 * DAY_MS ? 'STALE' : 'HISTORICAL';
 }
 
@@ -303,8 +303,24 @@ export function parseWasdeText(text: string, ctx: WasdeParseContext): MacroDatap
     const year = years[years.length - 1];
     const cur = nums[nums.length - 1];
     const hasPrevMonth = years.length >= 2 && years[years.length - 2] === year && months.length >= 2;
+
+    // Stocks-to-use = Ending Stocks / "Use, Total" (same table, same unit). Omitted when the row is absent.
+    const details: Record<string, number> = {};
+    const useLine = lines.slice(start, ei).reverse().find((l) => /^\s*Use, Total\s/.test(l));
+    const useNums = useLine ? (useLine.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number) : [];
+    if (useNums.length === nums.length && useNums.every((n) => Number.isFinite(n) && n > 0)) {
+      const useCur = useNums[useNums.length - 1];
+      details.useTotal = useCur;
+      details.stocksToUsePct = Number(((cur / useCur) * 100).toFixed(1));
+      if (hasPrevMonth) {
+        const usePrev = useNums[useNums.length - 2];
+        details.previousUseTotal = usePrev;
+        details.previousStocksToUsePct = Number(((nums[nums.length - 2] / usePrev) * 100).toFixed(1));
+      }
+    }
     return {
       ...base,
+      ...(Object.keys(details).length > 0 ? { details } : {}),
       unit,
       value: cur,
       asOf: `${year} projection (${months[months.length - 1]} ${reportMonth.slice(0, 4)} WASDE)`,

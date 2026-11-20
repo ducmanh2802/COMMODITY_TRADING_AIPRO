@@ -179,3 +179,30 @@ export function errorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
   return String(err);
 }
+
+export type YahooCurveResponseDto =
+  | {
+      status: 'OK' | 'PARTIAL';
+      instrumentId: string;
+      source: string;
+      unit: string;
+      valuationDate: string | null;
+      contracts: {
+        contract: string;
+        yahooSymbol: string;
+        price: number;
+        asOf: string;
+        lastTradingDay: string;
+        calendarStatus: string;
+      }[];
+      excluded: { contract: string; reason: string }[];
+      result: import('../shared/contracts/termStructure').TermStructureResult | null;
+      notes: string[];
+      fetchedAt: string;
+    }
+  | { status: 'UNAVAILABLE'; instrumentId: string; source: string; reason: string; fetchedAt: string };
+
+/** Live per-contract-month curve from Yahoo (UNOFFICIAL, delayed). */
+export function fetchYahooCurve(instrumentId: string, count = 8, signal?: AbortSignal): Promise<YahooCurveResponseDto> {
+  return getJson(`/api/contracts/${encodeURIComponent(instrumentId)}/yahoo-curve?count=${count}`, signal);
+}

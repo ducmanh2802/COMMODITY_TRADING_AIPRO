@@ -5,12 +5,15 @@ import {
   type CotQueryLike,
   type CycleProviderRegistryLike,
 } from '../services/cycleResearchService.ts';
+import type { SupplyMacroLike } from '../services/supplyDemandOverlay.ts';
 import {
   enrichDailyReportWithAi,
   generateEightQuestionVerdict,
 } from '../services/cycleAiService.ts';
 import type { ICandleRepository } from '../storage/candleRepository.ts';
 import type { IInstrumentRepository } from '../services/repository.ts';
+import { SwrCache } from '../services/swrCache.ts';
+import type { CycleMarketOverview } from '../../src/shared/types/cycle.ts';
 import { compareCommoditiesByPotential } from '../../src/shared/utils/commoditySort.ts';
 
 export interface CycleRoutesDeps {
@@ -18,6 +21,8 @@ export interface CycleRoutesDeps {
   providers: CycleProviderRegistryLike;
   candles: ICandleRepository;
   cotService?: CotQueryLike | null;
+  /** T60: official-source reader for the supply/demand matrix (omitted → friendly "no data" rows). */
+  macro?: SupplyMacroLike | null;
   aiRateLimiter?: (req: Request, res: Response, next: NextFunction) => void;
 }
 
@@ -53,15 +58,23 @@ export function registerCycleRoutes(app: Express, deps: CycleRoutesDeps): void {
     providers: deps.providers,
     candles: deps.candles,
     cotService: deps.cotService,
+    macro: deps.macro,
   });
 
   const passthrough = (_req: Request, _res: Response, next: NextFunction) => next();
   const limitAi = deps.aiRateLimiter ?? passthrough;
 
+  // Stale-while-revalidate: overview is served from memory; recomputation runs in the background.
+  const overviewCache = new SwrCache<CycleMarketOverview>({
+    compute: () => cycleService.buildMarketOverview(),
+    ttlMs: 5 * 60_000,
+  });
+  app.locals.cycleOverviewCache = overviewCache;
+
   app.get('/api/cycle/overview', async (_req: Request, res: Response, next: NextFunction) => {
     try {
-      const overview = await cycleService.buildMarketOverview();
-      res.json(overview);
+      const snap = await overviewCache.get();
+      res.json({ ...snap.value, asOf: snap.asOf, stale: snap.stale });
     } catch (err) {
       next(err);
     }

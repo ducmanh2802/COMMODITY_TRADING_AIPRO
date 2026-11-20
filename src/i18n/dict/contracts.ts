@@ -138,6 +138,14 @@ export const vi = {
   'ts.curveTitle': 'Đường cong — giá theo số ngày lịch đến ngày giao dịch cuối cùng',
   'ts.loadingCurve': 'Đang tải đường cong...',
   'ts.noCurve': 'Không có đường cong để vẽ cho ngày đã chọn — xem chi tiết bên dưới.',
+  'ts.yc.title': 'Đường cong trực tiếp từng tháng hợp đồng (Yahoo, KHÔNG CHÍNH THỨC)',
+  'ts.yc.note':
+    'Giá đóng cửa ngày của từng tháng hợp đồng riêng lẻ từ Yahoo Finance: không chính thức, có độ trễ, không phải giá thanh toán của sàn; các tháng xa có thể ít thanh khoản. Ngày giao dịch cuối do lịch hợp đồng của ứng dụng tính. Cần YAHOO_ENABLED=true.',
+  'ts.yc.csvHint':
+    'Muốn đường cong theo ngày lịch sử hoặc dữ liệu chính thức: nhập CSV từng hợp đồng (Dữ liệu > Nhập CSV, mã dạng ZCH27) rồi chọn ngày ở trên.',
+  'ts.yc.loading': 'Đang tải đường cong Yahoo...',
+  'ts.yc.asOf': 'Giá ngày {date} (lấy lúc {fetched})',
+  'ts.yc.symbol': 'Mã Yahoo',
   'ts.chartAria': 'Đường cong cấu trúc kỳ hạn hợp đồng tương lai',
   'ts.xLabel': 'Số ngày lịch đến ngày giao dịch cuối cùng',
   'ts.yLabel': 'Đóng cửa ({unit})',
@@ -451,6 +459,14 @@ export const en: Record<keyof typeof vi, string> = {
   'ts.curveTitle': 'Curve — price vs calendar days to last trading day',
   'ts.loadingCurve': 'Loading curve...',
   'ts.noCurve': 'No curve to plot for the selected date — see details below.',
+  'ts.yc.title': 'Live per-contract-month curve (Yahoo, UNOFFICIAL)',
+  'ts.yc.note':
+    'Daily close of each individual contract month from Yahoo Finance: unofficial, delayed, not an exchange settlement; far months may be illiquid. Last trading days are computed by the app calendar. Requires YAHOO_ENABLED=true.',
+  'ts.yc.csvHint':
+    'For historical-date curves or official data: import per-contract CSVs (Data > Import CSV, codes like ZCH27), then pick the date above.',
+  'ts.yc.loading': 'Loading Yahoo curve...',
+  'ts.yc.asOf': 'Prices of {date} (fetched {fetched})',
+  'ts.yc.symbol': 'Yahoo symbol',
   'ts.chartAria': 'Futures term structure curve',
   'ts.xLabel': 'Calendar days to last trading day',
   'ts.yLabel': 'Close ({unit})',

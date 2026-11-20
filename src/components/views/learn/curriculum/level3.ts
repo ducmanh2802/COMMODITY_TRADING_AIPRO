@@ -77,7 +77,7 @@ export const LEVEL3: Level = {
         'Đường (ICE US: SB): Brazil là nhà sản xuất lớn; giá liên quan giá ethanol và dầu thô vì mía có thể chuyển sang sản xuất ethanol. Ấn Độ và Thái Lan là nhân tố quan trọng khác.',
         'Ca cao (ICE US: CC): tập trung ở Tây Phi (Bờ Biển Ngà, Ghana); thời tiết và bệnh cây ảnh hưởng mạnh; thị trường có thể biến động rất lớn.',
         'Bông (ICE US: CT): giá chịu ảnh hưởng từ Mỹ, Trung Quốc, Ấn Độ và nhu cầu ngành dệt may; Việt Nam nhập khẩu bông cho ngành dệt may.',
-        'Cao su: Việt Nam là nước sản xuất lớn. Hợp đồng cao su không có trong Instrument Master của ứng dụng; hãy xem trang MXV để biết đặc tả: cần kiểm tra lại với MXV/công ty môi giới.',
+        'Cao su: Việt Nam là nước sản xuất lớn. Hợp đồng cao su không có trong Instrument Master của ứng dụng; bảng ký quỹ MXV (en.mxv.com.vn/trading/margin.html, kiểm tra 20/11/2026) có liệt kê cao su trong nhóm Softs; hãy xem trang MXV để biết đặc tả: cần kiểm tra lại với MXV/công ty môi giới.',
       ],
       instrumentIds: ['ICE:SB', 'ICE:CC', 'ICE:CT'],
       uncertain: ['Hợp đồng cao su: sàn tham chiếu và quy cách cần kiểm tra lại với MXV/công ty môi giới (mxv.com.vn).'],

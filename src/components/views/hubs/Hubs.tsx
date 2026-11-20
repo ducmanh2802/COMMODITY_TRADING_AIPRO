@@ -8,9 +8,12 @@ import { CyclePhaseBadge } from '../../common/CyclePhaseBadge';
 import { EmptyState } from '../../ui/EmptyState';
 import { DualViewTabs } from '../DualViewTabs';
 import { LegacyModule } from '../LegacyModule';
-import { LazyResearchNotebookView } from '../LazyOwnerViews';
+import { LazyPaperTradingView, LazyResearchNotebookView } from '../LazyOwnerViews';
 import { TodayPanel } from '../today/TodayPanel';
+import { RadarView } from '../radar/RadarView';
 import { MarketPulsePanel } from '../pulse/MarketPulsePanel';
+import { DriversPanel } from '../drivers/DriversPanel';
+import { HedgeWizard } from '../hedge/HedgeWizard';
 
 interface HubProps {
   tab?: string;
@@ -54,6 +57,7 @@ export function MarketHub({ tab, sub }: HubProps) {
           note: t('n2.mk.pulseNote'),
           render: () => <MarketPulsePanel />,
         },
+        { id: 'radar', label: t('n2.mk.radar'), note: t('n2.mk.radarNote'), render: () => <RadarView /> },
         { id: 'prices', label: t('n2.mk.prices'), note: t('n2.mk.pricesNote'), render: () => <PricesTab initial={sub ?? 'cards'} /> },
         { id: 'news', label: t('n2.mk.news'), note: t('n2.mk.newsNote'), render: () => <LegacyModule id="news" /> },
         { id: 'macro', label: t('n2.mk.macro'), note: t('n2.mk.macroNote'), render: () => <LegacyModule id="fundamental" /> },
@@ -153,6 +157,7 @@ export function InstrumentPage({ tab }: HubProps) {
           { id: 'overview', label: t('n2.in.overview'), note: '', render: () => <LegacyModule id="brief" /> },
           { id: 'charts', label: t('n2.in.charts'), note: '', render: () => <LegacyModule id="charts" /> },
           { id: 'cycle', label: t('n2.in.cycle'), note: t('n2.in.cycleNote'), render: () => <InstrumentCycleTab /> },
+          { id: 'drivers', label: t('drv.tab'), note: t('drv.tabNote'), render: () => <DriversPanel /> },
           { id: 'cot', label: t('n2.in.cot'), note: '', render: () => <LegacyModule id="cot" /> },
           { id: 'profile', label: t('n2.in.profile'), note: '', render: () => <LegacyModule id="commodity-profile" /> },
           { id: 'ai', label: t('n2.in.ai'), note: '', render: () => <LegacyModule id="ai-analyst" /> },
@@ -171,6 +176,8 @@ export function MineHub({ tab }: HubProps) {
         { id: 'notebook', label: t('n2.me.notebook'), note: t('nb.tab.notebookNote'), render: () => <LazyResearchNotebookView /> },
         { id: 'journal', label: t('n2.me.journal'), note: t('nb.tab.journalNote'), render: () => <LegacyModule id="journal" /> },
         { id: 'risk', label: t('n2.me.risk'), note: '', render: () => <LegacyModule id="risk" /> },
+        { id: 'hedge', label: t('hd.tab'), note: '', render: () => <HedgeWizard /> },
+        { id: 'paper', label: t('n2.me.paper'), note: t('pt.disclaimer'), render: () => <LazyPaperTradingView /> },
       ]}
     />
   );

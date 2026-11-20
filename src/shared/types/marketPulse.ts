@@ -64,6 +64,9 @@ export interface PulseBreadth {
 
 export interface MarketPulse {
   generatedAt: string;
+  /** Set by GET /api/market-pulse (stale-while-revalidate): true when served from an expired cache. */
+  asOf?: string;
+  stale?: boolean;
   fed: PulseIndicator[];
   fomc: { available: false; calendarUrl: string; note: PulseText };
   commodities: {

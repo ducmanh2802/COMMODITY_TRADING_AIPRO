@@ -10,7 +10,7 @@ Mỗi bài có: mục tiêu, nội dung ngắn, ví dụ số (tính bằng `lea
 1. Hàng hoá là gì · 2. Giao ngay, forward, futures · 3. Đặc tả hợp đồng: khối lượng, tick, tháng đáo hạn, mã tháng F G H J K M N Q U V X Z · 4. Ký quỹ ban đầu/duy trì và đòn bẩy · 5. Lãi lỗ tính thế nào · 6. Đáo hạn, roll, FND/LTD · 7. Nhà phòng hộ và nhà đầu cơ.
 
 ## Cấp 2 — Thị trường Việt Nam (6 bài)
-1. MXV là gì · 2. Thành viên môi giới · 3. Giờ giao dịch liên thông · 4. Quy đổi USD/VND và phí · 5. Quy trình mở tài khoản · 6. Pháp lý (NĐ 158/2020 là về chứng khoán phái sinh; NĐ 302/2026 thay NĐ 158/2006 và 51/2018 theo một nguồn báo chí, **cần kiểm tra lại**).
+1. MXV là gì · 2. Thành viên môi giới · 3. Giờ giao dịch liên thông · 4. Quy đổi USD/VND và phí · 5. Quy trình mở tài khoản · 6. Pháp lý (NĐ 158/2020 là về chứng khoán phái sinh; NĐ 302/2026/NĐ-CP, hiệu lực 15/09/2026, chấm dứt hiệu lực NĐ 158/2006 và 51/2018 theo Điều 40 — đối chiếu LuatVietnam 20/11/2026; bản gốc chinhphu.vn chưa đối chiếu).
 
 ## Cấp 3 — Từng nhóm hàng (8 bài)
 Ngô và lúa mì · Đậu tương, khô đậu, dầu đậu · Cà phê arabica/robusta · Đường, ca cao, bông, cao su · Vàng, bạc, bạch kim · Đồng và quặng sắt · Dầu WTI/Brent · Khí tự nhiên. Mỗi bài: cung–cầu, mùa vụ, báo cáo (WASDE, EIA, COT), liên hệ Việt Nam, bảng đặc tả từ Instrument Master.
@@ -34,4 +34,4 @@ Chiến lược gần nhất: **EMA Pullback Continuation** (EMA 9/20/50, RSI 14
 `tickPnl`, `marginLeverage`, `positionSize`, `contractValue`, `rollCost`, `marginCallDistance`, `convertCurrency`, `swingPlan`, `rMultiple`, `classifyCurve`.
 
 ## Các mục "cần kiểm tra lại với MXV/công ty môi giới"
-Danh mục và quy cách hợp đồng hiện hành; danh sách thành viên; giờ giao dịch từng mã; phí, hệ số ký quỹ, tỷ giá áp dụng; thủ tục mở tài khoản; ngày FND/LTD và ngày "chỉ đóng vị thế"; hiệu lực NĐ 302/2026; bảo vệ tài sản khách hàng; hợp đồng cao su.
+Danh mục và quy cách hợp đồng hiện hành; danh sách thành viên; giờ giao dịch từng mã; phí, hệ số ký quỹ, tỷ giá áp dụng; thủ tục mở tài khoản; ngày FND/LTD và ngày "chỉ đóng vị thế"; chi tiết NĐ 302/2026 áp dụng cho MXV; bảo vệ tài sản khách hàng; hợp đồng cao su.

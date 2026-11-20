@@ -5,6 +5,8 @@ import type { Timeframe, TradingStyle } from '../../shared/types/instrument';
 import type { AccountCurrency, DisplayTimezone } from '../../shared/types/risk';
 import { useT } from '../../i18n';
 import { LanguageSwitch } from '../common/LanguageSwitch';
+import { ModeSwitch } from './simple/ModeSwitch';
+import { useUiMode } from '../../contexts/UiModeContext';
 
 export function SettingsView() {
   const {
@@ -18,6 +20,7 @@ export function SettingsView() {
     saveSettings,
   } = useAuth();
   const t = useT();
+  const { mode: uiMode } = useUiMode();
 
   const [accountEquity, setAccountEquity] = useState(String(settings.accountEquity));
   const [accountCurrency, setAccountCurrency] = useState<AccountCurrency>(settings.accountCurrency);
@@ -116,6 +119,15 @@ export function SettingsView() {
           {t('dash.st.subtitle')}
         </p>
       </div>
+
+      {/* Interface mode: Dễ dùng / Chuyên sâu */}
+      <section className="bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-white">{t('sm.mode.label')}</h2>
+          <ModeSwitch />
+        </div>
+        <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">{t(uiMode === 'simple' ? 'sm.mode.hintSimple' : 'sm.mode.hintPro')}</p>
+      </section>
 
       {/* Interface language */}
       <section className="bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-3">

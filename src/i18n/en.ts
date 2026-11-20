@@ -12,6 +12,12 @@ import * as brief from './dict/brief';
 import * as scorecard from './dict/scorecard';
 import * as fedpulse from './dict/fedpulse';
 import * as nav2 from './dict/nav2';
+import * as papertrade from './dict/papertrade';
+import * as simple from './dict/simple';
+import * as drivers from './dict/drivers';
+import * as hedge from './dict/hedge';
+import * as onboarding from './dict/onboarding';
+import * as radar from './dict/radar';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
@@ -30,4 +36,10 @@ export const en: Record<TKey, string> = {
   ...scorecard.en,
   ...fedpulse.en,
   ...nav2.en,
+  ...papertrade.en,
+  ...simple.en,
+  ...drivers.en,
+  ...hedge.en,
+  ...onboarding.en,
+  ...radar.en,
 };
