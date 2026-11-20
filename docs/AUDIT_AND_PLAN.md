@@ -120,3 +120,17 @@ Ký hiệu: **P0** = chặn mọi việc khác · **P1** = lõi nghiên cứu ·
 | T42 | Giá nhanh & chính xác hơn: Yahoo batch `v8/finance/spark` (1 request cho mọi mã thay vì 1 mã/giây), TTL ~15 s, client tự làm mới 15–30 s (dừng khi tab ẩn), hiện "cập nhật X giây trước", đối chiếu chéo spark ↔ chart; hoàn tất T33 (lưu lịch sử 10 năm vào SQLite, tăng dần) | Dữ liệu | yahooAdapter, registry, services/yahooHistory, engineCandles, TerminalContext (phần polling) |
 | T43 | Giao diện hiện đại: design tokens (màu, bo góc, khoảng cách, font Inter), Sidebar/TopBar gọn, thẻ giá có sparkline, trạng thái rõ, responsive 390px; áp vào Tổng quan, Thị trường, Hồ sơ hàng hoá | Giao diện | index.css/tailwind, layout/*, common/*, OverviewDashboard, MarketWatchView, CommodityWorld/Profile (chỉ style) |
 | T44 | AI đánh giá các mã: bảng điểm nghiên cứu cho mọi mã (xu hướng, động lượng, biến động, COT, mùa vụ, chất lượng dữ liệu) bằng công thức xác định + tóm tắt Gemini (nếu có khoá); xếp hạng, giải thích bằng lời; KHÔNG khuyến nghị mua/bán; nối trang "Phân tích chi tiết" (brief) vào menu | AI | server/services/scorecard/*, routes mới, views/scorecard/*, brief/* , 1 mục Sidebar |
+
+### Wave 7 — Phát triển dần (2026-11-20). Giao TUẦN TỰ, mỗi lần 1 agent
+| Thứ tự | ID | Task | Tiêu chí xong |
+|---|---|---|---|
+| 1 | T45 | `docs/ARCHITECTURE.md`: sơ đồ tầng (UI → API → services/engines → providers → storage), luồng dữ liệu giá, nhãn chất lượng, module map 4 mục menu, quy ước thêm nguồn/trang/task | Tài liệu khớp code, có sơ đồ |
+| 2 | T46 | Tăng tốc "Hôm nay nên chú ý gì" & scorecard: tính trước/caching nền, endpoint gộp, skeleton | Panel có dữ liệu < 2 s khi cache ấm |
+| 3 | T47 | Giá từng tháng đáo hạn (kiểm chứng mã Yahoo theo tháng hoặc CSV) → Cấu trúc kỳ hạn & chi phí chuyển kỳ có dữ liệu thật | Ít nhất ZC, CL, GC có đường cong kỳ hạn |
+| 4 | T48 | Cảnh báo giá (hoàn tất T41) trong "Của tôi" | Tạo/sửa/xoá, kích hoạt đúng, rules + test |
+| 5 | T49 | Tỷ giá bổ sung (ECB/FRED) + hợp đồng mở theo tuần từ COT | Hiển thị có nguồn |
+| 6 | T50 | Giá nội địa Việt Nam từ nguồn công khai hợp lệ (cà phê, cao su, tiêu…) + basis nội địa vs quốc tế | Có nguồn, điều khoản cho phép |
+| 7 | T51 | Smoke test trình duyệt trong CI (hoàn tất T39) | CI chạy xanh |
+| 8 | T52 | Học viện: rà các mục "cần kiểm tra", tour nhập môn 5 bước | Danh sách đã kiểm/còn thiếu |
+| 9 | T53 | Deploy thử Cloud Run + lưu trữ bền (SQLite → Cloud SQL/Firestore hoặc GCS) | URL chạy được |
+| 10 | T54 | Chuẩn bị kiếm tiền: tài khoản, gói dịch vụ, giới hạn tính năng (chưa thanh toán) | Thiết kế + khung code |
