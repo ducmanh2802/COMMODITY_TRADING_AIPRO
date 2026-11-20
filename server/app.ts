@@ -10,6 +10,8 @@ import { registerContractRoutes } from './routes/contracts.ts';
 import { registerCotRoutes } from './routes/cot.ts';
 import { registerCycleRoutes } from './routes/cycleRoutes.ts';
 import { registerBriefRoutes } from './routes/brief.ts';
+import { registerScorecardRoutes } from './routes/scorecard.ts';
+import { ScorecardService } from './services/scorecard/scorecardService.ts';
 import { YahooFinanceAdapter, isYahooEnabled } from './providers/yahooAdapter.ts';
 import { registerMxvEstimateRoutes } from './routes/mxvEstimate.ts';
 import { registerMacroRoutes, type MacroServiceLike } from './routes/macro.ts';
@@ -649,6 +651,41 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
             isYahooEnabled() && yahooProvider.supports(inst) ? yahooProvider.getCandles(inst.exchangeSymbol, 'D1') : null
         : null,
     getCot: getAiCot,
+  });
+
+  // "Đánh giá các mã" scorecard (T44): deterministic per-instrument labels + optional AI narrative.
+  const scorecardService = new ScorecardService({
+    findInstrument: (idOrSymbol) => instrumentRepository.findBySymbol(idOrSymbol),
+    listInstruments: () => instrumentRepository.list({}),
+    getQuote: (inst) => providerRegistry.getQuoteForInstrument(inst),
+    candles: candleRepository,
+    fetchHistory:
+      yahooProvider instanceof YahooFinanceAdapter
+        ? async (inst) =>
+            isYahooEnabled() && yahooProvider.supports(inst) ? yahooProvider.getCandles(inst.exchangeSymbol, 'D1') : null
+        : null,
+    getCot: getAiCot,
+  });
+  registerScorecardRoutes(app, {
+    service: scorecardService,
+    rateLimiter: aiRateLimiter,
+    summarize: async (inst, language) => {
+      const history = await scorecardService.history(inst);
+      const snapshot = analyzeTechnicalSnapshot(history.candles, inst.exchangeSymbol, inst.exchange, 'D1');
+      const quote = await providerRegistry.getQuoteForInstrument(inst).catch(() => null);
+      return generateResearchSummary(
+        {
+          instrument: inst,
+          timeframe: 'D1',
+          language,
+          quote,
+          snapshot,
+          candleSource: history.source ? `${history.origin} ${history.source}` : history.origin,
+          cot: loadCotForAi(getAiCot(), inst.id),
+        },
+        { ...aiOptions, logError: aiOptions.logError ?? logError }
+      );
+    },
   });
 
 

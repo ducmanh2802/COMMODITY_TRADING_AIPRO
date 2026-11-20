@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, SearchX } from 'lucide-react';
+import { SectionHeader } from '../ui/SectionHeader';
+import { Card } from '../ui/Card';
+import { Skeleton } from '../ui/Skeleton';
+import { EmptyState } from '../ui/EmptyState';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { ProductCategory } from '../../shared/types/instrument';
 import type { CommodityCycleSummary, CycleMarketOverview } from '../../shared/types/cycle';
@@ -89,43 +93,40 @@ export function MarketWatchView() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">{t('dash.mw.title')}</h1>
-          <p className="text-sm text-[#E5E7EB]/65 mt-1">
-            {t('dash.mw.subtitle')}
-          </p>
-        </div>
-
-        <div className="relative w-full md:w-72">
-          <label htmlFor="market-watch-search" className="sr-only">
-            {t('dash.mw.filterLabel')}
-          </label>
-          <Search
-            className="w-4 h-4 text-[#E5E7EB]/45 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-            aria-hidden="true"
-          />
-          <input
-            id="market-watch-search"
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('dash.mw.filterPlaceholder')}
-            className="w-full bg-[#111622] border border-[#263244] rounded-md pl-9 pr-3 py-2 text-xs text-[#E5E7EB] placeholder:text-[#E5E7EB]/40 focus:outline-none focus:border-[#6366F1]"
-          />
-        </div>
-      </div>
-
+      <SectionHeader
+        level={1}
+        title={t('dash.mw.title')}
+        subtitle={t('dash.mw.subtitle')}
+        actions={
+          <div className="relative w-full md:w-72">
+            <label htmlFor="market-watch-search" className="sr-only">
+              {t('dash.mw.filterLabel')}
+            </label>
+            <Search
+              className="w-4 h-4 text-[var(--faint)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              aria-hidden="true"
+            />
+            <input
+              id="market-watch-search"
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('dash.mw.filterPlaceholder')}
+              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-[10px] pl-9 pr-3 h-10 text-sm text-[var(--text)] placeholder:text-[var(--faint)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/25"
+            />
+          </div>
+        }
+      />
       {/* Category Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-1.5 bg-[#111622] border border-[#263244] rounded-lg p-1.5 w-fit">
+      <div className="flex flex-wrap items-center gap-1 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-1 w-fit max-w-full">
         {CATEGORIES.map((cat) => (
           <button
             key={cat}
             type="button"
             onClick={() => setCategoryFilter(cat)}
-            className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+            className={`h-8 px-3.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
               categoryFilter === cat
-                ? 'bg-[#6366F1] text-white'
+                ? 'bg-[var(--accent)] text-white shadow-sm'
                 : 'text-[#E5E7EB]/70 hover:text-white hover:bg-[#172033]'
             }`}
           >
@@ -135,11 +136,11 @@ export function MarketWatchView() {
       </div>
 
       {/* High-Density Market Watch Data Grid */}
-      <div className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
+      <Card padded={false} className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[920px]">
             <thead>
-              <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
+              <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/60 text-xs uppercase tracking-wide text-[var(--muted)]">
                 <th className="py-3 px-4 font-medium">{t('dash.mw.colProduct')}</th>
                 <th className="py-3 px-3 font-medium">{t('dash.mw.colCategory')}</th>
                 <th className="py-3 px-3 font-medium">{t('common.exchange')}</th>
@@ -154,17 +155,24 @@ export function MarketWatchView() {
                 <th className="py-3 px-4 font-medium text-right">{t('dash.mw.colActions')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#263244]/70 text-xs">
+            <tbody className="divide-y divide-[var(--border)]/60 text-xs">
               {loading ? (
-                <tr>
-                  <td colSpan={12} className="py-10 px-4 text-center text-[#E5E7EB]/55">
-                    {t('dash.mw.loading')}
-                  </td>
-                </tr>
+                <>
+                  {Array.from({ length: 6 }, (_, i) => (
+                    <tr key={i}>
+                      <td colSpan={12} className="py-3 px-4">
+                        <Skeleton className="h-6 w-full" />
+                      </td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td colSpan={12} className="sr-only">{t('dash.mw.loading')}</td>
+                  </tr>
+                </>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="py-10 px-4 text-center text-[#E5E7EB]/55">
-                    {t('dash.mw.noMatch')}
+                  <td colSpan={12} className="p-4">
+                    <EmptyState title={t('dash.mw.noMatch')} icon={<SearchX className="w-6 h-6" aria-hidden="true" />} />
                   </td>
                 </tr>
               ) : (
@@ -172,8 +180,8 @@ export function MarketWatchView() {
                   const quote = quotesBySymbol[inst.exchangeSymbol];
                   const cycleSummary = summaryById.get(inst.id);
                   return (
-                    <tr key={inst.id} className="hover:bg-[#172033]/40 transition-colors">
-                      <td className="py-2.5 px-4 whitespace-nowrap">
+                    <tr key={inst.id} className="hover:bg-[var(--surface-2)]/50 transition-colors">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <div className="font-medium text-white">
                           {inst.commodityProfile?.vietnameseName ?? inst.productName}
                         </div>
@@ -273,7 +281,7 @@ export function MarketWatchView() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

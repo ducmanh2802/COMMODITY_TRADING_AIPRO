@@ -1,0 +1,64 @@
+{
+ "GC=F": {
+  "timestamp": [
+   1795173540,
+   1795173600,
+   1795173660,
+   1795173720,
+   1795173780,
+   1795173840,
+   1795173900,
+   1795173940
+  ],
+  "symbol": "GC=F",
+  "end": 1795237140,
+  "dataGranularity": 300,
+  "start": 1795150800,
+  "previousClose": 3685.5,
+  "chartPreviousClose": 3685.5,
+  "close": [
+   3587.8,
+   3587,
+   3587.1,
+   3589.1,
+   3590.6,
+   3589.9,
+   3588.6,
+   3588.2
+  ],
+  "fulldayChange": -97.3,
+  "fulldayChangePercent": -2.64,
+  "fulldayPrice": 3588.2
+ },
+ "ZC=F": {
+  "timestamp": [
+   1795173060,
+   1795173120,
+   1795173300,
+   1795173480,
+   1795173540,
+   1795173600,
+   1795173900,
+   1795174080
+  ],
+  "symbol": "ZC=F",
+  "end": 1795237140,
+  "dataGranularity": 300,
+  "start": 1795150800,
+  "previousClose": 452.5,
+  "chartPreviousClose": 452.5,
+  "close": [
+   450.5,
+   451,
+   451,
+   450.75,
+   450.75,
+   450.5,
+   450.5,
+   null
+  ],
+  "fulldayChange": -2,
+  "fulldayChangePercent": -0.442,
+  "fulldayPrice": 450.5
+ }
+}

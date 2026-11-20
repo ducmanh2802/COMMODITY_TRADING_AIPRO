@@ -170,7 +170,7 @@ export function CommodityProfileView() {
 
   if (loading && !dossier) {
     return (
-      <div className="bg-[#111622] border border-[#263244] rounded-lg p-10 text-center text-sm text-[#E5E7EB]/60">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-10 text-center text-sm text-[var(--muted)]">
         Đang tải hồ sơ nghiên cứu chu kỳ hàng hóa ({selectedSymbol})...
       </div>
     );
@@ -178,12 +178,12 @@ export function CommodityProfileView() {
 
   if (error || !dossier) {
     return (
-      <div className="bg-[#111622] border border-[#EF4444]/40 rounded-lg p-6 space-y-3">
+      <div className="bg-[var(--surface)] border border-[#EF4444]/40 rounded-[var(--radius-md)] p-6 space-y-3">
         <p className="text-sm text-[#EF4444]">{error ?? 'Không tìm thấy dữ liệu hồ sơ.'}</p>
         <button
           type="button"
           onClick={() => setActiveModule('commodity-world')}
-          className="px-3 py-1.5 bg-[#172033] border border-[#263244] rounded text-xs text-white"
+          className="px-3 py-1.5 bg-[var(--surface-2)] border border-[var(--border)] rounded text-xs text-white"
         >
           Quay lại Thế giới Hàng hóa
         </button>
@@ -203,21 +203,21 @@ export function CommodityProfileView() {
         <button
           type="button"
           onClick={() => setActiveModule('commodity-world')}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#E5E7EB]/80 hover:text-white self-start"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text)] hover:text-white self-start"
         >
           <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Quay lại Thế giới Hàng hóa</span>
         </button>
 
         <div className="flex items-center gap-2">
-          <label htmlFor="profile-symbol-select" className="text-xs text-[#E5E7EB]/60 whitespace-nowrap">
+          <label htmlFor="profile-symbol-select" className="text-xs text-[var(--muted)] whitespace-nowrap">
             Chuyển mã:
           </label>
           <select
             id="profile-symbol-select"
             value={instrument.exchangeSymbol}
             onChange={(e) => setSelectedSymbol(e.target.value)}
-            className="bg-[#111622] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#6366F1]"
+            className="bg-[var(--surface)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#6366F1]"
           >
             {instruments.map((inst) => (
               <option key={inst.id} value={inst.exchangeSymbol}>
@@ -229,7 +229,7 @@ export function CommodityProfileView() {
       </div>
 
       {/* Hero Banner */}
-      <section className="relative bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
+      <section className="relative bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] overflow-hidden">
         <div className="relative h-56 sm:h-64 w-full">
           <CommodityHeroImage
             symbol={instrument.id}
@@ -262,19 +262,19 @@ export function CommodityProfileView() {
                 </h1>
                 <div className="flex flex-wrap items-center gap-3 mt-2">
                   <CyclePhaseBadge phase={summary.cyclePhase} />
-                  <span className="text-xs font-mono text-[#E5E7EB]/75">
+                  <span className="text-xs font-mono text-[var(--muted)]">
                     Phiên ICT: {instrument.commodityProfile?.vietnamTradingSessionsIct ?? 'Theo giờ sàn chuẩn'}
                   </span>
                 </div>
               </div>
 
-              <div className="bg-[#0B0E14]/90 border border-[#263244] rounded-lg px-4 py-3 text-right shrink-0 max-w-xs">
-                <span className="block text-[11px] text-[#E5E7EB]/55">Giá tham chiếu / Hiện tại</span>
+              <div className="bg-[#0B0E14]/90 border border-[var(--border)] rounded-[var(--radius-md)] px-4 py-3 text-right shrink-0 max-w-xs">
+                <span className="block text-[11px] text-[var(--faint)]">Giá tham chiếu / Hiện tại</span>
                 <span className="block text-2xl font-mono font-semibold text-white tabular-nums">
                   {quote.price !== null ? quote.price.toFixed(2) : 'DATA_UNAVAILABLE'}
                 </span>
                 {quote.price !== null ? (
-                  <span className="block text-[11px] font-mono text-[#E5E7EB]/60">
+                  <span className="block text-[11px] font-mono text-[var(--muted)]">
                     {`${quote.currency} / ${quote.unit} · ${quote.source}`}
                   </span>
                 ) : (
@@ -313,7 +313,7 @@ export function CommodityProfileView() {
         </div>
 
         {/* Multi-Horizon Return Strip */}
-        <div className="grid grid-cols-4 sm:grid-cols-8 divide-x divide-[#263244] border-t border-[#263244] bg-[#111622]">
+        <div className="grid grid-cols-4 sm:grid-cols-8 divide-x divide-[#263244] border-t border-[var(--border)] bg-[var(--surface)]">
           {(
             [
               ['1W', returns.w1],
@@ -327,9 +327,9 @@ export function CommodityProfileView() {
             ] as Array<[string, number | null]>
           ).map(([label, val]) => (
             <div key={label} className="px-3 py-2.5 text-center">
-              <span className="block text-[10px] font-mono text-[#E5E7EB]/50">{label}</span>
+              <span className="block text-[10px] font-mono text-[var(--faint)]">{label}</span>
               <span
-                className={`block text-xs font-mono font-semibold tabular-nums mt-0.5 ${
+                className={`block text-xs font-semibold tabular-nums mt-0.5 ${
                   val === null ? 'text-[#E5E7EB]/40' : val >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'
                 }`}
               >
@@ -343,23 +343,23 @@ export function CommodityProfileView() {
       {/* Historical Chart + 8-Question AI Verdict Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Multi-Horizon Price Chart (2/3) */}
-        <section className="xl:col-span-2 bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3">
+        <section className="xl:col-span-2 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-white">Biểu đồ Chu kỳ Dài hạn (D1 OHLCV)</h2>
-              <p className="text-xs text-[#E5E7EB]/55 font-mono tabular-nums">
+              <p className="text-xs text-[var(--faint)] tabular-nums">
                 {candles.length} nến lịch sử khả dụng · Percentile chu kỳ:{' '}
                 {summary.percentile10Y !== null ? `${summary.percentile10Y.toFixed(1)}%` : 'DATA_UNAVAILABLE'}
               </p>
             </div>
-            <div className="flex items-center gap-1 bg-[#0B0E14] border border-[#263244] rounded p-1">
+            <div className="flex items-center gap-1 bg-[#0B0E14] border border-[var(--border)] rounded p-1">
               {(['1Y', '3Y', '5Y', '10Y', 'ALL'] as ChartHorizon[]).map((h) => (
                 <button
                   key={h}
                   type="button"
                   onClick={() => setHorizon(h)}
                   className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                    horizon === h ? 'bg-[#6366F1] text-white' : 'text-[#E5E7EB]/70 hover:text-white'
+                    horizon === h ? 'bg-[#6366F1] text-white' : 'text-[var(--muted)] hover:text-white'
                   }`}
                 >
                   {h}
@@ -369,11 +369,11 @@ export function CommodityProfileView() {
           </div>
 
           {visibleCandles.length === 0 ? (
-            <div className="h-[300px] bg-[#0B0E14] border border-[#263244] rounded flex flex-col items-center justify-center p-6 text-center space-y-3">
+            <div className="h-[300px] bg-[#0B0E14] border border-[var(--border)] rounded flex flex-col items-center justify-center p-6 text-center space-y-3">
               <p className="text-sm font-mono text-[#F59E0B]">
                 DATA_UNAVAILABLE — Chưa có chuỗi nến D1 lịch sử cho {instrument.exchangeSymbol}.
               </p>
-              <p className="text-xs text-[#E5E7EB]/60 max-w-md">
+              <p className="text-xs text-[var(--muted)] max-w-md">
                 Đồng bộ từ Twelve Data / FMP / Yahoo (nếu bật) hoặc import file CSV OHLCV chuẩn để vẽ biểu đồ chu kỳ &amp; kích hoạt chấm điểm Bottom Detection.
               </p>
               <button
@@ -390,11 +390,11 @@ export function CommodityProfileView() {
         </section>
 
         {/* 100-Point Bottom Detection Summary Card (1/3) */}
-        <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-4">
+        <section className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-4 space-y-4">
           <div className="flex items-start justify-between gap-2">
             <div>
               <h2 className="text-sm font-semibold text-white">Động cơ Phát hiện Đáy (100 Điểm)</h2>
-              <p className="text-xs text-[#E5E7EB]/55 mt-0.5">
+              <p className="text-xs text-[var(--faint)] mt-0.5">
                 Trọng số quan sát thực tế: {bottomDetection.observedWeight}/100
               </p>
             </div>
@@ -407,17 +407,17 @@ export function CommodityProfileView() {
             </span>
           </div>
 
-          <div className="bg-[#0B0E14] border border-[#263244] rounded p-3 space-y-1.5">
+          <div className="bg-[#0B0E14] border border-[var(--border)] rounded p-3 space-y-1.5">
             <p className={`text-xs font-medium ${getBottomScoreAccent(bottomDetection.classification)}`}>
               {bottomDetection.classificationLabelVi}
             </p>
-            <p className="text-xs font-mono text-[#E5E7EB]/75 tabular-nums">
+            <p className="text-xs font-mono text-[var(--muted)] tabular-nums">
               Model Confidence Score:{' '}
               {bottomDetection.modelConfidenceScore !== null
                 ? `${bottomDetection.modelConfidenceScore}/100`
                 : 'DATA_UNAVAILABLE'}
             </p>
-            <p className="text-[11px] text-[#E5E7EB]/55 leading-relaxed">
+            <p className="text-[11px] text-[var(--faint)] leading-relaxed">
               {bottomDetection.methodologyNote}
             </p>
           </div>
@@ -428,8 +428,8 @@ export function CommodityProfileView() {
               return (
                 <div key={f.key} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#E5E7EB]/85 truncate pr-2">{f.labelVi}</span>
-                    <span className="font-mono text-[#E5E7EB]/80 tabular-nums shrink-0">
+                    <span className="text-[var(--text)] truncate pr-2">{f.labelVi}</span>
+                    <span className="text-[var(--text)] tabular-nums tabular-nums shrink-0">
                       {f.score !== null ? `${f.score}/${f.weight}` : `—/${f.weight}`}
                     </span>
                   </div>
@@ -455,15 +455,15 @@ export function CommodityProfileView() {
       </div>
 
       {/* 8-Question AI VERDICT */}
-      <section className="bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#263244] pb-3">
+      <section className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
           <div className="flex items-center gap-2.5">
             <Bot className="w-4 h-4 text-[#6366F1]" aria-hidden="true" />
             <div>
               <h2 className="text-sm font-semibold text-white">
                 AI Verdict — 8 Câu hỏi Nghiên cứu Chu kỳ
               </h2>
-              <p className="text-xs text-[#E5E7EB]/55">
+              <p className="text-xs text-[var(--faint)]">
                 Phân tích server-side qua Gemini dựa hoàn toàn trên dữ liệu định lượng và Cung–Cầu đã kiểm chứng.
               </p>
             </div>
@@ -481,7 +481,7 @@ export function CommodityProfileView() {
         </div>
 
         {!verdict ? (
-          <p className="text-xs text-[#E5E7EB]/60">
+          <p className="text-xs text-[var(--muted)]">
             Nhấn nút phía trên để AI trả lời toàn diện 8 câu hỏi trọng tâm: Giai đoạn chu kỳ, Trạng thái Cung–Cầu, Định giá hay Bẫy giảm giá, Độ tin cậy tạo đáy, Động lực/Rủi ro, Hành động ngay hay Chờ xác nhận, Vùng mua/Vô hiệu/Mục tiêu và Tín hiệu kích hoạt.
           </p>
         ) : verdict.status !== 'OK' || !verdict.answers ? (
@@ -501,9 +501,9 @@ export function CommodityProfileView() {
               ['7. Vùng mua, điểm vô hiệu kịch bản & mục tiêu?', verdict.answers.q7EntryZoneInvalidationTargets],
               ['8. Tín hiệu kỹ thuật / vĩ mô cần để xác nhận?', verdict.answers.q8ConfirmationTriggers],
             ].map(([q, ans]) => (
-              <div key={q} className="bg-[#0B0E14] border border-[#263244] rounded-md p-3.5 space-y-1.5">
+              <div key={q} className="bg-[#0B0E14] border border-[var(--border)] rounded-md p-3.5 space-y-1.5">
                 <p className="font-semibold text-white">{q}</p>
-                <p className="text-[#E5E7EB]/85 leading-relaxed">{ans}</p>
+                <p className="text-[var(--text)] leading-relaxed">{ans}</p>
               </div>
             ))}
           </div>
@@ -511,7 +511,7 @@ export function CommodityProfileView() {
       </section>
 
       {/* Multi-Timeframe Cycle Matrix (M/W/D/H4) */}
-      <section className="bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-4">
+      <section className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-5 space-y-4">
         <div className="flex items-center gap-2">
           <Layers className="w-4 h-4 text-[#6366F1]" aria-hidden="true" />
           <h2 className="text-sm font-semibold text-white">
@@ -523,15 +523,15 @@ export function CommodityProfileView() {
           {(['MONTHLY', 'WEEKLY', 'DAILY', 'H4'] as const).map((tfKey) => {
             const tf = timeframes[tfKey];
             return (
-              <div key={tfKey} className="bg-[#0B0E14] border border-[#263244] rounded-md p-3.5 space-y-2 text-xs">
+              <div key={tfKey} className="bg-[#0B0E14] border border-[var(--border)] rounded-md p-3.5 space-y-2 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono font-semibold text-white">{tfKey}</span>
-                  <span className="font-mono text-[11px] text-[#E5E7EB]/50">{tf.candleCount} nến</span>
+                  <span className="font-mono text-[11px] text-[var(--faint)]">{tf.candleCount} nến</span>
                 </div>
                 <CyclePhaseBadge phase={tf.phase} compact />
-                <p className="text-[#E5E7EB]/75 leading-relaxed">{tf.summary}</p>
+                <p className="text-[var(--muted)] leading-relaxed">{tf.summary}</p>
                 {tf.available && (
-                  <div className="grid grid-cols-2 gap-1 pt-2 border-t border-[#263244] font-mono text-[11px] text-[#E5E7EB]/70 tabular-nums">
+                  <div className="grid grid-cols-2 gap-1 pt-2 border-t border-[var(--border)] font-mono text-[11px] text-[var(--muted)] tabular-nums">
                     <span>EMA20: {tf.ema20 ?? '—'}</span>
                     <span>EMA50: {tf.ema50 ?? '—'}</span>
                     <span>RSI14: {tf.rsi14 ?? '—'}</span>
@@ -547,42 +547,42 @@ export function CommodityProfileView() {
       {/* Dual Trade Setup Plans: A. Long-Term Cycle Investing & B. Swing Trading */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {[tradePlans.longTermCycle, tradePlans.swingTrading].map((plan) => (
-          <div key={plan.horizonType} className="bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-4">
-            <div className="flex items-start justify-between gap-3 border-b border-[#263244] pb-3">
+          <div key={plan.horizonType} className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-5 space-y-4">
+            <div className="flex items-start justify-between gap-3 border-b border-[var(--border)] pb-3">
               <div>
                 <h2 className="text-sm font-semibold text-white">{plan.title}</h2>
-                <p className="text-xs font-mono text-[#E5E7EB]/55 mt-0.5">
+                <p className="text-xs font-mono text-[var(--faint)] mt-0.5">
                   Chế độ: Hỗ trợ ra quyết định (Tự động giao dịch: TẮT)
                 </p>
               </div>
-              <span className="font-mono text-xs px-2 py-0.5 rounded border border-[#263244] bg-[#0B0E14] text-[#E5E7EB]/85 whitespace-nowrap">
+              <span className="font-mono text-xs px-2 py-0.5 rounded border border-[var(--border)] bg-[#0B0E14] text-[var(--text)] whitespace-nowrap">
                 {plan.status}
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="bg-[#0B0E14] border border-[#263244] rounded p-2.5">
-                <span className="block text-[11px] text-[#E5E7EB]/50">Vùng mua tối ưu</span>
+              <div className="bg-[#0B0E14] border border-[var(--border)] rounded p-2.5">
+                <span className="block text-[11px] text-[var(--faint)]">Vùng mua tối ưu</span>
                 <span className="font-mono text-white tabular-nums">
                   {plan.entryZone.low !== null && plan.entryZone.high !== null
                     ? `${plan.entryZone.low} – ${plan.entryZone.high}`
                     : 'DATA_UNAVAILABLE'}
                 </span>
               </div>
-              <div className="bg-[#0B0E14] border border-[#263244] rounded p-2.5">
-                <span className="block text-[11px] text-[#E5E7EB]/50">Cắt lỗ (SL)</span>
+              <div className="bg-[#0B0E14] border border-[var(--border)] rounded p-2.5">
+                <span className="block text-[11px] text-[var(--faint)]">Cắt lỗ (SL)</span>
                 <span className="font-mono text-[#EF4444] tabular-nums">
                   {plan.stopLoss !== null ? plan.stopLoss : '—'}
                 </span>
               </div>
-              <div className="bg-[#0B0E14] border border-[#263244] rounded p-2.5">
-                <span className="block text-[11px] text-[#E5E7EB]/50">Chốt lời (TP1 / TP2)</span>
+              <div className="bg-[#0B0E14] border border-[var(--border)] rounded p-2.5">
+                <span className="block text-[11px] text-[var(--faint)]">Chốt lời (TP1 / TP2)</span>
                 <span className="font-mono text-[#22C55E] tabular-nums">
                   {plan.takeProfits.length > 0 ? plan.takeProfits.join(' / ') : '—'}
                 </span>
               </div>
-              <div className="bg-[#0B0E14] border border-[#263244] rounded p-2.5">
-                <span className="block text-[11px] text-[#E5E7EB]/50">Tỷ lệ Risk/Reward</span>
+              <div className="bg-[#0B0E14] border border-[var(--border)] rounded p-2.5">
+                <span className="block text-[11px] text-[var(--faint)]">Tỷ lệ Risk/Reward</span>
                 <span className="font-mono text-[#6366F1] font-semibold tabular-nums">
                   {plan.riskRewardRatio !== null ? `1 : ${plan.riskRewardRatio}` : '—'}
                 </span>
@@ -590,7 +590,7 @@ export function CommodityProfileView() {
             </div>
 
             <div className="space-y-2 text-xs">
-              <p className="text-[#E5E7EB]/80 leading-relaxed">{plan.positionSizingGuidance}</p>
+              <p className="text-[var(--text)] leading-relaxed">{plan.positionSizingGuidance}</p>
               <p className="text-[#F59E0B]/90 font-mono">Vô hiệu kịch bản: {plan.invalidationCondition}</p>
             </div>
           </div>
@@ -599,7 +599,7 @@ export function CommodityProfileView() {
 
       {/* Tailored Supply/Demand Grid + 12-Month Seasonality & COT */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <section className="bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-3">
+        <section className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-5 space-y-3">
           <div className="flex items-center gap-2">
             <Compass className="w-4 h-4 text-[#6366F1]" aria-hidden="true" />
             <h2 className="text-sm font-semibold text-white">
@@ -612,33 +612,33 @@ export function CommodityProfileView() {
               <div key={item.id} className="py-3 space-y-1">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-medium text-white">{item.labelVi}</span>
-                  <span className="font-mono text-[#E5E7EB]/85 tabular-nums">
+                  <span className="text-[var(--text)] tabular-nums tabular-nums">
                     {item.latestValue !== null ? `${item.latestValue} ${item.unit}` : 'DATA_UNAVAILABLE'}
                   </span>
                 </div>
-                <p className="text-[11px] text-[#E5E7EB]/60">{item.notes}</p>
+                <p className="text-[11px] text-[var(--muted)]">{item.notes}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-4">
+        <section className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-5 space-y-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#6366F1]" aria-hidden="true" />
               <h2 className="text-sm font-semibold text-white">Tính mùa vụ 12 tháng &amp; Vị thế COT</h2>
             </div>
-            <span className="text-[11px] font-mono text-[#E5E7EB]/55">
+            <span className="text-[11px] font-mono text-[var(--faint)]">
               COT Index: {cotSnapshot.cotIndex !== null ? `${cotSnapshot.cotIndex.toFixed(1)}%` : 'UNAVAILABLE'}
             </span>
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 text-xs">
             {seasonality.map((m) => (
-              <div key={m.month} className="bg-[#0B0E14] border border-[#263244] rounded p-2">
-                <span className="block text-[11px] text-[#E5E7EB]/55">{m.label}</span>
+              <div key={m.month} className="bg-[#0B0E14] border border-[var(--border)] rounded p-2">
+                <span className="block text-[11px] text-[var(--faint)]">{m.label}</span>
                 <span
-                  className={`font-mono font-semibold tabular-nums ${
+                  className={`font-semibold tabular-nums ${
                     m.avgReturnPct === null
                       ? 'text-[#E5E7EB]/40'
                       : m.avgReturnPct >= 0
@@ -648,21 +648,21 @@ export function CommodityProfileView() {
                 >
                   {m.avgReturnPct !== null ? `${m.avgReturnPct >= 0 ? '+' : ''}${m.avgReturnPct}%` : '—'}
                 </span>
-                <span className="block text-[10px] font-mono text-[#E5E7EB]/45">
+                <span className="block text-[10px] font-mono text-[var(--faint)]">
                   {m.sampleYears > 0 ? `${m.sampleYears} năm · Win ${m.winRatePct}%` : 'Thiếu dữ liệu'}
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="bg-[#0B0E14] border border-[#263244] rounded p-3 text-xs space-y-1">
+          <div className="bg-[#0B0E14] border border-[var(--border)] rounded p-3 text-xs space-y-1">
             <div className="flex items-center gap-1.5 text-white font-medium">
               <TrendingUp className="w-3.5 h-3.5 text-[#6366F1]" aria-hidden="true" />
               <span>Bối cảnh CFTC COT &amp; Liên hệ Việt Nam</span>
             </div>
-            <p className="text-[#E5E7EB]/75">{cotSnapshot.note}</p>
+            <p className="text-[var(--muted)]">{cotSnapshot.note}</p>
             {instrument.commodityProfile?.vietnamMarketRelevance && (
-              <p className="text-[#E5E7EB]/65 pt-1">
+              <p className="text-[var(--muted)] pt-1">
                 {instrument.commodityProfile.vietnamMarketRelevance}
               </p>
             )}

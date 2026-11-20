@@ -1,0 +1,122 @@
+import { q, SRC, type Level } from './types';
+
+export const LEVEL4: Level = {
+  id: 'l4',
+  number: 4,
+  title: 'Cấp 4 — Phân tích',
+  goal: 'Biết các cách nhìn thị trường: cơ bản, kỹ thuật, cấu trúc kỳ hạn, COT, mùa vụ, tương quan, và xem chúng trong ứng dụng.',
+  lessons: [
+    {
+      id: 'l4-fundamental',
+      title: 'Phân tích cơ bản',
+      objective: 'Đọc bức tranh cung–cầu: sản lượng, tồn kho, thời tiết, USD.',
+      body: [
+        'Phân tích cơ bản trả lời: nguồn cung và nhu cầu đang thay đổi thế nào? Giá có xu hướng tăng khi cầu vượt cung hoặc tồn kho giảm, và ngược lại.',
+        'Chỉ số thường dùng: tỷ lệ tồn kho/tiêu thụ, sản lượng dự báo, thời tiết ở vùng sản xuất chính, chính sách xuất nhập khẩu.',
+        'Đồng USD mạnh thường gây áp lực lên giá hàng hoá định giá bằng USD (vì hàng hoá đắt hơn với người mua nước ngoài), nhưng quan hệ này không phải lúc nào cũng đúng.',
+        'Phân tích cơ bản cho biết "vì sao", không cho biết "khi nào": thị trường có thể đi ngược cơ bản rất lâu.',
+      ],
+      remember: ['Cơ bản cho biết lý do, không cho biết thời điểm.', 'Tồn kho thấp có xu hướng đẩy giá lên, nhưng không chắc chắn.'],
+      quiz: [
+        q('Tồn kho giảm mạnh so với tiêu thụ thường gợi ý điều gì?', ['Nguồn cung chặt hơn', 'Nguồn cung dư thừa', 'Giá chắc chắn tăng', 'Không có ý nghĩa'], 0, 'Chỉ gợi ý nguồn cung chặt hơn, không bảo đảm giá tăng.'),
+        q('Phân tích cơ bản trả lời tốt câu hỏi nào?', ['Vì sao giá có thể thay đổi', 'Chính xác ngày nào đổi chiều', 'Đặt stop ở đâu', 'Phí bao nhiêu'], 0, 'Lý do, không phải thời điểm.'),
+        q('USD mạnh thường tác động thế nào lên hàng hoá định giá USD?', ['Thường tạo áp lực giảm', 'Luôn tăng', 'Không bao giờ ảnh hưởng', 'Tăng gấp đôi'], 0, 'Thường là áp lực giảm, nhưng không tuyệt đối.'),
+      ],
+      links: [{ module: 'fundamental', label: 'Phân tích cơ bản' }, { module: 'commodity-profile', label: 'Hồ sơ hàng hoá' }],
+      sources: [SRC.wasde, SRC.eia, SRC.cmeEdu],
+    },
+    {
+      id: 'l4-technical',
+      title: 'Kỹ thuật: MA, RSI, ATR, khối lượng',
+      objective: 'Hiểu bốn công cụ phổ biến đo cái gì và không đo cái gì.',
+      body: [
+        'MA (đường trung bình động) làm mượt giá để nhìn xu hướng. Giá nằm trên MA dài hạn (ví dụ MA200) thường được xem là xu hướng tăng; MA luôn trễ so với giá.',
+        'RSI (0 đến 100) đo động lượng gần đây. Trên 70 thường gọi là quá mua, dưới 30 là quá bán. Trong xu hướng mạnh RSI có thể ở vùng "quá mua" rất lâu, nên không phải tín hiệu đảo chiều tự động.',
+        'ATR đo biên độ dao động trung bình mỗi nến; dùng để ước lượng khoảng cách cắt lỗ và rủi ro tiền theo hợp đồng.',
+        'Khối lượng (volume) cho biết mức độ tham gia; biến động giá kèm khối lượng lớn thường đáng tin hơn biến động khối lượng nhỏ.',
+      ],
+      remember: ['MA trễ; RSI không phải tín hiệu đảo chiều tự động.', 'ATR đo rủi ro/biên độ, không chỉ hướng.'],
+      quiz: [
+        q('RSI trên 70 có nghĩa chắc chắn giá sẽ giảm?', ['Không', 'Có', 'Chỉ với vàng', 'Chỉ buổi sáng'], 0, 'Chỉ là động lượng mạnh, có thể kéo dài.'),
+        q('ATR chủ yếu dùng để làm gì?', ['Ước lượng biên độ dao động và khoảng stop', 'Đoán hướng', 'Tính phí', 'Tính thuế'], 0, 'Đo biên độ.'),
+        q('Đặc điểm của đường MA?', ['Làm mượt nhưng trễ', 'Dự báo trước', 'Luôn chính xác', 'Không tính từ giá'], 0, 'Tính từ giá quá khứ nên trễ.'),
+      ],
+      links: [{ module: 'charts', label: 'Biểu đồ' }, { module: 'technical', label: 'Kỹ thuật' }],
+      sources: [SRC.cmeEdu],
+    },
+    {
+      id: 'l4-curve',
+      title: 'Cấu trúc kỳ hạn: contango và backwardation',
+      objective: 'Đọc đường cong giá các tháng và hiểu ý nghĩa với roll.',
+      body: [
+        'Contango: tháng xa đắt hơn tháng gần (thường gặp khi chi phí lưu kho, tài chính cao hoặc tồn kho dồi dào). Backwardation: tháng xa rẻ hơn tháng gần (thường khi nguồn cung hiện tại khan hiếm).',
+        'Với vị thế mua phải roll liên tục: contango có chi phí roll, backwardation có lợi roll (nếu đường cong giữ nguyên).',
+        'Hình dạng đường cong là một gợi ý về cung–cầu hiện tại, không phải dự báo giá.',
+      ],
+      remember: ['Contango: xa cao hơn gần. Backwardation: xa thấp hơn gần.', 'Roll trong contango tốn kém cho vị thế mua.'],
+      quiz: [
+        q('Tháng xa đắt hơn tháng gần gọi là gì?', ['Contango', 'Backwardation', 'Spread âm', 'Đáo hạn'], 0, 'Contango.'),
+        q('Backwardation thường gợi ý?', ['Nguồn cung hiện tại khan hiếm', 'Tồn kho dư thừa', 'Giá chắc chắn giảm', 'Không gợi ý gì'], 0, 'Nhu cầu hiện tại cao so với cung.'),
+        q('Đường cong là dự báo giá?', ['Không, là gợi ý về cung–cầu', 'Có, chính xác', 'Chỉ với dầu', 'Chỉ với vàng'], 0, 'Không phải dự báo.'),
+      ],
+      calculator: 'curve-quiz',
+      links: [{ module: 'term-structure', label: 'Cấu trúc kỳ hạn' }],
+      sources: [SRC.cmeEdu],
+    },
+    {
+      id: 'l4-cot',
+      title: 'COT: vị thế của các nhóm lớn',
+      objective: 'Hiểu báo cáo COT của CFTC và giới hạn của nó.',
+      body: [
+        'COT (Commitments of Traders) do CFTC công bố hằng tuần, cho biết vị thế của các nhóm như thương nhân thương mại (hedger) và quỹ quản lý tiền (đầu cơ) trên các thị trường Mỹ.',
+        'Dữ liệu thường được tính tại thứ Ba và công bố vào thứ Sáu, nên có độ trễ.',
+        'Vị thế đầu cơ quá nghiêng một phía có thể cho thấy thị trường đông đúc, nhưng không cho biết thời điểm đảo chiều.',
+        'COT áp dụng cho hợp đồng niêm yết tại Mỹ; không phải mọi mã trong ứng dụng đều có.',
+      ],
+      remember: ['COT trễ vài ngày.', 'Vị thế đông đúc không phải tín hiệu đảo chiều chính xác.'],
+      quiz: [
+        q('COT do tổ chức nào công bố?', ['CFTC', 'MXV', 'EIA', 'USDA'], 0, 'CFTC.'),
+        q('Dữ liệu COT có độ trễ không?', ['Có, vài ngày', 'Không', 'Thời gian thực', 'Hằng giờ'], 0, 'Tính tại thứ Ba, công bố thứ Sáu.'),
+        q('Vị thế đầu cơ nghiêng mạnh nói lên điều gì?', ['Thị trường có thể đông một phía', 'Giá chắc chắn đảo chiều', 'Giá chắc chắn tiếp tục', 'Không gì'], 0, 'Chỉ là gợi ý về độ đông đúc.'),
+      ],
+      links: [{ module: 'cot', label: 'Báo cáo COT' }],
+      sources: [SRC.cftc],
+    },
+    {
+      id: 'l4-seasonal',
+      title: 'Mùa vụ',
+      objective: 'Dùng mùa vụ như bối cảnh, không phải quy luật chắc chắn.',
+      body: [
+        'Nhiều hàng hoá có chu kỳ theo mùa: gieo trồng, sinh trưởng, thu hoạch (nông sản) hoặc nhu cầu sưởi/làm mát (năng lượng).',
+        'Biểu đồ mùa vụ cho thấy hành vi trung bình qua nhiều năm, nhưng từng năm có thể khác hoàn toàn do thời tiết và sự kiện bất thường.',
+        'Dùng mùa vụ để biết "giai đoạn nào cần chú ý thời tiết/báo cáo", đừng dùng như tín hiệu vào lệnh.',
+      ],
+      remember: ['Mùa vụ là trung bình lịch sử, không phải bảo đảm.', 'Ít năm dữ liệu thì độ tin cậy thấp.'],
+      quiz: [
+        q('Biểu đồ mùa vụ cho thấy gì?', ['Hành vi trung bình qua nhiều năm', 'Giá năm sau chắc chắn', 'Giá mỗi ngày', 'Phí'], 0, 'Trung bình lịch sử.'),
+        q('Mùa vụ nên dùng như?', ['Bối cảnh tham khảo', 'Tín hiệu bắt buộc', 'Bảo đảm lợi nhuận', 'Thay quản trị rủi ro'], 0, 'Chỉ là bối cảnh.'),
+        q('Vì sao mùa vụ có thể không lặp lại?', ['Thời tiết và sự kiện bất thường', 'Do sàn', 'Do tick', 'Do phí'], 0, 'Mỗi năm khác nhau.'),
+      ],
+      links: [{ module: 'analysis', label: 'Phân tích chi tiết' }, { module: 'scorecard', label: 'Đánh giá các mã' }],
+      sources: [SRC.cmeEdu, SRC.usda],
+    },
+    {
+      id: 'l4-correlation',
+      title: 'Tương quan giữa các mã',
+      objective: 'Hiểu tương quan và vì sao nhiều vị thế "khác nhau" có thể là một rủi ro.',
+      body: [
+        'Tương quan đo mức hai mã cùng đi lên/xuống (từ -1 đến +1). Ví dụ vàng và bạc thường có tương quan dương cao.',
+        'Nếu bạn mua cả vàng và bạc, rủi ro thực tế gần như gấp đôi một vị thế, không phải hai rủi ro độc lập.',
+        'Tương quan thay đổi theo thời gian và thường tăng lên trong khủng hoảng.',
+      ],
+      remember: ['Tương quan cao nghĩa là rủi ro chồng lên nhau.', 'Tương quan không ổn định theo thời gian.'],
+      quiz: [
+        q('Tương quan +0,9 giữa hai mã nghĩa là?', ['Thường đi cùng hướng', 'Luôn ngược hướng', 'Không liên quan', 'Giá bằng nhau'], 0, 'Đi cùng hướng mạnh.'),
+        q('Mua cả vàng và bạc thường là?', ['Rủi ro chồng lên nhau', 'Đa dạng hoá hoàn toàn', 'Không rủi ro', 'Rủi ro bằng 0'], 0, 'Tương quan dương cao.'),
+        q('Tương quan có đổi theo thời gian không?', ['Có', 'Không', 'Chỉ mùa hè', 'Chỉ tháng 1'], 0, 'Có thể thay đổi, đặc biệt khi khủng hoảng.'),
+      ],
+      links: [{ module: 'portfolio', label: 'Danh mục' }, { module: 'markets', label: 'Thị trường' }],
+      sources: [SRC.cmeEdu],
+    },
+  ],
+};

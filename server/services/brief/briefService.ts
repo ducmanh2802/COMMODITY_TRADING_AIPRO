@@ -60,7 +60,7 @@ export interface BriefDeps {
 
 const QUALITIES: BriefFactQuality[] = ['OFFICIAL', 'LICENSED_VENDOR', 'UNOFFICIAL', 'USER_PROVIDED'];
 
-function qualityFromSource(source: string | null | undefined, fallback: BriefFactQuality): BriefFactQuality {
+export function qualityFromSource(source: string | null | undefined, fallback: BriefFactQuality): BriefFactQuality {
   if (!source) return fallback;
   const m = /\((OFFICIAL|LICENSED_VENDOR|UNOFFICIAL|USER_PROVIDED)\)/.exec(source);
   return m && QUALITIES.includes(m[1] as BriefFactQuality) ? (m[1] as BriefFactQuality) : fallback;
@@ -145,7 +145,7 @@ async function loadHistory(deps: BriefDeps, inst: InstrumentDefinition, nowMs: n
 
 const txt = (vi: string, en: string): BriefText => ({ vi, en });
 
-function cotInput(deps: BriefDeps, inst: InstrumentDefinition, now: Date): CotInput {
+export function cotInput(deps: BriefDeps, inst: InstrumentDefinition, now: Date): CotInput {
   const empty = (reason: BriefText): CotInput => ({
     available: false,
     reason,

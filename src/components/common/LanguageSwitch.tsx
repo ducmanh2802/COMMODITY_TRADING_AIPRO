@@ -12,7 +12,7 @@ export function LanguageSwitch({ showLabel = false }: { showLabel?: boolean }) {
           {t('lang.label')}
         </span>
       )}
-      <div className="flex items-center gap-0.5 bg-[#0B0E14] border border-[#263244] rounded-md p-0.5">
+      <div className="flex items-center gap-0.5 h-9 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] p-0.5">
         {LANGS.map((l) => (
           <button
             key={l}
@@ -20,7 +20,7 @@ export function LanguageSwitch({ showLabel = false }: { showLabel?: boolean }) {
             onClick={() => setLang(l)}
             aria-pressed={lang === l}
             title={t(l === 'vi' ? 'lang.vi' : 'lang.en')}
-            className={`px-2 py-1 text-[11px] font-semibold rounded transition-colors ${
+            className={`h-full px-2.5 text-[11px] font-semibold rounded-lg transition-colors ${
               lang === l ? 'bg-[#6366F1] text-white' : 'text-[#E5E7EB]/70 hover:text-white'
             }`}
           >

@@ -1,0 +1,130 @@
+import { q, SRC, type Level } from './types';
+
+export const LEVEL2: Level = {
+  id: 'l2',
+  number: 2,
+  title: 'Cấp 2 — Thị trường Việt Nam (MXV)',
+  goal: 'Hiểu MXV là gì, giao dịch qua thành viên môi giới ra sao, giờ giấc, quy đổi USD/VND, phí, mở tài khoản và khung pháp lý.',
+  lessons: [
+    {
+      id: 'l2-mxv',
+      title: 'MXV là gì?',
+      objective: 'Biết MXV, loại hợp đồng giao dịch và mối liên thông với sàn quốc tế.',
+      body: [
+        'MXV (Sở Giao dịch Hàng hoá Việt Nam) là sàn giao dịch hàng hoá tại Việt Nam, chịu sự quản lý của Bộ Công Thương.',
+        'Hợp đồng trên MXV liên thông với các sàn quốc tế như CME Group (CBOT, NYMEX, COMEX), ICE (US, Europe) và SGX. Giá tham chiếu theo các sàn gốc.',
+        'MXV khác Sở Giao dịch Chứng khoán Hà Nội (HNX): HNX niêm yết chứng khoán phái sinh (hợp đồng tương lai VN30, trái phiếu Chính phủ), còn MXV là hàng hoá.',
+        'Danh mục hợp đồng, khối lượng, quy cách của MXV có thể thay đổi; luôn xem trang chính thức của MXV.',
+      ],
+      remember: ['MXV: sàn hàng hoá, liên thông CME/ICE/SGX.', 'HNX là chứng khoán phái sinh, không phải hàng hoá.'],
+      uncertain: ['Danh mục hợp đồng đang niêm yết và quy cách chính xác: cần kiểm tra lại với MXV/công ty môi giới (mxv.com.vn).'],
+      quiz: [
+        q('MXV khác HNX ở điểm nào?', ['MXV giao dịch hàng hoá, HNX giao dịch chứng khoán phái sinh', 'Giống nhau hoàn toàn', 'MXV chỉ giao dịch tiền tệ', 'HNX là sàn quốc tế'], 0, 'Khác loại tài sản.'),
+        q('Hợp đồng trên MXV liên thông với sàn nào?', ['CME, ICE, SGX và các sàn quốc tế khác', 'Chỉ sàn trong nước', 'Không liên thông', 'Chỉ ngân hàng'], 0, 'Liên thông các sàn quốc tế.'),
+        q('Nguồn nào nên xem để biết quy cách hiện hành?', ['Trang chính thức mxv.com.vn', 'Tin nhắn nhóm kín', 'Quảng cáo mạng xã hội', 'Người lạ'], 0, 'Chỉ dùng nguồn chính thức.'),
+      ],
+      sources: [SRC.mxv, SRC.mxvOverview],
+    },
+    {
+      id: 'l2-brokers',
+      title: 'Thành viên môi giới của MXV',
+      objective: 'Biết vì sao phải giao dịch qua thành viên được cấp phép và cách kiểm tra.',
+      body: [
+        'Nhà đầu tư không giao dịch trực tiếp trên MXV mà qua thành viên kinh doanh của MXV (công ty môi giới). Theo một nguồn báo chí, tại 01/09/2026 MXV có 33 thành viên; con số này có thể đã thay đổi.',
+        'Cách kiểm tra: tìm tên công ty trong danh sách thành viên trên website MXV, không chỉ tin vào quảng cáo của công ty đó.',
+        'Công ty không có tên trong danh sách thành viên và hứa hẹn lợi nhuận là dấu hiệu cảnh báo (xem Cấp 5 về lừa đảo).',
+      ],
+      remember: ['Chỉ giao dịch qua thành viên có tên trên website MXV.', 'Không chuyển tiền vào tài khoản cá nhân.'],
+      uncertain: ['Số lượng và danh sách thành viên hiện tại: cần kiểm tra lại với MXV (mxv.com.vn).'],
+      quiz: [
+        q('Cách kiểm tra một công ty môi giới hợp lệ?', ['Đối chiếu danh sách thành viên trên website MXV', 'Xem số người theo dõi', 'Hỏi bạn bè', 'Xem quảng cáo'], 0, 'Đối chiếu nguồn chính thức.'),
+        q('Nhà đầu tư giao dịch hàng hoá MXV bằng cách nào?', ['Qua thành viên kinh doanh của MXV', 'Mua trực tiếp từ sàn bằng ứng dụng bất kỳ', 'Qua sàn nước ngoài không phép', 'Tặng quà'], 0, 'Qua thành viên.'),
+        q('Dấu hiệu cảnh báo?', ['Hứa lợi nhuận cố định', 'Có hợp đồng rõ ràng', 'Có biểu phí công khai', 'Có tên trong danh sách MXV'], 0, 'Lợi nhuận cố định là lời hứa không thể có.'),
+      ],
+      sources: [SRC.mxv, { label: 'Tạp chí Công Thương – MXV 33 thành viên (01/09/2026)', url: 'https://tapchicongthuong.vn/so-giao-dich-hang-hoa-viet-nam--vung-vang-niem-tin--khong-ngung-phat-trien-546232.htm' }],
+    },
+    {
+      id: 'l2-hours',
+      title: 'Giờ giao dịch liên thông',
+      objective: 'Hiểu vì sao phần lớn hoạt động diễn ra chiều tối đến rạng sáng giờ Việt Nam.',
+      body: [
+        'Vì liên thông với sàn Mỹ và châu Âu, nhiều hợp đồng sôi động vào chiều tối đến rạng sáng giờ Việt Nam, khi sàn Mỹ mở cửa và các báo cáo (USDA, EIA) được công bố.',
+        'Giờ giao dịch của mỗi mã khác nhau và thay đổi theo giờ mùa hè/mùa đông của Mỹ, trong khi Việt Nam không đổi giờ.',
+        'Vì vậy cần tra lịch giao dịch từng mã và lịch công bố báo cáo, không tự suy luận.',
+      ],
+      remember: ['Giờ của sàn Mỹ đổi theo mùa, giờ Việt Nam thì không.', 'Báo cáo quan trọng thường gây biến động mạnh.'],
+      uncertain: ['Giờ mở/đóng cửa cụ thể từng hợp đồng: cần kiểm tra lại với MXV/công ty môi giới.'],
+      quiz: [
+        q('Vì sao giờ giao dịch theo Việt Nam có thể dịch chuyển trong năm?', ['Mỹ đổi giờ mùa hè/mùa đông', 'Sàn tự thích', 'Việt Nam đổi giờ', 'Do thời tiết'], 0, 'Mỹ có daylight saving, Việt Nam không.'),
+        q('Khoảng thời gian nào thường biến động mạnh?', ['Khi sàn Mỹ mở cửa và công bố báo cáo', 'Buổi sáng sớm Việt Nam', 'Ngày lễ', 'Không có quy luật'], 0, 'Thanh khoản và tin tức tập trung.'),
+        q('Nguồn tra giờ giao dịch từng mã?', ['MXV hoặc công ty môi giới', 'Suy đoán', 'Quảng cáo', 'Diễn đàn ẩn danh'], 0, 'Nguồn chính thức.'),
+      ],
+      sources: [SRC.mxv],
+    },
+    {
+      id: 'l2-fx-fees',
+      title: 'Quy đổi USD/VND và phí',
+      objective: 'Hiểu lãi lỗ tính bằng USD nhưng ký quỹ bằng VND, và biết các loại phí cần hỏi.',
+      body: [
+        'Hợp đồng quốc tế định giá bằng USD (hoặc cent), còn ký quỹ ở Việt Nam thường nộp bằng VND và quy đổi theo tỷ giá do thành viên/sàn áp dụng. Lãi lỗ vì thế chịu ảnh hưởng thêm bởi tỷ giá.',
+        'Theo quy định công bố của một thành viên (Finhay), ký quỹ ban đầu cho cá nhân tính từ ký quỹ cơ sở của sàn nhân hệ số, rồi quy đổi theo tỷ giá; hệ số và ngưỡng thanh lý có thể đổi theo thời kỳ.',
+        'Các loại phí cần hỏi: phí giao dịch mỗi lot (thường cố định), phí dữ liệu giá, phí qua đêm/khác nếu có. Mức phí cụ thể khác nhau giữa các thành viên.',
+      ],
+      example: undefined,
+      textExample: 'Tick ngô 12,5 USD. Nếu tỷ giá giả định là 25.000 VND/USD (số minh hoạ), 1 tick tương đương 312.500 VND. Dùng máy tính "Quy đổi" để thử với tỷ giá thực của bạn.',
+      remember: ['Ký quỹ bằng VND, giá niêm yết bằng USD: có thêm yếu tố tỷ giá.', 'Luôn hỏi biểu phí bằng văn bản.'],
+      uncertain: ['Mức phí, hệ số ký quỹ và tỷ giá áp dụng hiện hành: cần kiểm tra lại với MXV/công ty môi giới.'],
+      quiz: [
+        q('Ký quỹ ở Việt Nam thường nộp bằng gì?', ['VND, quy đổi theo tỷ giá do thành viên áp dụng', 'Vàng', 'Bitcoin', 'Hàng hoá thật'], 0, 'Quy đổi VND/USD.'),
+        q('Tick 12,5 USD, tỷ giá giả định 25.000: 1 tick là bao nhiêu VND?', ['25.000', '312.500', '125.000', '31.250'], 1, '12,5 × 25.000 = 312.500.'),
+        q('Nên làm gì về phí?', ['Hỏi biểu phí rõ ràng bằng văn bản', 'Bỏ qua phí', 'Tin lời hứa miệng', 'Chỉ hỏi sau khi nạp tiền'], 0, 'Phí ảnh hưởng trực tiếp kết quả.'),
+      ],
+      calculator: 'margin-call',
+      sources: [SRC.mxvMargin, SRC.finhay],
+    },
+    {
+      id: 'l2-account',
+      title: 'Quy trình mở tài khoản',
+      objective: 'Nắm các bước điển hình và điều cần đọc kỹ trước khi nộp tiền.',
+      body: [
+        'Bước điển hình: chọn thành viên, đăng ký mở tài khoản và ký hợp đồng, xác thực danh tính, nộp ký quỹ, được cấp tài khoản và phần mềm giao dịch.',
+        'Đọc kỹ: biểu phí, quy tắc ký quỹ/thanh lý, quy định đóng/roll trước FND, cách rút tiền.',
+        'Khách cá nhân thường không được nhận hàng vật chất: phải đóng hoặc roll trước FND.',
+        'Quy trình, giấy tờ và điều kiện cụ thể do từng thành viên quy định.',
+      ],
+      remember: ['Đọc kỹ hợp đồng trước khi ký và nộp tiền.', 'Thủ tục cụ thể do thành viên quy định.'],
+      uncertain: ['Giấy tờ, điều kiện, thời gian mở tài khoản: cần kiểm tra lại với MXV/công ty môi giới.'],
+      quiz: [
+        q('Điều nên đọc kỹ trước khi nộp tiền?', ['Biểu phí và quy tắc ký quỹ/thanh lý', 'Màu giao diện', 'Slogan', 'Số điện thoại'], 0, 'Đây là quy tắc ảnh hưởng đến tiền của bạn.'),
+        q('Cá nhân thường làm gì trước FND?', ['Đóng hoặc roll vị thế', 'Chờ nhận hàng', 'Không làm gì', 'Mở thêm vị thế'], 0, 'Tránh giao nhận hàng vật chất.'),
+        q('Ai quy định thủ tục mở tài khoản cụ thể?', ['Từng thành viên môi giới', 'Người lạ', 'Quảng cáo', 'Không ai'], 0, 'Mỗi thành viên có quy trình riêng.'),
+      ],
+      sources: [SRC.mxv, SRC.finhay],
+    },
+    {
+      id: 'l2-legal',
+      title: 'Pháp lý: những điều có thể kiểm chứng',
+      objective: 'Phân biệt các văn bản pháp lý liên quan và biết điều gì cần kiểm tra lại.',
+      body: [
+        'Nghị định 158/2020/NĐ-CP quy định về chứng khoán phái sinh và thị trường chứng khoán phái sinh (HNX), không phải khung pháp lý riêng của hàng hoá MXV.',
+        'Giao dịch hàng hoá qua Sở Giao dịch Hàng hoá trước đây theo Nghị định 158/2006/NĐ-CP và 51/2018/NĐ-CP. Một nguồn báo chí nêu Nghị định 302/2026/NĐ-CP có hiệu lực từ 15/09/2026 thay thế các văn bản này.',
+        'Vì văn bản pháp luật thay đổi, đừng dựa vào bài này để kết luận pháp lý: hãy kiểm tra văn bản gốc và hỏi MXV/công ty môi giới.',
+      ],
+      remember: ['NĐ 158/2020 là về chứng khoán phái sinh.', 'Pháp luật thay đổi: luôn đối chiếu văn bản gốc.'],
+      uncertain: [
+        'Hiệu lực và nội dung Nghị định 302/2026/NĐ-CP, văn bản thay thế NĐ 158/2006 và 51/2018: cần kiểm tra lại với MXV/công ty môi giới.',
+        'Quy định bảo vệ tài sản khách hàng khi thành viên mất khả năng thanh toán: cần kiểm tra lại với MXV/công ty môi giới.',
+      ],
+      quiz: [
+        q('Nghị định 158/2020/NĐ-CP chủ yếu điều chỉnh gì?', ['Chứng khoán phái sinh', 'Giao dịch ngô', 'Thuế thu nhập', 'Bảo hiểm'], 0, 'Về chứng khoán phái sinh và thị trường của nó.'),
+        q('Khi cần kết luận pháp lý, bạn nên?', ['Đối chiếu văn bản gốc và hỏi nguồn chính thức', 'Tin bài viết bất kỳ', 'Hỏi người lạ', 'Bỏ qua'], 0, 'Văn bản có thể thay đổi.'),
+        q('Ứng dụng này là?', ['Công cụ giáo dục, không phải tư vấn pháp lý/đầu tư', 'Tư vấn pháp lý', 'Môi giới', 'Cơ quan quản lý'], 0, 'Chỉ là giáo dục.'),
+      ],
+      sources: [
+        SRC.mxv,
+        { label: 'NĐ 158/2020/NĐ-CP', url: 'https://caselaw.vn/van-ban-phap-luat/368992-nghi-dinh-so-158-2020-nd-cp-ngay-31-12-2020-cua-chinh-phu-ve-chung-khoan-phai-sinh-va-thi-truong-chung-khoan-phai-sinh' },
+        { label: 'NĐ 302/2026 (LuatVietnam)', url: 'https://luatvietnam.vn/tin-van-ban-moi/tu-15-9-2026-lan-dau-tien-so-giao-dich-hang-hoa-phai-co-von-dieu-le-toi-thieu-1500-ty-dong-186-111173-article.html' },
+      ],
+    },
+  ],
+};

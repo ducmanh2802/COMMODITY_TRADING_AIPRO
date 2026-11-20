@@ -113,3 +113,10 @@ Ký hiệu: **P0** = chặn mọi việc khác · **P1** = lõi nghiên cứu ·
 | T39 | Smoke test trình duyệt trong CI (mở các trang chính, không lỗi console, không 404 API) | P1 | Bắt lỗi kiểu "Backend sync partially failed" |
 | T40 | Hướng dẫn nhập môn tương tác (tour 5 bước) + trang Thuật ngữ | P2 | Người mới |
 | T41 | Cảnh báo giá/biến động (ngưỡng do người dùng đặt, chỉ thông báo, không khuyến nghị) | P2 | |
+
+### Wave 6 — Đẹp hơn, giá nhanh hơn, AI đánh giá (2026-11-20)
+| ID | Task | Agent | Phạm vi file |
+|---|---|---|---|
+| T42 | Giá nhanh & chính xác hơn: Yahoo batch `v8/finance/spark` (1 request cho mọi mã thay vì 1 mã/giây), TTL ~15 s, client tự làm mới 15–30 s (dừng khi tab ẩn), hiện "cập nhật X giây trước", đối chiếu chéo spark ↔ chart; hoàn tất T33 (lưu lịch sử 10 năm vào SQLite, tăng dần) | Dữ liệu | yahooAdapter, registry, services/yahooHistory, engineCandles, TerminalContext (phần polling) |
+| T43 | Giao diện hiện đại: design tokens (màu, bo góc, khoảng cách, font Inter), Sidebar/TopBar gọn, thẻ giá có sparkline, trạng thái rõ, responsive 390px; áp vào Tổng quan, Thị trường, Hồ sơ hàng hoá | Giao diện | index.css/tailwind, layout/*, common/*, OverviewDashboard, MarketWatchView, CommodityWorld/Profile (chỉ style) |
+| T44 | AI đánh giá các mã: bảng điểm nghiên cứu cho mọi mã (xu hướng, động lượng, biến động, COT, mùa vụ, chất lượng dữ liệu) bằng công thức xác định + tóm tắt Gemini (nếu có khoá); xếp hạng, giải thích bằng lời; KHÔNG khuyến nghị mua/bán; nối trang "Phân tích chi tiết" (brief) vào menu | AI | server/services/scorecard/*, routes mới, views/scorecard/*, brief/* , 1 mục Sidebar |

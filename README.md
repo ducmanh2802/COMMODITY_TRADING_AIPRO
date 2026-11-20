@@ -60,6 +60,9 @@ Tất cả đều **tùy chọn**. Không bao giờ commit file `.env`. Danh sá
 | `YAHOO_ENABLED` | **Mặc định tắt.** `true` để lấy giá trễ từ Yahoo Finance: nguồn **KHÔNG chính thức (UNOFFICIAL)**, chỉ dùng cá nhân, không phân phối lại |
 | `DISABLE_HMR` | `true` để tắt hot reload khi dev |
 | `TWELVEDATA_API_KEY`, `FMP_API_KEY`, `COMMODITIES_API_KEY`, `ALPHAVANTAGE_API_KEY`, `EIA_API_KEY`, `USDA_API_KEY`, `MXV_API_KEY`, `MXV_API_URL`, `CME_DATAMINE_API_KEY`, `ICE_API_KEY`, `MARKET_DATA_PROVIDER_URL`, `MARKET_DATA_PROVIDER_KEY` | Khóa nguồn dữ liệu có trong `.env.example`; mức hỗ trợ thực tế xem `docs/REALTIME_DATA_SOURCES.md` |
+| `AI_PROVIDER` | Engine nhận định bảng đánh giá: `rules` (mặc định, miễn phí, offline, theo công thức) / `gemini` / `ollama`; lỗi AI thì tự quay về `rules` |
+| `OLLAMA_URL` | Địa chỉ Ollama khi `AI_PROVIDER=ollama` (mặc định `http://localhost:11434`) |
+| `OLLAMA_MODEL` | Tên model Ollama (mặc định `llama3.2`) |
 
 Cấu hình Firebase nằm ở `firebase-applet-config.json` (không dùng biến môi trường).
 

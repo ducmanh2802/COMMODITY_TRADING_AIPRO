@@ -24,6 +24,7 @@ import {
   LazyScannerView,
   LazySettingsView,
   LazyBriefView,
+  LazyScorecardView,
   LazySignalsView,
   LazyTechnicalAnalysisView,
   LazyTradeJournalView,
@@ -137,6 +138,8 @@ function TerminalWorkspace() {
         return <LazyDataImportView />;
       case 'term-structure':
         return <LazyTermStructureView />;
+      case 'scorecard':
+        return <LazyScorecardView />;
       case 'brief':
         return <LazyBriefView />;
       case 'analysis':

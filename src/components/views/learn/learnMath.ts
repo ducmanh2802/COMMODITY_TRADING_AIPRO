@@ -199,3 +199,118 @@ export const ILLUSTRATIVE_CURVES: IllustrativeCurve[] = [
     ],
   },
 ];
+
+export type ContractValueResult = { ok: true; notional: number; currency: string } | Refusal;
+
+/** Notional value of one contract at a price (quotation units): (price / tick) x tickValue. */
+export function contractValue(spec: ContractSpecification | null | undefined, price: number): ContractValueResult {
+  const s = requireVerifiedSpec(spec);
+  if (!s.ok) return s;
+  if (!(price > 0)) return { ok: false, reason: 'Nhập giá lớn hơn 0 (theo đơn vị yết giá).' };
+  return { ok: true, notional: (price / s.spec.tick) * s.spec.tickValue, currency: s.spec.currency };
+}
+
+export type RollCostResult =
+  | { ok: true; spreadPrice: number; spreadTicks: number; costPerContract: number; cost: number; currency: string; state: 'CONTANGO' | 'BACKWARDATION' | 'FLAT' }
+  | Refusal;
+
+/**
+ * Cost of rolling a LONG position: sell near month, buy far month. Spread = far - near.
+ * Positive cost = you pay (contango); negative = you receive (backwardation). Excludes fees/slippage.
+ */
+export function rollCost(spec: ContractSpecification | null | undefined, nearPrice: number, farPrice: number, contracts: number): RollCostResult {
+  const s = requireVerifiedSpec(spec);
+  if (!s.ok) return s;
+  if (!(nearPrice > 0) || !(farPrice > 0)) return { ok: false, reason: 'Nhập giá tháng gần và tháng xa lớn hơn 0.' };
+  if (!Number.isInteger(contracts) || contracts < 1) return { ok: false, reason: 'Số hợp đồng phải là số nguyên dương.' };
+  const spreadPrice = farPrice - nearPrice;
+  const spreadTicks = spreadPrice / s.spec.tick;
+  const costPerContract = spreadTicks * s.spec.tickValue;
+  const state = spreadPrice > 0 ? 'CONTANGO' : spreadPrice < 0 ? 'BACKWARDATION' : 'FLAT';
+  return { ok: true, spreadPrice, spreadTicks, costPerContract, cost: costPerContract * contracts, currency: s.spec.currency, state };
+}
+
+export type MarginCallResult =
+  | { ok: true; bufferPerContract: number; bufferTotal: number; ticksToCall: number; priceMoveToCall: number; currency: string }
+  | Refusal;
+
+/**
+ * Loss a long/short position can absorb before equity per contract falls to the maintenance margin
+ * (initial - maintenance, both user-provided, in the trading currency).
+ */
+export function marginCallDistance(
+  spec: ContractSpecification | null | undefined,
+  initialMargin: number,
+  maintenanceMargin: number,
+  contracts: number,
+): MarginCallResult {
+  const s = requireVerifiedSpec(spec);
+  if (!s.ok) return s;
+  if (!(initialMargin > 0) || !(maintenanceMargin > 0)) return { ok: false, reason: 'Nhập ký quỹ ban đầu và duy trì lớn hơn 0 (tự lấy từ bảng ký quỹ).' };
+  if (maintenanceMargin > initialMargin) return { ok: false, reason: 'Ký quỹ duy trì không được lớn hơn ký quỹ ban đầu.' };
+  if (!Number.isInteger(contracts) || contracts < 1) return { ok: false, reason: 'Số hợp đồng phải là số nguyên dương.' };
+  const bufferPerContract = initialMargin - maintenanceMargin;
+  const ticksToCall = bufferPerContract / s.spec.tickValue;
+  return {
+    ok: true,
+    bufferPerContract,
+    bufferTotal: bufferPerContract * contracts,
+    ticksToCall,
+    priceMoveToCall: ticksToCall * s.spec.tick,
+    currency: s.spec.currency,
+  };
+}
+
+/** Converts an amount in trading currency (USD) to VND at a user-provided rate. */
+export function convertCurrency(amount: number, rate: number): { ok: true; value: number } | Refusal {
+  if (!Number.isFinite(amount)) return { ok: false, reason: 'Nhập số tiền là một số.' };
+  if (!(rate > 0)) return { ok: false, reason: 'Nhập tỷ giá lớn hơn 0.' };
+  return { ok: true, value: amount * rate };
+}
+
+export type SwingPlanResult =
+  | ({ ok: true; stopDistance: number; stopPrice: number; takeProfit2R: number; pnlAt1R: number } & Omit<Extract<SizingResult, { ok: true }>, 'ok'>)
+  | Refusal;
+
+/**
+ * Swing-trade planning (LONG illustration): stopDistance = atr x atrMultiple, stopPrice = entry - stopDistance,
+ * contracts from positionSize(); the 2R reference level = entry + 2 x stopDistance. Education only.
+ */
+export function swingPlan(
+  spec: ContractSpecification | null | undefined,
+  entry: number,
+  atr: number,
+  atrMultiple: number,
+  equity: number,
+  riskPct: number,
+  costsPerContract: number,
+): SwingPlanResult {
+  if (!(entry > 0) || !(atr > 0) || !(atrMultiple > 0)) return { ok: false, reason: 'Nhập giá vào, ATR và hệ số ATR lớn hơn 0.' };
+  const stopDistance = atr * atrMultiple;
+  if (stopDistance >= entry) return { ok: false, reason: 'Khoảng cách stop phải nhỏ hơn giá vào.' };
+  const sized = positionSize(spec, equity, riskPct, stopDistance, costsPerContract);
+  if (!sized.ok) return sized;
+  const { ok: _ok, ...rest } = sized;
+  void _ok;
+  return { ok: true, ...rest, stopDistance, stopPrice: entry - stopDistance, takeProfit2R: entry + 2 * stopDistance, pnlAt1R: rest.riskPerContract * rest.contracts };
+}
+
+export type RMultipleResult = { ok: true; r: number; pnl: number; riskDollars: number; currency: string } | Refusal;
+
+/** R multiple of a closed LONG trade: P&L / initial risk, where initial risk = (entry - stop) / tick x tickValue x contracts. */
+export function rMultiple(
+  spec: ContractSpecification | null | undefined,
+  entry: number,
+  stop: number,
+  exit: number,
+  contracts: number,
+): RMultipleResult {
+  const s = requireVerifiedSpec(spec);
+  if (!s.ok) return s;
+  if (!(entry > 0) || !(stop > 0) || !(exit > 0)) return { ok: false, reason: 'Nhập giá vào, stop và giá thoát lớn hơn 0.' };
+  if (!(stop < entry)) return { ok: false, reason: 'Với vị thế mua minh hoạ, stop phải thấp hơn giá vào.' };
+  if (!Number.isInteger(contracts) || contracts < 1) return { ok: false, reason: 'Số hợp đồng phải là số nguyên dương.' };
+  const riskDollars = ((entry - stop) / s.spec.tick) * s.spec.tickValue * contracts;
+  const pnl = ((exit - entry) / s.spec.tick) * s.spec.tickValue * contracts;
+  return { ok: true, r: pnl / riskDollars, pnl, riskDollars, currency: s.spec.currency };
+}

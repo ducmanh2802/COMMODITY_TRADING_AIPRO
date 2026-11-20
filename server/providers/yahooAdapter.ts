@@ -31,6 +31,10 @@ export type FetchLike = typeof fetch;
 export const YAHOO_PROVIDER_ID: ProviderId = 'YAHOO_UNOFFICIAL';
 export const YAHOO_CONTRACT_LABEL = 'CONTINUOUS (front month as defined by Yahoo)';
 export const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart/';
+/** Batch endpoint: one request returns 1m closes for many symbols (no crumb needed; no exchange metadata). */
+export const YAHOO_SPARK_BASE = 'https://query1.finance.yahoo.com/v8/finance/spark';
+/** Max |spark last - chart regularMarketPrice| / chart before a quote is refused as INVALID. */
+export const YAHOO_CROSSCHECK_MAX_DEVIATION = 0.02;
 /** Generic client identification; contains no personal or project information. */
 export const YAHOO_USER_AGENT = 'Mozilla/5.0 (compatible; market-data-client/1.0)';
 /** Margin added on top of the exchange delay before a quote is considered STALE. */
@@ -196,8 +200,12 @@ export interface YahooAdapterOptions {
   fetchFn?: FetchLike;
   /** Minimum spacing between outgoing requests (polite rate limit). Default 1000 ms (≤ 1 req/s). */
   minIntervalMs?: number;
-  /** Quote cache TTL. Default 60 s. */
+  /** Quote cache TTL. Default 15 s (one batch request refreshes every supported symbol). */
   quoteTtlMs?: number;
+  /** How long validated exchange/currency metadata (from chart) is trusted. Default 3 h. */
+  metaTtlMs?: number;
+  /** Use the batch spark endpoint (default true); per-symbol chart remains the fallback. */
+  useBatch?: boolean;
   /** Retries after the first attempt on HTTP 429 / 5xx / network error. Default 2. */
   maxRetries?: number;
   /** Base backoff; attempt n waits base * 2^n (or Retry-After, capped at 30 s). Default 1000 ms. */
@@ -206,6 +214,35 @@ export interface YahooAdapterOptions {
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
 }
+
+interface YahooSparkSeries {
+  symbol?: string;
+  timestamp?: Array<number | null>;
+  close?: Array<number | null>;
+  start?: number;
+  end?: number;
+}
+
+/** Last non-null positive close and its bar time (seconds). Exported for tests. */
+export function lastSparkClose(series: YahooSparkSeries | undefined): { price: number; time: number } | null {
+  const ts = series?.timestamp ?? [];
+  const cl = series?.close ?? [];
+  for (let i = Math.min(ts.length, cl.length) - 1; i >= 0; i--) {
+    const c = cl[i];
+    const t = ts[i];
+    if (typeof c === 'number' && Number.isFinite(c) && c > 0 && typeof t === 'number' && Number.isFinite(t) && t > 0) {
+      return { price: c, time: t };
+    }
+  }
+  return null;
+}
+
+type MetaEntry = {
+  expiresAtMs: number;
+  /** null when exchange/currency matched; otherwise the refusal reason. */
+  error: string | null;
+  meta: YahooChartMeta | undefined;
+};
 
 type FetchResult = { ok: true; result: YahooChartResult } | { ok: false; error: string };
 
@@ -217,6 +254,13 @@ export class YahooFinanceAdapter implements MarketDataProvider {
   private readonly fetchFn: FetchLike;
   private readonly minIntervalMs: number;
   private readonly quoteTtlMs: number;
+  private readonly metaTtlMs: number;
+  private readonly useBatch: boolean;
+  private readonly metaCache = new Map<string, MetaEntry>();
+  /** Quotes refused by the spark/chart cross-check (or failed metadata validation), by Yahoo symbol. */
+  private readonly refused = new Map<string, { reason: string; expiresAtMs: number }>();
+  private batchInflight: Promise<void> | null = null;
+  private batchFailedUntilMs = Number.NEGATIVE_INFINITY;
   private readonly maxRetries: number;
   private readonly backoffBaseMs: number;
   private readonly timeoutMs: number;
@@ -238,7 +282,9 @@ export class YahooFinanceAdapter implements MarketDataProvider {
   constructor(options: YahooAdapterOptions = {}) {
     this.fetchFn = options.fetchFn ?? ((...args) => globalThis.fetch(...args));
     this.minIntervalMs = options.minIntervalMs ?? 1000;
-    this.quoteTtlMs = options.quoteTtlMs ?? 60_000;
+    this.quoteTtlMs = options.quoteTtlMs ?? 15_000;
+    this.metaTtlMs = options.metaTtlMs ?? 3 * 3_600_000;
+    this.useBatch = options.useBatch ?? true;
     this.maxRetries = options.maxRetries ?? 2;
     this.backoffBaseMs = options.backoffBaseMs ?? 1000;
     this.timeoutMs = options.timeoutMs ?? 10_000;
@@ -315,6 +361,161 @@ export class YahooFinanceAdapter implements MarketDataProvider {
     return { ok: false, error: `${lastError} after ${this.maxRetries + 1} attempt(s)` };
   }
 
+  // -------------------------------------------------------------------------------------------------
+  // Batch refresh (spark)
+  // -------------------------------------------------------------------------------------------------
+
+  private async supportedInstruments(): Promise<InstrumentDefinition[]> {
+    const all = await instrumentRepository.list();
+    return all.filter((i) => this.supports(i));
+  }
+
+  /**
+   * One spark request refreshes every supported symbol. Price = last non-null 1m close, timestamp = that
+   * bar's time. Exchange/currency are validated through chart metadata at most once per metaTtlMs; when
+   * the chart is fetched in the same cycle its regularMarketPrice cross-checks the spark price (>2%
+   * apart => refused as INVALID and logged). Concurrent callers share one in-flight refresh. On any batch
+   * failure the caller falls back to the per-symbol chart path.
+   */
+  refreshQuotesBatch(): Promise<void> {
+    if (!isYahooEnabled() || !this.useBatch) return Promise.resolve();
+    if (this.batchFailedUntilMs > this.now()) return Promise.resolve();
+    if (!this.batchInflight) {
+      this.batchInflight = this.doRefreshBatch()
+        .catch((err: unknown) => {
+          this.lastError = err instanceof Error ? err.message : 'Yahoo batch refresh failed';
+          this.batchFailedUntilMs = this.now() + this.quoteTtlMs;
+        })
+        .finally(() => {
+          this.batchInflight = null;
+        });
+    }
+    return this.batchInflight;
+  }
+
+  private async fetchSpark(
+    yahooSymbols: string[]
+  ): Promise<{ ok: true; body: Record<string, YahooSparkSeries> } | { ok: false; error: string }> {
+    const url = `${YAHOO_SPARK_BASE}?symbols=${yahooSymbols.map(encodeURIComponent).join(',')}&range=1d&interval=1m`;
+    await this.throttle();
+    try {
+      this.requestCount += 1;
+      const res = await this.fetchFn(url, {
+        headers: { 'User-Agent': YAHOO_USER_AGENT, Accept: 'application/json' },
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
+      if (!res.ok) return { ok: false, error: `spark HTTP ${res.status}` };
+      const body = (await res.json()) as unknown;
+      if (!body || typeof body !== 'object') return { ok: false, error: 'spark: unexpected response' };
+      return { ok: true, body: body as Record<string, YahooSparkSeries> };
+    } catch (err) {
+      return { ok: false, error: `spark: ${err instanceof Error ? err.message : 'network error'}` };
+    }
+  }
+
+  private async doRefreshBatch(): Promise<void> {
+    const insts = await this.supportedInstruments();
+    const entries = insts.map((inst) => ({ inst, mapping: YAHOO_SYMBOL_MAP[inst.exchangeSymbol.trim().toUpperCase()] }));
+    if (entries.length === 0) return;
+    const spark = await this.fetchSpark(entries.map((e) => e.mapping.yahooSymbol));
+    if (!spark.ok) {
+      this.lastError = spark.error;
+      this.batchFailedUntilMs = this.now() + this.quoteTtlMs;
+      return;
+    }
+    // Validate exchange/currency via chart meta for symbols without fresh metadata (rate-limited queue).
+    const freshCharts = new Map<string, YahooChartMeta | undefined>();
+    await Promise.all(
+      entries.map(async ({ mapping }) => {
+        const cached = this.metaCache.get(mapping.yahooSymbol);
+        if (cached && cached.expiresAtMs > this.now()) return;
+        const fetched = await this.fetchChart(mapping.yahooSymbol, '1d', '1d');
+        if (!fetched.ok) return; // no metadata: no spark quote; the per-symbol path reports the error
+        const meta = fetched.result.meta;
+        let error: string | null = null;
+        if (meta?.exchangeName !== mapping.expectedExchangeName) {
+          error = `Yahoo ${mapping.yahooSymbol} returned exchange "${meta?.exchangeName ?? 'missing'}", expected "${mapping.expectedExchangeName}"; refused.`;
+        } else if (meta?.currency !== mapping.expectedCurrency) {
+          error = `Yahoo ${mapping.yahooSymbol} returned currency "${meta?.currency ?? 'missing'}", expected "${mapping.expectedCurrency}"; refused (unit cannot be confirmed).`;
+        }
+        this.metaCache.set(mapping.yahooSymbol, { expiresAtMs: this.now() + (error ? 30 * 60_000 : this.metaTtlMs), error, meta });
+        freshCharts.set(mapping.yahooSymbol, meta);
+      })
+    );
+
+    let okCount = 0;
+    for (const { inst, mapping } of entries) {
+      const sym = mapping.yahooSymbol;
+      const metaEntry = this.metaCache.get(sym);
+      if (!metaEntry || metaEntry.expiresAtMs <= this.now()) continue;
+      if (metaEntry.error) {
+        this.refused.set(sym, { reason: metaEntry.error, expiresAtMs: metaEntry.expiresAtMs });
+        continue;
+      }
+      const last = lastSparkClose(spark.body[sym]);
+      if (!last) continue;
+      const chartPrice = freshCharts.get(sym)?.regularMarketPrice;
+      if (typeof chartPrice === 'number' && chartPrice > 0) {
+        const dev = Math.abs(last.price - chartPrice) / chartPrice;
+        if (dev > YAHOO_CROSSCHECK_MAX_DEVIATION) {
+          const reason = `Yahoo ${sym} cross-check failed: spark ${last.price} vs chart ${chartPrice} (${(dev * 100).toFixed(1)}% apart); refused.`;
+          console.warn(`[yahoo] ${reason}`);
+          this.lastError = reason;
+          this.refused.set(sym, { reason, expiresAtMs: this.now() + this.quoteTtlMs });
+          this.quoteCache.delete(sym);
+          continue;
+        }
+      }
+      this.refused.delete(sym);
+      const built = this.buildQuoteFromSpark(inst, mapping, last, spark.body[sym], metaEntry.meta);
+      if (!built) continue;
+      this.quoteCache.set(sym, { quote: built, expiresAtMs: this.now() + this.quoteTtlMs });
+      this.failedUntil.delete(sym);
+      okCount += 1;
+    }
+    if (okCount > 0) {
+      this.lastSyncAt = new Date(this.now()).toISOString();
+      this.lastError = null;
+    }
+  }
+
+  private buildQuoteFromSpark(
+    inst: InstrumentDefinition,
+    mapping: YahooSymbolMapping,
+    last: { price: number; time: number },
+    series: YahooSparkSeries | undefined,
+    meta: YahooChartMeta | undefined
+  ): MarketQuote | null {
+    const unit = inst.specification.quotationUnit;
+    const conv = yahooUnitConversion(mapping.expectedCurrency, unit);
+    if (!conv.ok) return null;
+    const start = typeof series?.start === 'number' ? series.start : (meta?.currentTradingPeriod?.regular?.start ?? null);
+    const end = typeof series?.end === 'number' ? series.end : (meta?.currentTradingPeriod?.regular?.end ?? null);
+    const quote: MarketQuote = {
+      symbol: inst.exchangeSymbol,
+      exchange: inst.exchange,
+      contractMonth: null,
+      price: applyUnitFactor(last.price, conv.factor),
+      bid: null,
+      ask: null,
+      volume: null, // spark carries no volume; never filled
+      openInterest: null,
+      currency: inst.specification.tradingCurrency,
+      unit,
+      source: `${this.providerId}:${mapping.yahooSymbol}`,
+      timestamp: new Date(last.time * 1000).toISOString(),
+      retrievedAt: new Date(this.now()).toISOString(),
+      status: 'DELAYED',
+      statusReason: `UNOFFICIAL Yahoo Finance ${mapping.yahooSymbol} (${mapping.fullExchangeName}) last 1m close via batch spark, exchange delay ~${mapping.delayMinutes} min, ${YAHOO_CONTRACT_LABEL}; personal use only. ${conv.note}`,
+      delayMinutes: mapping.delayMinutes,
+      sourceQuality: 'UNOFFICIAL',
+      contract: YAHOO_CONTRACT_LABEL,
+      tradingPeriod: start !== null && end !== null ? { start, end } : null,
+    };
+    quote.status = this.freshnessFor(quote, mapping);
+    return quote;
+  }
+
   async getInstruments(): Promise<string[]> {
     const all = await instrumentRepository.list();
     return all.filter((i) => this.supports(i)).map((i) => i.exchangeSymbol);
@@ -367,6 +568,18 @@ export class YahooFinanceAdapter implements MarketDataProvider {
       return { ...cached.quote, status: this.freshnessFor(cached.quote, mapping) };
     }
 
+    if (this.useBatch) {
+      await this.refreshQuotesBatch();
+      const fresh = this.quoteCache.get(mapping.yahooSymbol);
+      if (fresh && fresh.expiresAtMs > this.now()) {
+        return { ...fresh.quote, status: this.freshnessFor(fresh.quote, mapping) };
+      }
+      const refusal = this.refused.get(mapping.yahooSymbol);
+      if (refusal && refusal.expiresAtMs > this.now()) {
+        return { ...unavailable(refusal.reason, source), status: 'INVALID' };
+      }
+    }
+
     const fetched = await this.fetchChart(mapping.yahooSymbol, '1d', '1d');
     if (!fetched.ok) {
       this.lastError = fetched.error;
@@ -377,6 +590,7 @@ export class YahooFinanceAdapter implements MarketDataProvider {
       this.lastError = parsedQuote.reason;
       return { ...unavailable(parsedQuote.reason, source), status: 'INVALID' };
     }
+    this.metaCache.set(mapping.yahooSymbol, { expiresAtMs: this.now() + this.metaTtlMs, error: null, meta: fetched.result.meta });
     this.quoteCache.set(mapping.yahooSymbol, { quote: parsedQuote.quote, expiresAtMs: this.now() + this.quoteTtlMs });
     this.failedUntil.delete(mapping.yahooSymbol);
     this.lastSyncAt = parsedQuote.quote.retrievedAt;
@@ -610,6 +824,7 @@ export class YahooFinanceAdapter implements MarketDataProvider {
     // Warm quoteCache from validated chart metadata so startup history sync also delivers live delayed quotes without extra API calls.
     const warmedQuote = this.buildValidatedQuoteFromMeta(fetched.result.meta, inst, mapping);
     if (warmedQuote.ok) {
+      this.metaCache.set(mapping.yahooSymbol, { expiresAtMs: this.now() + this.metaTtlMs, error: null, meta: fetched.result.meta });
       this.quoteCache.set(mapping.yahooSymbol, {
         quote: warmedQuote.quote,
         expiresAtMs: this.now() + this.quoteTtlMs,

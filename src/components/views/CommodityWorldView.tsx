@@ -84,10 +84,10 @@ export function CommodityWorldView() {
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight text-balance">
+          <h1 className="text-2xl font-semibold text-white tracking-tight text-balance">
             Thế giới Hàng hóa Sống (Living Commodity World)
           </h1>
-          <p className="text-sm text-[#E5E7EB]/65 mt-1">
+          <p className="text-sm text-[var(--muted)] mt-1">
             Danh mục {overview?.commodities.length ?? 21} hàng hóa phái sinh MXV &amp; quốc tế · tự động xếp các hàng hóa tiềm năng (điểm cơ hội &amp; chu kỳ cao) lên đầu danh sách.
           </p>
         </div>
@@ -96,7 +96,7 @@ export function CommodityWorldView() {
           type="button"
           onClick={() => void fetchWorld()}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#111622] hover:bg-[#172033] border border-[#263244] rounded-md text-xs font-medium text-[#E5E7EB] whitespace-nowrap self-start lg:self-auto"
+          className="inline-flex items-center gap-1.5 px-3 py-2 bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--border)] rounded-md text-xs font-medium text-[#E5E7EB] whitespace-nowrap self-start lg:self-auto"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
           <span>Làm mới Chu kỳ</span>
@@ -106,9 +106,9 @@ export function CommodityWorldView() {
       {/* Filter Toolbar */}
       <section
         aria-label="Bộ lọc Thế giới Hàng hóa"
-        className="bg-[#111622] border border-[#263244] rounded-lg p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4"
+        className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4"
       >
-        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[#0B0E14] border border-[#263244] rounded-md">
+        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[#0B0E14] border border-[var(--border)] rounded-md">
           {GROUP_FILTERS.map((group) => {
             const active = groupFilter === group;
             return (
@@ -119,7 +119,7 @@ export function CommodityWorldView() {
                 className={`px-3 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
                   active
                     ? 'bg-[#6366F1] text-white'
-                    : 'text-[#E5E7EB]/70 hover:text-white hover:bg-[#172033]'
+                    : 'text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
                 }`}
               >
                 {group === 'ALL' ? `Tất cả (${overview?.commodities.length ?? 21})` : COMMODITY_GROUP_LABELS_VI[group]}
@@ -130,14 +130,14 @@ export function CommodityWorldView() {
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-[#E5E7EB]/45 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
+            <Search className="w-3.5 h-3.5 text-[var(--faint)] absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Tìm Ngô, Robusta, ZC, LRC..."
               aria-label="Tìm kiếm hàng hóa"
-              className="w-full sm:w-64 pl-8 pr-3 py-1.5 bg-[#0B0E14] border border-[#263244] rounded-md text-xs text-white placeholder:text-[#E5E7EB]/40 focus:outline-none focus:border-[#6366F1]"
+              className="w-full sm:w-64 pl-8 pr-3 py-1.5 bg-[#0B0E14] border border-[var(--border)] rounded-md text-xs text-white placeholder:text-[var(--faint)] focus:outline-none focus:border-[#6366F1]"
             />
           </div>
 
@@ -148,7 +148,7 @@ export function CommodityWorldView() {
             className={`px-3 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
               mxvOnly
                 ? 'bg-[#6366F1]/20 border-[#6366F1] text-white'
-                : 'bg-[#0B0E14] border-[#263244] text-[#E5E7EB]/75 hover:text-white'
+                : 'bg-[#0B0E14] border-[var(--border)] text-[var(--muted)] hover:text-white'
             }`}
           >
             {mxvOnly ? 'Đang lọc: Liên thông MXV' : 'Chỉ hiện hàng hóa MXV'}
@@ -157,12 +157,12 @@ export function CommodityWorldView() {
       </section>
 
       {error && (
-        <div className="bg-[#111622] border border-[#EF4444]/40 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#FCA5A5]">
+        <div className="bg-[var(--surface)] border border-[#EF4444]/40 rounded-[var(--radius-md)] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#FCA5A5]">
           <span>Không thể tải dữ liệu Thế giới Hàng hóa: {error}</span>
           <button
             type="button"
             onClick={() => void fetchWorld()}
-            className="px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded text-xs font-medium text-white whitespace-nowrap self-start sm:self-auto"
+            className="px-3 py-1.5 bg-[var(--surface-2)] hover:bg-[#1E293B] border border-[var(--border)] rounded text-xs font-medium text-white whitespace-nowrap self-start sm:self-auto"
           >
             Thử lại ngay
           </button>
@@ -175,12 +175,12 @@ export function CommodityWorldView() {
           {Array.from({ length: 6 }).map((_, idx) => (
             <div
               key={idx}
-              className="h-72 bg-[#111622] border border-[#263244] rounded-lg animate-pulse"
+              className="h-72 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] animate-pulse"
             />
           ))}
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="bg-[#111622] border border-[#263244] rounded-lg p-8 text-center text-sm text-[#E5E7EB]/60">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-8 text-center text-sm text-[var(--muted)]">
           Không tìm thấy hàng hóa nào khớp bộ lọc hiện tại.
         </div>
       ) : (
@@ -217,7 +217,7 @@ function CommodityWorldCard({
     <button
       type="button"
       onClick={onSelect}
-      className="group relative text-left bg-[#111622] border border-[#263244] hover:border-[#6366F1]/70 rounded-lg overflow-hidden transition-all duration-200 focus-visible:outline-2 focus-visible:outline-[#6366F1] flex flex-col"
+      className="group relative text-left shadow-[var(--shadow-card)] hover:-translate-y-0.5 bg-[var(--surface)] border border-[var(--border)] hover:border-[#6366F1]/70 rounded-[var(--radius-md)] overflow-hidden transition-all duration-200 focus-visible:outline-2 focus-visible:outline-[#6366F1] flex flex-col"
     >
       {/* Photographic 16:9 Canvas with measured contrast scrim */}
       <div className="relative aspect-video w-full overflow-hidden">
@@ -248,24 +248,24 @@ function CommodityWorldCard({
         {/* Bottom overlay row inside image: Title & Live Price */}
         <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] text-[#E5E7EB]/80 truncate">
+            <p className="text-[11px] text-[var(--text)] truncate">
               {visual?.groupVi ?? instrument.category} · {visual?.originTag ?? instrument.exchange}
             </p>
             <h2 className="text-lg font-semibold text-white tracking-tight truncate">
-              {nameVi} <span className="text-xs font-normal text-[#E5E7EB]/70">({instrument.productName})</span>
+              {nameVi} <span className="text-xs font-normal text-[var(--muted)]">({instrument.productName})</span>
             </h2>
           </div>
 
           <div className="text-right shrink-0">
             <p
               title={quote.price === null ? 'DATA_UNAVAILABLE' : undefined}
-              className={`font-mono font-semibold tabular-nums ${
+              className={`font-semibold tabular-nums ${
                 quote.price !== null ? 'text-sm sm:text-base text-white' : 'text-xs sm:text-sm text-[#E5E7EB]/85'
               }`}
             >
               {quote.price !== null ? quote.price.toFixed(2) : 'Chưa có giá'}
             </p>
-            <p className="text-[11px] font-mono text-[#E5E7EB]/75">
+            <p className="text-[11px] font-mono text-[var(--muted)]">
               {quote.price !== null ? quote.unit : 'Chưa có feed'}
             </p>
           </div>
@@ -273,7 +273,7 @@ function CommodityWorldCard({
       </div>
 
       {/* Crisp Cycle & Bottom Detection Telemetry Footer */}
-      <div className="p-4 space-y-3 flex-1 flex flex-col justify-between bg-[#111622]">
+      <div className="p-4 space-y-3 flex-1 flex flex-col justify-between bg-[var(--surface)]">
         <div className="flex items-center justify-between gap-2">
           <CyclePhaseBadge phase={cyclePhase} compact />
           <span className="inline-flex items-center gap-1 text-xs font-medium text-[#6366F1] group-hover:translate-x-0.5 transition-transform whitespace-nowrap shrink-0">
@@ -282,17 +282,17 @@ function CommodityWorldCard({
           </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 pt-2.5 border-t border-[#263244] text-xs">
+        <div className="grid grid-cols-3 gap-3 pt-2.5 border-t border-[var(--border)] text-xs">
           <div className="min-w-0">
-            <span className="block text-[11px] text-[#E5E7EB]/55 truncate">Bottom Score</span>
-            <span className={`block font-mono font-semibold tabular-nums truncate ${getBottomScoreAccent(bottomClassification)}`}>
+            <span className="block text-[11px] text-[var(--faint)] truncate">Bottom Score</span>
+            <span className={`block font-semibold tabular-nums truncate ${getBottomScoreAccent(bottomClassification)}`}>
               {bottomScore !== null ? `${bottomScore}/100` : 'Chưa chấm'}
             </span>
           </div>
           <div className="min-w-0 text-center">
-            <span className="block text-[11px] text-[#E5E7EB]/55 truncate">Biến động 1M</span>
+            <span className="block text-[11px] text-[var(--faint)] truncate">Biến động 1M</span>
             <span
-              className={`block font-mono font-semibold tabular-nums truncate ${
+              className={`block font-semibold tabular-nums truncate ${
                 returns.m1 === null
                   ? 'text-[#E5E7EB]/45'
                   : returns.m1 >= 0
@@ -304,8 +304,8 @@ function CommodityWorldCard({
             </span>
           </div>
           <div className="min-w-0 text-right">
-            <span className="block text-[11px] text-[#E5E7EB]/55 truncate">Cung–Cầu</span>
-            <span className="block font-mono text-[#E5E7EB]/85 truncate">
+            <span className="block text-[11px] text-[var(--faint)] truncate">Cung–Cầu</span>
+            <span className="block text-[var(--text)] tabular-nums truncate">
               {item.supplyDemandBias === 'DATA_UNAVAILABLE' ? '—' : item.supplyDemandBias}
             </span>
           </div>

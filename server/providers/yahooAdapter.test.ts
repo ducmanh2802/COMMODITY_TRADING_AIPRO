@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   classifyYahooFreshness,
+  lastSparkClose,
   parseYahooDailyCandles,
   YAHOO_CONTRACT_LABEL,
   YAHOO_SYMBOL_MAP,
@@ -92,6 +93,7 @@ function harness(
     clock,
     options: {
       fetchFn,
+      useBatch: false, // legacy per-symbol chart path; batch (spark) is covered by its own tests below
       now: () => clock.t,
       sleep: async (ms) => {
         sleeps.push(ms);
@@ -154,8 +156,8 @@ test('real ZC=F fixture: price in cents/bushel with market timestamp, DELAYED â†
     assert.equal(q.openInterest, null);
     assert.equal(q.volume, 168915);
 
-    // Cached for 60 s: no second request.
-    h.clock.t += 30_000;
+    // Cached for 15 s: no second request.
+    h.clock.t += 10_000;
     const cached = await adapter.getQuote('ZC');
     assert.equal(h.calls.length, 1, 'served from cache');
     assert.equal(cached.status, 'DELAYED');
@@ -491,5 +493,93 @@ test('getCandles warms quoteCache on valid metadata and skips cache on invalid e
     const qAfterBad = await badAdapter.getQuote('ZC');
     assert.equal(bad.calls.length, 2, 'invalid meta did not warm quoteCache');
     assert.equal(qAfterBad.status, 'INVALID');
+  });
+});
+
+// ---- T42: batch spark refresh ----------------------------------------------------------------------
+const SPARK = () =>
+  JSON.parse(
+    readFileSync(fileURLToPath(new URL('./__fixtures__/yahoo/spark_ZC_GC_1d_1m.json', import.meta.url)), 'utf8')
+  );
+const SPARK_ZC_TIME_MS = 1795173900 * 1000; // last non-null ZC bar in the fixture
+
+function sparkHarness(opts: { chartPrice?: number; sparkBody?: unknown; sparkStatus?: number } = {}) {
+  const h = harness((url) => {
+    if (url.includes('/v8/finance/spark')) return json(opts.sparkBody ?? SPARK(), opts.sparkStatus ?? 200);
+    const sym = decodeURIComponent(url.split('/chart/')[1].split('?')[0]);
+    const base = sym === 'GC=F' ? variant('GC=F', 'CMX', 'USD', opts.chartPrice ?? 3588.2) : variant(sym, 'CBT', 'USX', opts.chartPrice ?? 450.5);
+    return json(base);
+  }, SPARK_ZC_TIME_MS + 2 * MIN);
+  h.options.useBatch = true;
+  return h;
+}
+
+test('lastSparkClose takes the last non-null close and its own bar time', () => {
+  const last = lastSparkClose(SPARK()['ZC=F']);
+  assert.deepEqual(last, { price: 450.5, time: 1795173900 });
+  assert.equal(lastSparkClose({ timestamp: [1], close: [null] }), null);
+  assert.equal(lastSparkClose(undefined), null);
+});
+
+test('batch: one spark request refreshes all symbols; metadata validated once and cached for hours', async () => {
+  await withEnv({ YAHOO_ENABLED: 'true' }, async () => {
+    const h = sparkHarness();
+    const adapter = new YahooFinanceAdapter(h.options);
+    const q = await adapter.getQuote('ZC');
+    assert.equal(q.price, 450.5);
+    assert.equal(q.timestamp, new Date(SPARK_ZC_TIME_MS).toISOString());
+    assert.equal(q.status, 'DELAYED');
+    assert.equal(q.sourceQuality, 'UNOFFICIAL');
+    const spark1 = h.calls.filter((c) => c.url.includes('/spark'));
+    assert.equal(spark1.length, 1);
+    assert.match(spark1[0].url, /ZC%3DF/);
+    assert.match(spark1[0].url, /GC%3DF/);
+    // Another symbol is served from the same batch: no extra spark request.
+    const gc = await adapter.getQuote('GC');
+    assert.equal(gc.price, 3588.2);
+    assert.equal(h.calls.filter((c) => c.url.includes('/spark')).length, 1);
+
+    // After the 15 s TTL: one more spark request, but no more chart (metadata cached).
+    const chartsBefore = h.calls.filter((c) => c.url.includes('/chart/')).length;
+    h.clock.t += 16_000;
+    await adapter.getQuote('ZC');
+    assert.equal(h.calls.filter((c) => c.url.includes('/spark')).length, 2);
+    assert.equal(h.calls.filter((c) => c.url.includes('/chart/')).length, chartsBefore);
+    // Metadata older than 3 h is re-validated.
+    h.clock.t += 3 * 3_600_000 + 1;
+    await adapter.getQuote('ZC');
+    assert.ok(h.calls.filter((c) => c.url.includes('/chart/')).length > chartsBefore);
+  });
+});
+
+test('batch: spark vs chart deviation >2% is INVALID (no price), within tolerance is accepted', async () => {
+  await withEnv({ YAHOO_ENABLED: 'true' }, async () => {
+    const bad = sparkHarness({ chartPrice: 500 }); // spark 450.5 vs 500 = ~10%
+    const q = await new YahooFinanceAdapter(bad.options).getQuote('ZC');
+    assert.equal(q.status, 'INVALID');
+    assert.equal(q.price, null);
+    assert.match(q.statusReason ?? '', /cross-check/);
+    const ok = sparkHarness({ chartPrice: 452 }); // 0.3%
+    assert.equal((await new YahooFinanceAdapter(ok.options).getQuote('ZC')).price, 450.5);
+  });
+});
+
+test('batch: spark failure falls back to the per-symbol chart path', async () => {
+  await withEnv({ YAHOO_ENABLED: 'true' }, async () => {
+    const h = sparkHarness({ sparkStatus: 500 });
+    const q = await new YahooFinanceAdapter({ ...h.options, maxRetries: 0 }).getQuote('ZC');
+    assert.equal(q.price, 450.5); // from chart regularMarketPrice
+    assert.ok(h.calls.some((c) => c.url.includes('/spark')));
+  });
+});
+
+test('batch: wrong exchange in chart metadata refuses the quote', async () => {
+  await withEnv({ YAHOO_ENABLED: 'true' }, async () => {
+    const h = harness((url) =>
+      url.includes('/spark') ? json(SPARK()) : json(variant('ZC=F', 'NYM', 'USX', 450.5)), SPARK_ZC_TIME_MS + 2 * MIN);
+    h.options.useBatch = true;
+    const q = await new YahooFinanceAdapter(h.options).getQuote('ZC');
+    assert.equal(q.status, 'INVALID');
+    assert.equal(q.price, null);
   });
 });

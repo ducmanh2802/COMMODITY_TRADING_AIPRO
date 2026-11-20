@@ -21,6 +21,7 @@ export default defineConfig({
       PORT: String(PORT),
       MARKET_DB_PATH: dbPath,
       YAHOO_ENABLED: '',
+      SCHEDULER_ENABLED: 'false',
       GEMINI_API_KEY: '',
       NODE_ENV: 'production',
     },

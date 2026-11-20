@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, ArrowUpRight, Compass, Database, FileText, Lightbulb, Radar, RefreshCw, Upload } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Compass, Database, FileText, Lightbulb, Radar, RefreshCw, SearchX, Upload } from 'lucide-react';
+import { SectionHeader } from '../ui/SectionHeader';
+import { UpdatedAgo } from '../common/UpdatedAgo';
+import { SkeletonCards } from '../ui/Skeleton';
+import { EmptyState } from '../ui/EmptyState';
 import { useTerminal } from '../../contexts/TerminalContext';
 import { getCommodityVisual } from '../../shared/data/commodityVisuals';
 import type { InstrumentDefinition, ProductCategory } from '../../shared/types/instrument';
@@ -51,26 +55,27 @@ function PriceCard({ inst, quote, onOpen }: { inst: InstrumentDefinition; quote:
       type="button"
       onClick={onOpen}
       aria-label={t('fr.ov.openChart', { name })}
-      className="text-left bg-[#111622] hover:bg-[#151C2B] border border-[#263244] hover:border-[#6366F1]/60 rounded-xl p-4 flex flex-col gap-2 transition-colors min-w-0"
+      className="text-left bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--border)] hover:border-[var(--accent)]/50 shadow-[var(--shadow-card)] hover:-translate-y-px rounded-[var(--radius-md)] p-4 flex flex-col gap-3 transition min-w-0"
     >
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-white leading-snug">{name}</p>
-        <p className="text-[11px] text-[#E5E7EB]/45 mt-0.5">
+        <p className="text-sm font-semibold text-[var(--text-strong)] leading-snug">{name}</p>
+        <p className="text-[11px] text-[var(--faint)] mt-0.5 font-mono">
           {inst.exchange} · {inst.exchangeSymbol}
         </p>
       </div>
+      {/* Price change (▲▼ green/red) is intentionally not shown: MarketQuote carries no real change data yet. */}
       {priced ? (
         <div>
-          <p className="text-2xl font-semibold text-white tabular-nums leading-tight">{fmtPrice(quote.price)}</p>
-          <p className="text-xs text-[#E5E7EB]/60 mt-0.5">{plainUnit(t, quote)}</p>
+          <p className="text-[28px] font-semibold text-[var(--text-strong)] tabular-nums leading-none tracking-tight">{fmtPrice(quote.price)}</p>
+          <p className="text-xs text-[var(--muted)] mt-1.5">{plainUnit(t, quote)}</p>
         </div>
       ) : (
         <div>
-          <p className="text-2xl font-semibold text-[#E5E7EB]/30 leading-tight">—</p>
-          <p className="text-xs text-[#E5E7EB]/50 mt-0.5">{t('fr.ov.noPrice')}</p>
+          <p className="text-[28px] font-semibold text-[var(--faint)] leading-none">—</p>
+          <p className="text-xs text-[var(--muted)] mt-1.5">{t('fr.ov.noPrice')}</p>
         </div>
       )}
-      <div className="mt-auto pt-2 border-t border-[#263244]/70 flex flex-col gap-1">
+      <div className="mt-auto pt-3 border-t border-[var(--border)]/70 flex flex-col gap-1">
         <DataStatusBadge
           status={quote?.status ?? 'UNAVAILABLE'}
           compact
@@ -78,7 +83,7 @@ function PriceCard({ inst, quote, onOpen }: { inst: InstrumentDefinition; quote:
           delayMinutes={quote?.delayMinutes}
         />
         {priced && (
-          <p className="text-[11px] text-[#E5E7EB]/50">{clock ? t('fr.updatedAt', { time: clock }) : t('fr.noTime')}</p>
+          <p className="text-[11px] text-[var(--faint)]">{clock ? t('fr.updatedAt', { time: clock }) : t('fr.noTime')}</p>
         )}
       </div>
     </button>
@@ -233,8 +238,8 @@ export function OverviewDashboard() {
   };
 
   const linkBtn = 'text-xs font-medium text-[#818CF8] hover:text-[#A5B4FC] hover:underline whitespace-nowrap';
-  const card = 'bg-[#111622] border border-[#263244] rounded-xl p-4';
-  const statCard = 'bg-[#111622] border border-[#263244] rounded-xl p-4 space-y-1 min-w-0';
+  const card = 'bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] shadow-[var(--shadow-card)] p-4';
+  const statCard = `${card} space-y-1 min-w-0`;
 
   return (
     <div className="space-y-6">
@@ -242,7 +247,7 @@ export function OverviewDashboard() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="text-xs font-medium text-[#818CF8]">{t('fr.ov2.kicker')}</p>
-          <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight mt-0.5 text-balance">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight mt-0.5 text-balance">
             {t('fr.ov.hello')}
           </h1>
           <p className="text-sm text-[#E5E7EB]/65 mt-1">{t('fr.ov.sub')}</p>
@@ -532,15 +537,18 @@ export function OverviewDashboard() {
 
       {/* Prices grouped by category */}
       <section aria-label={t('fr.ov2.pricesTitle')} className="space-y-4">
-        <h2 className="text-base font-semibold text-white">{t('fr.ov2.pricesTitle')}</h2>
+        <SectionHeader
+          title={t('fr.ov2.pricesTitle')}
+          actions={<UpdatedAgo className="text-xs text-[var(--muted)] tabular-nums" />}
+        />
         {loading ? (
-          <p className="text-sm text-[#E5E7EB]/55">{t('fr.ov.loading')}</p>
+          <SkeletonCards count={8} />
         ) : groups.length === 0 ? (
-          <p className="text-sm text-[#E5E7EB]/55">{t('fr.ov.noMatch')}</p>
+          <EmptyState title={t('fr.ov.noMatch')} icon={<SearchX className="w-6 h-6" aria-hidden="true" />} />
         ) : (
           groups.map((g) => (
             <div key={g.cat} className="space-y-2">
-              <h3 className="text-sm font-medium text-[#E5E7EB]/80">{t(`dash.cat.${g.cat}`)}</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--faint)]">{t(`dash.cat.${g.cat}`)}</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                 {g.items.map((inst) => (
                   <PriceCard

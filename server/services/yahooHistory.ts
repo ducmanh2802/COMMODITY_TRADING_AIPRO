@@ -15,10 +15,24 @@ import { YAHOO_PROVIDER_ID, isYahooEnabled, type YahooHistoryRange } from '../pr
 
 export const YAHOO_HISTORY_CONTRACT_CODE = PROVIDER_CONTRACT_CODE.YAHOO_UNOFFICIAL ?? 'VENDOR_YAHOO';
 const DAY_MS = 86_400_000;
+/** Symbols whose 10y backfill was already tried in this process (avoids refetching 10y every run). */
+const backfillAttempted = new Set<string>();
 
 /** Smallest Yahoo range covering the gap since the last stored bar (plus margin); 10y when no history. */
-export function pickYahooRange(lastTimestampMs: number | null, nowMs: number): YahooHistoryRange {
+export function pickYahooRange(
+  lastTimestampMs: number | null,
+  nowMs: number,
+  /** Earliest stored bar; when it is newer than ~9y and 10y was not yet attempted, backfill 10y. */
+  opts: { firstTimestampMs?: number | null; backfillAttempted?: boolean } = {}
+): YahooHistoryRange {
   if (lastTimestampMs === null) return '10y';
+  if (
+    !opts.backfillAttempted &&
+    typeof opts.firstTimestampMs === 'number' &&
+    nowMs - opts.firstTimestampMs < 9 * 365 * DAY_MS
+  ) {
+    return '10y'; // e.g. a 2y provider sync stored the series first; extend it back once per process
+  }
   const gapDays = (nowMs - lastTimestampMs) / DAY_MS;
   if (gapDays <= 20) return '1mo';
   if (gapDays <= 80) return '3mo';
@@ -72,7 +86,13 @@ export async function syncYahooHistory(deps: {
         .map((d) => Date.parse(d.lastTimestamp))
         .filter((t) => Number.isFinite(t))
         .reduce<number | null>((m, t) => (m === null || t > m ? t : m), null);
-      const range = pickYahooRange(lastMs, now());
+      const firstMs = datasets
+        .filter((d) => d.contractCode === YAHOO_HISTORY_CONTRACT_CODE && d.timeframe === 'D1')
+        .map((d) => Date.parse(d.firstTimestamp))
+        .filter((t) => Number.isFinite(t))
+        .reduce<number | null>((m, t) => (m === null || t < m ? t : m), null);
+      const range = pickYahooRange(lastMs, now(), { firstTimestampMs: firstMs, backfillAttempted: backfillAttempted.has(inst.id) });
+      if (range === '10y') backfillAttempted.add(inst.id);
       const res = await deps.adapter.getCandles(inst.exchangeSymbol, 'D1', undefined, undefined, { range });
       if (res.candles.length === 0) {
         results.push({ symbol: inst.exchangeSymbol, status: 'UNAVAILABLE', range, barsFetched: 0, rowsWritten: 0, message: res.reason ?? 'No bars returned.' });

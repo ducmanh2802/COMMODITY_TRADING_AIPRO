@@ -9,6 +9,7 @@ import * as ai from './dict/ai';
 import * as macro from './dict/macro';
 import * as friendly from './dict/friendly';
 import * as brief from './dict/brief';
+import * as scorecard from './dict/scorecard';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
@@ -23,6 +24,7 @@ export const vi = {
   ...macro.vi,
   ...friendly.vi,
   ...brief.vi,
+  ...scorecard.vi,
 };
 
 export type TKey = keyof typeof vi;

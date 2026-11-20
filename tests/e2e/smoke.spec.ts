@@ -1,18 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-// Essential sidebar modules (ids from src/components/layout/Sidebar.tsx).
-const MODULES = [
-  'overview',
-  'commodity-world',
-  'markets',
-  'cycle-hunter',
-  'commodity-profile',
-  'research-report',
-  'charts',
-  'news',
-  'risk',
-  'data-health',
-];
+// Modules that need a Firebase login to render meaningfully (none in the sidebar today; add ids here).
+const LOGIN_ONLY = new Set<string>([]);
 
 test('every module renders without errors or failing /api calls', async ({ page }) => {
   const problems: string[] = [];
@@ -31,11 +20,14 @@ test('every module renders without errors or failing /api calls', async ({ page 
   await page.goto('/');
   const buttons = page.locator('aside nav li > button');
   await expect(buttons.first()).toBeVisible();
+  // Read nav entries from the DOM so newly added modules are covered automatically.
   const count = await buttons.count();
-  expect(count, 'sidebar buttons').toBe(MODULES.length);
+  expect(count, 'sidebar buttons').toBeGreaterThanOrEqual(10);
 
-  for (let i = 0; i < MODULES.length; i++) {
-    current = MODULES[i];
+  for (let i = 0; i < count; i++) {
+    const label = ((await buttons.nth(i).innerText()) || '').trim() || `#${i}`;
+    if (LOGIN_ONLY.has(label)) continue;
+    current = label;
     await buttons.nth(i).click();
     await expect(buttons.nth(i)).toHaveAttribute('aria-current', 'page');
     await page.waitForLoadState('networkidle').catch(() => {});

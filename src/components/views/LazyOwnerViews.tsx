@@ -37,3 +37,4 @@ export const LazyCommodityProfileView = lazyNamed(() => import('./CommodityProfi
 export const LazyCycleScannerView = lazyNamed(() => import('./CycleScannerView'), 'CycleScannerView');
 export const LazyCycleResearchReportView = lazyNamed(() => import('./CycleResearchReportView'), 'CycleResearchReportView');
 export const LazyBriefView = lazyNamed(() => import('./brief/BriefView'), 'BriefView');
+export const LazyScorecardView = lazyNamed(() => import('./scorecard/ScorecardView'), 'ScorecardView');

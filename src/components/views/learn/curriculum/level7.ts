@@ -1,0 +1,76 @@
+import { q, SRC, type Level } from './types';
+
+export const LEVEL7: Level = {
+  id: 'l7',
+  number: 7,
+  title: 'Cấp 7 — Lướt sóng cho người mới',
+  goal: 'Hiểu lướt sóng (giữ vài ngày đến vài tuần) một cách trung thực: rủi ro trước, khung 7 quy tắc, kiểm thử bằng backtest và lộ trình tập trên tài khoản giả lập. Giáo dục, không phải tư vấn đầu tư.',
+  lessons: [
+    {
+      id: 'l7-swing',
+      title: 'Lướt sóng: rủi ro trước, rồi khung 7 quy tắc',
+      objective: 'Hiểu rủi ro đòn bẩy, khác biệt với lướt ngắn, và có khung quy tắc để kiểm thử.',
+      body: [
+        'Rủi ro trước: nếu ký quỹ khoảng 5% đến 10% giá trị hợp đồng (số giả định), giá đi ngược 2% đến 3% tương đương khoảng 20% (2% trên ký quỹ 10%) đến 60% (3% trên ký quỹ 5%) ký quỹ của vị thế. Phần lớn nhà giao dịch ngắn hạn cá nhân thua lỗ và không có cách nào bảo đảm lợi nhuận nhanh.',
+        'Khác biệt: lướt sóng giữ vị thế vài ngày đến vài tuần, ít lệnh hơn, ít bị phí/trượt giá bào mòn hơn, nhưng chịu rủi ro qua đêm và qua báo cáo. Scalping/day trading giữ vài phút đến trong ngày, nhiều lệnh, đòi hỏi tốc độ và chi phí thấp, thường bất lợi cho người mới.',
+        'Khung 7 quy tắc (để kiểm thử, không phải tín hiệu): (1) chọn mã có xu hướng rõ trong "Đánh giá các mã". (2) Giao dịch thuận xu hướng, ví dụ giá trên MA50 và MA200, chờ nhịp kéo về gần MA. (3) Đặt stop trước khi vào lệnh, khoảng 1,5 đến 2 lần ATR. (4) Rủi ro 1% đến 2% vốn mỗi lệnh bằng máy tính khối lượng. (5) Tránh giữ qua báo cáo lớn mà bạn chưa hiểu (WASDE, EIA, COT). (6) Có kế hoạch chốt lời, ví dụ chốt một phần ở 2R rồi dời stop theo giá. (7) Ghi mọi lệnh vào Sổ ghi chú nghiên cứu.',
+        'Ví dụ minh hoạ (số giả định, không phải dữ liệu hiện tại): vào 450 cent, ATR 8, stop 1,5 × ATR. Tính bên dưới bằng công cụ của ứng dụng.',
+        'R-multiple: nếu thoát ở 474 thì lãi bằng 2 lần rủi ro ban đầu (2R); nếu chạm stop thì -1R.',
+      ],
+      example: { caption: 'Ví dụ minh hoạ, không phải dữ liệu hiện tại: vào 450, ATR 8, stop 1,5×ATR, vốn 30.000 USD, rủi ro 2%, thoát 474', calc: { kind: 'swing', instrumentId: 'CBOT:ZC', entry: 450, atr: 8, atrMult: 1.5, equity: 30000, riskPct: 2, costs: 0, exit: 474 } },
+      remember: ['Rủi ro đòn bẩy trước, lợi nhuận sau; không có lợi nhuận nhanh được bảo đảm.', 'Stop trước khi vào lệnh; rủi ro 1% đến 2% vốn mỗi lệnh.', 'Ghi nhật ký mọi lệnh.'],
+      quiz: [
+        q('Ký quỹ 10%, giá đi ngược 2% thì mất khoảng bao nhiêu % ký quỹ?', ['20%', '2%', '10%', '100%'], 0, '2 chia 10 = 20%.'),
+        q('Stop theo khung này đặt khi nào?', ['Trước khi vào lệnh', 'Sau khi lỗ', 'Không cần', 'Khi hoảng sợ'], 0, 'Đặt trước để định khối lượng.'),
+        q('Vào 450, stop 438, thoát 474 là bao nhiêu R?', ['2R', '1R', '3R', '0,5R'], 0, 'Lãi 24 cent / rủi ro 12 cent.'),
+        q('Vì sao tránh giữ qua báo cáo bạn không hiểu?', ['Giá có thể nhảy qua stop', 'Do phí', 'Do luật', 'Không có lý do'], 0, 'Gap và trượt giá.'),
+        q('Kết quả của khung này được bảo đảm?', ['Không', 'Có', 'Luôn', 'Chỉ mùa hè'], 0, 'Không chiến lược nào bảo đảm lợi nhuận.'),
+      ],
+      links: [{ module: 'scorecard', label: 'Đánh giá các mã' }, { module: 'risk', label: 'Rủi ro' }, { module: 'journal', label: 'Sổ ghi chú' }],
+      calculator: 'position-sizing',
+      sources: [SRC.cmeEdu, SRC.wasde, SRC.cftc],
+    },
+    {
+      id: 'l7-backtest',
+      title: 'Kiểm thử khung này bằng công cụ backtest',
+      objective: 'Biết cấu hình và cách đọc kết quả, cùng các dấu hiệu đáng ngờ.',
+      body: [
+        'Công cụ gần nhất với khung trên là chiến lược "EMA Pullback Continuation": xu hướng theo EMA 9/20/50, giá kéo về gần EMA20 mà không phá EMA50, RSI hồi về vùng giữa; stop khoảng 1,25 × ATR14. Khác với khung (MA50/MA200, stop 1,5–2 × ATR), nên đây là kiểm thử gần đúng.',
+        'Các tham số của chiến lược do công cụ cố định và không chỉnh được trên giao diện; ứng dụng chưa hỗ trợ cấu hình sẵn. Bạn chỉ chọn mã, chiến lược, khung thời gian, vốn, số hợp đồng mỗi lệnh, phí mỗi hợp đồng, số tick trượt giá và chu kỳ roll tuỳ chọn. Công cụ dùng số hợp đồng cố định, nên không kiểm thử trực tiếp quy tắc "rủi ro 1% đến 2% vốn".',
+        'Các bước: (1) mở Kiểm thử chiến lược. (2) Chọn mã và chiến lược EMA Pullback. (3) Chọn khung ngày (1D) để dùng lịch sử nhiều năm. (4) Nhập vốn, 1 hợp đồng mỗi lệnh, phí và trượt giá thực tế (hỏi công ty môi giới, đừng để 0). (5) Chạy và đọc kết quả. (6) Lặp lại trên vài mã khác nhau và vài giai đoạn khác nhau.',
+        'Lưu ý dữ liệu: lịch sử 10 năm từ Yahoo là chuỗi hợp đồng gần tháng nhất liên tục, không điều chỉnh roll và là nguồn không chính thức. Khi chuyển kỳ hạn giá nhảy (roll gap) và có thể tạo lãi/lỗ giả; kết quả chỉ để học, không phải bằng chứng chiến lược hiệu quả.',
+        'Đọc kết quả: tổng lợi nhuận (đã trừ phí và trượt giá); max drawdown (mức sụt giảm lớn nhất của vốn, hãy tự hỏi bạn có chịu được không); tỷ lệ thắng (một mình nó chưa nói gì: thắng 70% nhưng lỗ lớn vẫn có thể thua); profit factor (tổng lãi chia tổng lỗ, trên 1 là có lãi trước các sai lệch); số lệnh; phí và trượt giá.',
+        'Dấu hiệu đáng ngờ: quá ít lệnh (vài chục lệnh trở xuống thì kết quả không ổn định); kết quả tốt do một vài lệnh lớn; tinh chỉnh tham số cho đẹp trên một mã/giai đoạn (overfitting); kết quả tốt chỉ khi phí/trượt giá bằng 0; kết quả chỉ tốt trên một mã.',
+      ],
+      remember: ['Backtest tốt không bảo đảm tương lai.', 'Chuỗi liên tục chưa điều chỉnh roll: có roll gap, nguồn không chính thức.', 'Luôn nhập phí và trượt giá thực tế.'],
+      uncertain: ['Mức phí và trượt giá thực tế: cần kiểm tra lại với MXV/công ty môi giới.'],
+      quiz: [
+        q('Max drawdown cho biết gì?', ['Mức sụt giảm lớn nhất của vốn', 'Lãi lớn nhất', 'Phí', 'Số lệnh'], 0, 'Đo mức sụt vốn.'),
+        q('Dấu hiệu đáng ngờ?', ['Quá ít lệnh hoặc kết quả do một lệnh lớn', 'Nhiều lệnh, phí thực tế', 'Thử nhiều mã', 'Dữ liệu nhiều năm'], 0, 'Ít lệnh hoặc phụ thuộc một lệnh.'),
+        q('Roll gap là gì?', ['Khoảng nhảy giá khi chuyển kỳ hạn trên chuỗi liên tục', 'Phí sàn', 'Tín hiệu mua', 'Một loại lệnh'], 0, 'Có thể tạo lãi/lỗ giả.'),
+        q('Profit factor là?', ['Tổng lãi chia tổng lỗ', 'Lãi trừ phí', 'Số lệnh thắng', 'Ký quỹ'], 0, 'Trên 1 nghĩa là tổng lãi lớn hơn tổng lỗ.'),
+        q('Vì sao nhập phí và trượt giá thực tế?', ['Bỏ qua sẽ làm kết quả đẹp giả', 'Không quan trọng', 'Do luật', 'Để tăng lãi'], 0, 'Chi phí bào mòn kết quả.'),
+      ],
+      links: [{ module: 'backtest', label: 'Kiểm thử chiến lược' }, { module: 'data-import', label: 'Nhập dữ liệu' }],
+      sources: [SRC.cmeEdu, SRC.mxv],
+    },
+    {
+      id: 'l7-roadmap',
+      title: 'Lộ trình: tập trên tài khoản giả lập trước',
+      objective: 'Có kế hoạch từng bước trước khi dùng tiền thật.',
+      body: [
+        'Lộ trình gợi ý: học Cấp 1 đến 5; thực hành quy trình Cấp 6; backtest khung với phí thực tế; giả lập (paper trade) vài tháng và ghi nhật ký; chỉ khi kỷ luật ổn mới cân nhắc tiền thật với số vốn nhỏ bạn có thể chịu mất.',
+        'Giả lập không bao gồm áp lực tâm lý khi mất tiền thật, nên kết quả thật có thể khác.',
+        'Chỉ giao dịch qua thành viên được MXV cấp phép; kiểm tra tên trên mxv.com.vn. Cảnh giác "sàn" hứa lợi nhuận cố định, nhóm kín gợi ý lệnh, yêu cầu chuyển tiền vào tài khoản cá nhân.',
+        'Nội dung này là giáo dục, không phải tư vấn đầu tư. Bạn tự chịu trách nhiệm về quyết định của mình.',
+      ],
+      remember: ['Giả lập trước, tiền thật sau, số vốn nhỏ bạn chịu mất được.', 'Chỉ giao dịch qua thành viên MXV.'],
+      quiz: [
+        q('Trước khi dùng tiền thật nên?', ['Giả lập vài tháng và ghi nhật ký', 'Vay tiền', 'Vào lệnh lớn', 'Bỏ stop'], 0, 'Tập kỷ luật.'),
+        q('Nơi giao dịch hợp lệ?', ['Thành viên được MXV cấp phép', 'Sàn bất kỳ nhắn tin', 'Nhóm kín', 'Người lạ'], 0, 'Qua thành viên MXV.'),
+        q('Giả lập có thay thế hoàn toàn tiền thật không?', ['Không, thiếu áp lực tâm lý', 'Có', 'Luôn', 'Hoàn toàn'], 0, 'Tâm lý khác.'),
+      ],
+      sources: [SRC.mxv, SRC.mxvOverview],
+    },
+  ],
+};

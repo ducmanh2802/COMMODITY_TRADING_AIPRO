@@ -6,6 +6,9 @@ import type { AppModuleId, PhaseModuleDescriptor } from '../shared/types/risk';
 import type { RoadmapPhase } from '../shared/architecture';
 import { fetchJsonWithRetry, safeReadJson } from '../shared/utils/http';
 
+/** Auto-refresh period for quotes (ms); paused while the tab is hidden. */
+export const QUOTE_AUTO_REFRESH_MS = 20_000;
+
 export interface BackendHealthPayload {
   status: string;
   service: string;
@@ -85,6 +88,9 @@ interface TerminalContextValue {
   lastSyncSummary: SyncResultSummary | null;
   loadError: string | null;
   refreshBackendData: () => Promise<void>;
+  /** Epoch ms of the last successful quotes response (null before the first). */
+  lastUpdatedAt: number | null;
+  refreshQuotes: () => Promise<void>;
   syncProviderFeeds: (options?: {
     symbol?: string;
     timeframe?: Timeframe;
@@ -118,6 +124,8 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [lastSyncSummary, setLastSyncSummary] = useState<SyncResultSummary | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const warmupPollsRef = useRef(0);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+  const quotesInFlightRef = useRef(false);
 
   const refreshBackendData = useCallback(async () => {
     setLoading(true);
@@ -165,6 +173,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
           quoteMap[q.symbol] = q;
         }
         setQuotesBySymbol(quoteMap);
+        setLastUpdatedAt(Date.now());
       }
       if (dsJson) setDatasets(dsJson.datasets ?? []);
       if (reportJson && Array.isArray(reportJson.commodities)) setDataHealthReport(reportJson);
@@ -180,6 +189,23 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       setLoadError(err instanceof Error ? err.message : 'Failed to connect to backend API.');
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  /** Quotes-only refresh (no loading flash); never overlaps with itself. */
+  const refreshQuotes = useCallback(async () => {
+    if (quotesInFlightRef.current) return;
+    quotesInFlightRef.current = true;
+    try {
+      const json = await fetchJsonWithRetry<{ quotes?: MarketQuote[] }>('/api/market/quotes', undefined, { retries: 0 });
+      const quoteMap: Record<string, MarketQuote> = {};
+      for (const q of json?.quotes ?? []) quoteMap[q.symbol] = q;
+      setQuotesBySymbol(quoteMap);
+      setLastUpdatedAt(Date.now());
+    } catch {
+      // Keep the previous quotes; their own timestamps/status keep ageing honestly.
+    } finally {
+      quotesInFlightRef.current = false;
     }
   }, []);
 
@@ -242,6 +268,23 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     };
   }, [providers, quotesBySymbol, datasets.length, refreshBackendData]);
 
+  // Periodic quote refresh; skipped while the document is hidden, catches up on becoming visible.
+  useEffect(() => {
+    const tick = () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      void refreshQuotes();
+    };
+    const onVisible = () => {
+      if (!document.hidden) void refreshQuotes();
+    };
+    const id = window.setInterval(tick, QUOTE_AUTO_REFRESH_MS);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [refreshQuotes]);
+
   const openInstrumentIn = useCallback((symbol: string, module: AppModuleId) => {
     setSelectedSymbol(symbol);
     setActiveModule(module);
@@ -275,6 +318,8 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
         lastSyncSummary,
         loadError,
         refreshBackendData,
+        lastUpdatedAt,
+        refreshQuotes,
         syncProviderFeeds,
         openInstrumentIn,
       }}

@@ -87,6 +87,7 @@ export type AppModuleId =
   | 'technical'
   | 'analysis'
   | 'brief'
+  | 'scorecard'
   | 'cot'
   | 'fundamental'
   | 'ai-analyst'

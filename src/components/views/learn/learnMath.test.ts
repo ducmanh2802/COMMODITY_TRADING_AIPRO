@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { ContractSpecification } from '../../../shared/types/instrument';
-import { classifyCurve, ILLUSTRATIVE_CURVES, marginLeverage, positionSize, tickPnl } from './learnMath';
+import { classifyCurve, contractValue, convertCurrency, ILLUSTRATIVE_CURVES, marginCallDistance, marginLeverage, positionSize, rollCost, rMultiple, swingPlan, tickPnl } from './learnMath';
 
 // Mirrors the CBOT Corn (ZC) entry in server/data/instruments.ts.
 const zc: ContractSpecification = {
@@ -70,4 +70,57 @@ test('curve classification of the illustrative curves', () => {
     ILLUSTRATIVE_CURVES.map((c) => classifyCurve(c.points.map((p) => p.price))),
     ['CONTANGO', 'BACKWARDATION', 'MIXED'],
   );
+});
+
+test('contractValue: ZC at 450 cents = 1800 ticks x 12.5 = 22500 USD; refuses unverified', () => {
+  const r = contractValue(zc, 450);
+  assert.ok(r.ok && r.notional === 22500);
+  assert.equal(contractValue(unverified, 450).ok, false);
+  assert.equal(contractValue(zc, 0).ok, false);
+});
+
+test('rollCost: contango costs, backwardation pays', () => {
+  const c = rollCost(zc, 450, 455, 2);
+  assert.ok(c.ok && c.state === 'CONTANGO' && c.spreadTicks === 20 && c.costPerContract === 250 && c.cost === 500);
+  const b = rollCost(zc, 455, 450, 1);
+  assert.ok(b.ok && b.state === 'BACKWARDATION' && b.cost === -250);
+  assert.equal(rollCost(zc, 450, 450, 1).ok && (rollCost(zc, 450, 450, 1) as { state: string }).state, 'FLAT');
+  assert.equal(rollCost(zc, 450, 455, 0).ok, false);
+});
+
+test('marginCallDistance: buffer / tick value', () => {
+  const r = marginCallDistance(zc, 1500, 1250, 2);
+  assert.ok(r.ok && r.bufferPerContract === 250 && r.bufferTotal === 500 && r.ticksToCall === 20 && r.priceMoveToCall === 5);
+  assert.equal(marginCallDistance(zc, 1000, 1250, 1).ok, false);
+  assert.equal(marginCallDistance(zc, 1500, 1250, 1.5).ok, false);
+});
+
+test('convertCurrency', () => {
+  const r = convertCurrency(12.5, 25000);
+  assert.ok(r.ok && r.value === 312500);
+  assert.equal(convertCurrency(1, 0).ok, false);
+});
+
+test('swingPlan: ZC entry 450, ATR 8, 1.5x -> stop 12 cents = 48 ticks = 600 USD/contract', () => {
+  const r = swingPlan(zc, 450, 8, 1.5, 10000, 1, 0);
+  assert.ok(r.ok);
+  if (r.ok) {
+    assert.equal(r.stopDistance, 12);
+    assert.equal(r.stopPrice, 438);
+    assert.equal(r.takeProfit2R, 474);
+    assert.equal(r.riskBudget, 100);
+    assert.equal(r.contracts, 0);
+  }
+  const big = swingPlan(zc, 450, 8, 1.5, 100000, 1, 0);
+  assert.ok(big.ok && big.contracts === 1 && big.pnlAt1R === 600);
+  assert.equal(swingPlan(zc, 450, 0, 1.5, 10000, 1, 0).ok, false);
+  assert.equal(swingPlan(unverified, 450, 8, 1.5, 10000, 1, 0).ok, false);
+});
+
+test('rMultiple: risk 12 cents, exit +24 cents = 2R', () => {
+  const r = rMultiple(zc, 450, 438, 474, 1);
+  assert.ok(r.ok && r.r === 2 && r.pnl === 1200 && r.riskDollars === 600);
+  const l = rMultiple(zc, 450, 438, 438, 1);
+  assert.ok(l.ok && l.r === -1);
+  assert.equal(rMultiple(zc, 450, 460, 470, 1).ok, false);
 });
