@@ -95,7 +95,7 @@ export function BriefSectionCard({ section }: { section: BriefSection }) {
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="flex items-center gap-1.5 text-xs text-[var(--accent-text)] hover:text-white"
+          className="flex items-center gap-1.5 text-xs text-[var(--accent-text)] hover:text-[var(--text-strong)]"
         >
           <Info className="w-3.5 h-3.5" aria-hidden="true" />
           {t('brief.explain')}

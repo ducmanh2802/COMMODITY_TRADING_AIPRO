@@ -16,10 +16,10 @@ export function PhaseStrip({ steps, active, ariaLabel }: { steps: PhaseStep[]; a
             key={s.label}
             aria-current={on ? 'step' : undefined}
             className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-1 py-3 text-center ${
-              on ? 'border-[#FBBF24] bg-[#FBBF24]/15 text-white' : 'border-[var(--border)] text-[var(--muted)]'
+              on ? 'border-[var(--warning)] bg-[var(--warning)]/15 text-[var(--text-strong)]' : 'border-[var(--border)] text-[var(--muted)]'
             }`}
           >
-            <s.Icon className={`w-7 h-7 ${on ? 'text-[#FBBF24]' : ''}`} aria-hidden="true" />
+            <s.Icon className={`w-7 h-7 ${on ? 'text-[var(--warning)]' : ''}`} aria-hidden="true" />
             <span className="text-sm sm:text-base font-semibold leading-tight">{s.label}</span>
           </li>
         );

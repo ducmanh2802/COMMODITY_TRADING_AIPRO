@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
-import { useUiMode } from '../../contexts/UiModeContext';
+import { useTheme } from '../../shared/theme/theme';
 import { useT, type TKey } from '../../i18n';
 import type { AppModuleId } from '../../shared/types/risk';
 
@@ -20,7 +20,7 @@ function isDone(): boolean {
 /** First-run, skippable 5-step tour. Completion/skip is remembered in localStorage. */
 export function OnboardingTour() {
   const t = useT();
-  const { mode, setMode } = useUiMode();
+  const [theme, setTheme] = useTheme();
   const { setActiveModule } = useTerminal();
   const { user, signInWithGoogle } = useAuth();
   const [open, setOpen] = useState(() => !isDone());
@@ -43,24 +43,24 @@ export function OnboardingTour() {
 
   return (
     <div role="dialog" aria-modal="true" aria-label={t(k('title'))} className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-[#6366F1] bg-[#0B0E14] p-6 text-white shadow-2xl">
-        <div className="text-base text-[#A5B4FC]">{t('ob.step', { n: step, total: TOTAL })}</div>
+      <div className="w-full max-w-lg rounded-2xl border border-[var(--accent)] bg-[var(--bg)] p-6 text-[var(--text-strong)] shadow-2xl">
+        <div className="text-base text-[var(--accent-text)]">{t('ob.step', { n: step, total: TOTAL })}</div>
         <h2 className="mt-2 text-3xl font-bold">{t(k('title'))}</h2>
         <p className="mt-3 text-xl leading-relaxed">{t(k('body'))}</p>
 
         <div className="mt-5 flex flex-wrap gap-3">
           {step === 1 && (
             <>
-              <button type="button" onClick={() => setMode('simple')} aria-pressed={mode === 'simple'} className={`${btn} ${mode === 'simple' ? 'bg-[#6366F1] border-[#6366F1]' : 'border-[#A5B4FC]'}`}>
+              <button type="button" onClick={() => setTheme('dark')} aria-pressed={theme === 'dark'} className={`${btn} ${theme === 'dark' ? 'bg-[var(--accent)] border-[var(--accent)]' : 'border-[var(--accent-text)]'}`}>
                 {t('ob.s1.simple')}
               </button>
-              <button type="button" onClick={() => setMode('pro')} aria-pressed={mode === 'pro'} className={`${btn} ${mode === 'pro' ? 'bg-[#6366F1] border-[#6366F1]' : 'border-[#A5B4FC]'}`}>
+              <button type="button" onClick={() => setTheme('light')} aria-pressed={theme === 'light'} className={`${btn} ${theme === 'light' ? 'bg-[var(--accent)] border-[var(--accent)]' : 'border-[var(--accent-text)]'}`}>
                 {t('ob.s1.pro')}
               </button>
             </>
           )}
           {target && (
-            <button type="button" onClick={() => setActiveModule(target)} className={`${btn} border-[#A5B4FC] hover:bg-[#6366F1]/20`}>
+            <button type="button" onClick={() => setActiveModule(target)} className={`${btn} border-[var(--accent-text)] hover:bg-[var(--accent)]/20`}>
               {t(k('go'))}
             </button>
           )}
@@ -68,17 +68,17 @@ export function OnboardingTour() {
             (user ? (
               <span className="text-lg text-emerald-300 self-center">{t('ob.s5.signedIn')}</span>
             ) : (
-              <button type="button" onClick={() => void signInWithGoogle()} className={`${btn} border-[#A5B4FC] hover:bg-[#6366F1]/20`}>
+              <button type="button" onClick={() => void signInWithGoogle()} className={`${btn} border-[var(--accent-text)] hover:bg-[var(--accent)]/20`}>
                 {t('ob.s5.go')}
               </button>
             ))}
         </div>
 
         <div className="mt-6 flex items-center justify-between">
-          <button type="button" onClick={close} className="text-lg underline text-[#9CA3AF] px-2 py-2">
+          <button type="button" onClick={close} className="text-lg underline text-[var(--muted)] px-2 py-2">
             {t('ob.skip')}
           </button>
-          <button type="button" onClick={next} className={`${btn} bg-[#6366F1] border-[#6366F1]`}>
+          <button type="button" onClick={next} className={`${btn} bg-[var(--accent)] border-[var(--accent)]`}>
             {step >= TOTAL ? t('ob.done') : t('ob.next')}
           </button>
         </div>

@@ -1,21 +1,21 @@
 import { fmtInt } from '../../../i18n';
 
-export const inputCls = 'w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-sm text-white';
-export const labelCls = 'block text-xs text-[#E5E7EB]/65 mb-1';
-export const cardCls = 'bg-[#111622] border border-[#263244] rounded-lg p-4';
+export const inputCls = 'w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-sm text-[var(--text-strong)]';
+export const labelCls = 'block text-xs text-[var(--text)]/65 mb-1';
+export const cardCls = 'bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4';
 export const bigBtn = 'inline-flex items-center justify-center gap-1.5 px-5 py-3 text-sm font-semibold rounded-md disabled:opacity-40';
 
 export const fmtVnd = (v: number | null | undefined): string => (v === null || v === undefined ? '—' : `${fmtInt(v)} đ`);
 export const fmtPct = (v: number | null | undefined, digits = 1): string =>
   v === null || v === undefined ? '—' : `${v >= 0 ? '' : '-'}${Math.abs(v).toFixed(digits)}%`;
 export const signedVnd = (v: number): string => `${v > 0 ? '+' : ''}${fmtInt(v)} đ`;
-export const pnlColor = (v: number): string => (v > 0 ? 'text-[#4ADE80]' : v < 0 ? 'text-[#F87171]' : 'text-[#E5E7EB]/80');
+export const pnlColor = (v: number): string => (v > 0 ? 'text-[var(--positive)]' : v < 0 ? 'text-[var(--negative)]' : 'text-[var(--text)]/80');
 
 export function Stat({ label, value, tone, hint }: { label: string; value: string; tone?: string; hint?: string }) {
   return (
-    <div className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2" title={hint}>
-      <p className="text-[11px] text-[#E5E7EB]/55">{label}</p>
-      <p className={`text-sm font-mono font-semibold mt-0.5 ${tone ?? 'text-white'}`}>{value}</p>
+    <div className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2" title={hint}>
+      <p className="text-[11px] text-[var(--text)]/55">{label}</p>
+      <p className={`text-sm font-mono font-semibold mt-0.5 ${tone ?? 'text-[var(--text-strong)]'}`}>{value}</p>
     </div>
   );
 }

@@ -71,7 +71,7 @@ export function ScorecardDrawer({ card, onClose }: Props) {
             <h2 className="text-lg font-semibold text-[var(--text-strong)] truncate">{name}</h2>
             <p className="text-xs font-mono text-[var(--faint)]">{card.instrumentId}</p>
           </div>
-          <button ref={closeRef} type="button" onClick={onClose} aria-label={t('sc.detail.close')} className="p-1.5 rounded-md border border-[var(--border)] text-[var(--muted)] hover:text-white">
+          <button ref={closeRef} type="button" onClick={onClose} aria-label={t('sc.detail.close')} className="p-1.5 rounded-md border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text-strong)]">
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>

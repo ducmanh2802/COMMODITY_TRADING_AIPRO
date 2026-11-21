@@ -7,7 +7,7 @@ import type { MarketScope } from '../../shared/types/market';
 import { getVietnamClockLabel } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { LanguageSwitch } from '../common/LanguageSwitch';
-import { ModeSwitch } from '../views/simple/ModeSwitch';
+import { ThemeSwitch } from '../common/ThemeSwitch';
 import { RadarBell } from '../radar/RadarBell';
 import { useT } from '../../i18n';
 
@@ -52,12 +52,12 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           type="button"
           onClick={onOpenMobileMenu}
           aria-label={t('nav.openMenu')}
-          className="lg:hidden w-9 h-9 grid place-items-center bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-[var(--text)] hover:text-white"
+          className="lg:hidden w-9 h-9 grid place-items-center bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-[var(--text)] hover:text-[var(--text-strong)]"
         >
           <Menu className="w-4 h-4" aria-hidden="true" />
         </button>
 
-        <div className="flex items-center gap-1 bg-[#0B0E14] border border-[#263244] rounded-[10px] p-0.5 shrink-0">
+        <div className="flex items-center gap-1 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] p-0.5 shrink-0">
           {(['ALL', 'MXV', 'INTERNATIONAL'] as MarketScope[]).map((scope) => (
             <button
               key={scope}
@@ -66,7 +66,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
               className={`h-8 px-3 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                 marketScope === scope
                   ? 'bg-[var(--accent)] text-white shadow-sm'
-                  : 'text-[#E5E7EB]/70 hover:text-white'
+                  : 'text-[var(--text)]/70 hover:text-white'
               }`}
             >
               {t(`topbar.scope.${scope}`)}
@@ -79,7 +79,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
             {t('topbar.search')}
           </label>
           <Search
-            className="w-3.5 h-3.5 text-[#E5E7EB]/45 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+            className="w-3.5 h-3.5 text-[var(--text)]/45 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
             aria-hidden="true"
           />
           <input
@@ -93,7 +93,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
               }
             }}
             placeholder={t('topbar.searchPlaceholder')}
-            className="w-full h-9 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] pl-9 pr-3 text-sm text-[#E5E7EB] placeholder:text-[#E5E7EB]/40 focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/25"
+            className="w-full h-9 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] pl-9 pr-3 text-sm text-[var(--text)] placeholder:text-[var(--text)]/40 focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/25"
           />
         </div>
       </div>
@@ -108,7 +108,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
             id="topbar-timeframe"
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value as Timeframe)}
-            className="h-9 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] px-2.5 text-xs tabular-nums text-[#E5E7EB] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/25"
+            className="h-9 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] px-2.5 text-xs tabular-nums text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/25"
           >
             {TIMEFRAMES.map((tf) => (
               <option key={tf} value={tf}>
@@ -120,7 +120,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
 
         <div className="hidden md:flex items-center gap-3 h-9 px-3 bg-[var(--bg)] border border-[var(--border)] rounded-[10px]">
           <DataStatusBadge status={overallDataStatus} />
-          <span className="text-[#263244]" aria-hidden="true">
+          <span className="text-[var(--border)]" aria-hidden="true">
             |
           </span>
           <span className="text-xs text-[var(--text)] tabular-nums whitespace-nowrap">
@@ -129,7 +129,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
         </div>
 
         <RadarBell />
-        <ModeSwitch />
+        <ThemeSwitch />
         <LanguageSwitch />
 
         <button
@@ -148,9 +148,9 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
             <button
               type="button"
               onClick={() => setActiveModule('settings')}
-              className="flex items-center gap-2 h-9 px-3 bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-xs text-[#E5E7EB] hover:border-[#6366F1] transition-colors whitespace-nowrap"
+              className="flex items-center gap-2 h-9 px-3 bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-xs text-[var(--text)] hover:border-[var(--accent)] transition-colors whitespace-nowrap"
             >
-              <UserIcon className="w-3.5 h-3.5 text-[#6366F1]" aria-hidden="true" />
+              <UserIcon className="w-3.5 h-3.5 text-[var(--accent)]" aria-hidden="true" />
               <span className="hidden sm:inline max-w-[120px] truncate">
                 {user.displayName || user.email}
               </span>
@@ -160,7 +160,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
               onClick={() => void logout()}
               aria-label={t('topbar.signOut')}
               title={t('topbar.signOut')}
-              className="w-9 h-9 grid place-items-center bg-[var(--surface-2)] hover:bg-[#EF4444]/15 border border-[var(--border)] hover:border-[#EF4444]/40 rounded-[10px] text-[#E5E7EB]/80 hover:text-[#EF4444] transition-colors"
+              className="w-9 h-9 grid place-items-center bg-[var(--surface-2)] hover:bg-[var(--negative)]/15 border border-[var(--border)] hover:border-[var(--negative)]/40 rounded-[10px] text-[var(--text)]/80 hover:text-[var(--negative)] transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
             </button>

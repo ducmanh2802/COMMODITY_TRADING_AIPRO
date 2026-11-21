@@ -8,13 +8,11 @@ import { resolveModule } from './components/layout/navMap';
 import { AuthProvider } from './contexts/AuthContext';
 import { TerminalProvider, useTerminal } from './contexts/TerminalContext';
 import { I18nProvider } from './i18n';
-import { UiModeProvider, useUiMode } from './contexts/UiModeContext';
+import { UiModeProvider } from './contexts/UiModeContext';
 import { OnboardingTour } from './components/common/OnboardingTour';
-import { SimpleShell } from './components/views/simple/SimpleShell';
 
 function TerminalWorkspace() {
   const { activeModule, selectedSymbol } = useTerminal();
-  const { mode } = useUiMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mainRef = useRef<HTMLElement | null>(null);
 
@@ -40,10 +38,8 @@ function TerminalWorkspace() {
     return <LegacyModule id={activeModule} />;
   };
 
-  if (mode === 'simple') return <SimpleShell renderOther={renderActiveView} />;
-
   return (
-    <div className="min-h-screen bg-[#0B0E14] text-[#E5E7EB] flex">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex">
       <Sidebar mobileOpen={mobileMenuOpen} onCloseMobile={() => setMobileMenuOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0">

@@ -175,10 +175,10 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">
+          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">
             {mode === 'news' ? t('news.title.news') : t('news.title.fundamental')}
           </h1>
-          <p className="text-sm text-[#E5E7EB]/65 mt-1">
+          <p className="text-sm text-[var(--text)]/65 mt-1">
             {t('news.subtitle')}
           </p>
         </div>
@@ -187,7 +187,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
             type="button"
             onClick={() => void handleSyncOfficialMacro()}
             disabled={syncing}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50 whitespace-nowrap shrink-0"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md disabled:opacity-50 whitespace-nowrap shrink-0"
           >
             <CloudDownload className={`w-3.5 h-3.5 ${syncing ? 'animate-pulse' : ''}`} aria-hidden="true" />
             <span>{syncing ? t('news.syncing') : t('news.sync')}</span>
@@ -197,7 +197,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
       </div>
 
       {syncMessage && (
-        <div className="bg-[#111622] border border-[#263244] rounded-lg px-4 py-2.5 text-xs font-mono text-[#E5E7EB]/85">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg px-4 py-2.5 text-xs font-mono text-[var(--text)]/85">
           {syncMessage}
         </div>
       )}
@@ -211,15 +211,15 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
       {/* Add Sourced Record Form */}
       <form
         onSubmit={(e) => void handleSubmit(e)}
-        className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3"
+        className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-3"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">{t('news.form.title')}</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('news.form.title')}</h2>
           <select
             aria-label={t('news.form.kind')}
             value={kind}
             onChange={(e) => setKind(e.target.value as 'MACRO' | 'NEWS')}
-            className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1 text-xs font-mono text-white"
+            className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1 text-xs font-mono text-[var(--text-strong)]"
           >
             <option value="MACRO">{t('news.form.kind.MACRO')}</option>
             <option value="NEWS">{t('news.form.kind.NEWS')}</option>
@@ -228,7 +228,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
-            <label htmlFor="fund-source" className="block text-xs text-[#E5E7EB]/65 mb-1">
+            <label htmlFor="fund-source" className="block text-xs text-[var(--text)]/65 mb-1">
               {t('news.form.source')}
             </label>
             <input
@@ -237,11 +237,11 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
               placeholder={t('news.form.sourcePlaceholder')}
               value={source}
               onChange={(e) => setSource(e.target.value)}
-              className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs text-white"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs text-[var(--text-strong)]"
             />
           </div>
           <div>
-            <label htmlFor="fund-ts" className="block text-xs text-[#E5E7EB]/65 mb-1">
+            <label htmlFor="fund-ts" className="block text-xs text-[var(--text)]/65 mb-1">
               {t('news.form.pubTime')}
             </label>
             <input
@@ -249,11 +249,11 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
               type="datetime-local"
               value={pubTs}
               onChange={(e) => setPubTs(e.target.value)}
-              className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
             />
           </div>
           <div>
-            <label htmlFor="fund-dataset" className="block text-xs text-[#E5E7EB]/65 mb-1">
+            <label htmlFor="fund-dataset" className="block text-xs text-[var(--text)]/65 mb-1">
               {t('news.form.dataset')}
             </label>
             <input
@@ -262,18 +262,18 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
               placeholder={t('news.form.datasetPlaceholder')}
               value={dataset}
               onChange={(e) => setDataset(e.target.value)}
-              className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
             />
           </div>
           <div>
-            <label htmlFor="fund-impact" className="block text-xs text-[#E5E7EB]/65 mb-1">
+            <label htmlFor="fund-impact" className="block text-xs text-[var(--text)]/65 mb-1">
               {t('news.form.impact')}
             </label>
             <select
               id="fund-impact"
               value={impact}
               onChange={(e) => setImpact(e.target.value as MarketDirection)}
-              className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
             >
               <option value="BULLISH">{codeLabel('news.dir.', 'BULLISH')}</option>
               <option value="BEARISH">{codeLabel('news.dir.', 'BEARISH')}</option>
@@ -290,34 +290,34 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
               placeholder={t('news.form.actual')}
               value={actualVal}
               onChange={(e) => setActualVal(e.target.value)}
-              className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
+              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
             />
             <input
               type="text"
               placeholder={t('news.form.previous')}
               value={previousVal}
               onChange={(e) => setPreviousVal(e.target.value)}
-              className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
+              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
             />
             <input
               type="text"
               placeholder={t('news.form.forecast')}
               value={forecastVal}
               onChange={(e) => setForecastVal(e.target.value)}
-              className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
+              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
             />
             <input
               type="text"
               placeholder={t('news.form.unit')}
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
-              className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
+              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
             />
             <select
               aria-label={t('news.form.revision')}
               value={revisionStatus}
               onChange={(e) => setRevisionStatus(e.target.value as FundamentalMacroRecord['revisionStatus'] | '')}
-              className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
+              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
             >
               <option value="">{t('news.form.revisionPlaceholder')}</option>
               <option value="PRELIMINARY">{codeLabel('news.rev.', 'PRELIMINARY')}</option>
@@ -331,7 +331,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
               maxLength={40}
               value={dataPeriod}
               onChange={(e) => setDataPeriod(e.target.value)}
-              className="col-span-2 bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
+              className="col-span-2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
             />
           </div>
         ) : (
@@ -341,25 +341,25 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
               placeholder={t('news.form.headline')}
               value={headline}
               onChange={(e) => setHeadline(e.target.value)}
-              className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-white"
+              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs text-[var(--text-strong)]"
             />
             <input
               type="text"
               placeholder={t('news.form.summary')}
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
-              className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-white"
+              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs text-[var(--text-strong)]"
             />
           </div>
         )}
 
-        {error && <p className="text-xs font-mono text-[#EF4444]">{error}</p>}
+        {error && <p className="text-xs font-mono text-[var(--negative)]">{error}</p>}
 
         <div className="flex justify-end">
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{submitting ? t('news.form.saving') : t('news.form.submit')}</span>
@@ -369,14 +369,14 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
 
       {/* Macro Records & Sourced News */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#263244]">
-            <h2 className="text-sm font-semibold text-white">{t('news.macro.title', { n: records.length })}</h2>
+        <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--border)]">
+            <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('news.macro.title', { n: records.length })}</h2>
           </div>
           {loading ? (
-            <div className="p-6 text-xs font-mono text-[#E5E7EB]/60">{t('news.macro.loading')}</div>
+            <div className="p-6 text-xs font-mono text-[var(--text)]/60">{t('news.macro.loading')}</div>
           ) : records.length === 0 ? (
-            <div className="p-6 text-xs font-mono text-[#F59E0B]">
+            <div className="p-6 text-xs font-mono text-[var(--warning)]">
               {t('news.macro.empty')}
             </div>
           ) : (
@@ -384,27 +384,27 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
           )}
         </section>
 
-        <section className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#263244] flex items-center gap-2">
-            <Newspaper className="w-4 h-4 text-[#6366F1]" aria-hidden="true" />
-            <h2 className="text-sm font-semibold text-white">{t('news.list.title', { n: news.length })}</h2>
+        <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2">
+            <Newspaper className="w-4 h-4 text-[var(--accent)]" aria-hidden="true" />
+            <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('news.list.title', { n: news.length })}</h2>
           </div>
           {loading ? (
-            <div className="p-6 text-xs font-mono text-[#E5E7EB]/60">{t('news.list.loading')}</div>
+            <div className="p-6 text-xs font-mono text-[var(--text)]/60">{t('news.list.loading')}</div>
           ) : news.length === 0 ? (
-            <div className="p-6 text-xs font-mono text-[#F59E0B]">
+            <div className="p-6 text-xs font-mono text-[var(--warning)]">
               {t('news.list.empty')}
             </div>
           ) : (
-            <div className="divide-y divide-[#263244]/70">
+            <div className="divide-y divide-[var(--border)]/70">
               {news.map((n) => (
                 <div key={n.id} className="p-4 space-y-1 text-xs">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold text-white">{n.headline}</span>
-                    <span className="font-mono text-[#6366F1] shrink-0">{codeLabel('news.dir.', n.classification)}</span>
+                    <span className="font-semibold text-[var(--text-strong)]">{n.headline}</span>
+                    <span className="font-mono text-[var(--accent)] shrink-0">{codeLabel('news.dir.', n.classification)}</span>
                   </div>
-                  <p className="text-[#E5E7EB]/80">{n.summary}</p>
-                  <p className="text-[11px] font-mono text-[#E5E7EB]/50">
+                  <p className="text-[var(--text)]/80">{n.summary}</p>
+                  <p className="text-[11px] font-mono text-[var(--text)]/50">
                     {t('news.sourceLine', { source: n.source, time: formatTimestampInZone(n.publicationTimestamp, 'Asia/Ho_Chi_Minh') })}
                   </p>
                 </div>

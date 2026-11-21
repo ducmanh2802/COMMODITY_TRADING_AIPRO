@@ -134,7 +134,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
             aria-pressed={category === c}
             onClick={() => setCategory(c)}
             className={`px-3 py-1 text-xs rounded-full border ${
-              category === c ? 'bg-[var(--accent-soft)] border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--muted)] hover:text-white'
+              category === c ? 'bg-[var(--accent-soft)] border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--muted)] hover:text-[var(--text-strong)]'
             }`}
           >
             {c === 'ALL' ? t('sc.filter.all') : t(`sc.cat.${c}` as TKey)}
@@ -162,7 +162,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
               <tr className="text-left text-xs text-[var(--muted)] border-b border-[var(--border)]">
                 {COLS.map((c) => (
                   <th key={c.key} scope="col" aria-sort={sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'} className="px-3 py-2 font-medium">
-                    <button type="button" onClick={() => toggleSort(c.key)} title={t('sc.sortBy', { col: t(c.label) })} className="inline-flex items-center gap-1 hover:text-white">
+                    <button type="button" onClick={() => toggleSort(c.key)} title={t('sc.sortBy', { col: t(c.label) })} className="inline-flex items-center gap-1 hover:text-[var(--text-strong)]">
                       {t(c.label)}
                       {sort.key === c.key && (sort.dir === 'asc' ? <ArrowUp className="w-3 h-3" aria-hidden="true" /> : <ArrowDown className="w-3 h-3" aria-hidden="true" />)}
                     </button>

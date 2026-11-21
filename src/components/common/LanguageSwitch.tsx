@@ -7,7 +7,7 @@ export function LanguageSwitch({ showLabel = false }: { showLabel?: boolean }) {
   return (
     <div className="flex items-center gap-1.5" role="group" aria-label={t('lang.label')}>
       {showLabel && (
-        <span className="inline-flex items-center gap-1 text-xs text-[#E5E7EB]/70">
+        <span className="inline-flex items-center gap-1 text-xs text-[var(--text)]/70">
           <Languages className="w-3.5 h-3.5" aria-hidden="true" />
           {t('lang.label')}
         </span>
@@ -21,7 +21,7 @@ export function LanguageSwitch({ showLabel = false }: { showLabel?: boolean }) {
             aria-pressed={lang === l}
             title={t(l === 'vi' ? 'lang.vi' : 'lang.en')}
             className={`h-full px-2.5 text-[11px] font-semibold rounded-lg transition-colors ${
-              lang === l ? 'bg-[#6366F1] text-white' : 'text-[#E5E7EB]/70 hover:text-white'
+              lang === l ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/70 hover:text-white'
             }`}
           >
             {l.toUpperCase()}

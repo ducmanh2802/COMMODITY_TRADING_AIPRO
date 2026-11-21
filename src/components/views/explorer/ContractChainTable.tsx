@@ -8,13 +8,13 @@ function DateCell({ r }: { r: ContractDateResult }) {
   const t = useT();
   if (r.status === 'COMPUTED') {
     return (
-      <span className="font-mono tabular-nums text-white" title={r.date}>
+      <span className="font-mono tabular-nums text-[var(--text-strong)]" title={r.date}>
         {fmtDate(r.date)}
       </span>
     );
   }
   return (
-    <span className="font-mono text-[#F59E0B]" title={r.reason}>
+    <span className="font-mono text-[var(--warning)]" title={r.reason}>
       {t('exp.unavailable')}
     </span>
   );
@@ -42,17 +42,17 @@ export function ContractChainTable({ chain }: { chain: ContractChainResponse }) 
   const flagLabel = (f: string) => (f === 'YES' ? t('exp.yes') : f === 'NO' ? t('exp.no') : t('exp.na'));
   if (chain.status !== 'OK') {
     return (
-      <p className="text-xs font-mono text-[#F59E0B]" role="status">
+      <p className="text-xs font-mono text-[var(--warning)]" role="status">
         {t('exp.chain.unavailable', { reason: chain.reason })}
       </p>
     );
   }
   return (
     <div className="space-y-2">
-      <div className="overflow-x-auto border border-[#263244] rounded-md">
+      <div className="overflow-x-auto border border-[var(--border)] rounded-md">
         <table className="w-full text-left border-collapse min-w-[860px] text-xs">
           <thead>
-            <tr className="border-b border-[#263244] bg-[#172033]/50 text-[#E5E7EB]/65">
+            <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-[var(--text)]/65">
               <th className="py-2 px-3 font-medium">{t('exp.chain.exchangeCode')}</th>
               <th className="py-2 px-3 font-medium">{t('exp.chain.mxvCode')}</th>
               <th className="py-2 px-3 font-medium">{t('exp.chain.month')}</th>
@@ -66,16 +66,16 @@ export function ContractChainTable({ chain }: { chain: ContractChainResponse }) 
               <th className="py-2 px-3 font-medium">{t('exp.chain.warnings')}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#263244]/70">
+          <tbody className="divide-y divide-[var(--border)]/70">
             {chain.contracts.map((c) => {
               const warns = rowWarnings(c);
               return (
-                <tr key={c.code} className="hover:bg-[#172033]/40 align-top">
-                  <td className="py-2 px-3 font-mono text-white whitespace-nowrap">{c.code}</td>
+                <tr key={c.code} className="hover:bg-[var(--surface-2)]/40 align-top">
+                  <td className="py-2 px-3 font-mono text-[var(--text-strong)] whitespace-nowrap">{c.code}</td>
                   <td className="py-2 px-3 font-mono whitespace-nowrap">
-                    {c.mxvCode ?? <span className="text-[#E5E7EB]/40">{t('exp.unavailable')}</span>}
+                    {c.mxvCode ?? <span className="text-[var(--text)]/40">{t('exp.unavailable')}</span>}
                   </td>
-                  <td className="py-2 px-3 font-mono text-[#E5E7EB]/75 whitespace-nowrap">{c.contractMonth}</td>
+                  <td className="py-2 px-3 font-mono text-[var(--text)]/75 whitespace-nowrap">{c.contractMonth}</td>
                   <td className="py-2 px-3 whitespace-nowrap">
                     <DateCell r={c.lastTradingDay} />
                   </td>
@@ -83,17 +83,17 @@ export function ContractChainTable({ chain }: { chain: ContractChainResponse }) 
                     <DateCell r={c.firstNoticeDay} />
                   </td>
                   <td className="py-2 px-3 font-mono tabular-nums text-right whitespace-nowrap">
-                    {c.calendarDaysToLastTrade ?? <span className="text-[#E5E7EB]/40">{t('exp.na')}</span>}
+                    {c.calendarDaysToLastTrade ?? <span className="text-[var(--text)]/40">{t('exp.na')}</span>}
                   </td>
                   <td className="py-2 px-3 font-mono whitespace-nowrap">
-                    <span className={holidayFlag(c) === 'YES' ? 'text-[#22C55E]' : 'text-[#F59E0B]'}>{flagLabel(holidayFlag(c))}</span>
+                    <span className={holidayFlag(c) === 'YES' ? 'text-[var(--positive)]' : 'text-[var(--warning)]'}>{flagLabel(holidayFlag(c))}</span>
                   </td>
                   <td className="py-2 px-3 whitespace-nowrap">
                     <VerificationBadge status={c.calendarStatus} />
                   </td>
-                  <td className="py-2 px-3 text-[11px] text-[#F59E0B]/85 max-w-[360px]">
+                  <td className="py-2 px-3 text-[11px] text-[var(--warning)]/85 max-w-[360px]">
                     {warns.length === 0 ? (
-                      <span className="text-[#E5E7EB]/40">{t('exp.none')}</span>
+                      <span className="text-[var(--text)]/40">{t('exp.none')}</span>
                     ) : (
                       <ul className="list-disc pl-4 space-y-0.5">
                         {warns.map((w) => (
@@ -109,13 +109,13 @@ export function ContractChainTable({ chain }: { chain: ContractChainResponse }) 
         </table>
       </div>
       {chain.warnings.length > 0 && (
-        <ul className="text-[11px] font-mono text-[#F59E0B]/85 list-disc pl-4 space-y-0.5">
+        <ul className="text-[11px] font-mono text-[var(--warning)]/85 list-disc pl-4 space-y-0.5">
           {chain.warnings.map((w) => (
             <li key={w}>{w}</li>
           ))}
         </ul>
       )}
-      <p className="text-[11px] text-[#E5E7EB]/45">{chain.disclaimer}</p>
+      <p className="text-[11px] text-[var(--text)]/45">{chain.disclaimer}</p>
     </div>
   );
 }

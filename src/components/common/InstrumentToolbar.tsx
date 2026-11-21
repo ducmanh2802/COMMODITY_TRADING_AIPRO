@@ -14,7 +14,7 @@ export function InstrumentToolbar({ showTimeframe = true, rightSlot }: Instrumen
   const t = useT();
 
   return (
-    <div className="bg-[#111622] border border-[#263244] rounded-lg p-3 flex flex-wrap items-center justify-between gap-3">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3 flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-3">
         <div>
           <label htmlFor="toolbar-symbol-select" className="sr-only">
@@ -24,7 +24,7 @@ export function InstrumentToolbar({ showTimeframe = true, rightSlot }: Instrumen
             id="toolbar-symbol-select"
             value={selectedSymbol}
             onChange={(e) => setSelectedSymbol(e.target.value)}
-            className="bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#6366F1]"
+            className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)] focus:outline-none focus:border-[var(--accent)]"
           >
             {instruments.map((inst) => (
               <option key={inst.id} value={inst.exchangeSymbol}>
@@ -35,7 +35,7 @@ export function InstrumentToolbar({ showTimeframe = true, rightSlot }: Instrumen
         </div>
 
         {showTimeframe && (
-          <div className="flex flex-wrap items-center gap-1 bg-[#0B0E14] border border-[#263244] rounded-md p-0.5">
+          <div className="flex flex-wrap items-center gap-1 bg-[var(--bg)] border border-[var(--border)] rounded-md p-0.5">
             {TIMEFRAMES.map((tf) => (
               <button
                 key={tf}
@@ -43,8 +43,8 @@ export function InstrumentToolbar({ showTimeframe = true, rightSlot }: Instrumen
                 onClick={() => setTimeframe(tf)}
                 className={`px-2 py-1 text-xs font-mono rounded transition-colors ${
                   timeframe === tf
-                    ? 'bg-[#6366F1] text-white'
-                    : 'text-[#E5E7EB]/65 hover:text-white'
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'text-[var(--text)]/65 hover:text-white'
                 }`}
               >
                 {tf}

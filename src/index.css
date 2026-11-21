@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Be Vietnam Pro", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --color-terminal-bg: #0B0E14;
@@ -15,20 +15,21 @@
   --color-terminal-text: #E5E7EB;
 }
 
-/* Design tokens (dark default). Use via var(--token) or the components in src/components/ui. */
+/* Design tokens. Dark is the default; light via <html data-theme="light">. Use var(--token) or src/components/ui. */
 :root {
-  --bg: #0B0E14;
-  --surface: #111622;
-  --surface-2: #172033;
-  --surface-3: #1D2840;
-  --border: #263244;
-  --text: #E5E7EB;
+  color-scheme: dark;
+  --bg: #0D1210;
+  --surface: #141B18;
+  --surface-2: #1B2420;
+  --surface-3: #232E29;
+  --border: #2A3631;
+  --text: #E6ECE8;
   --text-strong: #FFFFFF;
-  --muted: rgba(229, 231, 235, 0.64);
-  --faint: rgba(229, 231, 235, 0.42);
-  --accent: #6366F1;
-  --accent-soft: rgba(99, 102, 241, 0.14);
-  --accent-text: #A5B4FC;
+  --muted: rgba(230, 236, 232, 0.68);
+  --faint: rgba(230, 236, 232, 0.46);
+  --accent: #2F9E66;
+  --accent-soft: rgba(47, 158, 102, 0.16);
+  --accent-text: #7DD3A8;
   --positive: #4ADE80;
   --negative: #F87171;
   --warning: #FBBF24;
@@ -39,6 +40,30 @@
   --space-card: 1rem;
   --space-section: 1.5rem;
 }
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F6F5F0;
+  --surface: #FFFFFF;
+  --surface-2: #F0EEE6;
+  --surface-3: #E7E4DA;
+  --border: #E1DED4;
+  --text: #1B1F1C;
+  --text-strong: #0F1210;
+  --muted: rgba(27, 31, 28, 0.7);
+  --faint: rgba(27, 31, 28, 0.52);
+  --accent: #1F6B45;
+  --accent-soft: rgba(31, 107, 69, 0.12);
+  --accent-text: #1F6B45;
+  --positive: #1F7A4D;
+  --negative: #B42318;
+  --warning: #A15C00;
+  --shadow-card: 0 1px 2px rgba(20, 30, 25, 0.06), 0 4px 14px -6px rgba(20, 30, 25, 0.12);
+}
+/* Light theme: soften translucent-white helpers that assumed a dark background. */
+:root[data-theme="light"] .bg-white/5,
+:root[data-theme="light"] .bg-white/10 { background-color: rgba(27, 31, 28, 0.05); }
+:root[data-theme="light"] .border-white/10,
+:root[data-theme="light"] .border-white/5 { border-color: var(--border); }
 
 @layer base {
   html,

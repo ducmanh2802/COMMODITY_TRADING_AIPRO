@@ -67,9 +67,9 @@ interface IndicatorReport {
 }
 
 const selectCls =
-  'bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs text-[#E5E7EB] focus:outline-none focus:border-[#6366F1] disabled:opacity-50';
+  'bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] disabled:opacity-50';
 const numCls =
-  'w-16 bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-1 text-xs font-mono text-[#E5E7EB] focus:outline-none focus:border-[#6366F1]';
+  'w-16 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1 text-xs font-mono text-[var(--text)] focus:outline-none focus:border-[var(--accent)]';
 
 function uniq<T>(xs: T[]): T[] {
   return [...new Set(xs)];
@@ -93,7 +93,7 @@ function NumInput({
   step?: number;
 }) {
   return (
-    <label className="inline-flex items-center gap-1.5 text-xs text-[#E5E7EB]/65">
+    <label className="inline-flex items-center gap-1.5 text-xs text-[var(--text)]/65">
       {label}
       <input
         type="number"
@@ -275,8 +275,8 @@ export function ChartsView() {
     <div className="space-y-5">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">{t('chart.title')}</h1>
-          <p className="text-sm text-[#E5E7EB]/65 mt-1">
+          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('chart.title')}</h1>
+          <p className="text-sm text-[var(--text)]/65 mt-1">
             {t('chart.subtitle')}
           </p>
         </div>
@@ -298,7 +298,7 @@ export function ChartsView() {
             );
             setActiveModule('journal');
           }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-[#263244] text-[#E5E7EB]/80 hover:text-white hover:bg-[#172033] w-fit disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-[var(--border)] text-[var(--text)]/80 hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)] w-fit disabled:opacity-40"
         >
           <NotebookPen className="w-3.5 h-3.5" aria-hidden="true" />
           {t('nb.addFromChart')}
@@ -306,7 +306,7 @@ export function ChartsView() {
         <button
           type="button"
           onClick={() => setReloadKey((k) => k + 1)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-[#263244] text-[#E5E7EB]/80 hover:text-white hover:bg-[#172033] w-fit"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-[var(--border)] text-[var(--text)]/80 hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)] w-fit"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${datasetsLoading || candlesLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
           {t('chart.reload')}
@@ -315,9 +315,9 @@ export function ChartsView() {
       </div>
 
       {/* Series pickers */}
-      <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 flex flex-wrap items-end gap-4">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 flex flex-wrap items-end gap-4">
         <div>
-          <label htmlFor="ch-instrument" className="block text-xs font-medium text-[#E5E7EB]/75 mb-1">
+          <label htmlFor="ch-instrument" className="block text-xs font-medium text-[var(--text)]/75 mb-1">
             {t('chart.instrument')}
           </label>
           <select
@@ -336,7 +336,7 @@ export function ChartsView() {
           </select>
         </div>
         <div>
-          <label htmlFor="ch-contract" className="block text-xs font-medium text-[#E5E7EB]/75 mb-1">
+          <label htmlFor="ch-contract" className="block text-xs font-medium text-[var(--text)]/75 mb-1">
             {t('term.contract')}
           </label>
           <select
@@ -354,7 +354,7 @@ export function ChartsView() {
           </select>
         </div>
         <div>
-          <label htmlFor="ch-tf" className="block text-xs font-medium text-[#E5E7EB]/75 mb-1">
+          <label htmlFor="ch-tf" className="block text-xs font-medium text-[var(--text)]/75 mb-1">
             {t('chart.timeframe')}
           </label>
           <select
@@ -376,32 +376,32 @@ export function ChartsView() {
         </div>
       </div>
 
-      {datasetsError && <p className="text-xs text-[#EF4444]">{datasetsError}</p>}
-      {candlesError && <p className="text-xs text-[#EF4444]">{candlesError}</p>}
+      {datasetsError && <p className="text-xs text-[var(--negative)]">{datasetsError}</p>}
+      {candlesError && <p className="text-xs text-[var(--negative)]">{candlesError}</p>}
 
       {/* Provenance banner */}
       {data?.status === 'HISTORICAL' && (
-        <div className="bg-[#6366F1]/10 border border-[#6366F1]/35 rounded-lg px-4 py-3 text-xs text-[#E5E7EB]/85 space-y-1.5">
+        <div className="bg-[var(--accent)]/10 border border-[var(--accent)]/35 rounded-lg px-4 py-3 text-xs text-[var(--text)]/85 space-y-1.5">
           <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-[#6366F1] shrink-0 mt-px" aria-hidden="true" />
+            <Info className="w-4 h-4 text-[var(--accent)] shrink-0 mt-px" aria-hidden="true" />
             <div className="space-y-1">
               <p>
-                <span className="font-semibold text-white">{t('chart.histNotLive')}</span>{' '}
+                <span className="font-semibold text-[var(--text-strong)]">{t('chart.histNotLive')}</span>{' '}
                 {t('chart.bars', { n: fmtInt(data.count) })}
                 {data.truncated && ` ${t('chart.truncated', { n: fmtInt(data.totalInRange) })}`} · {t('common.unit').toLowerCase()}{' '}
-                <span className="font-mono text-white">{data.priceUnit ?? 'UNKNOWN'}</span>
+                <span className="font-mono text-[var(--text-strong)]">{data.priceUnit ?? 'UNKNOWN'}</span>
                 {data.continuousAdjustment && data.continuousAdjustment !== 'NONE' && (
                   <>
                     {' '}
-                    · {t('chart.adjustment')} <span className="font-mono text-white">{data.continuousAdjustment}</span>
+                    · {t('chart.adjustment')} <span className="font-mono text-[var(--text-strong)]">{data.continuousAdjustment}</span>
                   </>
                 )}
                 {incompleteDropped > 0 && ` · ${t('chart.incompleteHidden', { n: incompleteDropped })}`}
               </p>
               {data.provenance.map((p) => (
-                <p key={p.datasetId} className="font-mono text-[11px] text-[#E5E7EB]/70">
+                <p key={p.datasetId} className="font-mono text-[11px] text-[var(--text)]/70">
                   {t('common.source')} “{p.sourceLabel}” ·{' '}
-                  <span className="text-[#F59E0B]" title={p.sourceQuality === 'UNOFFICIAL' ? t('quality.UNOFFICIAL.desc') : undefined}>
+                  <span className="text-[var(--warning)]" title={p.sourceQuality === 'UNOFFICIAL' ? t('quality.UNOFFICIAL.desc') : undefined}>
                     {p.sourceQuality}
                     {p.sourceQuality === 'UNOFFICIAL' ? ` (${t('quality.UNOFFICIAL')})` : ''}
                   </span>{' '}
@@ -410,7 +410,7 @@ export function ChartsView() {
                   {p.checksum.slice(0, 12)}… · {t('chart.importedOn')} {fmtDate(p.importedAt.slice(0, 10))}
                 </p>
               ))}
-              <p className="text-[11px] text-[#E5E7EB]/55">
+              <p className="text-[11px] text-[var(--text)]/55">
                 {t('chart.timestamps')}: {data.timestampConvention}{' '}
                 {data.timeframe === 'D1' || data.timeframe === 'W1'
                   ? t('chart.tsSession')
@@ -422,25 +422,25 @@ export function ChartsView() {
       )}
 
       {/* Indicator controls */}
-      <div className="bg-[#111622] border border-[#263244] rounded-lg p-4 flex flex-wrap items-center gap-x-6 gap-y-3">
-        <label className="inline-flex items-center gap-2 text-xs text-[#E5E7EB]/85">
-          <input type="checkbox" checked={settings.smaOn} onChange={(e) => set('smaOn', e.target.checked)} className="accent-[#F59E0B]" />
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <label className="inline-flex items-center gap-2 text-xs text-[var(--text)]/85">
+          <input type="checkbox" checked={settings.smaOn} onChange={(e) => set('smaOn', e.target.checked)} className="accent-[var(--warning)]" />
           SMA
         </label>
         <NumInput label={t('chart.period')} value={settings.smaPeriod} onChange={(v) => set('smaPeriod', v)} />
-        <label className="inline-flex items-center gap-2 text-xs text-[#E5E7EB]/85">
-          <input type="checkbox" checked={settings.emaOn} onChange={(e) => set('emaOn', e.target.checked)} className="accent-[#38BDF8]" />
+        <label className="inline-flex items-center gap-2 text-xs text-[var(--text)]/85">
+          <input type="checkbox" checked={settings.emaOn} onChange={(e) => set('emaOn', e.target.checked)} className="accent-[var(--accent-text)]" />
           EMA
         </label>
         <NumInput label={t('chart.period')} value={settings.emaPeriod} onChange={(v) => set('emaPeriod', v)} />
-        <label className="inline-flex items-center gap-2 text-xs text-[#E5E7EB]/85">
+        <label className="inline-flex items-center gap-2 text-xs text-[var(--text)]/85">
           <input type="checkbox" checked={settings.bbOn} onChange={(e) => set('bbOn', e.target.checked)} className="accent-[#A78BFA]" />
           Bollinger
         </label>
         <NumInput label={t('chart.period')} value={settings.bbPeriod} onChange={(v) => set('bbPeriod', v)} />
         <NumInput label="k" value={settings.bbK} step={0.5} min={0.5} onChange={(v) => set('bbK', v)} />
-        <span className="hidden md:block w-px h-6 bg-[#263244]" aria-hidden="true" />
-        <label className="inline-flex items-center gap-2 text-xs text-[#E5E7EB]/85">
+        <span className="hidden md:block w-px h-6 bg-[var(--border)]" aria-hidden="true" />
+        <label className="inline-flex items-center gap-2 text-xs text-[var(--text)]/85">
           {t('chart.lowerPane')}
           <select
             value={settings.lower}
@@ -470,13 +470,13 @@ export function ChartsView() {
           {computed.reports.map((r) => (
               <li key={r.name} className="flex items-start gap-2 text-xs">
                 {r.status === 'OK' && r.warnings.length === 0 ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#22C55E] shrink-0 mt-px" aria-hidden="true" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[var(--positive)] shrink-0 mt-px" aria-hidden="true" />
                 ) : (
-                  <AlertTriangle className="w-3.5 h-3.5 text-[#F59E0B] shrink-0 mt-px" aria-hidden="true" />
+                  <AlertTriangle className="w-3.5 h-3.5 text-[var(--warning)] shrink-0 mt-px" aria-hidden="true" />
                 )}
-                <span className="font-mono text-white">{r.name}</span>
-                <span className={`font-mono ${r.status === 'OK' ? 'text-[#22C55E]' : 'text-[#F59E0B]'}`}>{r.status}</span>
-                <span className="text-[#E5E7EB]/70">
+                <span className="font-mono text-[var(--text-strong)]">{r.name}</span>
+                <span className={`font-mono ${r.status === 'OK' ? 'text-[var(--positive)]' : 'text-[var(--warning)]'}`}>{r.status}</span>
+                <span className="text-[var(--text)]/70">
                   {r.status !== 'OK' ? `${r.reason ?? ''} — ${t('chart.notDrawn')}` : ''} {r.warnings.join('; ')}
                 </span>
               </li>
@@ -485,7 +485,7 @@ export function ChartsView() {
       )}
 
       {/* Chart / empty state */}
-      <div className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
         {candles.length > 0 ? (
           <CandleChart
             candles={candles}
@@ -497,12 +497,12 @@ export function ChartsView() {
         ) : (
           <div className="h-[460px] flex flex-col items-center justify-center gap-3 text-center px-6">
             {candlesLoading || datasetsLoading ? (
-              <p className="text-xs text-[#E5E7EB]/55">{t('common.loading')}</p>
+              <p className="text-xs text-[var(--text)]/55">{t('common.loading')}</p>
             ) : (
               <>
                 <DataStatusBadge status="UNAVAILABLE" />
-                <p className="text-sm text-white">{t('chart.noCandles')}</p>
-                <p className="text-xs text-[#E5E7EB]/55 max-w-md">
+                <p className="text-sm text-[var(--text-strong)]">{t('chart.noCandles')}</p>
+                <p className="text-xs text-[var(--text)]/55 max-w-md">
                   {unavailable && data?.reason
                     ? data.reason
                     : datasets.length === 0

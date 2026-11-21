@@ -336,14 +336,14 @@ export function PaperTradingView() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold text-white tracking-tight flex items-center gap-2">
-          <GraduationCap className="w-5 h-5 text-[#6366F1]" aria-hidden="true" />
+        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight flex items-center gap-2">
+          <GraduationCap className="w-5 h-5 text-[var(--accent)]" aria-hidden="true" />
           {t('pt.title')}
         </h1>
-        <p className="text-sm text-[#E5E7EB]/70 mt-1">{t('pt.subtitle')}</p>
+        <p className="text-sm text-[var(--text)]/70 mt-1">{t('pt.subtitle')}</p>
       </div>
 
-      <div role="note" className="flex gap-2 items-start bg-[#F59E0B]/10 border border-[#F59E0B]/40 rounded-lg p-3 text-xs text-[#FCD34D]">
+      <div role="note" className="flex gap-2 items-start bg-[var(--warning)]/10 border border-[var(--warning)]/40 rounded-lg p-3 text-xs text-[var(--warning)]">
         <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
         <p>{t('pt.disclaimer')}</p>
       </div>
@@ -351,38 +351,38 @@ export function PaperTradingView() {
       {/* Sign-in / storage mode */}
       {!user ? (
         <div className={`${cardCls} flex flex-wrap items-center gap-3`}>
-          <button type="button" onClick={() => void signInWithGoogle()} className={`${bigBtn} bg-[#6366F1] hover:bg-[#6366F1]/90 text-white`}>
+          <button type="button" onClick={() => void signInWithGoogle()} className={`${bigBtn} bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white`}>
             <LogIn className="w-4 h-4" aria-hidden="true" />
             {t('pt.auth.signIn')}
           </button>
-          <p className="text-xs text-[#E5E7EB]/70 flex-1 min-w-[14rem]">{t('pt.auth.localNote')}</p>
+          <p className="text-xs text-[var(--text)]/70 flex-1 min-w-[14rem]">{t('pt.auth.localNote')}</p>
         </div>
       ) : !user.emailVerified ? (
-        <div className={`${cardCls} text-xs text-[#F59E0B]`}>{t('pt.auth.verify')}</div>
+        <div className={`${cardCls} text-xs text-[var(--warning)]`}>{t('pt.auth.verify')}</div>
       ) : (
-        <p className="text-[11px] text-[#4ADE80]">{t('pt.auth.cloud')}</p>
+        <p className="text-[11px] text-[var(--positive)]">{t('pt.auth.cloud')}</p>
       )}
 
       {cloud && store.localPending.sessions.length > 0 && !importDismissed && (
-        <div className={`${cardCls} space-y-2 border-[#6366F1]/50`}>
-          <p className="text-sm text-white">{t('pt.import.title', { n: store.localPending.sessions.length })}</p>
-          <p className="text-xs text-[#E5E7EB]/70">{t('pt.import.body')}</p>
+        <div className={`${cardCls} space-y-2 border-[var(--accent)]/50`}>
+          <p className="text-sm text-[var(--text-strong)]">{t('pt.import.title', { n: store.localPending.sessions.length })}</p>
+          <p className="text-xs text-[var(--text)]/70">{t('pt.import.body')}</p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              className={`${bigBtn} bg-[#6366F1] text-white`}
+              className={`${bigBtn} bg-[var(--accent)] text-white`}
               onClick={() => void store.importLocal().then((err) => setMessage(err ?? t('pt.import.done')))}
             >
               {t('pt.import.yes')}
             </button>
-            <button type="button" className={`${bigBtn} border border-[#263244]`} onClick={() => setImportDismissed(true)}>{t('pt.import.later')}</button>
-            <button type="button" className={`${bigBtn} border border-[#263244] text-[#F87171]`} onClick={() => window.confirm(t('pt.import.discardConfirm')) && store.discardLocal()}>{t('pt.import.discard')}</button>
+            <button type="button" className={`${bigBtn} border border-[var(--border)]`} onClick={() => setImportDismissed(true)}>{t('pt.import.later')}</button>
+            <button type="button" className={`${bigBtn} border border-[var(--border)] text-[var(--negative)]`} onClick={() => window.confirm(t('pt.import.discardConfirm')) && store.discardLocal()}>{t('pt.import.discard')}</button>
           </div>
         </div>
       )}
 
-      {store.error && <p className="text-xs text-[#F87171]" role="alert">{store.error}</p>}
-      {message && <p className="text-xs text-[#A5B4FC]" role="status">{message}</p>}
+      {store.error && <p className="text-xs text-[var(--negative)]" role="alert">{store.error}</p>}
+      {message && <p className="text-xs text-[var(--accent-text)]" role="status">{message}</p>}
 
       <div className="flex gap-2" role="tablist">
         {(['trade', 'history'] as const).map((k) => (
@@ -392,7 +392,7 @@ export function PaperTradingView() {
             role="tab"
             aria-selected={tab === k}
             onClick={() => setTab(k)}
-            className={`px-4 py-2 text-sm rounded-md border ${tab === k ? 'bg-[#6366F1] border-[#6366F1] text-white' : 'border-[#263244] text-[#E5E7EB]/80'}`}
+            className={`px-4 py-2 text-sm rounded-md border ${tab === k ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--border)] text-[var(--text)]/80'}`}
           >
             {t(k === 'trade' ? 'pt.tab.trade' : 'pt.tab.history')}
           </button>
@@ -400,7 +400,7 @@ export function PaperTradingView() {
       </div>
 
       {!store.ready ? (
-        <p className="text-sm text-[#E5E7EB]/60">{t('pt.loading')}</p>
+        <p className="text-sm text-[var(--text)]/60">{t('pt.loading')}</p>
       ) : tab === 'history' ? (
         <SessionHistory
           state={state}
@@ -414,7 +414,7 @@ export function PaperTradingView() {
         <div className="space-y-5">
           {/* Session picker / creator */}
           <div className={`${cardCls} space-y-3`}>
-            <h2 className="text-sm font-semibold text-white">{t('pt.session.title')}</h2>
+            <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('pt.session.title')}</h2>
             {activeSessions.length > 0 && (
               <div>
                 <label htmlFor="pt-session" className={labelCls}>{t('pt.session.pick')}</label>
@@ -438,9 +438,9 @@ export function PaperTradingView() {
                 <label htmlFor="pt-capital" className={labelCls}>{t('pt.session.capital')}</label>
                 <input id="pt-capital" inputMode="numeric" value={newCapital} onChange={(e) => setNewCapital(e.target.value)} className={`${inputCls} font-mono`} />
               </div>
-              <button type="submit" className={`${bigBtn} bg-[#22C55E] hover:bg-[#22C55E]/90 text-[#05210F]`}>{t('pt.session.create')}</button>
+              <button type="submit" className={`${bigBtn} bg-[var(--positive)] hover:bg-[var(--positive)]/90 text-[#05210F]`}>{t('pt.session.create')}</button>
             </form>
-            {formError && <p className="text-xs text-[#F87171]" role="alert">{formError}</p>}
+            {formError && <p className="text-xs text-[var(--negative)]" role="alert">{formError}</p>}
           </div>
 
           {session && snap && (
@@ -448,10 +448,10 @@ export function PaperTradingView() {
               {/* Account */}
               <div className={`${cardCls} space-y-3`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-sm font-semibold text-white">{session.name}</h2>
+                  <h2 className="text-sm font-semibold text-[var(--text-strong)]">{session.name}</h2>
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" className="px-3 py-2 border border-[#263244] text-xs rounded-md" onClick={() => void resetSession()}>{t('pt.session.reset')}</button>
-                    <button type="button" className="px-3 py-2 border border-[#263244] text-xs rounded-md" onClick={() => void closeSession()}>{t('pt.session.close')}</button>
+                    <button type="button" className="px-3 py-2 border border-[var(--border)] text-xs rounded-md" onClick={() => void resetSession()}>{t('pt.session.reset')}</button>
+                    <button type="button" className="px-3 py-2 border border-[var(--border)] text-xs rounded-md" onClick={() => void closeSession()}>{t('pt.session.close')}</button>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -465,21 +465,21 @@ export function PaperTradingView() {
                   <Stat label={t('pt.acc.fx')} value={fx ? `${fmtInt(fx)} đ` : '—'} hint={t('pt.acc.fxHint')} />
                 </div>
                 {snap.status === 'MARGIN_CALL' && (
-                  <p role="alert" className="text-xs text-[#FCD34D] bg-[#F59E0B]/10 border border-[#F59E0B]/40 rounded-md p-2">{t('pt.warn.marginCall', { pct: session.settings.marginCallPct, stop: session.settings.stopOutPct })}</p>
+                  <p role="alert" className="text-xs text-[var(--warning)] bg-[var(--warning)]/10 border border-[var(--warning)]/40 rounded-md p-2">{t('pt.warn.marginCall', { pct: session.settings.marginCallPct, stop: session.settings.stopOutPct })}</p>
                 )}
                 {snap.status === 'STOP_OUT' && (
-                  <p role="alert" className="text-xs text-[#FCA5A5] bg-[#EF4444]/10 border border-[#EF4444]/40 rounded-md p-2">{t('pt.warn.stopOut', { stop: session.settings.stopOutPct })}</p>
+                  <p role="alert" className="text-xs text-[var(--negative)] bg-[var(--negative)]/10 border border-[var(--negative)]/40 rounded-md p-2">{t('pt.warn.stopOut', { stop: session.settings.stopOutPct })}</p>
                 )}
-                <div className="text-[11px] text-[#E5E7EB]/55 flex flex-wrap items-center gap-2">
+                <div className="text-[11px] text-[var(--text)]/55 flex flex-wrap items-center gap-2">
                   <span>{t('pt.fx.source')}{vcb.asOf ? ` (${vcb.asOf.slice(0, 16).replace('T', ' ')})` : ''}</span>
                   <label htmlFor="pt-fx" className="sr-only">{t('pt.fx.manual')}</label>
-                  <input id="pt-fx" inputMode="decimal" placeholder={t('pt.fx.manual')} value={manualFx} onChange={(e) => setManualFx(e.target.value)} className="w-40 bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-1 text-xs text-white" />
+                  <input id="pt-fx" inputMode="decimal" placeholder={t('pt.fx.manual')} value={manualFx} onChange={(e) => setManualFx(e.target.value)} className="w-40 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1 text-xs text-[var(--text-strong)]" />
                 </div>
                 <details className="text-xs" onToggle={(e) => (e.currentTarget as HTMLDetailsElement).open && !settingsDraft && setSettingsDraft({ marginPct: String(session.settings.marginPct), feePerContractUsd: String(session.settings.feePerContractUsd), slippageTicks: String(session.settings.slippageTicks), marginCallPct: String(session.settings.marginCallPct), stopOutPct: String(session.settings.stopOutPct) })}>
-                  <summary className="cursor-pointer text-[#A5B4FC]">{t('pt.settings.title')}</summary>
+                  <summary className="cursor-pointer text-[var(--accent-text)]">{t('pt.settings.title')}</summary>
                   {settingsDraft && (
                     <div className="mt-3 space-y-2">
-                      <p className="text-[#E5E7EB]/60">{t('pt.settings.note')}</p>
+                      <p className="text-[var(--text)]/60">{t('pt.settings.note')}</p>
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                         {(['marginPct', 'feePerContractUsd', 'slippageTicks', 'marginCallPct', 'stopOutPct'] as const).map((k) => (
                           <div key={k}>
@@ -488,8 +488,8 @@ export function PaperTradingView() {
                           </div>
                         ))}
                       </div>
-                      <p className="text-[#E5E7EB]/60">{t('pt.settings.stopOutExplain')}</p>
-                      <button type="button" className="px-4 py-2 bg-[#6366F1] text-white rounded-md" onClick={() => void saveSettings()}>{t('pt.save')}</button>
+                      <p className="text-[var(--text)]/60">{t('pt.settings.stopOutExplain')}</p>
+                      <button type="button" className="px-4 py-2 bg-[var(--accent)] text-white rounded-md" onClick={() => void saveSettings()}>{t('pt.save')}</button>
                     </div>
                   )}
                 </details>
@@ -497,7 +497,7 @@ export function PaperTradingView() {
 
               {/* Order ticket */}
               <div className={`${cardCls} space-y-3`}>
-                <h2 className="text-sm font-semibold text-white">{t('pt.order.title')}</h2>
+                <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('pt.order.title')}</h2>
                 <div>
                   <label htmlFor="pt-inst" className={labelCls}>{t('pt.order.instrument')}</label>
                   <select id="pt-inst" value={instId} onChange={(e) => { setInstId(e.target.value); setOrderError(null); }} className={inputCls}>
@@ -508,29 +508,29 @@ export function PaperTradingView() {
                 {inst && specRes && gate && (
                   <div className="text-xs space-y-1">
                     {!specRes.ok ? (
-                      <p className="text-[#FCA5A5]">{t(`pt.specBlock.${specRes.reason}` as TKey)}</p>
+                      <p className="text-[var(--negative)]">{t(`pt.specBlock.${specRes.reason}` as TKey)}</p>
                     ) : gate.ok ? (
                       <>
-                        <p className="text-white">
+                        <p className="text-[var(--text-strong)]">
                           {t('pt.order.lastPrice')}: <span className="font-mono">{fmtFixed(gate.price, 2)}</span> {inst.specification.quotationUnit}
-                          {gate.delayed && <span className="ml-2 text-[#FCD34D]">{t('pt.order.delayed', { min: gate.delayMinutes })}</span>}
+                          {gate.delayed && <span className="ml-2 text-[var(--warning)]">{t('pt.order.delayed', { min: gate.delayMinutes })}</span>}
                         </p>
-                        <p className="text-[#E5E7EB]/65">
+                        <p className="text-[var(--text)]/65">
                           {t('pt.order.contractValue')}: {fmtFixed(contractValueUsd(specRes.spec, gate.price), 0)} USD{fx ? ` ≈ ${fmtVnd(contractValueUsd(specRes.spec, gate.price) * fx)}` : ''}
                           {' · '}{t('pt.order.defaultMargin', { usd: mgText(specRes.spec, gate.price, session.settings) })}
                         </p>
                       </>
                     ) : (
-                      <p className="text-[#FCA5A5]" role="alert">{t(`pt.block.${gate.reason}` as TKey)}</p>
+                      <p className="text-[var(--negative)]" role="alert">{t(`pt.block.${gate.reason}` as TKey)}</p>
                     )}
-                    <button type="button" className="text-[#A5B4FC] underline" onClick={() => void refreshQuotes()}>{t('pt.order.refresh')}</button>
+                    <button type="button" className="text-[var(--accent-text)] underline" onClick={() => void refreshQuotes()}>{t('pt.order.refresh')}</button>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-3">
-                  <button type="button" aria-pressed={side === 'LONG'} onClick={() => setSide('LONG')} className={`${bigBtn} border ${side === 'LONG' ? 'bg-[#22C55E] border-[#22C55E] text-[#05210F]' : 'border-[#263244] text-[#E5E7EB]'}`}>{t('pt.side.buy')}</button>
-                  <button type="button" aria-pressed={side === 'SHORT'} onClick={() => setSide('SHORT')} className={`${bigBtn} border ${side === 'SHORT' ? 'bg-[#EF4444] border-[#EF4444] text-white' : 'border-[#263244] text-[#E5E7EB]'}`}>{t('pt.side.sell')}</button>
+                  <button type="button" aria-pressed={side === 'LONG'} onClick={() => setSide('LONG')} className={`${bigBtn} border ${side === 'LONG' ? 'bg-[var(--positive)] border-[var(--positive)] text-[#05210F]' : 'border-[var(--border)] text-[var(--text)]'}`}>{t('pt.side.buy')}</button>
+                  <button type="button" aria-pressed={side === 'SHORT'} onClick={() => setSide('SHORT')} className={`${bigBtn} border ${side === 'SHORT' ? 'bg-[var(--negative)] border-[var(--negative)] text-white' : 'border-[var(--border)] text-[var(--text)]'}`}>{t('pt.side.sell')}</button>
                 </div>
-                <p className="text-[11px] text-[#E5E7EB]/60">{side === 'LONG' ? t('pt.side.buyExplain') : t('pt.side.sellExplain')}</p>
+                <p className="text-[11px] text-[var(--text)]/60">{side === 'LONG' ? t('pt.side.buyExplain') : t('pt.side.sellExplain')}</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
                     <label htmlFor="pt-qty" className={labelCls}>{t('pt.order.qty')}</label>
@@ -549,16 +549,16 @@ export function PaperTradingView() {
                     <input id="pt-margin" inputMode="decimal" value={marginText} onChange={(e) => setMarginText(e.target.value)} className={`${inputCls} font-mono`} placeholder={t('pt.order.marginDefault', { pct: session.settings.marginPct })} />
                   </div>
                 </div>
-                <p className="text-[11px] text-[#E5E7EB]/60">{t('pt.order.marginAssumed')}</p>
-                <button type="button" onClick={prepareOrder} className={`${bigBtn} w-full bg-[#6366F1] hover:bg-[#6366F1]/90 text-white`}>{t('pt.order.review')}</button>
-                {orderError && <p className="text-xs text-[#F87171]" role="alert">{orderError}</p>}
+                <p className="text-[11px] text-[var(--text)]/60">{t('pt.order.marginAssumed')}</p>
+                <button type="button" onClick={prepareOrder} className={`${bigBtn} w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white`}>{t('pt.order.review')}</button>
+                {orderError && <p className="text-xs text-[var(--negative)]" role="alert">{orderError}</p>}
               </div>
 
               {/* Open positions */}
               <div className={cardCls}>
-                <h2 className="text-sm font-semibold text-white mb-2">{t('pt.pos.title')}</h2>
+                <h2 className="text-sm font-semibold text-[var(--text-strong)] mb-2">{t('pt.pos.title')}</h2>
                 {positions.length === 0 ? (
-                  <p className="text-xs text-[#E5E7EB]/60">{t('pt.pos.none')}</p>
+                  <p className="text-xs text-[var(--text)]/60">{t('pt.pos.none')}</p>
                 ) : (
                   <ul className="space-y-3">
                     {positions.map((p) => {
@@ -567,10 +567,10 @@ export function PaperTradingView() {
                       const editing = editPos?.id === p.id;
                       const instNotes = notes.filter((n) => n.instrumentId === p.instrumentId || n.id === p.researchNoteId);
                       return (
-                        <li key={p.id} className="border border-[#263244] rounded-md p-3 text-xs space-y-2">
+                        <li key={p.id} className="border border-[var(--border)] rounded-md p-3 text-xs space-y-2">
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                            <span className="text-white font-semibold">{instrumentName(p.instrumentId)}</span>
-                            <span className={p.side === 'LONG' ? 'text-[#4ADE80]' : 'text-[#F87171]'}>{p.side === 'LONG' ? t('pt.side.long') : t('pt.side.short')} × {p.contracts}</span>
+                            <span className="text-[var(--text-strong)] font-semibold">{instrumentName(p.instrumentId)}</span>
+                            <span className={p.side === 'LONG' ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}>{p.side === 'LONG' ? t('pt.side.long') : t('pt.side.short')} × {p.contracts}</span>
                             <span className="font-mono">{t('pt.pos.entry')} {fmtFixed(p.entryPrice, 2)}</span>
                             <span className="font-mono">{t('pt.pos.now')} {pi?.price != null ? fmtFixed(pi.price, 2) : t('pt.pos.noPrice')}</span>
                           </div>
@@ -578,8 +578,8 @@ export function PaperTradingView() {
                             <span className={`font-mono font-semibold ${upl === null ? '' : pnlColor(upl)}`}>
                               {upl === null ? t('pt.pos.noPnl') : `${upl >= 0 ? '+' : ''}${fmtFixed(upl, 2)} USD ≈ ${signedVnd(upl * fxForView)}`}
                             </span>
-                            <span className="text-[#E5E7EB]/70">{t('pt.pos.margin')}: {fmtVnd(p.marginPerContractUsd * p.contracts * fxForView)}</span>
-                            <span className="text-[#E5E7EB]/70">SL {p.stopLoss ?? '—'} · TP {p.takeProfit ?? '—'}</span>
+                            <span className="text-[var(--text)]/70">{t('pt.pos.margin')}: {fmtVnd(p.marginPerContractUsd * p.contracts * fxForView)}</span>
+                            <span className="text-[var(--text)]/70">SL {p.stopLoss ?? '—'} · TP {p.takeProfit ?? '—'}</span>
                           </div>
                           {editing ? (
                             <div className="space-y-2">
@@ -601,16 +601,16 @@ export function PaperTradingView() {
                                 </select>
                               )}
                               <div className="flex gap-2">
-                                <button type="button" className="px-3 py-2 bg-[#6366F1] text-white rounded-md" onClick={() => void savePosition()}>{t('pt.save')}</button>
-                                <button type="button" className="px-3 py-2 border border-[#263244] rounded-md" onClick={() => setEditPos(null)}>{t('pt.cancel')}</button>
+                                <button type="button" className="px-3 py-2 bg-[var(--accent)] text-white rounded-md" onClick={() => void savePosition()}>{t('pt.save')}</button>
+                                <button type="button" className="px-3 py-2 border border-[var(--border)] rounded-md" onClick={() => setEditPos(null)}>{t('pt.cancel')}</button>
                               </div>
                             </div>
                           ) : (
                             <>
-                              {p.journal && <p className="text-[#E5E7EB]/75 whitespace-pre-wrap">{p.journal}</p>}
+                              {p.journal && <p className="text-[var(--text)]/75 whitespace-pre-wrap">{p.journal}</p>}
                               <div className="flex flex-wrap gap-2">
-                                <button type="button" className={`${bigBtn} !py-2 bg-[#EF4444] text-white`} onClick={() => void closeManually(p)}>{t('pt.pos.close')}</button>
-                                <button type="button" className="px-3 py-2 border border-[#263244] rounded-md" onClick={() => setEditPos({ id: p.id, sl: p.stopLoss === null ? '' : String(p.stopLoss), tp: p.takeProfit === null ? '' : String(p.takeProfit), journal: p.journal, noteId: p.researchNoteId })}>{t('pt.pos.edit')}</button>
+                                <button type="button" className={`${bigBtn} !py-2 bg-[var(--negative)] text-white`} onClick={() => void closeManually(p)}>{t('pt.pos.close')}</button>
+                                <button type="button" className="px-3 py-2 border border-[var(--border)] rounded-md" onClick={() => setEditPos({ id: p.id, sl: p.stopLoss === null ? '' : String(p.stopLoss), tp: p.takeProfit === null ? '' : String(p.takeProfit), journal: p.journal, noteId: p.researchNoteId })}>{t('pt.pos.edit')}</button>
                               </div>
                             </>
                           )}
@@ -637,33 +637,33 @@ export function PaperTradingView() {
       {/* Confirm dialog: shows the money at risk before any order is placed. */}
       {pending && session && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={t('pt.confirm.title')}>
-          <div className="bg-[#111622] border border-[#263244] rounded-lg p-5 w-full max-w-md space-y-3">
-            <h2 className="text-base font-semibold text-white">{t('pt.confirm.title')}</h2>
-            <p className="text-sm text-white">
-              <span className={pending.side === 'LONG' ? 'text-[#4ADE80]' : 'text-[#F87171]'}>{pending.side === 'LONG' ? t('pt.side.buy') : t('pt.side.sell')}</span>
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-5 w-full max-w-md space-y-3">
+            <h2 className="text-base font-semibold text-[var(--text-strong)]">{t('pt.confirm.title')}</h2>
+            <p className="text-sm text-[var(--text-strong)]">
+              <span className={pending.side === 'LONG' ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}>{pending.side === 'LONG' ? t('pt.side.buy') : t('pt.side.sell')}</span>
               {' '}{pending.contracts} × {instrumentName(pending.instId)}
             </p>
             <dl className="text-xs grid grid-cols-[1fr_auto] gap-x-4 gap-y-1">
-              <dt className="text-[#E5E7EB]/60">{t('pt.confirm.fill')}</dt>
-              <dd className="font-mono text-right">{fmtFixed(pending.fill, 2)} <span className="text-[#E5E7EB]/50">({t('pt.confirm.quote')} {fmtFixed(pending.quote, 2)})</span></dd>
-              <dt className="text-[#E5E7EB]/60">{t('pt.order.contractValue')}</dt>
+              <dt className="text-[var(--text)]/60">{t('pt.confirm.fill')}</dt>
+              <dd className="font-mono text-right">{fmtFixed(pending.fill, 2)} <span className="text-[var(--text)]/50">({t('pt.confirm.quote')} {fmtFixed(pending.quote, 2)})</span></dd>
+              <dt className="text-[var(--text)]/60">{t('pt.order.contractValue')}</dt>
               <dd className="font-mono text-right">{fmtVnd(pending.check.contractValueVnd)}</dd>
-              <dt className="text-[#E5E7EB]/60">{t('pt.confirm.margin')}</dt>
+              <dt className="text-[var(--text)]/60">{t('pt.confirm.margin')}</dt>
               <dd className="font-mono text-right">{fmtVnd(pending.check.marginVnd)}</dd>
-              <dt className="text-[#E5E7EB]/60">{t('pt.confirm.fee')}</dt>
+              <dt className="text-[var(--text)]/60">{t('pt.confirm.fee')}</dt>
               <dd className="font-mono text-right">{fmtVnd(pending.check.feeVnd)}</dd>
-              <dt className="text-[#E5E7EB]/60">SL / TP</dt>
+              <dt className="text-[var(--text)]/60">SL / TP</dt>
               <dd className="font-mono text-right">{pending.stopLoss ?? '—'} / {pending.takeProfit ?? '—'}</dd>
             </dl>
-            <p className="text-sm font-semibold text-[#FCA5A5]">
+            <p className="text-sm font-semibold text-[var(--negative)]">
               {pending.check.riskVnd === null ? t('pt.confirm.riskNoStop', { margin: fmtVnd(pending.check.marginVnd) }) : t('pt.confirm.risk', { risk: fmtVnd(pending.check.riskVnd) })}
             </p>
-            <p className="text-[11px] text-[#E5E7EB]/60">{t('pt.confirm.assumptions', { slip: session.settings.slippageTicks, fee: session.settings.feePerContractUsd })}</p>
-            {pending.delayed && <p className="text-[11px] text-[#FCD34D]">{t('pt.order.delayed', { min: 15 })}</p>}
-            <p className="text-[11px] text-[#FCD34D]">{t('pt.confirm.virtual')}</p>
+            <p className="text-[11px] text-[var(--text)]/60">{t('pt.confirm.assumptions', { slip: session.settings.slippageTicks, fee: session.settings.feePerContractUsd })}</p>
+            {pending.delayed && <p className="text-[11px] text-[var(--warning)]">{t('pt.order.delayed', { min: 15 })}</p>}
+            <p className="text-[11px] text-[var(--warning)]">{t('pt.confirm.virtual')}</p>
             <div className="grid grid-cols-2 gap-3">
-              <button type="button" className={`${bigBtn} border border-[#263244]`} onClick={() => setPending(null)}>{t('pt.cancel')}</button>
-              <button type="button" className={`${bigBtn} bg-[#22C55E] text-[#05210F]`} onClick={() => void confirmOrder()}>{t('pt.confirm.ok')}</button>
+              <button type="button" className={`${bigBtn} border border-[var(--border)]`} onClick={() => setPending(null)}>{t('pt.cancel')}</button>
+              <button type="button" className={`${bigBtn} bg-[var(--positive)] text-[#05210F]`} onClick={() => void confirmOrder()}>{t('pt.confirm.ok')}</button>
             </div>
           </div>
         </div>

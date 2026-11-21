@@ -188,8 +188,8 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
 
         <div className="space-y-2">
           {legs.map((l, i) => (
-            <div key={l.uid} className="flex flex-wrap items-end gap-3 border border-[#263244] rounded-md p-2">
-              <span className="text-[11px] font-mono text-[#E5E7EB]/50 pb-2">Leg {i + 1}</span>
+            <div key={l.uid} className="flex flex-wrap items-end gap-3 border border-[var(--border)] rounded-md p-2">
+              <span className="text-[11px] font-mono text-[var(--text)]/50 pb-2">Leg {i + 1}</span>
               <div>
                 <label htmlFor={`leg-series-${l.uid}`} className={labelClass}>
                   Series
@@ -235,7 +235,7 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
                 aria-label={`Remove leg ${i + 1}`}
                 disabled={legs.length <= 2}
                 onClick={() => setLegs((ls) => ls.filter((x) => x.uid !== l.uid))}
-                className="p-2 text-[#E5E7EB]/60 hover:text-[#EF4444] disabled:opacity-30"
+                className="p-2 text-[var(--text)]/60 hover:text-[var(--negative)] disabled:opacity-30"
               >
                 <Trash2 className="w-4 h-4" aria-hidden="true" />
               </button>
@@ -244,7 +244,7 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
           <button
             type="button"
             onClick={() => setLegs((ls) => [...ls, { uid: uidCounter++, seriesKey: '', coefficient: 1, priceUnit: '' }])}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] border border-[#263244] rounded-md text-xs text-white hover:bg-[#172033]/80"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-2)] border border-[var(--border)] rounded-md text-xs text-[var(--text-strong)] hover:bg-[var(--surface-2)]/80"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" /> Add leg
           </button>
@@ -260,7 +260,7 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
             </ul>
           </Notice>
         )}
-        {loading && <p className="text-xs text-[#E5E7EB]/55">Loading candles…</p>}
+        {loading && <p className="text-xs text-[var(--text)]/55">Loading candles…</p>}
         {error && <Notice tone="error">{error}</Notice>}
         {data.map((d) => (
           <SeriesIntegrity key={d.option.key} s={d} returnBased={false} />
@@ -272,7 +272,7 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
         <Panel title="Spread" subtitle={`Output unit: ${spread.outputUnit || '—'}`}>
           <StatusBlock label="Spread" status={spread.status} reason={spread.reason} warnings={spread.warnings} />
           {spread.status !== 'INVALID_INPUT' && (
-            <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs font-mono text-[#E5E7EB]/80">
+            <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs font-mono text-[var(--text)]/80">
               <span>Common points: {spread.timestamps.length}</span>
               <span>
                 Dropped in alignment:{' '}
@@ -285,13 +285,13 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
           <div className="overflow-x-auto">
             <table className="text-xs font-mono min-w-[420px]">
               <thead>
-                <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
+                <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
                   <th className="py-1.5 pr-4 text-left font-medium">Leg (stated assumptions)</th>
                   <th className="py-1.5 px-3 text-right font-medium">Coefficient</th>
                   <th className="py-1.5 px-3 text-left font-medium">Price unit</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#263244]/70">
+              <tbody className="divide-y divide-[var(--border)]/70">
                 {spread.legs.map((l) => (
                   <tr key={String(l.id)}>
                     <td className="py-1.5 pr-4">{l.id}</td>
@@ -328,8 +328,8 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
 
 function LatestRow({ label, r, unit }: { label: string; r: { t: string; v: number } | null; unit?: string }) {
   return (
-    <p className="text-xs font-mono text-[#E5E7EB]/80">
-      {label}: <span className="text-white">{fmtNum(r?.v ?? null, 4)}</span>
+    <p className="text-xs font-mono text-[var(--text)]/80">
+      {label}: <span className="text-[var(--text-strong)]">{fmtNum(r?.v ?? null, 4)}</span>
       {unit ? ` ${unit}` : ''} @ {fmtDate(r?.t)}
     </p>
   );

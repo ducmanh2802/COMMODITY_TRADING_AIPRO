@@ -26,8 +26,8 @@ import {
 } from './researchNotes';
 
 const COLLECTION = 'researchNotes';
-const inputCls = 'w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs text-white';
-const labelCls = 'block text-xs text-[#E5E7EB]/65 mb-1';
+const inputCls = 'w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs text-[var(--text-strong)]';
+const labelCls = 'block text-xs text-[var(--text)]/65 mb-1';
 
 /** T18 Research Notebook: owner-only notes per instrument, optionally carrying chart context. */
 export function ResearchNotebookView() {
@@ -139,14 +139,14 @@ export function ResearchNotebookView() {
 
   if (!user) {
     return (
-      <section className="bg-[#111622] border border-[#263244] rounded-lg p-8 text-center space-y-3">
-        <NotebookPen className="w-8 h-8 text-[#6366F1] mx-auto" aria-hidden="true" />
-        <h2 className="text-sm font-semibold text-white">{t('nb.signInTitle')}</h2>
-        <p className="text-xs text-[#E5E7EB]/65 max-w-md mx-auto">{t('nb.signInBody')}</p>
+      <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-8 text-center space-y-3">
+        <NotebookPen className="w-8 h-8 text-[var(--accent)] mx-auto" aria-hidden="true" />
+        <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('nb.signInTitle')}</h2>
+        <p className="text-xs text-[var(--text)]/65 max-w-md mx-auto">{t('nb.signInBody')}</p>
         <button
           type="button"
           onClick={() => void signInWithGoogle()}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md"
         >
           <LogIn className="w-3.5 h-3.5" aria-hidden="true" />
           <span>{t('nb.signInGoogle')}</span>
@@ -158,15 +158,15 @@ export function ResearchNotebookView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-white tracking-tight">{t('nb.title')}</h1>
-        <p className="text-sm text-[#E5E7EB]/65 mt-1">{t('nb.subtitle')}</p>
-        {!canWrite && <p className="text-xs text-[#F59E0B] mt-2">{t('nb.verifyEmail')}</p>}
+        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('nb.title')}</h1>
+        <p className="text-sm text-[var(--text)]/65 mt-1">{t('nb.subtitle')}</p>
+        {!canWrite && <p className="text-xs text-[var(--warning)] mt-2">{t('nb.verifyEmail')}</p>}
       </div>
 
       {/* Create / edit */}
-      <form onSubmit={(e) => void handleSubmit(e)} className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3">
-        <h2 className="text-sm font-semibold text-white">{editingId ? t('nb.editNote') : t('nb.newNote')}</h2>
-        {fromChart && !editingId && <p className="text-[11px] text-[#6366F1]">{t('nb.fromChart')}</p>}
+      <form onSubmit={(e) => void handleSubmit(e)} className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-3">
+        <h2 className="text-sm font-semibold text-[var(--text-strong)]">{editingId ? t('nb.editNote') : t('nb.newNote')}</h2>
+        {fromChart && !editingId && <p className="text-[11px] text-[var(--accent)]">{t('nb.fromChart')}</p>}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label htmlFor="nb-inst" className={labelCls}>{t('nb.instrument')}</label>
@@ -201,14 +201,14 @@ export function ResearchNotebookView() {
             onChange={(e) => setField('body', e.target.value)}
             className={`${inputCls} resize-y`}
           />
-          <p className="text-[11px] text-[#E5E7EB]/45 text-right">{t('nb.chars', { n: draft.body.length, max: NOTE_LIMITS.bodyMax })}</p>
+          <p className="text-[11px] text-[var(--text)]/45 text-right">{t('nb.chars', { n: draft.body.length, max: NOTE_LIMITS.bodyMax })}</p>
         </div>
         <div>
           <label htmlFor="nb-tags" className={labelCls}>{t('nb.tags')}</label>
           <input id="nb-tags" type="text" value={draft.tagsText} placeholder={t('nb.tagsPh')} onChange={(e) => setField('tagsText', e.target.value)} className={inputCls} />
         </div>
-        <fieldset className="border border-[#263244] rounded-md p-3">
-          <legend className="text-xs text-[#E5E7EB]/65 px-1">{t('nb.chartContext')}</legend>
+        <fieldset className="border border-[var(--border)] rounded-md p-3">
+          <legend className="text-xs text-[var(--text)]/65 px-1">{t('nb.chartContext')}</legend>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
               <label htmlFor="nb-tf" className={labelCls}>{t('nb.timeframe')}</label>
@@ -233,17 +233,17 @@ export function ResearchNotebookView() {
             </div>
           </div>
         </fieldset>
-        {error && <p className="text-xs font-mono text-[#EF4444]">{error}</p>}
+        {error && <p className="text-xs font-mono text-[var(--negative)]">{error}</p>}
         <div className="flex justify-end gap-2">
           {(editingId || draft !== EMPTY_DRAFT) && (
-            <button type="button" onClick={resetForm} className="px-3 py-1.5 border border-[#263244] rounded-md text-xs text-[#E5E7EB]/80">
+            <button type="button" onClick={resetForm} className="px-3 py-1.5 border border-[var(--border)] rounded-md text-xs text-[var(--text)]/80">
               {t('nb.cancel')}
             </button>
           )}
           <button
             type="submit"
             disabled={saving || !canWrite}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{saving ? t('nb.saving') : editingId ? t('nb.update') : t('nb.save')}</span>
@@ -252,34 +252,34 @@ export function ResearchNotebookView() {
       </form>
 
       {/* List + filters */}
-      <section className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#263244] flex flex-wrap items-end gap-3">
-          <h2 className="text-sm font-semibold text-white mr-auto">{t('nb.notes', { n: visible.length })}</h2>
-          <select aria-label={t('nb.filterInstrument')} value={filter.instrumentId} onChange={(e) => setFilter((f) => ({ ...f, instrumentId: e.target.value }))} className="bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-1.5 text-xs font-mono text-white">
+      <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
+        <div className="px-4 py-3 border-b border-[var(--border)] flex flex-wrap items-end gap-3">
+          <h2 className="text-sm font-semibold text-[var(--text-strong)] mr-auto">{t('nb.notes', { n: visible.length })}</h2>
+          <select aria-label={t('nb.filterInstrument')} value={filter.instrumentId} onChange={(e) => setFilter((f) => ({ ...f, instrumentId: e.target.value }))} className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]">
             <option value="">{t('nb.filterInstrument')}: {t('nb.all')}</option>
             {facets.instruments.map((id) => (
               <option key={id} value={id}>{instrumentLabel(id)}</option>
             ))}
           </select>
-          <select aria-label={t('nb.filterTag')} value={filter.tag} onChange={(e) => setFilter((f) => ({ ...f, tag: e.target.value }))} className="bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-1.5 text-xs text-white">
+          <select aria-label={t('nb.filterTag')} value={filter.tag} onChange={(e) => setFilter((f) => ({ ...f, tag: e.target.value }))} className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs text-[var(--text-strong)]">
             <option value="">{t('nb.filterTag')}: {t('nb.all')}</option>
             {facets.tags.map((tag) => (
               <option key={tag} value={tag}>#{tag}</option>
             ))}
           </select>
-          <input type="search" aria-label={t('nb.filterText')} placeholder={t('nb.filterText')} value={filter.text} onChange={(e) => setFilter((f) => ({ ...f, text: e.target.value }))} className="bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-1.5 text-xs text-white" />
+          <input type="search" aria-label={t('nb.filterText')} placeholder={t('nb.filterText')} value={filter.text} onChange={(e) => setFilter((f) => ({ ...f, text: e.target.value }))} className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs text-[var(--text-strong)]" />
         </div>
-        {loadError && <p className="px-4 py-2 text-xs text-[#EF4444]">{loadError}</p>}
+        {loadError && <p className="px-4 py-2 text-xs text-[var(--negative)]">{loadError}</p>}
         {visible.length === 0 ? (
-          <div className="p-6 text-xs font-mono text-[#E5E7EB]/60">{notes.length === 0 ? t('nb.empty') : t('nb.emptyFiltered')}</div>
+          <div className="p-6 text-xs font-mono text-[var(--text)]/60">{notes.length === 0 ? t('nb.empty') : t('nb.emptyFiltered')}</div>
         ) : (
-          <ul className="divide-y divide-[#263244]/70">
+          <ul className="divide-y divide-[var(--border)]/70">
             {visible.map((n) => (
               <li key={n.id} className="px-4 py-3 space-y-1.5">
                 <div className="flex items-start gap-2">
                   <div className="min-w-0 mr-auto">
-                    <p className="text-sm text-white font-medium break-words">{n.title}</p>
-                    <p className="text-[11px] font-mono text-[#E5E7EB]/55">
+                    <p className="text-sm text-[var(--text-strong)] font-medium break-words">{n.title}</p>
+                    <p className="text-[11px] font-mono text-[var(--text)]/55">
                       {instrumentLabel(n.instrumentId)}
                       {n.chartContext && (
                         <>
@@ -292,14 +292,14 @@ export function ResearchNotebookView() {
                       {n.updatedAtMs === null ? t('nb.pending') : t('nb.updated', { when: fmtDateTime(n.updatedAtMs) })}
                     </p>
                   </div>
-                  <button type="button" onClick={() => startEdit(n)} aria-label={t('nb.edit')} className="p-1 text-[#E5E7EB]/75 hover:bg-[#172033] rounded">
+                  <button type="button" onClick={() => startEdit(n)} aria-label={t('nb.edit')} className="p-1 text-[var(--text)]/75 hover:bg-[var(--surface-2)] rounded">
                     <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
-                  <button type="button" onClick={() => void handleDelete(n)} aria-label={t('nb.delete')} className="p-1 text-[#EF4444] hover:bg-[#EF4444]/15 rounded">
+                  <button type="button" onClick={() => void handleDelete(n)} aria-label={t('nb.delete')} className="p-1 text-[var(--negative)] hover:bg-[var(--negative)]/15 rounded">
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
-                {n.body && <p className="text-xs text-[#E5E7EB]/80 whitespace-pre-wrap break-words">{n.body}</p>}
+                {n.body && <p className="text-xs text-[var(--text)]/80 whitespace-pre-wrap break-words">{n.body}</p>}
                 {n.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {n.tags.map((tag) => (
@@ -307,7 +307,7 @@ export function ResearchNotebookView() {
                         key={tag}
                         type="button"
                         onClick={() => setFilter((f) => ({ ...f, tag }))}
-                        className="px-1.5 py-0.5 rounded bg-[#6366F1]/15 text-[11px] text-[#A5B4FC]"
+                        className="px-1.5 py-0.5 rounded bg-[var(--accent)]/15 text-[11px] text-[var(--accent-text)]"
                       >
                         #{tag}
                       </button>

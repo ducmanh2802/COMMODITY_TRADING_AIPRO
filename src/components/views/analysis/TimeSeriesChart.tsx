@@ -74,7 +74,7 @@ export function TimeSeriesChart({ lines, height = 260, valueFormatter, reference
   return (
     <div>
       <div ref={containerRef} role="img" aria-label={ariaLabel} className="w-full" style={{ height }} />
-      <div className="flex flex-wrap gap-3 mt-2 text-[11px] text-[#E5E7EB]/70">
+      <div className="flex flex-wrap gap-3 mt-2 text-[11px] text-[var(--text)]/70">
         {lines.map((l) => (
           <span key={l.name} className="inline-flex items-center gap-1.5">
             <span className="w-3 h-0.5 inline-block" style={{ backgroundColor: l.color }} aria-hidden="true" />

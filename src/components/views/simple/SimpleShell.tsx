@@ -49,7 +49,7 @@ export function SimpleShell({ renderOther }: { renderOther: () => ReactNode }) {
           onClick={() => setActiveModule(tab.target)}
           aria-current={tab.active ? 'page' : undefined}
           className={`w-full min-h-[56px] flex ${bottom ? 'flex-col justify-center gap-0.5 px-1 text-sm' : 'flex-row items-center gap-2 px-4 text-lg'} items-center rounded-xl font-bold focus:outline-none focus-visible:ring-4 focus-visible:ring-white/70 ${
-            tab.active ? 'bg-[#6366F1] text-white' : 'text-[var(--text)] hover:bg-[var(--surface-2)]'
+            tab.active ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)] hover:bg-[var(--surface-2)]'
           }`}
         >
           <tab.Icon className="w-6 h-6 shrink-0" aria-hidden="true" />
@@ -59,9 +59,9 @@ export function SimpleShell({ renderOther }: { renderOther: () => ReactNode }) {
     ));
 
   return (
-    <div className="min-h-screen bg-[#0B0E14] text-[#E5E7EB] flex flex-col">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col">
       <header className="sticky top-0 z-30 bg-[var(--surface)]/95 backdrop-blur border-b border-[var(--border)] px-3 sm:px-5 py-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="text-xl font-extrabold text-white mr-auto">COMMODITY AI PRO</span>
+        <span className="text-xl font-extrabold text-[var(--text-strong)] mr-auto">COMMODITY AI PRO</span>
         <nav aria-label={t('sm.nav.aria')} className="hidden md:block">
           <ul className="flex gap-2">{navButtons(false)}</ul>
         </nav>
@@ -73,7 +73,7 @@ export function SimpleShell({ renderOther }: { renderOther: () => ReactNode }) {
           aria-label={t('topbar.refresh')}
           title={t('topbar.refresh')}
           disabled={loading}
-          className="w-11 h-11 grid place-items-center bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-white disabled:opacity-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/70"
+          className="w-11 h-11 grid place-items-center bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-[var(--text-strong)] disabled:opacity-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/70"
         >
           <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
         </button>
@@ -84,7 +84,7 @@ export function SimpleShell({ renderOther }: { renderOther: () => ReactNode }) {
           <button
             type="button"
             onClick={() => setActiveModule('market-hub')}
-            className="mb-4 min-h-[48px] inline-flex items-center gap-2 px-4 rounded-xl border-2 border-[var(--border)] text-lg font-semibold text-white hover:bg-[var(--surface-2)] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/70"
+            className="mb-4 min-h-[48px] inline-flex items-center gap-2 px-4 rounded-xl border-2 border-[var(--border)] text-lg font-semibold text-[var(--text-strong)] hover:bg-[var(--surface-2)] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/70"
           >
             <ArrowLeft className="w-6 h-6" aria-hidden="true" />
             {t('sm.back')}

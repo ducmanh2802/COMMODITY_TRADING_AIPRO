@@ -12,9 +12,9 @@ interface BadgeProps {
 const TONES = {
   neutral: 'bg-[var(--surface-2)] text-[var(--muted)] border-[var(--border)]',
   accent: 'bg-[var(--accent-soft)] text-[var(--accent-text)] border-[var(--accent)]/30',
-  positive: 'bg-[#22C55E]/10 text-[var(--positive)] border-[#22C55E]/30',
-  negative: 'bg-[#EF4444]/10 text-[var(--negative)] border-[#EF4444]/30',
-  warning: 'bg-[#F59E0B]/10 text-[var(--warning)] border-[#F59E0B]/30',
+  positive: 'bg-[var(--positive)]/10 text-[var(--positive)] border-[var(--positive)]/30',
+  negative: 'bg-[var(--negative)]/10 text-[var(--negative)] border-[var(--negative)]/30',
+  warning: 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30',
 };
 
 /** Small pill label. */

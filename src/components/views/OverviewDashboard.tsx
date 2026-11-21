@@ -33,12 +33,12 @@ const HEATMAP_HORIZONS: HeatmapHorizon[] = ['w1', 'm1', 'm3', 'm6', 'y1'];
 const CATEGORY_ORDER: ProductCategory[] = ['AGRICULTURE', 'SOFT_COMMODITIES', 'METALS', 'ENERGY'];
 
 function getHeatmapTone(val: number | null): string {
-  if (val === null) return 'bg-[#0B0E14] border-[#263244] text-[#E5E7EB]/45';
-  if (val >= 5) return 'bg-[#22C55E]/20 border-[#22C55E]/40 text-[#4ADE80]';
-  if (val > 0) return 'bg-[#22C55E]/10 border-[#22C55E]/25 text-[#4ADE80]';
-  if (val <= -5) return 'bg-[#EF4444]/20 border-[#EF4444]/40 text-[#F87171]';
-  if (val < 0) return 'bg-[#EF4444]/10 border-[#EF4444]/25 text-[#F87171]';
-  return 'bg-[#0B0E14] border-[#263244] text-[#E5E7EB]/75';
+  if (val === null) return 'bg-[var(--bg)] border-[var(--border)] text-[var(--text)]/45';
+  if (val >= 5) return 'bg-[var(--positive)]/20 border-[var(--positive)]/40 text-[var(--positive)]';
+  if (val > 0) return 'bg-[var(--positive)]/10 border-[var(--positive)]/25 text-[var(--positive)]';
+  if (val <= -5) return 'bg-[var(--negative)]/20 border-[var(--negative)]/40 text-[var(--negative)]';
+  if (val < 0) return 'bg-[var(--negative)]/10 border-[var(--negative)]/25 text-[var(--negative)]';
+  return 'bg-[var(--bg)] border-[var(--border)] text-[var(--text)]/75';
 }
 
 function fmtPct(val: number): string {
@@ -245,7 +245,7 @@ export function OverviewDashboard() {
     return hasKey(k) ? t(k) : v;
   };
 
-  const linkBtn = 'text-xs font-medium text-[#818CF8] hover:text-[#A5B4FC] hover:underline whitespace-nowrap';
+  const linkBtn = 'text-xs font-medium text-[var(--accent-text)] hover:text-[var(--accent-text)] hover:underline whitespace-nowrap';
   const card = 'bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] shadow-[var(--shadow-card)] p-4';
   const statCard = `${card} space-y-1 min-w-0`;
 
@@ -254,12 +254,12 @@ export function OverviewDashboard() {
       {/* Friendly header (owner's slogan kept as kicker) */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-medium text-[#818CF8]">{t('fr.ov2.kicker')}</p>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight mt-0.5 text-balance">
+          <p className="text-xs font-medium text-[var(--accent-text)]">{t('fr.ov2.kicker')}</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--text-strong)] tracking-tight mt-0.5 text-balance">
             {t('fr.ov.hello')}
           </h1>
-          <p className="text-sm text-[#E5E7EB]/65 mt-1">{t('fr.ov.sub')}</p>
-          <p className="text-xs text-[#E5E7EB]/45 mt-1">
+          <p className="text-sm text-[var(--text)]/65 mt-1">{t('fr.ov.sub')}</p>
+          <p className="text-xs text-[var(--text)]/45 mt-1">
             {t('fr.ov2.context', {
               name: activeName,
               symbol: selectedSymbol,
@@ -273,16 +273,16 @@ export function OverviewDashboard() {
           <button
             type="button"
             onClick={() => setActiveModule('commodity-world')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded-md text-xs font-medium text-white whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border)] rounded-md text-xs font-medium text-[var(--text-strong)] whitespace-nowrap"
           >
-            <Compass className="w-3.5 h-3.5 text-[#818CF8]" aria-hidden="true" />
+            <Compass className="w-3.5 h-3.5 text-[var(--accent-text)]" aria-hidden="true" />
             <span>{t('fr.ov2.world', { n: worldCount })}</span>
           </button>
           <button
             type="button"
             onClick={() => void syncProviderFeeds({ timeframe })}
             disabled={syncing}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded-md text-xs font-medium text-white disabled:opacity-50 whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent)] hover:bg-[var(--accent)]/90 rounded-md text-xs font-medium text-white disabled:opacity-50 whitespace-nowrap"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} aria-hidden="true" />
             <span>{syncing ? t('fr.ov.refreshing') : t('fr.ov.refresh')}</span>
@@ -291,9 +291,9 @@ export function OverviewDashboard() {
       </div>
 
       {loadError && (
-        <div className="bg-[#111622] border border-[#EF4444]/40 rounded-xl p-4 text-sm text-[#FCA5A5] space-y-1">
+        <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-xl p-4 text-sm text-[var(--negative)] space-y-1">
           <p>{t('fr.ov.loadError')}</p>
-          <details className="text-xs text-[#E5E7EB]/50">
+          <details className="text-xs text-[var(--text)]/50">
             <summary className="cursor-pointer">{t('fr.ov.loadErrorDetail')}</summary>
             <p className="mt-1 break-words">{loadError}</p>
           </details>
@@ -301,15 +301,15 @@ export function OverviewDashboard() {
       )}
 
       {lastSyncSummary && (
-        <section className="bg-[#111622] border border-[#6366F1]/40 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs">
+        <section className="bg-[var(--surface)] border border-[var(--accent)]/40 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs">
           <div className="space-y-1 min-w-0">
-            <p className="font-semibold text-white">
+            <p className="font-semibold text-[var(--text-strong)]">
               {t('fr.ov2.syncTitle', {
                 candles: lastSyncSummary.totalCandlesDatasetsAdded,
                 macro: lastSyncSummary.totalMacroAdded,
               })}
             </p>
-            <p className="text-[#E5E7EB]/70 break-words">
+            <p className="text-[var(--text)]/70 break-words">
               {lastSyncSummary.totalCandlesDatasetsAdded === 0 && lastSyncSummary.totalMacroAdded === 0
                 ? t('fr.ov2.syncNone')
                 : lastSyncSummary.outcomes
@@ -322,14 +322,14 @@ export function OverviewDashboard() {
             <button
               type="button"
               onClick={() => setActiveModule('data-health')}
-              className="px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded text-xs font-medium text-white whitespace-nowrap"
+              className="px-3 py-1.5 bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border)] rounded text-xs font-medium text-[var(--text-strong)] whitespace-nowrap"
             >
               {t('fr.ov2.syncHealth')}
             </button>
             <button
               type="button"
               onClick={() => setActiveModule('data-import')}
-              className="px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded text-xs font-medium text-white whitespace-nowrap"
+              className="px-3 py-1.5 bg-[var(--accent)] hover:bg-[var(--accent)]/90 rounded text-xs font-medium text-white whitespace-nowrap"
             >
               {t('fr.ov2.syncImport')}
             </button>
@@ -338,10 +338,10 @@ export function OverviewDashboard() {
       )}
 
       {/* Compact status line (provider details live in Data Health) */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[#E5E7EB]/70">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--text)]/70">
         {!loading && <span>{t('fr.ov.pricesCount', { n: pricedCount, total: filteredInstruments.length })}</span>}
         <span className="inline-flex flex-wrap items-center gap-1.5">
-          <Database className="w-3.5 h-3.5 text-[#E5E7EB]/45" aria-hidden="true" />
+          <Database className="w-3.5 h-3.5 text-[var(--text)]/45" aria-hidden="true" />
           {t('fr.ov.sources', { n: connectedProviderCount, total: providers.length })}
           <button
             type="button"
@@ -360,30 +360,30 @@ export function OverviewDashboard() {
       {/* Gentle empty state or active warm-up notice when no prices have landed yet */}
       {!loading && !anyPriceAtAll && (
         providers.some((p) => p.providerId === 'YAHOO_UNOFFICIAL' && p.connectionState === 'CONNECTED') ? (
-          <section className={`${card} border-[#6366F1]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
+          <section className={`${card} border-[var(--accent)]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
             <div className="space-y-1">
-              <h2 className="text-sm font-semibold text-white inline-flex items-center gap-2">
-                <RefreshCw className="w-4 h-4 text-[#818CF8] animate-spin" aria-hidden="true" />
+              <h2 className="text-sm font-semibold text-[var(--text-strong)] inline-flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-[var(--accent-text)] animate-spin" aria-hidden="true" />
                 <span>Đang đồng bộ giá hàng hóa thực tế (Yahoo Finance 15m delayed)...</span>
               </h2>
-              <p className="text-xs text-[#E5E7EB]/65">
+              <p className="text-xs text-[var(--text)]/65">
                 Hệ thống đang nạp 15 hàng hóa hỗ trợ theo tốc độ an toàn (~15 giây sau khi khởi động). Bạn cũng có thể bấm &quot;Cập nhật giá&quot; bất kỳ lúc nào.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setActiveModule('data-health')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded-md text-xs font-medium text-[#E5E7EB] whitespace-nowrap self-start sm:self-auto"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border)] rounded-md text-xs font-medium text-[var(--text)] whitespace-nowrap self-start sm:self-auto"
             >
               <Database className="w-3.5 h-3.5" aria-hidden="true" />
               {t('fr.ov.empty.health')}
             </button>
           </section>
         ) : (
-          <section className={`${card} border-[#6366F1]/40 space-y-3`}>
-            <h2 className="text-base font-semibold text-white">{t('fr.ov.empty.title')}</h2>
-            <p className="text-sm text-[#E5E7EB]/75 leading-relaxed">{t('fr.ov.empty.body')}</p>
-            <ol className="list-decimal pl-5 space-y-1 text-sm text-[#E5E7EB]/75">
+          <section className={`${card} border-[var(--accent)]/40 space-y-3`}>
+            <h2 className="text-base font-semibold text-[var(--text-strong)]">{t('fr.ov.empty.title')}</h2>
+            <p className="text-sm text-[var(--text)]/75 leading-relaxed">{t('fr.ov.empty.body')}</p>
+            <ol className="list-decimal pl-5 space-y-1 text-sm text-[var(--text)]/75">
               <li>{t('fr.ov.empty.step1')}</li>
               <li>{t('fr.ov.empty.step2')}</li>
             </ol>
@@ -391,7 +391,7 @@ export function OverviewDashboard() {
               <button
                 type="button"
                 onClick={() => setActiveModule('data-import')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 rounded-md text-xs font-medium text-white"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent)] hover:bg-[var(--accent)]/90 rounded-md text-xs font-medium text-white"
               >
                 <Upload className="w-3.5 h-3.5" aria-hidden="true" />
                 {t('fr.ov.empty.import')}
@@ -399,7 +399,7 @@ export function OverviewDashboard() {
               <button
                 type="button"
                 onClick={() => setActiveModule('data-health')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#1E293B] border border-[#263244] rounded-md text-xs font-medium text-[#E5E7EB]"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border)] rounded-md text-xs font-medium text-[var(--text)]"
               >
                 <Database className="w-3.5 h-3.5" aria-hidden="true" />
                 {t('fr.ov.empty.health')}
@@ -412,47 +412,47 @@ export function OverviewDashboard() {
       {/* A. Market breadth by cycle */}
       <section aria-label={t('fr.ov2.breadthAria')} className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
         <div className={statCard}>
-          <p className="text-xs text-[#E5E7EB]/60">{t('fr.ov2.upDown')}</p>
-          <p className="text-xl font-semibold text-white tabular-nums">
+          <p className="text-xs text-[var(--text)]/60">{t('fr.ov2.upDown')}</p>
+          <p className="text-xl font-semibold text-[var(--text-strong)] tabular-nums">
             {breadth ? (
               <>
-                <span className="text-[#4ADE80]">▲ {breadth.risingCount}</span>{' '}
-                <span className="text-[#E5E7EB]/40">/</span>{' '}
-                <span className="text-[#F87171]">▼ {breadth.fallingCount}</span>
+                <span className="text-[var(--positive)]">▲ {breadth.risingCount}</span>{' '}
+                <span className="text-[var(--text)]/40">/</span>{' '}
+                <span className="text-[var(--negative)]">▼ {breadth.fallingCount}</span>
               </>
             ) : (
               '—'
             )}
           </p>
-          <p className="text-[11px] text-[#E5E7EB]/50">
+          <p className="text-[11px] text-[var(--text)]/50">
             {breadth ? t('fr.ov2.withPrice', { n: breadth.withPriceData, total: breadth.totalTracked }) : '—'}
           </p>
         </div>
         <div className={statCard}>
-          <p className="text-xs text-[#E5E7EB]/60">{t('fr.ov2.accum')}</p>
-          <p className="text-xl font-semibold text-[#38BDF8] tabular-nums">{breadth ? breadth.accumulationCount : '—'}</p>
-          <p className="text-[11px] text-[#E5E7EB]/50">
+          <p className="text-xs text-[var(--text)]/60">{t('fr.ov2.accum')}</p>
+          <p className="text-xl font-semibold text-[var(--accent-text)] tabular-nums">{breadth ? breadth.accumulationCount : '—'}</p>
+          <p className="text-[11px] text-[var(--text)]/50">
             <Term k="cyclePhase">{t('fr.ov2.phase1')}</Term>
           </p>
         </div>
         <div className={statCard}>
-          <p className="text-xs text-[#E5E7EB]/60">
+          <p className="text-xs text-[var(--text)]/60">
             <Term k="bottomScore">{t('fr.ov2.bottomCand')}</Term>
           </p>
-          <p className="text-xl font-semibold text-[#4ADE80] tabular-nums">{breadth ? breadth.bottomCandidateCount : '—'}</p>
-          <button type="button" onClick={() => setActiveModule('cycle-hunter')} className="text-[11px] text-[#818CF8] hover:underline text-left">
+          <p className="text-xl font-semibold text-[var(--positive)] tabular-nums">{breadth ? breadth.bottomCandidateCount : '—'}</p>
+          <button type="button" onClick={() => setActiveModule('cycle-hunter')} className="text-[11px] text-[var(--accent-text)] hover:underline text-left">
             {t('fr.ov2.openCycle')}
           </button>
         </div>
         <div className={statCard}>
-          <p className="text-xs text-[#E5E7EB]/60">{t('fr.ov2.markup')}</p>
-          <p className="text-xl font-semibold text-[#818CF8] tabular-nums">{breadth ? breadth.markupCount : '—'}</p>
-          <p className="text-[11px] text-[#E5E7EB]/50">{t('fr.ov2.phase3')}</p>
+          <p className="text-xs text-[var(--text)]/60">{t('fr.ov2.markup')}</p>
+          <p className="text-xl font-semibold text-[var(--accent-text)] tabular-nums">{breadth ? breadth.markupCount : '—'}</p>
+          <p className="text-[11px] text-[var(--text)]/50">{t('fr.ov2.phase3')}</p>
         </div>
         <div className={`${statCard} col-span-2 sm:col-span-1`}>
-          <p className="text-xs text-[#E5E7EB]/60">{t('fr.ov2.distrib')}</p>
-          <p className="text-xl font-semibold text-[#FBBF24] tabular-nums">{breadth ? breadth.distributionCount : '—'}</p>
-          <p className="text-[11px] text-[#E5E7EB]/50">
+          <p className="text-xs text-[var(--text)]/60">{t('fr.ov2.distrib')}</p>
+          <p className="text-xl font-semibold text-[var(--warning)] tabular-nums">{breadth ? breadth.distributionCount : '—'}</p>
+          <p className="text-[11px] text-[var(--text)]/50">
             {breadth ? t('fr.ov2.missingHist', { n: breadth.unavailableCount }) : '—'}
           </p>
         </div>
@@ -462,8 +462,8 @@ export function OverviewDashboard() {
       <section aria-label={t('fr.ov2.spotTitle')} className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="min-w-0">
-            <h2 className="text-base font-semibold text-white">{t('fr.ov2.spotTitle')}</h2>
-            <p className="text-xs text-[#E5E7EB]/55">{t('fr.ov2.spotSub')}</p>
+            <h2 className="text-base font-semibold text-[var(--text-strong)]">{t('fr.ov2.spotTitle')}</h2>
+            <p className="text-xs text-[var(--text)]/55">{t('fr.ov2.spotSub')}</p>
           </div>
           <button
             type="button"
@@ -485,7 +485,7 @@ export function OverviewDashboard() {
                 key={item.instrument.id}
                 type="button"
                 onClick={() => openInstrumentIn(item.instrument.exchangeSymbol, 'commodity-profile')}
-                className="group text-left bg-[#111622] border border-[#263244] hover:border-[#6366F1]/70 rounded-xl overflow-hidden transition-all duration-200 focus-visible:outline-2 focus-visible:outline-[#6366F1]"
+                className="group text-left bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)]/70 rounded-xl overflow-hidden transition-all duration-200 focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
               >
                 <div className="relative aspect-video w-full overflow-hidden">
                   <CommodityHeroImage
@@ -497,14 +497,14 @@ export function OverviewDashboard() {
                   />
                   <div
                     aria-hidden="true"
-                    className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-[#0B0E14]/60 to-[#0B0E14]/50"
+                    className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/60 to-[var(--bg)]/50"
                   />
                   <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2">
-                    <span className="text-[11px] text-white/95 bg-[#0B0E14]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15 whitespace-nowrap">
+                    <span className="text-[11px] text-[var(--text-strong)]/95 bg-[var(--bg)]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15 whitespace-nowrap">
                       {item.instrument.exchangeSymbol}
                       {item.instrument.mxvMapping?.mxvSymbol ? ` · MXV ${item.instrument.mxvMapping.mxvSymbol}` : ''}
                     </span>
-                    <span className="inline-flex items-center bg-[#0B0E14]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15 shadow-sm">
+                    <span className="inline-flex items-center bg-[var(--bg)]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15 shadow-sm">
                       <DataStatusBadge
                         status={item.quote.status}
                         compact
@@ -516,16 +516,16 @@ export function OverviewDashboard() {
                   </div>
                   <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-end justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-[11px] text-[#E5E7EB]/75 truncate">
+                      <p className="text-[11px] text-[var(--text)]/75 truncate">
                         {visual?.groupVi ?? t(`dash.cat.${item.instrument.category}`)}
                       </p>
-                      <h3 className="text-base font-semibold text-white truncate">{nameVi}</h3>
+                      <h3 className="text-base font-semibold text-[var(--text-strong)] truncate">{nameVi}</h3>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-base font-semibold text-white tabular-nums">
+                      <p className="text-base font-semibold text-[var(--text-strong)] tabular-nums">
                         {priced ? fmtPrice(item.quote.price as number) : t('fr.ov.noPrice')}
                       </p>
-                      <p className="text-[10px] text-[#E5E7EB]/65">
+                      <p className="text-[10px] text-[var(--text)]/65">
                         {item.bottomScore !== null ? t('fr.ov2.bottomScore', { n: item.bottomScore }) : t('fr.ov2.notScored')}
                       </p>
                     </div>
@@ -533,7 +533,7 @@ export function OverviewDashboard() {
                 </div>
                 <div className="px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs">
                   <CyclePhaseBadge phase={item.cyclePhase} compact />
-                  <span className="inline-flex items-center gap-1 text-[#818CF8] font-medium whitespace-nowrap">
+                  <span className="inline-flex items-center gap-1 text-[var(--accent-text)] font-medium whitespace-nowrap">
                     <span>{t('fr.ov2.analyze')}</span>
                     <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
                   </span>
@@ -576,15 +576,15 @@ export function OverviewDashboard() {
       {/* Beginner tips */}
       <section className={`${card} space-y-2`}>
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-white inline-flex items-center gap-2">
-            <Lightbulb className="w-4 h-4 text-[#FBBF24]" aria-hidden="true" />
+          <h2 className="text-sm font-semibold text-[var(--text-strong)] inline-flex items-center gap-2">
+            <Lightbulb className="w-4 h-4 text-[var(--warning)]" aria-hidden="true" />
             {t('fr.ov.tipsTitle')}
           </h2>
           <button type="button" onClick={() => setActiveModule('learn')} className={linkBtn}>
             {t('fr.ov.learnMore')} →
           </button>
         </div>
-        <ul className="space-y-1.5 text-sm text-[#E5E7EB]/80 leading-relaxed list-disc pl-5">
+        <ul className="space-y-1.5 text-sm text-[var(--text)]/80 leading-relaxed list-disc pl-5">
           <li>
             {t('fr.ov.tip1a')} <Term k="futures" /> {t('fr.ov.tip1b')}
           </li>
@@ -602,14 +602,14 @@ export function OverviewDashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <section
           aria-label={t('fr.ov2.radarTitle')}
-          className="xl:col-span-2 bg-[#111622] border border-[#263244] rounded-xl overflow-hidden flex flex-col"
+          className="xl:col-span-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl overflow-hidden flex flex-col"
         >
-          <div className="px-4 py-3 border-b border-[#263244] flex items-start justify-between gap-3">
+          <div className="px-4 py-3 border-b border-[var(--border)] flex items-start justify-between gap-3">
             <div className="flex items-start gap-2 min-w-0">
-              <Radar className="w-4 h-4 text-[#818CF8] mt-0.5 shrink-0" aria-hidden="true" />
+              <Radar className="w-4 h-4 text-[var(--accent-text)] mt-0.5 shrink-0" aria-hidden="true" />
               <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-white">{t('fr.ov2.radarTitle')}</h2>
-                <p className="text-xs text-[#E5E7EB]/55">{t('fr.ov2.radarSub')}</p>
+                <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('fr.ov2.radarTitle')}</h2>
+                <p className="text-xs text-[var(--text)]/55">{t('fr.ov2.radarSub')}</p>
               </div>
             </div>
             <button
@@ -625,7 +625,7 @@ export function OverviewDashboard() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[560px]">
               <thead>
-                <tr className="border-b border-[#263244] text-xs text-[#E5E7EB]/55">
+                <tr className="border-b border-[var(--border)] text-xs text-[var(--text)]/55">
                   <th className="py-2.5 px-4 font-medium">{t('fr.ov2.colName')}</th>
                   <th className="py-2.5 px-3 font-medium">
                     <Term k="cyclePhase">{t('fr.ov2.colPhase')}</Term>
@@ -639,10 +639,10 @@ export function OverviewDashboard() {
                   <th className="py-2.5 px-4 font-medium text-right">{t('fr.ov2.colPrice')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#263244]/70 text-xs">
+              <tbody className="divide-y divide-[var(--border)]/70 text-xs">
                 {(cycleOverview?.opportunityRadar ?? []).length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 px-4 text-center text-[#E5E7EB]/55">
+                    <td colSpan={5} className="py-6 px-4 text-center text-[var(--text)]/55">
                       {t('fr.ov2.radarEmpty')}
                     </td>
                   </tr>
@@ -653,11 +653,11 @@ export function OverviewDashboard() {
                       <tr
                         key={item.instrument.id}
                         onClick={() => openInstrumentIn(item.instrument.exchangeSymbol, 'commodity-profile')}
-                        className="hover:bg-[#172033]/50 transition-colors cursor-pointer"
+                        className="hover:bg-[var(--surface-2)]/50 transition-colors cursor-pointer"
                       >
                         <td className="py-2.5 px-4">
-                          <div className="font-medium text-white">{nameVi}</div>
-                          <div className="text-[11px] text-[#E5E7EB]/50">
+                          <div className="font-medium text-[var(--text-strong)]">{nameVi}</div>
+                          <div className="text-[11px] text-[var(--text)]/50">
                             {item.instrument.exchange} · {item.instrument.exchangeSymbol}
                             {item.instrument.mxvMapping?.mxvSymbol ? ` · MXV ${item.instrument.mxvMapping.mxvSymbol}` : ''}
                           </div>
@@ -668,14 +668,14 @@ export function OverviewDashboard() {
                         <td className={`py-2.5 px-3 text-right font-semibold tabular-nums ${getBottomScoreAccent(item.bottomClassification)}`}>
                           {item.bottomScore !== null ? `${item.bottomScore}/100` : '—'}
                         </td>
-                        <td className="py-2.5 px-3 text-right text-[#E5E7EB]/75 tabular-nums">
+                        <td className="py-2.5 px-3 text-right text-[var(--text)]/75 tabular-nums">
                           {item.percentile10Y !== null ? `${fmtFixed(item.percentile10Y, 0)}%` : '—'}
                         </td>
                         <td className="py-2.5 px-4 text-right tabular-nums">
                           {hasPrice(item.quote) ? (
-                            <span className="text-[#E5E7EB]/90">{fmtPrice(item.quote.price)}</span>
+                            <span className="text-[var(--text)]/90">{fmtPrice(item.quote.price)}</span>
                           ) : (
-                            <span className="text-[#E5E7EB]/45">{t('fr.ov.noPrice')}</span>
+                            <span className="text-[var(--text)]/45">{t('fr.ov.noPrice')}</span>
                           )}
                           <div className="mt-0.5 inline-flex justify-end w-full">
                             <DataStatusBadge
@@ -697,26 +697,26 @@ export function OverviewDashboard() {
         </section>
 
         <section aria-label={t('fr.ov2.macroTitle')} className={`${card} space-y-3`}>
-          <div className="flex items-start justify-between gap-2 border-b border-[#263244] pb-2.5">
+          <div className="flex items-start justify-between gap-2 border-b border-[var(--border)] pb-2.5">
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-white">{t('fr.ov2.macroTitle')}</h2>
-              <p className="text-xs text-[#E5E7EB]/55">{t('fr.ov2.macroSub')}</p>
+              <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('fr.ov2.macroTitle')}</h2>
+              <p className="text-xs text-[var(--text)]/55">{t('fr.ov2.macroSub')}</p>
             </div>
             <button type="button" onClick={() => setActiveModule('data-health')} className={linkBtn}>
               {t('fr.ov2.macroLink')}
             </button>
           </div>
           {(cycleOverview?.macroTracker ?? []).length === 0 ? (
-            <p className="text-xs text-[#E5E7EB]/55">{t('fr.ov2.macroEmpty')}</p>
+            <p className="text-xs text-[var(--text)]/55">{t('fr.ov2.macroEmpty')}</p>
           ) : (
-            <ul className="divide-y divide-[#263244]/70 text-xs">
+            <ul className="divide-y divide-[var(--border)]/70 text-xs">
               {(cycleOverview?.macroTracker ?? []).map((m) => (
                 <li key={m.id} className="py-2.5 space-y-0.5">
                   <div className="flex items-start justify-between gap-2">
-                    <span className="font-medium text-white">{m.labelVi}</span>
-                    <span className="text-[#E5E7EB] tabular-nums text-right">
+                    <span className="font-medium text-[var(--text-strong)]">{m.labelVi}</span>
+                    <span className="text-[var(--text)] tabular-nums text-right">
                       {m.value === null ? (
-                        <span className="text-[#E5E7EB]/45">{t('fr.ov2.noValue')}</span>
+                        <span className="text-[var(--text)]/45">{t('fr.ov2.noValue')}</span>
                       ) : typeof m.value === 'number' ? (
                         `${fmtNum(m.value, { maximumFractionDigits: 2 })} ${m.unit}`
                       ) : (
@@ -724,7 +724,7 @@ export function OverviewDashboard() {
                       )}
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#E5E7EB]/55" title={m.cycleImplication}>
+                  <p className="text-[11px] text-[var(--text)]/55" title={m.cycleImplication}>
                     {m.cycleImplication.replace(/^DATA_UNAVAILABLE\s*[—-]\s*/, '')}
                   </p>
                 </li>
@@ -738,17 +738,17 @@ export function OverviewDashboard() {
       <section aria-label={t('fr.ov2.heatTitle')} className={`${card} space-y-4`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-white">{t('fr.ov2.heatTitle')}</h2>
-            <p className="text-xs text-[#E5E7EB]/55">{t('fr.ov2.heatSub')}</p>
+            <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('fr.ov2.heatTitle')}</h2>
+            <p className="text-xs text-[var(--text)]/55">{t('fr.ov2.heatSub')}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-1 p-1 bg-[#0B0E14] border border-[#263244] rounded-md self-start sm:self-auto">
+          <div className="flex flex-wrap items-center gap-1 p-1 bg-[var(--bg)] border border-[var(--border)] rounded-md self-start sm:self-auto">
             {HEATMAP_HORIZONS.map((h) => (
               <button
                 key={h}
                 type="button"
                 onClick={() => setHeatmapHorizon(h)}
                 className={`px-2.5 py-1 rounded text-xs transition-colors whitespace-nowrap ${
-                  heatmapHorizon === h ? 'bg-[#6366F1] text-white' : 'text-[#E5E7EB]/70 hover:text-white'
+                  heatmapHorizon === h ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/70 hover:text-white'
                 }`}
               >
                 {t(`fr.ov2.h.${h}`)}
@@ -766,11 +766,11 @@ export function OverviewDashboard() {
                 key={item.instrument.id}
                 type="button"
                 onClick={() => openInstrumentIn(item.instrument.exchangeSymbol, 'commodity-profile')}
-                className={`text-left border rounded-md p-3 transition-colors hover:border-[#6366F1] min-w-0 ${getHeatmapTone(val)}`}
+                className={`text-left border rounded-md p-3 transition-colors hover:border-[var(--accent)] min-w-0 ${getHeatmapTone(val)}`}
               >
                 <div className="flex items-center justify-between gap-1 min-w-0">
-                  <span className="text-xs font-semibold text-white truncate">{nameVi}</span>
-                  <span className="text-[10px] text-[#E5E7EB]/60 shrink-0">{item.instrument.exchangeSymbol}</span>
+                  <span className="text-xs font-semibold text-[var(--text-strong)] truncate">{nameVi}</span>
+                  <span className="text-[10px] text-[var(--text)]/60 shrink-0">{item.instrument.exchangeSymbol}</span>
                 </div>
                 <p className="text-base font-semibold tabular-nums mt-1">
                   {val !== null ? `${val > 0 ? '▲' : val < 0 ? '▼' : ''} ${fmtPct(val)}` : '—'}
@@ -785,7 +785,7 @@ export function OverviewDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <section className={`${card} space-y-2`}>
           <div className="flex items-start justify-between gap-2">
-            <h2 className="text-sm font-semibold text-white">
+            <h2 className="text-sm font-semibold text-[var(--text-strong)]">
               {(() => {
                 // '{term}' is left unreplaced on purpose so the glossary tooltip can be inserted there.
                 const [before, after] = t('fr.ov.trendTitle', { name: activeName }).split('{term}');
@@ -803,7 +803,7 @@ export function OverviewDashboard() {
             </button>
           </div>
           {techSummary && techSummary.status !== 'UNAVAILABLE' ? (
-            <div className="text-xs text-[#E5E7EB]/80 space-y-1 tabular-nums">
+            <div className="text-xs text-[var(--text)]/80 space-y-1 tabular-nums">
               <DataStatusBadge status={techSummary.status as 'HISTORICAL'} compact />
               <p>
                 {t('fr.ov.trendLine', {
@@ -820,22 +820,22 @@ export function OverviewDashboard() {
               </p>
             </div>
           ) : (
-            <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">{t('fr.ov.trendNeed', { name: activeName })}</p>
+            <p className="text-xs text-[var(--text)]/65 leading-relaxed">{t('fr.ov.trendNeed', { name: activeName })}</p>
           )}
         </section>
 
         <section className={`${card} space-y-2`}>
           <div className="flex items-start justify-between gap-2">
-            <h2 className="text-sm font-semibold text-white">{t('fr.ov2.calTitle')}</h2>
+            <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('fr.ov2.calTitle')}</h2>
             <button type="button" onClick={() => setActiveModule('news')} className={linkBtn}>
               {t('fr.ov.open')}
             </button>
           </div>
-          <p className="text-xs text-[#E5E7EB]/65 leading-relaxed">
+          <p className="text-xs text-[var(--text)]/65 leading-relaxed">
             {macroCount + newsCount > 0 ? t('fr.ov2.calHas', { macro: macroCount, news: newsCount }) : t('fr.ov.calDesc')}
           </p>
           {datasets[0] && (
-            <p className="text-[11px] text-[#E5E7EB]/50">
+            <p className="text-[11px] text-[var(--text)]/50">
               {t('fr.ov2.lastSync', { time: formatTimestampInZone(datasets[0].importedAt, 'Asia/Ho_Chi_Minh') })}
             </p>
           )}

@@ -47,20 +47,20 @@ export function CommodityHeroImage({
   if (!visual || errored) {
     return (
       <div
-        className={`relative overflow-hidden bg-gradient-to-br from-[#172033] via-[#111622] to-[#0B0E14] flex flex-col items-center justify-center p-4 text-center ${className}`}
+        className={`relative overflow-hidden bg-gradient-to-br from-[var(--surface-2)] via-[var(--surface)] to-[var(--bg)] flex flex-col items-center justify-center p-4 text-center ${className}`}
         style={{
           backgroundImage: `radial-gradient(circle at 25% 25%, ${accent}24 0%, transparent 60%)`,
         }}
       >
         <FallbackIcon className="w-8 h-8 mb-2 opacity-80" style={{ color: accent }} aria-hidden="true" />
-        <span className="text-xs font-medium text-white/85">{visual?.nameVi ?? name}</span>
-        <span className="text-[11px] font-mono text-white/45 mt-0.5">{symbol}</span>
+        <span className="text-xs font-medium text-[var(--text-strong)]/85">{visual?.nameVi ?? name}</span>
+        <span className="text-[11px] font-mono text-[var(--text-strong)]/45 mt-0.5">{symbol}</span>
       </div>
     );
   }
 
   return (
-    <div className={`relative overflow-hidden bg-[#0B0E14] ${className}`}>
+    <div className={`relative overflow-hidden bg-[var(--bg)] ${className}`}>
       <img
         src={visual.imageUrl}
         alt={visual.imageAlt}

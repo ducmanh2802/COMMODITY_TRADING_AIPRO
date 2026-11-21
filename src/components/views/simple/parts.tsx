@@ -69,7 +69,7 @@ export function BigPrice({ row, t, size = 'card' }: { row: SimpleRow; t: TFuncti
     return (
       <div>
         <div className="flex items-baseline flex-wrap gap-x-2">
-          <span className={`${big} font-extrabold tabular-nums text-white`}>{fmtInt(main)}</span>
+          <span className={`${big} font-extrabold tabular-nums text-[var(--text-strong)]`}>{fmtInt(main)}</span>
           <span className="text-xl font-semibold text-[var(--text)]">{unit === 'kg' ? 'đ/kg' : 'đ/tấn'}</span>
         </div>
         {unit === 'kg' && size === 'detail' && (
@@ -80,7 +80,7 @@ export function BigPrice({ row, t, size = 'card' }: { row: SimpleRow; t: TFuncti
   }
   return (
     <div>
-      <span className={`${big} font-extrabold tabular-nums text-white`}>{fmtPrice(row.quote.price as number)}</span>
+      <span className={`${big} font-extrabold tabular-nums text-[var(--text-strong)]`}>{fmtPrice(row.quote.price as number)}</span>
       <div className="text-lg text-[var(--text)]">{plainUnit(t, row.quote)}</div>
     </div>
   );

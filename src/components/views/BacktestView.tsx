@@ -74,7 +74,7 @@ function EquityCurveSvg({ points }: { points: Array<{ equity: number }> }) {
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
-      className="w-full h-44 bg-[#0B0E14] border border-[#263244] rounded-md"
+      className="w-full h-44 bg-[var(--bg)] border border-[var(--border)] rounded-md"
       role="img"
       aria-label={tr('bt.equityAria')}
     >
@@ -143,27 +143,27 @@ export function BacktestView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-white tracking-tight">
+        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">
           {t('bt.title')}
         </h1>
-        <p className="text-sm text-[#E5E7EB]/65 mt-1">
+        <p className="text-sm text-[var(--text)]/65 mt-1">
           {t('bt.subtitle')}
         </p>
       </div>
 
       <form
         onSubmit={(e) => void handleRun(e)}
-        className="bg-[#111622] border border-[#263244] rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
+        className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
       >
         <div>
-          <label htmlFor="bt-symbol" className="block text-xs text-[#E5E7EB]/65 mb-1">
+          <label htmlFor="bt-symbol" className="block text-xs text-[var(--text)]/65 mb-1">
             {t('bt.instrument')}
           </label>
           <select
             id="bt-symbol"
             value={selectedSymbol}
             onChange={(e) => setSelectedSymbol(e.target.value)}
-            className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
           >
             {instruments.map((inst) => (
               <option key={inst.id} value={inst.exchangeSymbol}>
@@ -174,14 +174,14 @@ export function BacktestView() {
         </div>
 
         <div>
-          <label htmlFor="bt-strategy" className="block text-xs text-[#E5E7EB]/65 mb-1">
+          <label htmlFor="bt-strategy" className="block text-xs text-[var(--text)]/65 mb-1">
             {t('bt.strategy')}
           </label>
           <select
             id="bt-strategy"
             value={strategyId}
             onChange={(e) => setStrategyId(e.target.value as StrategyId)}
-            className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
           >
             {(strategies.length > 0
               ? strategies
@@ -195,14 +195,14 @@ export function BacktestView() {
         </div>
 
         <div>
-          <label htmlFor="bt-tf" className="block text-xs text-[#E5E7EB]/65 mb-1">
+          <label htmlFor="bt-tf" className="block text-xs text-[var(--text)]/65 mb-1">
             {t('bt.timeframe')}
           </label>
           <select
             id="bt-tf"
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value as Timeframe)}
-            className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
           >
             {(['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'] as Timeframe[]).map((tf) => (
               <option key={tf} value={tf}>
@@ -213,7 +213,7 @@ export function BacktestView() {
         </div>
 
         <div>
-          <label htmlFor="bt-equity" className="block text-xs text-[#E5E7EB]/65 mb-1">
+          <label htmlFor="bt-equity" className="block text-xs text-[var(--text)]/65 mb-1">
             {t('bt.equity')}
           </label>
           <input
@@ -222,12 +222,12 @@ export function BacktestView() {
             min="100"
             value={initialEquity}
             onChange={(e) => setInitialEquity(e.target.value)}
-            className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
           />
         </div>
 
         <div>
-          <label htmlFor="bt-contracts" className="block text-xs text-[#E5E7EB]/65 mb-1">
+          <label htmlFor="bt-contracts" className="block text-xs text-[var(--text)]/65 mb-1">
             {t('bt.contracts')}
           </label>
           <input
@@ -236,12 +236,12 @@ export function BacktestView() {
             min="1"
             value={contractsPerTrade}
             onChange={(e) => setContractsPerTrade(e.target.value)}
-            className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
           />
         </div>
 
         <div>
-          <label htmlFor="bt-comm" className="block text-xs text-[#E5E7EB]/65 mb-1">
+          <label htmlFor="bt-comm" className="block text-xs text-[var(--text)]/65 mb-1">
             {t('bt.commission')}
           </label>
           <input
@@ -251,12 +251,12 @@ export function BacktestView() {
             min="0"
             value={commission}
             onChange={(e) => setCommission(e.target.value)}
-            className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
           />
         </div>
 
         <div>
-          <label htmlFor="bt-slip" className="block text-xs text-[#E5E7EB]/65 mb-1">
+          <label htmlFor="bt-slip" className="block text-xs text-[var(--text)]/65 mb-1">
             {t('bt.slipRoll')}
           </label>
           <div className="flex gap-2">
@@ -266,7 +266,7 @@ export function BacktestView() {
               min="0"
               value={slippageTicks}
               onChange={(e) => setSlippageTicks(e.target.value)}
-              className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
+              className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
             />
             <input
               aria-label={t('bt.rollAria')}
@@ -275,7 +275,7 @@ export function BacktestView() {
               placeholder={t('bt.rollPh')}
               value={rolloverBars}
               onChange={(e) => setRolloverBars(e.target.value)}
-              className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white"
+              className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
             />
           </div>
         </div>
@@ -283,7 +283,7 @@ export function BacktestView() {
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
         >
           <History className="w-3.5 h-3.5" aria-hidden="true" />
           <span>{loading ? t('bt.simulating') : t('bt.run')}</span>
@@ -291,21 +291,21 @@ export function BacktestView() {
       </form>
 
       {error && (
-        <div className="bg-[#111622] border border-[#EF4444]/40 rounded-lg p-4 text-xs font-mono text-[#EF4444]">
+        <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-lg p-4 text-xs font-mono text-[var(--negative)]">
           {error}
         </div>
       )}
 
       {result && !result.valid && (
-        <div className="bg-[#111622] border border-[#F59E0B]/40 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-[var(--surface)] border border-[var(--warning)]/40 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-xs font-mono font-semibold text-[#F59E0B]">{t('bt.unavailable')}</p>
-            <p className="text-xs text-[#E5E7EB]/80">{result.error}</p>
+            <p className="text-xs font-mono font-semibold text-[var(--warning)]">{t('bt.unavailable')}</p>
+            <p className="text-xs text-[var(--text)]/80">{result.error}</p>
           </div>
           <button
             type="button"
             onClick={() => setActiveModule('charts')}
-            className="px-3 py-1.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md whitespace-nowrap"
+            className="px-3 py-1.5 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md whitespace-nowrap"
           >
             {t('bt.importCsv')}
           </button>
@@ -315,64 +315,64 @@ export function BacktestView() {
       {result && result.valid && (
         <div className="space-y-6">
           <section className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 text-xs font-mono tabular-nums">
-            <div className="bg-[#111622] border border-[#263244] rounded-lg p-3">
-              <span className="text-[#E5E7EB]/55 font-sans block">{t('bt.netProfit')}</span>
-              <span className={`text-base font-bold ${result.metrics.netProfit >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+              <span className="text-[var(--text)]/55 font-sans block">{t('bt.netProfit')}</span>
+              <span className={`text-base font-bold ${result.metrics.netProfit >= 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>
                 ${fmtFixed(result.metrics.netProfit, 2)}
               </span>
             </div>
-            <div className="bg-[#111622] border border-[#263244] rounded-lg p-3">
-              <span className="text-[#E5E7EB]/55 font-sans block">{t('bt.winRate')}</span>
-              <span className="text-base font-bold text-white">{fmtFixed(result.metrics.winRatePct, 1)}%</span>
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+              <span className="text-[var(--text)]/55 font-sans block">{t('bt.winRate')}</span>
+              <span className="text-base font-bold text-[var(--text-strong)]">{fmtFixed(result.metrics.winRatePct, 1)}%</span>
             </div>
-            <div className="bg-[#111622] border border-[#263244] rounded-lg p-3">
-              <span className="text-[#E5E7EB]/55 font-sans block">{t('bt.profitFactor')}</span>
-              <span className="text-base font-bold text-white">
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+              <span className="text-[var(--text)]/55 font-sans block">{t('bt.profitFactor')}</span>
+              <span className="text-base font-bold text-[var(--text-strong)]">
                 {result.metrics.profitFactor !== null ? fmtFixed(result.metrics.profitFactor, 2) : '∞'}
               </span>
             </div>
-            <div className="bg-[#111622] border border-[#263244] rounded-lg p-3">
-              <span className="text-[#E5E7EB]/55 font-sans block">{t('bt.maxDd')}</span>
-              <span className="text-base font-bold text-[#EF4444]">
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+              <span className="text-[var(--text)]/55 font-sans block">{t('bt.maxDd')}</span>
+              <span className="text-base font-bold text-[var(--negative)]">
                 {fmtFixed(result.metrics.maxDrawdownPct, 2)}%
               </span>
             </div>
-            <div className="bg-[#111622] border border-[#263244] rounded-lg p-3">
-              <span className="text-[#E5E7EB]/55 font-sans block">{t('bt.expectancy')}</span>
-              <span className="text-base font-bold text-white">
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+              <span className="text-[var(--text)]/55 font-sans block">{t('bt.expectancy')}</span>
+              <span className="text-base font-bold text-[var(--text-strong)]">
                 ${fmtFixed(result.metrics.expectancy, 2)} ({fmtFixed(result.metrics.averageR, 2)}R)
               </span>
             </div>
-            <div className="bg-[#111622] border border-[#263244] rounded-lg p-3">
-              <span className="text-[#E5E7EB]/55 font-sans block">{t('bt.tradesSharpe')}</span>
-              <span className="text-base font-bold text-white">
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+              <span className="text-[var(--text)]/55 font-sans block">{t('bt.tradesSharpe')}</span>
+              <span className="text-base font-bold text-[var(--text-strong)]">
                 {result.metrics.tradeCount} / {result.metrics.sharpeRatio !== null ? fmtFixed(result.metrics.sharpeRatio, 2) : t('common.na')}
               </span>
             </div>
           </section>
 
-          <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3">
+          <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-white">{t('bt.equityCurve')}</h2>
-              <span className="font-mono text-xs text-[#E5E7EB]/65">
+              <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('bt.equityCurve')}</h2>
+              <span className="font-mono text-xs text-[var(--text)]/65">
                 {t('bt.finalEquity', { v: fmtFixed(result.metrics.finalEquity, 2) })}
               </span>
             </div>
             <EquityCurveSvg points={result.equityCurve} />
-            <p className="text-[11px] text-[#E5E7EB]/60 leading-relaxed">
+            <p className="text-[11px] text-[var(--text)]/60 leading-relaxed">
               {result.assumptions.disclaimer}{' '}
               {t('bt.assumptions', { look: result.assumptions.lookAheadPrevention, fill: result.assumptions.intrabarFillOrder })}
             </p>
           </section>
 
-          <section className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
-            <div className="px-4 py-3 border-b border-[#263244]">
-              <h2 className="text-sm font-semibold text-white">{t('bt.ledger', { n: result.trades.length })}</h2>
+          <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b border-[var(--border)]">
+              <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('bt.ledger', { n: result.trades.length })}</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[780px]">
                 <thead>
-                  <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
+                  <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">
                     <th className="py-2 px-4">#</th>
                     <th className="py-2 px-3">{t('bt.col.dir')}</th>
                     <th className="py-2 px-3">{t('bt.col.entryTime')}</th>
@@ -383,23 +383,23 @@ export function BacktestView() {
                     <th className="py-2 px-4 text-right">{t('bt.col.netPnl')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#263244]/70 text-xs font-mono tabular-nums">
+                <tbody className="divide-y divide-[var(--border)]/70 text-xs font-mono tabular-nums">
                   {result.trades.map((trade) => (
                     <tr key={trade.tradeNumber}>
-                      <td className="py-2 px-4 text-[#E5E7EB]/60">{trade.tradeNumber}</td>
-                      <td className={`py-2 px-3 ${trade.direction === 'LONG' ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                      <td className="py-2 px-4 text-[var(--text)]/60">{trade.tradeNumber}</td>
+                      <td className={`py-2 px-3 ${trade.direction === 'LONG' ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>
                         {t(`bt.dir.${trade.direction}`)}
                       </td>
-                      <td className="py-2 px-3 text-[#E5E7EB]/70">
+                      <td className="py-2 px-3 text-[var(--text)]/70">
                         {formatTimestampInZone(trade.entryTimestamp, 'Asia/Ho_Chi_Minh')}
                       </td>
-                      <td className="py-2 px-3 text-right text-white">{fmtFixed(trade.entryPrice, 2)}</td>
-                      <td className="py-2 px-3 text-right text-white">{fmtFixed(trade.exitPrice, 2)}</td>
-                      <td className="py-2 px-3 text-[#E5E7EB]/75" title={trade.exitReason}>
+                      <td className="py-2 px-3 text-right text-[var(--text-strong)]">{fmtFixed(trade.entryPrice, 2)}</td>
+                      <td className="py-2 px-3 text-right text-[var(--text-strong)]">{fmtFixed(trade.exitPrice, 2)}</td>
+                      <td className="py-2 px-3 text-[var(--text)]/75" title={trade.exitReason}>
                         {hasKey(`bt.reason.${trade.exitReason}`) ? t(`bt.reason.${trade.exitReason}` as TKey) : trade.exitReason}
                       </td>
-                      <td className="py-2 px-3 text-right text-white">{fmtFixed(trade.rMultiple, 2)}R</td>
-                      <td className={`py-2 px-4 text-right ${trade.netPnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                      <td className="py-2 px-3 text-right text-[var(--text-strong)]">{fmtFixed(trade.rMultiple, 2)}R</td>
+                      <td className={`py-2 px-4 text-right ${trade.netPnl >= 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>
                         ${fmtFixed(trade.netPnl, 2)}
                       </td>
                     </tr>

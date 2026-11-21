@@ -84,7 +84,7 @@ export function CommodityWorldView() {
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight text-balance">
+          <h1 className="text-2xl font-semibold text-[var(--text-strong)] tracking-tight text-balance">
             Thế giới Hàng hóa Sống (Living Commodity World)
           </h1>
           <p className="text-sm text-[var(--muted)] mt-1">
@@ -96,7 +96,7 @@ export function CommodityWorldView() {
           type="button"
           onClick={() => void fetchWorld()}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 px-3 py-2 bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--border)] rounded-md text-xs font-medium text-[#E5E7EB] whitespace-nowrap self-start lg:self-auto"
+          className="inline-flex items-center gap-1.5 px-3 py-2 bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--border)] rounded-md text-xs font-medium text-[var(--text)] whitespace-nowrap self-start lg:self-auto"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
           <span>Làm mới Chu kỳ</span>
@@ -108,7 +108,7 @@ export function CommodityWorldView() {
         aria-label="Bộ lọc Thế giới Hàng hóa"
         className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4"
       >
-        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[#0B0E14] border border-[var(--border)] rounded-md">
+        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[var(--bg)] border border-[var(--border)] rounded-md">
           {GROUP_FILTERS.map((group) => {
             const active = groupFilter === group;
             return (
@@ -118,7 +118,7 @@ export function CommodityWorldView() {
                 onClick={() => setGroupFilter(group)}
                 className={`px-3 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
                   active
-                    ? 'bg-[#6366F1] text-white'
+                    ? 'bg-[var(--accent)] text-white'
                     : 'text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
                 }`}
               >
@@ -137,7 +137,7 @@ export function CommodityWorldView() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Tìm Ngô, Robusta, ZC, LRC..."
               aria-label="Tìm kiếm hàng hóa"
-              className="w-full sm:w-64 pl-8 pr-3 py-1.5 bg-[#0B0E14] border border-[var(--border)] rounded-md text-xs text-white placeholder:text-[var(--faint)] focus:outline-none focus:border-[#6366F1]"
+              className="w-full sm:w-64 pl-8 pr-3 py-1.5 bg-[var(--bg)] border border-[var(--border)] rounded-md text-xs text-[var(--text-strong)] placeholder:text-[var(--faint)] focus:outline-none focus:border-[var(--accent)]"
             />
           </div>
 
@@ -147,8 +147,8 @@ export function CommodityWorldView() {
             aria-pressed={mxvOnly}
             className={`px-3 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
               mxvOnly
-                ? 'bg-[#6366F1]/20 border-[#6366F1] text-white'
-                : 'bg-[#0B0E14] border-[var(--border)] text-[var(--muted)] hover:text-white'
+                ? 'bg-[var(--accent)]/20 border-[var(--accent)] text-[var(--text-strong)]'
+                : 'bg-[var(--bg)] border-[var(--border)] text-[var(--muted)] hover:text-[var(--text-strong)]'
             }`}
           >
             {mxvOnly ? 'Đang lọc: Liên thông MXV' : 'Chỉ hiện hàng hóa MXV'}
@@ -157,12 +157,12 @@ export function CommodityWorldView() {
       </section>
 
       {error && (
-        <div className="bg-[var(--surface)] border border-[#EF4444]/40 rounded-[var(--radius-md)] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#FCA5A5]">
+        <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-[var(--radius-md)] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[var(--negative)]">
           <span>Không thể tải dữ liệu Thế giới Hàng hóa: {error}</span>
           <button
             type="button"
             onClick={() => void fetchWorld()}
-            className="px-3 py-1.5 bg-[var(--surface-2)] hover:bg-[#1E293B] border border-[var(--border)] rounded text-xs font-medium text-white whitespace-nowrap self-start sm:self-auto"
+            className="px-3 py-1.5 bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border)] rounded text-xs font-medium text-[var(--text-strong)] whitespace-nowrap self-start sm:self-auto"
           >
             Thử lại ngay
           </button>
@@ -217,7 +217,7 @@ function CommodityWorldCard({
     <button
       type="button"
       onClick={onSelect}
-      className="group relative text-left shadow-[var(--shadow-card)] hover:-translate-y-0.5 bg-[var(--surface)] border border-[var(--border)] hover:border-[#6366F1]/70 rounded-[var(--radius-md)] overflow-hidden transition-all duration-200 focus-visible:outline-2 focus-visible:outline-[#6366F1] flex flex-col"
+      className="group relative text-left shadow-[var(--shadow-card)] hover:-translate-y-0.5 bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)]/70 rounded-[var(--radius-md)] overflow-hidden transition-all duration-200 focus-visible:outline-2 focus-visible:outline-[var(--accent)] flex flex-col"
     >
       {/* Photographic 16:9 Canvas with measured contrast scrim */}
       <div className="relative aspect-video w-full overflow-hidden">
@@ -231,16 +231,16 @@ function CommodityWorldCard({
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-[#0B0E14]/60 to-[#0B0E14]/50"
+          className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/60 to-[var(--bg)]/50"
         />
 
         {/* Top overlay row: exchange/MXV + status */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-          <span className="text-[11px] font-mono text-white/95 bg-[#0B0E14]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15 truncate">
+          <span className="text-[11px] font-mono text-[var(--text-strong)]/95 bg-[var(--bg)]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15 truncate">
             {instrument.exchange}:{instrument.exchangeSymbol}
             {mxvCode ? ` · MXV ${mxvCode}` : ''}
           </span>
-          <span className="inline-flex items-center shrink-0 bg-[#0B0E14]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15 shadow-sm">
+          <span className="inline-flex items-center shrink-0 bg-[var(--bg)]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15 shadow-sm">
             <DataStatusBadge status={quote.status} compact />
           </span>
         </div>
@@ -251,7 +251,7 @@ function CommodityWorldCard({
             <p className="text-[11px] text-[var(--text)] truncate">
               {visual?.groupVi ?? instrument.category} · {visual?.originTag ?? instrument.exchange}
             </p>
-            <h2 className="text-lg font-semibold text-white tracking-tight truncate">
+            <h2 className="text-lg font-semibold text-[var(--text-strong)] tracking-tight truncate">
               {nameVi} <span className="text-xs font-normal text-[var(--muted)]">({instrument.productName})</span>
             </h2>
           </div>
@@ -260,7 +260,7 @@ function CommodityWorldCard({
             <p
               title={quote.price === null ? 'DATA_UNAVAILABLE' : undefined}
               className={`font-semibold tabular-nums ${
-                quote.price !== null ? 'text-sm sm:text-base text-white' : 'text-xs sm:text-sm text-[#E5E7EB]/85'
+                quote.price !== null ? 'text-sm sm:text-base text-[var(--text-strong)]' : 'text-xs sm:text-sm text-[var(--text)]/85'
               }`}
             >
               {quote.price !== null ? quote.price.toFixed(2) : 'Chưa có giá'}
@@ -276,7 +276,7 @@ function CommodityWorldCard({
       <div className="p-4 space-y-3 flex-1 flex flex-col justify-between bg-[var(--surface)]">
         <div className="flex items-center justify-between gap-2">
           <CyclePhaseBadge phase={cyclePhase} compact />
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-[#6366F1] group-hover:translate-x-0.5 transition-transform whitespace-nowrap shrink-0">
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent)] group-hover:translate-x-0.5 transition-transform whitespace-nowrap shrink-0">
             <span>Hồ sơ chu kỳ</span>
             <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
           </span>
@@ -294,10 +294,10 @@ function CommodityWorldCard({
             <span
               className={`block font-semibold tabular-nums truncate ${
                 returns.m1 === null
-                  ? 'text-[#E5E7EB]/45'
+                  ? 'text-[var(--text)]/45'
                   : returns.m1 >= 0
-                    ? 'text-[#22C55E]'
-                    : 'text-[#EF4444]'
+                    ? 'text-[var(--positive)]'
+                    : 'text-[var(--negative)]'
               }`}
             >
               {returns.m1 !== null ? `${returns.m1 >= 0 ? '+' : ''}${returns.m1.toFixed(2)}%` : '—'}

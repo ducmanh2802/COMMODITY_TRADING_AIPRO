@@ -24,15 +24,15 @@ class ModuleErrorBoundary extends Component<ModuleErrorBoundaryProps, ModuleErro
   render(): React.ReactNode {
     if (this.state.error) {
       return (
-        <div className="bg-[#111622] border border-[#263244] rounded-xl p-6 max-w-lg mx-auto my-8 space-y-4">
-          <div className="flex items-center gap-2.5 text-[#F59E0B]">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 max-w-lg mx-auto my-8 space-y-4">
+          <div className="flex items-center gap-2.5 text-[var(--warning)]">
             <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden="true" />
-            <h2 className="text-sm font-semibold text-white">Không thể tải mô-đun giao diện</h2>
+            <h2 className="text-sm font-semibold text-[var(--text-strong)]">Không thể tải mô-đun giao diện</h2>
           </div>
-          <p className="text-xs text-[#E5E7EB]/70 leading-relaxed">
+          <p className="text-xs text-[var(--text)]/70 leading-relaxed">
             Máy chủ phát triển vừa khởi động lại hoặc kết nối tạm gián đoạn khi nạp file giao diện. Bạn có thể thử nạp lại mô-đun hoặc tải lại trang.
           </p>
-          <p className="text-[11px] font-mono text-[#E5E7EB]/55 bg-[#0B0E14] border border-[#263244] rounded p-2.5 break-all">
+          <p className="text-[11px] font-mono text-[var(--text)]/55 bg-[var(--bg)] border border-[var(--border)] rounded p-2.5 break-all">
             {this.state.error.message}
           </p>
           <div className="flex flex-wrap items-center gap-2">
@@ -42,7 +42,7 @@ class ModuleErrorBoundary extends Component<ModuleErrorBoundaryProps, ModuleErro
                 this.setState({ error: null });
                 this.props.onRetry();
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Thử tải lại</span>
@@ -50,7 +50,7 @@ class ModuleErrorBoundary extends Component<ModuleErrorBoundaryProps, ModuleErro
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] text-white text-xs font-medium rounded-md transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[var(--surface-2)] hover:bg-[var(--surface-2)]/80 border border-[var(--border)] text-[var(--text-strong)] text-xs font-medium rounded-md transition-colors"
             >
               <span>Tải lại toàn trang</span>
             </button>
@@ -107,7 +107,7 @@ export function lazyWithRetry<M, P extends object = object>(
       <ModuleErrorBoundary onRetry={handleRetry}>
         <Suspense
           key={retryKey}
-          fallback={<p className="text-xs text-[#E5E7EB]/55 py-10 text-center">{fallbackText}</p>}
+          fallback={<p className="text-xs text-[var(--text)]/55 py-10 text-center">{fallbackText}</p>}
         >
           <CurrentLazy {...props} />
         </Suspense>

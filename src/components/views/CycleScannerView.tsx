@@ -54,11 +54,11 @@ export function CycleScannerView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight flex items-center gap-2">
-            <Radar className="w-5 h-5 text-[#6366F1]" aria-hidden="true" />
+          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight flex items-center gap-2">
+            <Radar className="w-5 h-5 text-[var(--accent)]" aria-hidden="true" />
             <span>Bộ lọc Săn Chu kỳ &amp; Vùng Đáy (Cycle Hunter Scanner)</span>
           </h1>
-          <p className="text-sm text-[#E5E7EB]/65 mt-1">
+          <p className="text-sm text-[var(--text)]/65 mt-1">
             Tự động xếp các hàng hóa tiềm năng nhất (điểm cơ hội &amp; tạo đáy 0–100) lên đầu danh sách.
           </p>
         </div>
@@ -67,10 +67,10 @@ export function CycleScannerView() {
       {/* Filter Controls */}
       <section
         aria-label="Bộ lọc Cycle Scanner"
-        className="bg-[#111622] border border-[#263244] rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
       >
         <div className="space-y-1">
-          <label htmlFor="scan-group" className="text-xs text-[#E5E7EB]/60 flex items-center gap-1">
+          <label htmlFor="scan-group" className="text-xs text-[var(--text)]/60 flex items-center gap-1">
             <Filter className="w-3 h-3" aria-hidden="true" />
             <span>Nhóm hàng hóa</span>
           </label>
@@ -78,7 +78,7 @@ export function CycleScannerView() {
             id="scan-group"
             value={category}
             onChange={(e) => setCategory(e.target.value as CommodityGroupFilter)}
-            className="w-full bg-[#0B0E14] border border-[#263244] rounded px-2.5 py-2 text-xs text-white focus:outline-none focus:border-[#6366F1]"
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded px-2.5 py-2 text-xs text-[var(--text-strong)] focus:outline-none focus:border-[var(--accent)]"
           >
             {(['ALL', 'AGRICULTURE', 'SOFT_COMMODITIES', 'METALS', 'ENERGY'] as CommodityGroupFilter[]).map((g) => (
               <option key={g} value={g}>
@@ -89,14 +89,14 @@ export function CycleScannerView() {
         </div>
 
         <div className="space-y-1">
-          <label htmlFor="scan-phase" className="text-xs text-[#E5E7EB]/60 block">
+          <label htmlFor="scan-phase" className="text-xs text-[var(--text)]/60 block">
             Giai đoạn Chu kỳ
           </label>
           <select
             id="scan-phase"
             value={phase}
             onChange={(e) => setPhase(e.target.value as 'ALL' | CyclePhase)}
-            className="w-full bg-[#0B0E14] border border-[#263244] rounded px-2.5 py-2 text-xs text-white focus:outline-none focus:border-[#6366F1]"
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded px-2.5 py-2 text-xs text-[var(--text-strong)] focus:outline-none focus:border-[var(--accent)]"
           >
             <option value="ALL">Tất cả giai đoạn</option>
             <option value="PHASE_1_ACCUMULATION">Giai đoạn 1 · Tích lũy đáy</option>
@@ -108,7 +108,7 @@ export function CycleScannerView() {
         </div>
 
         <div className="space-y-1">
-          <label htmlFor="scan-score" className="text-xs text-[#E5E7EB]/60 block">
+          <label htmlFor="scan-score" className="text-xs text-[var(--text)]/60 block">
             Bottom Score tối thiểu ({minScore})
           </label>
           <input
@@ -119,7 +119,7 @@ export function CycleScannerView() {
             step={5}
             value={minScore}
             onChange={(e) => setMinScore(Number(e.target.value))}
-            className="w-full accent-[#6366F1]"
+            className="w-full accent-[var(--accent)]"
           />
         </div>
 
@@ -130,8 +130,8 @@ export function CycleScannerView() {
             aria-pressed={mxvOnly}
             className={`w-full px-3 py-2 rounded border text-xs font-medium transition-colors whitespace-nowrap ${
               mxvOnly
-                ? 'bg-[#6366F1] border-[#6366F1] text-white'
-                : 'bg-[#0B0E14] border-[#263244] text-[#E5E7EB]/80 hover:text-white'
+                ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                : 'bg-[var(--bg)] border-[var(--border)] text-[var(--text)]/80 hover:text-white'
             }`}
           >
             {mxvOnly ? 'Đang lọc: Liên thông MXV' : 'Bao gồm cả MXV & Quốc tế'}
@@ -140,18 +140,18 @@ export function CycleScannerView() {
       </section>
 
       {error && (
-        <div className="bg-[#111622] border border-[#EF4444]/40 rounded-lg p-4 text-xs text-[#EF4444]">
+        <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-lg p-4 text-xs text-[var(--negative)]">
           {error}
         </div>
       )}
 
       {/* Scanner Results Table */}
-      <section className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#263244] flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">
+      <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
+        <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-[var(--text-strong)]">
             Kết quả Xếp hạng Cơ hội Chu kỳ ({results.length})
           </h2>
-          <span className="text-[11px] font-mono text-[#E5E7EB]/50">
+          <span className="text-[11px] font-mono text-[var(--text)]/50">
             Nhấp bất kỳ hàng hóa để mở Hồ sơ Chu kỳ &amp; AI Verdict
           </span>
         </div>
@@ -159,7 +159,7 @@ export function CycleScannerView() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-[#263244] text-xs text-[#E5E7EB]/55">
+              <tr className="border-b border-[var(--border)] text-xs text-[var(--text)]/55">
                 <th className="py-2.5 px-4 font-medium">Hàng hóa</th>
                 <th className="py-2.5 px-3 font-medium">Giai đoạn Chu kỳ</th>
                 <th className="py-2.5 px-3 font-medium text-right">Bottom Score</th>
@@ -169,16 +169,16 @@ export function CycleScannerView() {
                 <th className="py-2.5 px-4 font-medium text-right">Chi tiết</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#263244]/70 text-xs">
+            <tbody className="divide-y divide-[var(--border)]/70 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-[#E5E7EB]/55">
+                  <td colSpan={7} className="py-8 text-center text-[var(--text)]/55">
                     Đang tính toán ma trận chu kỳ 20 hàng hóa...
                   </td>
                 </tr>
               ) : results.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-[#E5E7EB]/55">
+                  <td colSpan={7} className="py-8 text-center text-[var(--text)]/55">
                     Không có hàng hóa nào thỏa mãn điều kiện lọc (Lưu ý: các mã thiếu lịch sử OHLCV có Bottom Score = null và sẽ ẩn khi chọn Bottom Score &gt; 0).
                   </td>
                 </tr>
@@ -190,7 +190,7 @@ export function CycleScannerView() {
                     <tr
                       key={item.instrument.id}
                       onClick={() => openInstrumentIn(item.instrument.exchangeSymbol, 'commodity-profile')}
-                      className="hover:bg-[#172033]/60 transition-colors cursor-pointer"
+                      className="hover:bg-[var(--surface-2)]/60 transition-colors cursor-pointer"
                     >
                       <td className="py-2.5 px-4">
                         <div className="flex items-center gap-3">
@@ -198,11 +198,11 @@ export function CycleScannerView() {
                             symbol={item.instrument.id}
                             name={nameVi}
                             category={item.instrument.category}
-                            className="w-16 h-9 rounded shrink-0 border border-[#263244]"
+                            className="w-16 h-9 rounded shrink-0 border border-[var(--border)]"
                           />
                           <div className="min-w-0">
-                            <p className="font-medium text-white truncate">{nameVi}</p>
-                            <p className="text-[11px] font-mono text-[#E5E7EB]/50">
+                            <p className="font-medium text-[var(--text-strong)] truncate">{nameVi}</p>
+                            <p className="text-[11px] font-mono text-[var(--text)]/50">
                               {item.instrument.exchange}:{item.instrument.exchangeSymbol}
                               {item.instrument.mxvMapping?.mxvSymbol
                                 ? ` · MXV ${item.instrument.mxvMapping.mxvSymbol}`
@@ -217,10 +217,10 @@ export function CycleScannerView() {
                       <td className={`py-2.5 px-3 text-right font-mono font-semibold tabular-nums ${getBottomScoreAccent(item.bottomClassification)}`}>
                         {item.bottomScore !== null ? `${item.bottomScore}/100` : '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-[#E5E7EB]/75 tabular-nums">
+                      <td className="py-2.5 px-3 text-right font-mono text-[var(--text)]/75 tabular-nums">
                         {item.percentile10Y !== null ? `${item.percentile10Y.toFixed(0)}%` : '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-white tabular-nums">
+                      <td className="py-2.5 px-3 text-right font-mono text-[var(--text-strong)] tabular-nums">
                         {item.quote.price !== null ? item.quote.price.toFixed(2) : 'DATA_UNAVAILABLE'}
                       </td>
                       <td className="py-2.5 px-3">
@@ -233,7 +233,7 @@ export function CycleScannerView() {
                             e.stopPropagation();
                             openInstrumentIn(item.instrument.exchangeSymbol, 'commodity-profile');
                           }}
-                          className="inline-flex items-center gap-1 text-xs text-[#6366F1] hover:underline whitespace-nowrap"
+                          className="inline-flex items-center gap-1 text-xs text-[var(--accent)] hover:underline whitespace-nowrap"
                         >
                           <span>Mở</span>
                           <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />

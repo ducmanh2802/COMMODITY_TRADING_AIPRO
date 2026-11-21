@@ -31,9 +31,9 @@ export function Heatmap({
     <ul className={`grid grid-cols-2 sm:grid-cols-3 gap-2 ${className}`} aria-label={ariaLabel}>
       {tiles.map((t) => (
         <li key={t.id} className="rounded-lg border border-[var(--border)] p-3 min-h-[72px]" style={{ background: heatColor(t.pct) }}>
-          <div className="text-sm font-semibold text-white">{t.label}</div>
-          <div className="text-xl font-bold tabular-nums text-white">{t.pct === null ? noDataLabel : formatPct(t.pct)}</div>
-          {t.sub && <div className="text-xs text-white/80">{t.sub}</div>}
+          <div className="text-sm font-semibold text-[var(--text-strong)]">{t.label}</div>
+          <div className="text-xl font-bold tabular-nums text-[var(--text-strong)]">{t.pct === null ? noDataLabel : formatPct(t.pct)}</div>
+          {t.sub && <div className="text-xs text-[var(--text-strong)]/80">{t.sub}</div>}
         </li>
       ))}
     </ul>

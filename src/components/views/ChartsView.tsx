@@ -200,10 +200,10 @@ export function ChartsView() {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">
+          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">
             {t('chart.owner.title', { symbol: selectedSymbol, tf: timeframe })}
           </h1>
-          <p className="text-sm text-[#E5E7EB]/65 mt-1">
+          <p className="text-sm text-[var(--text)]/65 mt-1">
             {t('chart.owner.subtitle')}
           </p>
         </div>
@@ -213,37 +213,37 @@ export function ChartsView() {
       <InstrumentToolbar
         rightSlot={
           <>
-            <label className="inline-flex items-center gap-1.5 text-xs font-mono text-[#E5E7EB]/80 cursor-pointer">
+            <label className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--text)]/80 cursor-pointer">
               <input
                 type="checkbox"
                 checked={showEma20}
                 onChange={(e) => setShowEma20(e.target.checked)}
-                className="accent-[#6366F1]"
+                className="accent-[var(--accent)]"
               />
               <span>EMA 20</span>
             </label>
-            <label className="inline-flex items-center gap-1.5 text-xs font-mono text-[#E5E7EB]/80 cursor-pointer">
+            <label className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--text)]/80 cursor-pointer">
               <input
                 type="checkbox"
                 checked={showEma50}
                 onChange={(e) => setShowEma50(e.target.checked)}
-                className="accent-[#F59E0B]"
+                className="accent-[var(--warning)]"
               />
               <span>EMA 50</span>
             </label>
-            <label className="inline-flex items-center gap-1.5 text-xs font-mono text-[#E5E7EB]/80 cursor-pointer">
+            <label className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--text)]/80 cursor-pointer">
               <input
                 type="checkbox"
                 checked={showEma200}
                 onChange={(e) => setShowEma200(e.target.checked)}
-                className="accent-[#E5E7EB]"
+                className="accent-[var(--text)]"
               />
               <span>EMA 200</span>
             </label>
             <button
               type="button"
               onClick={() => setShowCsvPanel((v) => !v)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#172033] hover:bg-[#6366F1] border border-[#263244] rounded-md text-xs font-medium text-white transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-2)] hover:bg-[var(--accent)] border border-[var(--border)] rounded-md text-xs font-medium text-white transition-colors"
             >
               <Upload className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{showCsvPanel ? t('chart.owner.hideCsv') : t('chart.owner.importCsv')}</span>
@@ -261,54 +261,54 @@ export function ChartsView() {
       )}
 
       {error && (
-        <div className="bg-[#111622] border border-[#EF4444]/40 rounded-lg p-4 text-xs text-[#EF4444] font-mono">
+        <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-lg p-4 text-xs text-[var(--negative)] font-mono">
           {error}
         </div>
       )}
 
       <section
         aria-label={t('chart.owner.canvas')}
-        className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
+        className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden"
       >
-        <div className="px-4 py-2.5 border-b border-[#263244] flex flex-wrap items-center justify-between gap-3 text-xs font-mono tabular-nums">
+        <div className="px-4 py-2.5 border-b border-[var(--border)] flex flex-wrap items-center justify-between gap-3 text-xs font-mono tabular-nums">
           {hoverCandle ? (
-            <div className="flex flex-wrap items-center gap-4 text-[#E5E7EB]">
-              <span className="text-[#E5E7EB]/60">
+            <div className="flex flex-wrap items-center gap-4 text-[var(--text)]">
+              <span className="text-[var(--text)]/60">
                 {formatTimestampInZone(hoverCandle.timestamp, 'Asia/Ho_Chi_Minh')}
               </span>
               <span>O: {fmtFixed(hoverCandle.open, 4)}</span>
               <span>H: {fmtFixed(hoverCandle.high, 4)}</span>
               <span>L: {fmtFixed(hoverCandle.low, 4)}</span>
-              <span className={hoverCandle.close >= hoverCandle.open ? 'text-[#22C55E]' : 'text-[#EF4444]'}>
+              <span className={hoverCandle.close >= hoverCandle.open ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}>
                 C: {fmtFixed(hoverCandle.close, 4)}
               </span>
               <span>{t('chart.owner.vol')}: {hoverCandle.volume !== null ? fmtNum(hoverCandle.volume) : t('common.na')}</span>
             </div>
           ) : (
-            <span className="text-[#F59E0B]">
+            <span className="text-[var(--warning)]">
               {t('chart.owner.noVerified')}
             </span>
           )}
-          <span className="text-[#E5E7EB]/55">{t('chart.bars', { n: candles.length })}</span>
+          <span className="text-[var(--text)]/55">{t('chart.bars', { n: candles.length })}</span>
         </div>
 
         {loading ? (
-          <div className="h-[440px] flex items-center justify-center text-xs font-mono text-[#E5E7EB]/60">
+          <div className="h-[440px] flex items-center justify-center text-xs font-mono text-[var(--text)]/60">
             {t('chart.owner.loading')}
           </div>
         ) : candles.length === 0 ? (
           <div className="h-[440px] flex flex-col items-center justify-center p-6 text-center space-y-3">
             <DataStatusBadge status="UNAVAILABLE" />
-            <p className="text-sm font-mono text-white">
+            <p className="text-sm font-mono text-[var(--text-strong)]">
               {t('chart.owner.noCandles', { symbol: selectedSymbol, tf: timeframe })}
             </p>
-            <p className="text-xs text-[#E5E7EB]/60 max-w-md">
+            <p className="text-xs text-[var(--text)]/60 max-w-md">
               {t('chart.owner.noCandlesHint')}
             </p>
             <button
               type="button"
               onClick={() => setShowCsvPanel(true)}
-              className="px-3.5 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md"
+              className="px-3.5 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md"
             >
               {t('chart.owner.uploadCsv')}
             </button>

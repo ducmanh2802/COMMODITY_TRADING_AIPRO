@@ -155,10 +155,10 @@ export function RiskManagementView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-white tracking-tight">
+        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">
           {t('risk.title')}
         </h1>
-        <p className="text-sm text-[#E5E7EB]/65 mt-1">
+        <p className="text-sm text-[var(--text)]/65 mt-1">
           {t('risk.subtitle')}
         </p>
       </div>
@@ -166,18 +166,18 @@ export function RiskManagementView() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <form
           onSubmit={(e) => void handleCalculate(e)}
-          className="xl:col-span-2 bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-4"
+          className="xl:col-span-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-5 space-y-4"
         >
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
-              <label htmlFor="risk-symbol" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-symbol" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.contract')}
               </label>
               <select
                 id="risk-symbol"
                 value={selectedSymbol}
                 onChange={(e) => setSelectedSymbol(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)]"
               >
                 {instruments.map((inst) => (
                   <option key={inst.id} value={inst.exchangeSymbol}>
@@ -188,14 +188,14 @@ export function RiskManagementView() {
             </div>
 
             <div>
-              <label htmlFor="risk-currency" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-currency" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.accountCurrency')}
               </label>
               <select
                 id="risk-currency"
                 value={accountCurrency}
                 onChange={(e) => setAccountCurrency(e.target.value as AccountCurrency)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)]"
               >
                 <option value="USD">USD</option>
                 <option value="VND">VND</option>
@@ -205,7 +205,7 @@ export function RiskManagementView() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="risk-equity" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-equity" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.equity', { cur: accountCurrency })}
               </label>
               <input
@@ -214,12 +214,12 @@ export function RiskManagementView() {
                 step="any"
                 value={accountEquity}
                 onChange={(e) => setAccountEquity(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
 
             <div>
-              <label htmlFor="risk-pct" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-pct" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.riskPct')}
               </label>
               <input
@@ -228,12 +228,12 @@ export function RiskManagementView() {
                 step="0.05"
                 value={riskPct}
                 onChange={(e) => setRiskPct(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
 
             <div>
-              <label htmlFor="risk-max-contracts" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-max-contracts" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.maxContracts')}
               </label>
               <input
@@ -242,14 +242,14 @@ export function RiskManagementView() {
                 min="1"
                 value={maxContractsPerInstrument}
                 onChange={(e) => setMaxContractsPerInstrument(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="risk-entry" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-entry" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.entry')}
               </label>
               <input
@@ -259,12 +259,12 @@ export function RiskManagementView() {
                 placeholder={t('risk.entryPh')}
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
 
             <div>
-              <label htmlFor="risk-sl" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-sl" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.stop')}
               </label>
               <input
@@ -274,12 +274,12 @@ export function RiskManagementView() {
                 placeholder={t('risk.stopPh')}
                 value={stopLossPrice}
                 onChange={(e) => setStopLossPrice(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
 
             <div>
-              <label htmlFor="risk-tp" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-tp" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.tp')}
               </label>
               <input
@@ -289,14 +289,14 @@ export function RiskManagementView() {
                 placeholder={t('risk.optional')}
                 value={takeProfitPrice}
                 onChange={(e) => setTakeProfitPrice(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
-              <label htmlFor="risk-comm" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-comm" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.commission')}
               </label>
               <input
@@ -306,11 +306,11 @@ export function RiskManagementView() {
                 placeholder={t('risk.commissionPh')}
                 value={commission}
                 onChange={(e) => setCommission(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
             <div>
-              <label htmlFor="risk-exfee" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-exfee" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.exFee')}
               </label>
               <input
@@ -320,11 +320,11 @@ export function RiskManagementView() {
                 placeholder={t('risk.exFeePh')}
                 value={exchangeFee}
                 onChange={(e) => setExchangeFee(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
             <div>
-              <label htmlFor="risk-brkfee" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-brkfee" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.brkFee')}
               </label>
               <input
@@ -334,11 +334,11 @@ export function RiskManagementView() {
                 placeholder={t('risk.brkFeePh')}
                 value={brokerageFee}
                 onChange={(e) => setBrokerageFee(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
             <div>
-              <label htmlFor="risk-slip" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-slip" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.slippage')}
               </label>
               <input
@@ -348,14 +348,14 @@ export function RiskManagementView() {
                 placeholder={t('risk.slippagePh')}
                 value={slippageTicks}
                 onChange={(e) => setSlippageTicks(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs font-mono text-white tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-[#263244]">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-[var(--border)]">
             <div>
-              <label htmlFor="risk-open-pos" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-open-pos" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.openPos')}
               </label>
               <div className="flex gap-1.5">
@@ -365,7 +365,7 @@ export function RiskManagementView() {
                   min="0"
                   value={currentOpenPositions}
                   onChange={(e) => setCurrentOpenPositions(e.target.value)}
-                  className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-1.5 text-xs font-mono text-white"
+                  className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]"
                 />
                 <input
                   aria-label={t('risk.maxOpenPos')}
@@ -373,13 +373,13 @@ export function RiskManagementView() {
                   min="1"
                   value={maxOpenPositions}
                   onChange={(e) => setMaxOpenPositions(e.target.value)}
-                  className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-1.5 text-xs font-mono text-white"
+                  className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="risk-port-pct" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-port-pct" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.openRisk')}
               </label>
               <div className="flex gap-1.5">
@@ -389,7 +389,7 @@ export function RiskManagementView() {
                   step="0.1"
                   value={currentOpenRiskPct}
                   onChange={(e) => setCurrentOpenRiskPct(e.target.value)}
-                  className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-1.5 text-xs font-mono text-white"
+                  className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]"
                 />
                 <input
                   aria-label={t('risk.maxPortRisk')}
@@ -397,13 +397,13 @@ export function RiskManagementView() {
                   step="0.5"
                   value={maxPortfolioRiskPct}
                   onChange={(e) => setMaxPortfolioRiskPct(e.target.value)}
-                  className="w-1/2 bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-1.5 text-xs font-mono text-white"
+                  className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="risk-daily-lim" className="block text-xs text-[#E5E7EB]/65 mb-1">
+              <label htmlFor="risk-daily-lim" className="block text-xs text-[var(--text)]/65 mb-1">
                 {t('risk.dailyLimit')}
               </label>
               <input
@@ -412,13 +412,13 @@ export function RiskManagementView() {
                 step="0.5"
                 value={dailyLossLimitPct}
                 onChange={(e) => setDailyLossLimitPct(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between gap-2 mb-1">
-                <label htmlFor="risk-fx" className="block text-xs text-[#E5E7EB]/65">
+                <label htmlFor="risk-fx" className="block text-xs text-[var(--text)]/65">
                   {t('risk.fxRate', { from: activeInstrument?.specification.tradingCurrency ?? 'USD', to: accountCurrency })}
                 </label>
                 {accountCurrency === 'VND' && (
@@ -426,7 +426,7 @@ export function RiskManagementView() {
                     type="button"
                     onClick={() => void handleFetchUsdVnd()}
                     disabled={fxFetching}
-                    className="text-[11px] font-mono text-[#6366F1] hover:underline disabled:opacity-50"
+                    className="text-[11px] font-mono text-[var(--accent)] hover:underline disabled:opacity-50"
                   >
                     {fxFetching ? t('risk.fetching') : t('risk.fetchFx')}
                   </button>
@@ -439,22 +439,22 @@ export function RiskManagementView() {
                 placeholder={needsFx ? t('risk.required') : '1.0'}
                 value={fxRate}
                 onChange={(e) => setFxRate(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs font-mono text-white"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
               />
             </div>
           </div>
 
           {fxNotice && (
-            <p className="text-xs font-mono text-[#F59E0B]">{fxNotice}</p>
+            <p className="text-xs font-mono text-[var(--warning)]">{fxNotice}</p>
           )}
 
-          {error && <p className="text-xs font-mono text-[#EF4444]">{error}</p>}
+          {error && <p className="text-xs font-mono text-[var(--negative)]">{error}</p>}
 
           <div className="flex justify-end">
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
             >
               <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{loading ? t('risk.calculating') : t('risk.calculate')}</span>
@@ -463,24 +463,24 @@ export function RiskManagementView() {
         </form>
 
         {/* Risk Engine Output */}
-        <section className="bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-white border-b border-[#263244] pb-2">
+        <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-[var(--text-strong)] border-b border-[var(--border)] pb-2">
             {t('risk.result')}
           </h2>
 
           {!output ? (
-            <p className="text-xs text-[#E5E7EB]/60 font-mono">
+            <p className="text-xs text-[var(--text)]/60 font-mono">
               {t('risk.emptyHint')}
             </p>
           ) : (
             <div className="space-y-3 text-xs font-mono tabular-nums">
               {!output.valid && (
-                <div className="bg-[#0B0E14] border border-[#EF4444]/40 rounded-md p-4 space-y-2">
-                  <div className="flex items-center gap-2 font-semibold text-[#EF4444]">
+                <div className="bg-[var(--bg)] border border-[var(--negative)]/40 rounded-md p-4 space-y-2">
+                  <div className="flex items-center gap-2 font-semibold text-[var(--negative)]">
                     <ShieldAlert className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span>{t('risk.rejected')}</span>
                   </div>
-                  <ul className="list-disc pl-4 space-y-1 text-[#E5E7EB]/85 font-sans">
+                  <ul className="list-disc pl-4 space-y-1 text-[var(--text)]/85 font-sans">
                     {output.rejectionReasons.map((r, i) => (
                       <li key={i}>{r}</li>
                     ))}
@@ -491,13 +491,13 @@ export function RiskManagementView() {
               {output.riskBudget !== null && (
                 <>
                   {output.valid && (
-                    <div className="bg-[#0B0E14] border border-[#22C55E]/40 rounded-md p-3">
-                      <span className="text-[#E5E7EB]/60 block">{t('risk.recommended')}</span>
-                      <span className="text-2xl font-bold text-[#22C55E]">
+                    <div className="bg-[var(--bg)] border border-[var(--positive)]/40 rounded-md p-3">
+                      <span className="text-[var(--text)]/60 block">{t('risk.recommended')}</span>
+                      <span className="text-2xl font-bold text-[var(--positive)]">
                         {output.recommendedContracts}
                       </span>
                       {output.cappedByLimits && (
-                        <span className="block text-[11px] text-[#F59E0B] mt-0.5">
+                        <span className="block text-[11px] text-[var(--warning)] mt-0.5">
                           {t('risk.capped')}
                         </span>
                       )}
@@ -506,52 +506,52 @@ export function RiskManagementView() {
 
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">{t('risk.budget')}</span>
-                      <span className="text-white">
+                      <span className="text-[var(--text)]/60">{t('risk.budget')}</span>
+                      <span className="text-[var(--text-strong)]">
                         {fmtNum(output.riskBudget)} {output.accountCurrency}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">{t('risk.ticksAtRisk')}</span>
-                      <span className="text-white">{fmtFixed(output.ticksAtRisk, 2)}</span>
+                      <span className="text-[var(--text)]/60">{t('risk.ticksAtRisk')}</span>
+                      <span className="text-[var(--text-strong)]">{fmtFixed(output.ticksAtRisk, 2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">{t('risk.grossRisk')}</span>
-                      <span className="text-white">
+                      <span className="text-[var(--text)]/60">{t('risk.grossRisk')}</span>
+                      <span className="text-[var(--text-strong)]">
                         {fmtFixed(output.grossRiskPerContract, 2)} {output.contractCurrency}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">{t('risk.costs')}</span>
-                      <span className="text-white">
+                      <span className="text-[var(--text)]/60">{t('risk.costs')}</span>
+                      <span className="text-[var(--text-strong)]">
                         {fmtFixed(output.estimatedCostsPerContract, 2)} {output.contractCurrency}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">{t('risk.riskPerCtr', { cur: output.accountCurrency })}</span>
-                      <span className="text-white">
+                      <span className="text-[var(--text)]/60">{t('risk.riskPerCtr', { cur: output.accountCurrency })}</span>
+                      <span className="text-[var(--text-strong)]">
                         {fmtNum(output.riskPerContractInAccountCurrency)} {output.accountCurrency}
                       </span>
                     </div>
-                    <div className="flex justify-between border-t border-[#263244] pt-2">
-                      <span className="text-[#E5E7EB]/60">{t('risk.maxLoss')}</span>
-                      <span className="text-[#EF4444]">
+                    <div className="flex justify-between border-t border-[var(--border)] pt-2">
+                      <span className="text-[var(--text)]/60">{t('risk.maxLoss')}</span>
+                      <span className="text-[var(--negative)]">
                         {fmtNum(output.maxLossEstimate)} {output.accountCurrency}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">{t('risk.rr')}</span>
-                      <span className="text-[#22C55E]">
+                      <span className="text-[var(--text)]/60">{t('risk.rr')}</span>
+                      <span className="text-[var(--positive)]">
                         {output.riskRewardRatio !== null ? `${fmtFixed(output.riskRewardRatio, 2)}R` : t('common.na')}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">{t('risk.projected')}</span>
-                      <span className="text-white">{fmtFixed(output.projectedPortfolioRiskPct, 2)}%</span>
+                      <span className="text-[var(--text)]/60">{t('risk.projected')}</span>
+                      <span className="text-[var(--text-strong)]">{fmtFixed(output.projectedPortfolioRiskPct, 2)}%</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#E5E7EB]/60">{t('risk.marginStatus')}</span>
-                      <span className="text-[#F59E0B]">{t(`risk.margin.${output.marginStatus}`)}</span>
+                      <span className="text-[var(--text)]/60">{t('risk.marginStatus')}</span>
+                      <span className="text-[var(--warning)]">{t(`risk.margin.${output.marginStatus}`)}</span>
                     </div>
                   </div>
                 </>

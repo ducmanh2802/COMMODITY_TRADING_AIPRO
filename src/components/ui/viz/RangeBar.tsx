@@ -26,7 +26,7 @@ export function RangeBar({ low, high, current, lowLabel, highLabel, ariaLabel, c
           style={{ background: 'linear-gradient(90deg,#4ADE80 0%,#FBBF24 50%,#F87171 100%)' }}
         />
         <div
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-4 border-[#0B0E14] shadow"
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-4 border-[var(--bg)] shadow"
           style={{ left: `${pos}%` }}
         />
       </div>

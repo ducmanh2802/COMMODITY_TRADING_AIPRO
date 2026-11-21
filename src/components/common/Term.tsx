@@ -84,7 +84,7 @@ export function Term({ k, children }: TermProps) {
         onKeyDown={(e) => {
           if (e.key === 'Escape') hide();
         }}
-        className="underline decoration-dotted decoration-[#6366F1]/70 underline-offset-[3px] cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-[#6366F1] rounded-sm"
+        className="underline decoration-dotted decoration-[var(--accent)]/70 underline-offset-[3px] cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded-sm"
       >
         {children ?? t(`gl.${k}`)}
       </span>
@@ -99,9 +99,9 @@ export function Term({ k, children }: TermProps) {
             width: Math.min(TIP_WIDTH, window.innerWidth - 16),
             transform: pos.above ? 'translateY(-100%)' : undefined,
           }}
-          className="z-50 block rounded-md border border-[#334155] bg-[#1E293B] px-3 py-2 text-xs font-normal leading-relaxed text-[#E5E7EB] shadow-lg pointer-events-none"
+          className="z-50 block rounded-md border border-[#334155] bg-[var(--surface-3)] px-3 py-2 text-xs font-normal leading-relaxed text-[var(--text)] shadow-lg pointer-events-none"
         >
-          <span className="block font-semibold text-white mb-0.5">{t(`gl.${k}`)}</span>
+          <span className="block font-semibold text-[var(--text-strong)] mb-0.5">{t(`gl.${k}`)}</span>
           {t(`gl.${k}.def`)}
         </span>
       )}

@@ -16,32 +16,32 @@ import {
 } from './learnMath';
 
 const inputClass =
-  'w-full bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-[#E5E7EB] font-mono focus:outline-none focus:border-[#6366F1]';
+  'w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs text-[var(--text)] font-mono focus:outline-none focus:border-[var(--accent)]';
 
 const fmt = (v: number, digits = 2) => v.toLocaleString('vi-VN', { maximumFractionDigits: digits });
 
 export function NumField({ label, value, onChange, hint }: { label: string; value: string; onChange: (v: string) => void; hint?: string }) {
   return (
     <label className="block text-xs space-y-1">
-      <span className="text-[#E5E7EB]/70">{label}</span>
+      <span className="text-[var(--text)]/70">{label}</span>
       <input className={inputClass} inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)} />
-      {hint && <span className="block text-[10px] text-[#E5E7EB]/45">{hint}</span>}
+      {hint && <span className="block text-[10px] text-[var(--text)]/45">{hint}</span>}
     </label>
   );
 }
 
 export function RefusalBox({ r }: { r: Refusal }) {
-  return <p className="text-xs text-[#F59E0B] bg-[#F59E0B]/10 border border-[#F59E0B]/30 rounded-md p-2">{r.reason}</p>;
+  return <p className="text-xs text-[var(--warning)] bg-[var(--warning)]/10 border border-[var(--warning)]/30 rounded-md p-2">{r.reason}</p>;
 }
 
 export function SourceLinks({ sources }: { sources: Source[] }) {
   return (
-    <p className="text-[11px] text-[#E5E7EB]/50">
+    <p className="text-[11px] text-[var(--text)]/50">
       Nguồn:{' '}
       {sources.map((s, i) => (
         <span key={s.url}>
           {i > 0 && ' · '}
-          <a href={s.url} target="_blank" rel="noreferrer" className="underline hover:text-[#E5E7EB]">
+          <a href={s.url} target="_blank" rel="noreferrer" className="underline hover:text-[var(--text)]">
             {s.label}
           </a>
         </span>
@@ -65,7 +65,7 @@ function SpecPicker({
   return (
     <div className="space-y-1.5">
       <label className="block text-xs space-y-1">
-        <span className="text-[#E5E7EB]/70">Hợp đồng (đặc tả từ /api/instruments)</span>
+        <span className="text-[var(--text)]/70">Hợp đồng (đặc tả từ /api/instruments)</span>
         <select className={inputClass} value={value} onChange={(e) => onChange(e.target.value)}>
           {instruments.map((i) => (
             <option key={i.id} value={i.id}>
@@ -75,10 +75,10 @@ function SpecPicker({
         </select>
       </label>
       {s && (
-        <p className="text-[11px] text-[#E5E7EB]/60 font-mono">
+        <p className="text-[11px] text-[var(--text)]/60 font-mono">
           {s.contractSize ?? '?'} {s.contractSizeUnit} · tick {s.minimumTickSize ?? '?'} {s.quotationUnit} · tick value{' '}
           {s.tickValue ?? '?'} {s.tradingCurrency} ·{' '}
-          <span className={s.verificationStatus === 'VERIFIED' ? 'text-[#10B981]' : 'text-[#F59E0B]'}>{s.verificationStatus}</span>
+          <span className={s.verificationStatus === 'VERIFIED' ? 'text-[var(--positive)]' : 'text-[var(--warning)]'}>{s.verificationStatus}</span>
           {s.dataSource.startsWith('http') && (
             <>
               {' · '}
@@ -109,7 +109,7 @@ function TickPnlExercise({ instruments }: { instruments: InstrumentDefinition[] 
   const r = tickPnl(spec, Number(move), Number(contracts));
   return (
     <div className="space-y-3">
-      <p className="text-xs text-[#E5E7EB]/80">Câu hỏi: ngô (ZC) tăng 10 cent/bushel → lãi bao nhiêu mỗi hợp đồng? Đổi hợp đồng để thử mã khác.</p>
+      <p className="text-xs text-[var(--text)]/80">Câu hỏi: ngô (ZC) tăng 10 cent/bushel → lãi bao nhiêu mỗi hợp đồng? Đổi hợp đồng để thử mã khác.</p>
       <SpecPicker instruments={instruments} value={id} onChange={setId} />
       <div className="grid grid-cols-2 gap-3">
         <NumField label={`Biến động giá (${spec?.quotationUnit ?? 'đơn vị yết giá'})`} value={move} onChange={setMove} hint="Số âm = giá giảm" />
@@ -119,13 +119,13 @@ function TickPnlExercise({ instruments }: { instruments: InstrumentDefinition[] 
         <div className="text-xs font-mono space-y-1">
           <p>
             Số tick = {move} ÷ {spec?.minimumTickSize} = {fmt(r.ticks, 4)}
-            {r.fractionalTicks && <span className="text-[#F59E0B]"> (không tròn tick — giá thật luôn đi theo bội số tick)</span>}
+            {r.fractionalTicks && <span className="text-[var(--warning)]"> (không tròn tick — giá thật luôn đi theo bội số tick)</span>}
           </p>
           <p>
-            Lãi/lỗ mỗi HĐ = {fmt(r.ticks, 4)} × {spec?.tickValue} = <span className="text-white">{fmt(r.pnlPerContract)} {r.currency}</span>
+            Lãi/lỗ mỗi HĐ = {fmt(r.ticks, 4)} × {spec?.tickValue} = <span className="text-[var(--text-strong)]">{fmt(r.pnlPerContract)} {r.currency}</span>
           </p>
           <p>
-            Tổng = <span className={r.pnl >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}>{fmt(r.pnl)} {r.currency}</span> (chưa trừ phí, trượt giá)
+            Tổng = <span className={r.pnl >= 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}>{fmt(r.pnl)} {r.currency}</span> (chưa trừ phí, trượt giá)
           </p>
         </div>
       ) : (
@@ -146,16 +146,16 @@ function MarginExercise({ instruments }: { instruments: InstrumentDefinition[] }
   const r = marginLeverage(spec, Number(price), Number(margin), fxNum, Number(movePct));
   return (
     <div className="space-y-3">
-      <p className="text-xs text-[#E5E7EB]/80">
+      <p className="text-xs text-[var(--text)]/80">
         Ký quỹ <strong>không</strong> có trong đặc tả (thay đổi thường xuyên). Hãy tự nhập giá hiện tại và mức ký quỹ ban đầu lấy từ bảng ký quỹ
-        MXV/thành viên — các ô này được đánh dấu <span className="text-[#F59E0B]">do người dùng nhập</span>.
+        MXV/thành viên — các ô này được đánh dấu <span className="text-[var(--warning)]">do người dùng nhập</span>.
       </p>
       <SpecPicker instruments={instruments} value={id} onChange={setId} />
       <div className="grid grid-cols-2 gap-3">
         <NumField label={`Giá (${spec?.quotationUnit ?? '…'}) — do người dùng nhập`} value={price} onChange={setPrice} />
         <NumField label={`Ký quỹ ban đầu/HĐ (${currency}) — do người dùng nhập`} value={margin} onChange={setMargin} />
         <label className="block text-xs space-y-1">
-          <span className="text-[#E5E7EB]/70">Đơn vị ký quỹ</span>
+          <span className="text-[var(--text)]/70">Đơn vị ký quỹ</span>
           <select className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value as 'VND' | 'USD')}>
             <option value="VND">VND</option>
             <option value="USD">USD</option>
@@ -171,10 +171,10 @@ function MarginExercise({ instruments }: { instruments: InstrumentDefinition[] }
           </p>
           <p>Ký quỹ quy đổi = {fmt(r.marginInTradingCurrency)} {r.currency}</p>
           <p>
-            Đòn bẩy ≈ <span className="text-white">{fmt(r.leverage, 1)}x</span> → giá đi ngược ~{fmt(r.wipeoutMovePct)}% là mất toàn bộ ký quỹ
+            Đòn bẩy ≈ <span className="text-[var(--text-strong)]">{fmt(r.leverage, 1)}x</span> → giá đi ngược ~{fmt(r.wipeoutMovePct)}% là mất toàn bộ ký quỹ
           </p>
           <p>
-            Với biến động {movePct}%: lãi/lỗ = <span className={r.movePnl >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}>{fmt(r.movePnl)} {r.currency}</span> ={' '}
+            Với biến động {movePct}%: lãi/lỗ = <span className={r.movePnl >= 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}>{fmt(r.movePnl)} {r.currency}</span> ={' '}
             {fmt(r.movePctOfMargin, 1)}% ký quỹ (vị thế long)
           </p>
         </div>
@@ -208,8 +208,8 @@ function SizingExercise({ instruments }: { instruments: InstrumentDefinition[] }
             Rủi ro/HĐ = {fmt(r.stopTicks, 4)} tick × {spec?.tickValue} + {costs} = {fmt(r.riskPerContract)} {r.currency}
           </p>
           <p>
-            Số hợp đồng = floor({fmt(r.riskBudget)} ÷ {fmt(r.riskPerContract)}) = <span className="text-white">{r.contracts}</span>
-            {r.contracts === 0 && <span className="text-[#F59E0B]"> → không vào lệnh: một hợp đồng đã vượt ngân sách rủi ro</span>}
+            Số hợp đồng = floor({fmt(r.riskBudget)} ÷ {fmt(r.riskPerContract)}) = <span className="text-[var(--text-strong)]">{r.contracts}</span>
+            {r.contracts === 0 && <span className="text-[var(--warning)]"> → không vào lệnh: một hợp đồng đã vượt ngân sách rủi ro</span>}
           </p>
           {r.contracts > 0 && <p>Rủi ro thực tế = {fmt(r.actualRisk)} {r.currency}</p>}
         </div>
@@ -228,7 +228,7 @@ function RollExercise({ instruments }: { instruments: InstrumentDefinition[] }) 
   const r = rollCost(spec, Number(near), Number(far), Number(contracts));
   return (
     <div className="space-y-3">
-      <p className="text-xs text-[#E5E7EB]/80">Roll vị thế mua: bán tháng gần, mua tháng xa. Giá nhập là số minh hoạ do bạn tự nhập.</p>
+      <p className="text-xs text-[var(--text)]/80">Roll vị thế mua: bán tháng gần, mua tháng xa. Giá nhập là số minh hoạ do bạn tự nhập.</p>
       <SpecPicker instruments={instruments} value={id} onChange={setId} />
       <div className="grid grid-cols-3 gap-3">
         <NumField label="Giá tháng gần" value={near} onChange={setNear} />
@@ -239,7 +239,7 @@ function RollExercise({ instruments }: { instruments: InstrumentDefinition[] }) 
         <div className="text-xs font-mono space-y-1">
           <p>Chênh lệch = {far} - {near} = {fmt(r.spreadPrice, 4)} ({fmt(r.spreadTicks, 2)} tick) → {r.state}</p>
           <p>
-            Chi phí roll = <span className={r.cost > 0 ? 'text-[#EF4444]' : 'text-[#10B981]'}>{fmt(r.cost)} {r.currency}</span> (dương = bạn trả; chưa gồm phí/trượt giá)
+            Chi phí roll = <span className={r.cost > 0 ? 'text-[var(--negative)]' : 'text-[var(--positive)]'}>{fmt(r.cost)} {r.currency}</span> (dương = bạn trả; chưa gồm phí/trượt giá)
           </p>
         </div>
       ) : (
@@ -257,8 +257,8 @@ function MarginCallExercise({ instruments }: { instruments: InstrumentDefinition
   const r = marginCallDistance(spec, Number(initial), Number(maint), Number(contracts));
   return (
     <div className="space-y-3">
-      <p className="text-xs text-[#E5E7EB]/80">
-        Tự nhập ký quỹ ban đầu và duy trì (USD/hợp đồng) từ bảng ký quỹ hiện hành — <span className="text-[#F59E0B]">do người dùng nhập</span>.
+      <p className="text-xs text-[var(--text)]/80">
+        Tự nhập ký quỹ ban đầu và duy trì (USD/hợp đồng) từ bảng ký quỹ hiện hành — <span className="text-[var(--warning)]">do người dùng nhập</span>.
       </p>
       <SpecPicker instruments={instruments} value={id} onChange={setId} />
       <div className="grid grid-cols-3 gap-3">
@@ -285,13 +285,13 @@ function FxExercise({ instruments }: { instruments: InstrumentDefinition[] }) {
   const r = convertCurrency(Number(usd), Number(rate));
   return (
     <div className="space-y-3">
-      <p className="text-xs text-[#E5E7EB]/80">Đổi một số tiền USD sang VND bằng tỷ giá do bạn nhập (lấy từ thành viên môi giới). Mặc định là giá trị tick của mã đã chọn.</p>
+      <p className="text-xs text-[var(--text)]/80">Đổi một số tiền USD sang VND bằng tỷ giá do bạn nhập (lấy từ thành viên môi giới). Mặc định là giá trị tick của mã đã chọn.</p>
       <SpecPicker instruments={instruments} value={id} onChange={(v) => { setId(v); const t = instruments.find((i) => i.id === v)?.specification.tickValue; if (t) setUsd(String(t)); }} />
       <div className="grid grid-cols-2 gap-3">
         <NumField label="Số tiền (USD)" value={usd} onChange={setUsd} />
         <NumField label="Tỷ giá VND/USD — do người dùng nhập" value={rate} onChange={setRate} />
       </div>
-      {r.ok ? <p className="text-xs font-mono">= <span className="text-white">{fmt(r.value, 0)} VND</span></p> : <RefusalBox r={r} />}
+      {r.ok ? <p className="text-xs font-mono">= <span className="text-[var(--text-strong)]">{fmt(r.value, 0)} VND</span></p> : <RefusalBox r={r} />}
     </div>
   );
 }
@@ -306,7 +306,7 @@ function CurveQuiz() {
   const [answers, setAnswers] = useState<Record<string, CurveShape>>({});
   return (
     <div className="space-y-3">
-      <p className="text-xs text-[#F59E0B] font-medium">Ví dụ minh hoạ, không phải giá thật.</p>
+      <p className="text-xs text-[var(--warning)] font-medium">Ví dụ minh hoạ, không phải giá thật.</p>
       {ILLUSTRATIVE_CURVES.map((c) => {
         const prices = c.points.map((p) => p.price);
         const min = Math.min(...prices);
@@ -320,8 +320,8 @@ function CurveQuiz() {
           y: 10 + ((max - p.price) * (H - 20)) / (max - min || 1),
         }));
         return (
-          <div key={c.id} className="border border-[#263244] rounded-md p-3 space-y-2">
-            <p className="text-xs text-white">{c.label} (minh hoạ)</p>
+          <div key={c.id} className="border border-[var(--border)] rounded-md p-3 space-y-2">
+            <p className="text-xs text-[var(--text-strong)]">{c.label} (minh hoạ)</p>
             <div className="flex flex-wrap items-center gap-4">
               <svg width={W} height={H} role="img" aria-label={`${c.label}: ${c.points.map((p) => `${p.month} ${p.price}`).join(', ')}`}>
                 <polyline points={xy.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#6366F1" strokeWidth="2" />
@@ -329,7 +329,7 @@ function CurveQuiz() {
                   <circle key={i} cx={p.x} cy={p.y} r="3" fill="#6366F1" />
                 ))}
               </svg>
-              <p className="text-[11px] font-mono text-[#E5E7EB]/70">{c.points.map((p) => `${p.month}: ${p.price}`).join(' · ')}</p>
+              <p className="text-[11px] font-mono text-[var(--text)]/70">{c.points.map((p) => `${p.month}: ${p.price}`).join(' · ')}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               {(Object.keys(SHAPE_LABEL) as CurveShape[]).map((s) => (
@@ -338,7 +338,7 @@ function CurveQuiz() {
                   type="button"
                   onClick={() => setAnswers((a) => ({ ...a, [c.id]: s }))}
                   className={`text-xs px-2.5 py-1 rounded-md border ${
-                    chosen === s ? 'border-[#6366F1] bg-[#6366F1]/15 text-white' : 'border-[#263244] text-[#E5E7EB]/75 hover:text-white'
+                    chosen === s ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--text-strong)]' : 'border-[var(--border)] text-[var(--text)]/75 hover:text-[var(--text-strong)]'
                   }`}
                 >
                   {SHAPE_LABEL[s]}
@@ -346,7 +346,7 @@ function CurveQuiz() {
               ))}
             </div>
             {chosen && (
-              <p className={`text-xs ${chosen === correct ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
+              <p className={`text-xs ${chosen === correct ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>
                 {chosen === correct ? 'Đúng.' : `Chưa đúng — đáp án: ${SHAPE_LABEL[correct]}.`}{' '}
                 {correct === 'CONTANGO' && 'Long roll liên tục sẽ bán rẻ tháng gần, mua đắt tháng xa → roll yield âm.'}
                 {correct === 'BACKWARDATION' && 'Long roll liên tục bán đắt tháng gần, mua rẻ tháng xa → roll yield dương (nếu đường cong giữ nguyên).'}

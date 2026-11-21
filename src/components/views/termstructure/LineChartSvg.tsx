@@ -120,7 +120,7 @@ export function LineChartSvg({
         })}
       </svg>
       {series.length > 1 && (
-        <div className="flex flex-wrap gap-4 mt-1 text-[11px] font-mono text-[#E5E7EB]/70">
+        <div className="flex flex-wrap gap-4 mt-1 text-[11px] font-mono text-[var(--text)]/70">
           {series.map((s) => (
             <span key={s.name} className="inline-flex items-center gap-1.5">
               <span className="inline-block w-4 h-0.5" style={{ backgroundColor: s.color }} aria-hidden="true" />

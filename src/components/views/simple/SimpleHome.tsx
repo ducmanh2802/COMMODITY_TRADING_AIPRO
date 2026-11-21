@@ -32,12 +32,12 @@ function CommodityCard({ row, onOpen }: { row: SimpleRow; onOpen: (id: string) =
           imgClassName="group-hover:scale-105 transition-transform duration-300"
         />
         <div className="p-4 space-y-3">
-          <h3 className="text-2xl font-bold text-white leading-tight">{row.name}</h3>
+          <h3 className="text-2xl font-bold text-[var(--text-strong)] leading-tight">{row.name}</h3>
           <BigPrice row={row} t={t} />
           <div>
             <LightBadge light={row.light} t={t} />
           </div>
-          <p className="text-lg text-white leading-snug">{summaryText(t, row)}</p>
+          <p className="text-lg text-[var(--text-strong)] leading-snug">{summaryText(t, row)}</p>
           <p className="text-base text-[var(--text)] leading-snug">
             {fresh}
             <br />
@@ -59,7 +59,7 @@ function CompactRow({ row, onOpen }: { row: SimpleRow; onOpen: (id: string) => v
         className="w-full min-h-[56px] flex items-center gap-3 text-left px-4 py-3 rounded-xl border-2 border-[#64748B] bg-[var(--surface)] hover:bg-[var(--surface-2)] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/70"
       >
         <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ background: LIGHT_STYLE.gray.dot }} aria-hidden="true" />
-        <span className="text-xl font-semibold text-white flex-1">{row.name}</span>
+        <span className="text-xl font-semibold text-[var(--text-strong)] flex-1">{row.name}</span>
         <span className="text-base text-[var(--text)]">{t('sm.light.gray')}</span>
       </button>
     </li>
@@ -88,10 +88,10 @@ export function SimpleHome() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <header className="space-y-2">
-        <h1 className="text-4xl font-extrabold text-white">{t('sm.home.title')}</h1>
+        <h1 className="text-4xl font-extrabold text-[var(--text-strong)]">{t('sm.home.title')}</h1>
         <p className="text-xl text-[var(--text)]">{t('sm.home.sub')}</p>
         <p className="text-lg text-[var(--text)]">{formatUpdatedAgo(seconds)}</p>
-        <p className="text-lg text-[#FDE68A] bg-[#FBBF24]/10 border border-[#FBBF24]/40 rounded-xl px-4 py-3">
+        <p className="text-lg text-[#FDE68A] bg-[var(--warning)]/10 border border-[var(--warning)]/40 rounded-xl px-4 py-3">
           {fx
             ? t('sm.home.fxNote', { rate: fmtInt(fx.rate), time: fmtClock(fx.asOf) ?? '—' })
             : extraLoading
@@ -115,7 +115,7 @@ export function SimpleHome() {
         <>
           {familiarPriced.length > 0 && (
             <section className="space-y-3" aria-labelledby="sm-familiar">
-              <h2 id="sm-familiar" className="text-3xl font-bold text-white">
+              <h2 id="sm-familiar" className="text-3xl font-bold text-[var(--text-strong)]">
                 {t('sm.home.familiar')}
               </h2>
               <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -127,7 +127,7 @@ export function SimpleHome() {
           )}
           {othersPriced.length > 0 && (
             <section className="space-y-3" aria-labelledby="sm-others">
-              <h2 id="sm-others" className="text-3xl font-bold text-white">
+              <h2 id="sm-others" className="text-3xl font-bold text-[var(--text-strong)]">
                 {t('sm.home.others')}
               </h2>
               <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -139,7 +139,7 @@ export function SimpleHome() {
           )}
           {unpriced.length > 0 && (
             <section className="space-y-3" aria-labelledby="sm-nop">
-              <h2 id="sm-nop" className="text-3xl font-bold text-white">
+              <h2 id="sm-nop" className="text-3xl font-bold text-[var(--text-strong)]">
                 {t('sm.home.noPrice')}
               </h2>
               <p className="text-lg text-[var(--text)]">{t('sm.home.noPriceNote')}</p>

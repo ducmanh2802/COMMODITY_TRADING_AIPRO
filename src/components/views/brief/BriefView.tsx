@@ -101,7 +101,7 @@ export function BriefView() {
               type="button"
               onClick={() => setActiveModule('commodity-profile')}
               title={t('brief.profileHint')}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-[var(--border)] text-[var(--muted)] hover:text-white hover:border-[var(--accent)]"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text-strong)] hover:border-[var(--accent)]"
             >
               <Layers className="w-3.5 h-3.5" aria-hidden="true" />
               {t('brief.openProfile')}

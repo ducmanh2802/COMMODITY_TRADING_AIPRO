@@ -84,7 +84,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
           onClick={() => handleSelect(id)}
           aria-current={isActive ? 'page' : undefined}
           className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors ${
-            isActive ? 'bg-[var(--accent-soft)] text-white' : 'text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
+            isActive ? 'bg-[var(--accent-soft)] text-[var(--text-strong)]' : 'text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
           }`}
         >
           {t(key)}
@@ -115,13 +115,13 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
         <div className="h-14 px-4 border-b border-[var(--border)] flex items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
             <span
-              className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] grid place-items-center text-white shrink-0"
+              className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[var(--accent)] to-[#8B5CF6] grid place-items-center text-[var(--text-strong)] shrink-0"
               aria-hidden="true"
             >
               <TrendingUp className="w-4 h-4" />
             </span>
             <span
-              className={`text-sm font-semibold tracking-tight text-white truncate ${rail ? 'lg:hidden' : ''}`}
+              className={`text-sm font-semibold tracking-tight text-[var(--text-strong)] truncate ${rail ? 'lg:hidden' : ''}`}
             >
               COMMODITY AI PRO
             </span>
@@ -130,7 +130,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
             type="button"
             onClick={onCloseMobile}
             aria-label={t('nav.closeMenu')}
-            className="lg:hidden p-2 text-[var(--muted)] hover:text-white rounded-md"
+            className="lg:hidden p-2 text-[var(--muted)] hover:text-[var(--text-strong)] rounded-md"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -153,8 +153,8 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                       rail ? 'lg:justify-center lg:px-0' : ''
                     } ${
                       isActive
-                        ? 'bg-[var(--accent-soft)] text-white font-medium'
-                        : 'text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
+                        ? 'bg-[var(--accent-soft)] text-[var(--text-strong)] font-medium'
+                        : 'text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
                     }`}
                   >
                     {isActive && (
@@ -174,7 +174,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
               {SETTINGS_ITEMS.map((id) => smallButton(id))}
             </ul>
             <details open={currentSection === 'advanced'} className="group">
-              <summary className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--faint)] cursor-pointer hover:text-white list-none">
+              <summary className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--faint)] cursor-pointer hover:text-[var(--text-strong)] list-none">
                 {t('n2.sec.advanced')}
               </summary>
               <ul className="space-y-0.5 mt-1">
@@ -191,7 +191,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
             onClick={toggleCollapsed}
             aria-label={rail ? t('nav.expand') : t('nav.collapse')}
             title={rail ? t('nav.expand') : t('nav.collapse')}
-            className="hidden lg:grid place-items-center w-8 h-8 mx-auto rounded-md text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]"
+            className="hidden lg:grid place-items-center w-8 h-8 mx-auto rounded-md text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]"
           >
             {rail ? (
               <PanelLeftOpen className="w-4 h-4" aria-hidden="true" />

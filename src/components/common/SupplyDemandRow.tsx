@@ -19,11 +19,11 @@ function Bars({ cur, prev }: { cur: number; prev: number | null }) {
   const max = Math.max(cur, prev) || 1;
   return (
     <div className="mt-1 space-y-0.5" aria-hidden="true">
-      <div className="h-1 rounded bg-[#263244] w-full overflow-hidden" title="Kỳ trước">
+      <div className="h-1 rounded bg-[var(--border)] w-full overflow-hidden" title="Kỳ trước">
         <div className="h-full bg-[#64748B]" style={{ width: `${(prev / max) * 100}%` }} />
       </div>
-      <div className="h-1 rounded bg-[#263244] w-full overflow-hidden" title="Kỳ này">
-        <div className="h-full bg-[#6366F1]" style={{ width: `${(cur / max) * 100}%` }} />
+      <div className="h-1 rounded bg-[var(--border)] w-full overflow-hidden" title="Kỳ này">
+        <div className="h-full bg-[var(--accent)]" style={{ width: `${(cur / max) * 100}%` }} />
       </div>
     </div>
   );
@@ -37,7 +37,7 @@ export function SupplyDemandRow({ item }: { item: TailoredSupplyDemandItem }) {
   return (
     <div className="py-3 space-y-1" data-sd-state={item.state ?? 'UNAVAILABLE'}>
       <div className="flex items-start justify-between gap-3">
-        <span className="font-medium text-white">{item.labelVi}</span>
+        <span className="font-medium text-[var(--text-strong)]">{item.labelVi}</span>
         {ok ? (
           <span className="text-[var(--text)] tabular-nums text-right">
             {item.valueText ?? `${item.latestValue} ${item.unit}`}

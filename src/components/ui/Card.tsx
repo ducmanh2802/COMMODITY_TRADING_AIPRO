@@ -12,7 +12,7 @@ interface CardProps extends HTMLAttributes<HTMLElement> {
 const TONES = {
   default: 'border-[var(--border)]',
   accent: 'border-[var(--accent)]/40',
-  warning: 'border-[#F59E0B]/40',
+  warning: 'border-[var(--warning)]/40',
 };
 
 /** Layered surface with subtle border, radius and shadow. */

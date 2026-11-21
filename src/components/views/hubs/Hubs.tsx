@@ -33,7 +33,7 @@ function PricesTab({ initial }: { initial: string }) {
             type="button"
             aria-pressed={mode === m}
             onClick={() => setMode(m)}
-            className={`px-3 py-1.5 text-xs ${mode === m ? 'bg-[#3B82F6]/20 text-white' : 'text-[#E5E7EB]/70 hover:text-white'}`}
+            className={`px-3 py-1.5 text-xs ${mode === m ? 'bg-[var(--accent)]/20 text-[var(--text-strong)]' : 'text-[var(--text)]/70 hover:text-[var(--text-strong)]'}`}
           >
             {t(m === 'cards' ? 'n2.mk.viewCards' : 'n2.mk.viewTable')}
           </button>
@@ -133,7 +133,7 @@ export function InstrumentPage({ tab }: HubProps) {
         <button
           type="button"
           onClick={() => setActiveModule('analysis-hub')}
-          className="inline-flex items-center gap-1.5 text-xs text-[var(--muted)] hover:text-white"
+          className="inline-flex items-center gap-1.5 text-xs text-[var(--muted)] hover:text-[var(--text-strong)]"
         >
           <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
           {t('n2.in.back')}
@@ -142,7 +142,7 @@ export function InstrumentPage({ tab }: HubProps) {
           aria-label={t('n2.in.pick')}
           value={selectedSymbol}
           onChange={(e) => setSelectedSymbol(e.target.value)}
-          className="bg-[var(--surface)] border border-[var(--border)] rounded-md px-2 py-1 text-sm text-white"
+          className="bg-[var(--surface)] border border-[var(--border)] rounded-md px-2 py-1 text-sm text-[var(--text-strong)]"
         >
           {options.map((i) => (
             <option key={i.exchangeSymbol} value={i.exchangeSymbol}>

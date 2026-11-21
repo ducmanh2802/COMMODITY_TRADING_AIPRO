@@ -8,9 +8,10 @@ export const UI_MODE_KEY = 'ctap.uiMode';
 export function readUiMode(): UiMode {
   try {
     const v = window.localStorage.getItem(UI_MODE_KEY);
-    return v === 'pro' ? 'pro' : 'simple';
+    void v;
+    return 'pro'; // single UI mode: the toggle was removed (2026-11-21)
   } catch {
-    return 'simple';
+    return 'pro';
   }
 }
 
@@ -36,5 +37,5 @@ export function UiModeProvider({ children }: { children: ReactNode }) {
 }
 
 export function useUiMode(): UiModeValue {
-  return useContext(UiModeContext) ?? { mode: 'simple', setMode: () => {} };
+  return useContext(UiModeContext) ?? { mode: 'pro', setMode: () => {} };
 }

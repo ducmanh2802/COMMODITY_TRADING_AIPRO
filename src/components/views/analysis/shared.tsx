@@ -48,17 +48,17 @@ export function latestValue(timestamps: string[], values: (number | null)[]): { 
 // UI primitives (terminal dark style)
 // ------------------------------------------------------------------------------------------------
 
-export const panelClass = 'bg-[#111622] border border-[#263244] rounded-lg';
+export const panelClass = 'bg-[var(--surface)] border border-[var(--border)] rounded-lg';
 export const inputClass =
-  'bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-[#E5E7EB] focus:outline-none focus:border-[#6366F1] disabled:opacity-50';
-export const labelClass = 'block text-[11px] text-[#E5E7EB]/60 mb-1';
+  'bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] disabled:opacity-50';
+export const labelClass = 'block text-[11px] text-[var(--text)]/60 mb-1';
 
 export function Panel({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
     <section aria-label={title} className={`${panelClass} overflow-hidden`}>
-      <div className="px-4 py-3 border-b border-[#263244]">
-        <h2 className="text-sm font-semibold text-white">{title}</h2>
-        {subtitle && <p className="text-xs text-[#E5E7EB]/55 mt-0.5">{subtitle}</p>}
+      <div className="px-4 py-3 border-b border-[var(--border)]">
+        <h2 className="text-sm font-semibold text-[var(--text-strong)]">{title}</h2>
+        {subtitle && <p className="text-xs text-[var(--text)]/55 mt-0.5">{subtitle}</p>}
       </div>
       <div className="p-4 space-y-3">{children}</div>
     </section>
@@ -66,9 +66,9 @@ export function Panel({ title, subtitle, children }: { title: string; subtitle?:
 }
 
 const STATUS_STYLE: Record<string, { cls: string; Icon: typeof CheckCircle2 }> = {
-  OK: { cls: 'text-[#22C55E] border-[#22C55E]/40 bg-[#22C55E]/10', Icon: CheckCircle2 },
-  INSUFFICIENT_DATA: { cls: 'text-[#F59E0B] border-[#F59E0B]/40 bg-[#F59E0B]/10', Icon: AlertTriangle },
-  INVALID_INPUT: { cls: 'text-[#EF4444] border-[#EF4444]/40 bg-[#EF4444]/10', Icon: XCircle },
+  OK: { cls: 'text-[var(--positive)] border-[var(--positive)]/40 bg-[var(--positive)]/10', Icon: CheckCircle2 },
+  INSUFFICIENT_DATA: { cls: 'text-[var(--warning)] border-[var(--warning)]/40 bg-[var(--warning)]/10', Icon: AlertTriangle },
+  INVALID_INPUT: { cls: 'text-[var(--negative)] border-[var(--negative)]/40 bg-[var(--negative)]/10', Icon: XCircle },
 };
 
 export function StatusChip({ status }: { status: AnalyticsStatus | string }) {
@@ -106,18 +106,18 @@ export function StatusBlock({
   return (
     <div className="text-xs space-y-1" data-testid={`status-${label}`}>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[#E5E7EB]/80 font-medium">{label}</span>
+        <span className="text-[var(--text)]/80 font-medium">{label}</span>
         <StatusChip status={status} />
       </div>
-      {status !== 'OK' && reason && <p className="font-mono text-[11px] text-[#E5E7EB]/75">{t('an.reason', { reason })}</p>}
+      {status !== 'OK' && reason && <p className="font-mono text-[11px] text-[var(--text)]/75">{t('an.reason', { reason })}</p>}
       {warnings.length > 0 && (
-        <ul className="list-disc pl-5 text-[11px] text-[#F59E0B]/90 space-y-0.5">
+        <ul className="list-disc pl-5 text-[11px] text-[var(--warning)]/90 space-y-0.5">
           {shown.map((w, i) => (
             <li key={i}>{w}</li>
           ))}
           {warnings.length > 5 && (
             <li className="list-none -ml-5">
-              <button type="button" className="underline text-[#E5E7EB]/60" onClick={() => setExpanded((e) => !e)}>
+              <button type="button" className="underline text-[var(--text)]/60" onClick={() => setExpanded((e) => !e)}>
                 {expanded ? t('an.showFewer') : t('an.showAll', { n: warnings.length })}
               </button>
             </li>
@@ -131,10 +131,10 @@ export function StatusBlock({
 export function Notice({ tone, children }: { tone: 'warn' | 'error' | 'info'; children: ReactNode }) {
   const cls =
     tone === 'error'
-      ? 'border-[#EF4444]/50 bg-[#EF4444]/10 text-[#FCA5A5]'
+      ? 'border-[var(--negative)]/50 bg-[var(--negative)]/10 text-[var(--negative)]'
       : tone === 'warn'
-        ? 'border-[#F59E0B]/50 bg-[#F59E0B]/10 text-[#FCD34D]'
-        : 'border-[#6366F1]/40 bg-[#6366F1]/10 text-[#C7D2FE]';
+        ? 'border-[var(--warning)]/50 bg-[var(--warning)]/10 text-[var(--warning)]'
+        : 'border-[var(--accent)]/40 bg-[var(--accent)]/10 text-[#C7D2FE]';
   const Icon = tone === 'info' ? Info : AlertTriangle;
   return (
     <div role={tone === 'info' ? 'note' : 'alert'} className={`flex gap-2 border rounded-md px-3 py-2 text-xs ${cls}`}>
@@ -178,7 +178,7 @@ export function NumberField({
         step={step}
         onChange={(e) => onChange(e.target.value === '' ? NaN : Number(e.target.value))}
       />
-      {hint && <p className="text-[10px] text-[#E5E7EB]/45 mt-0.5">{hint}</p>}
+      {hint && <p className="text-[10px] text-[var(--text)]/45 mt-0.5">{hint}</p>}
     </div>
   );
 }
@@ -357,7 +357,7 @@ export function SeriesIntegrity({ s, returnBased = true }: { s: LoadedSeries; re
       )}
       {s.excludedIncomplete > 0 && <Notice tone="info">{t('an.incompleteExcluded', { n: fmtInt(s.excludedIncomplete) })}</Notice>}
       {prov.length > 0 && (
-        <p className="text-[11px] text-[#E5E7EB]/50 font-mono">
+        <p className="text-[11px] text-[var(--text)]/50 font-mono">
           {t('an.provenance', {
             label: s.option.label,
             count: fmtInt(r.count),

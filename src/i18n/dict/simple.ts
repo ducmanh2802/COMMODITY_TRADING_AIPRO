@@ -1,6 +1,10 @@
 // "Chế độ Dễ dùng" (easy mode) strings. Keys prefixed 'sm.'. Plain words, short sentences.
 export const vi = {
   'sm.mode.label': 'Chế độ giao diện',
+  'theme.label': 'Màu nền',
+  'theme.dark': 'Tối',
+  'theme.light': 'Sáng',
+  'theme.hint': 'Mặc định nền tối. Lựa chọn được ghi nhớ trên trình duyệt này.',
   'sm.mode.simple': 'Dễ dùng',
   'sm.mode.pro': 'Chuyên sâu',
   'sm.mode.hintSimple': 'Chữ to, ít số, màu đèn giao thông. Phù hợp người mới.',
@@ -106,6 +110,10 @@ export const vi = {
 
 export const en: Record<keyof typeof vi, string> = {
   'sm.mode.label': 'Interface mode',
+  'theme.label': 'Theme',
+  'theme.dark': 'Dark',
+  'theme.light': 'Light',
+  'theme.hint': 'Dark by default. Your choice is remembered in this browser.',
   'sm.mode.simple': 'Easy',
   'sm.mode.pro': 'Advanced',
   'sm.mode.hintSimple': 'Big text, fewer numbers, traffic-light colours. Good for beginners.',

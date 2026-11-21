@@ -19,7 +19,7 @@ export function ModeSwitch({ large = false }: { large?: boolean }) {
           aria-pressed={mode === m}
           onClick={() => setMode(m)}
           className={`h-full px-3 ${large ? 'min-w-[96px] text-base' : 'text-[11px]'} font-semibold rounded-lg whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
-            mode === m ? 'bg-[#6366F1] text-white' : 'text-[#E5E7EB]/80 hover:text-white'
+            mode === m ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/80 hover:text-white'
           }`}
         >
           {t(m === 'simple' ? 'sm.mode.simple' : 'sm.mode.pro')}

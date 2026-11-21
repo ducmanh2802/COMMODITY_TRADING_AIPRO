@@ -4,9 +4,9 @@ import { useT } from '../../../i18n';
 export type VerificationLevel = 'VERIFIED' | 'UNVERIFIED' | 'UNAVAILABLE';
 
 const META: Record<VerificationLevel, { colorClass: string; Icon: typeof CheckCircle2 }> = {
-  VERIFIED: { colorClass: 'text-[#22C55E] border-[#22C55E]/30 bg-[#22C55E]/10', Icon: CheckCircle2 },
-  UNVERIFIED: { colorClass: 'text-[#F59E0B] border-[#F59E0B]/30 bg-[#F59E0B]/10', Icon: HelpCircle },
-  UNAVAILABLE: { colorClass: 'text-[#EF4444] border-[#EF4444]/30 bg-[#EF4444]/10', Icon: ShieldAlert },
+  VERIFIED: { colorClass: 'text-[var(--positive)] border-[var(--positive)]/30 bg-[var(--positive)]/10', Icon: CheckCircle2 },
+  UNVERIFIED: { colorClass: 'text-[var(--warning)] border-[var(--warning)]/30 bg-[var(--warning)]/10', Icon: HelpCircle },
+  UNAVAILABLE: { colorClass: 'text-[var(--negative)] border-[var(--negative)]/30 bg-[var(--negative)]/10', Icon: ShieldAlert },
 };
 
 export function VerificationBadge({
@@ -38,14 +38,14 @@ export function VerificationBadge({
 /** Renders an external source as a link only when it is an http(s) URL. */
 export function SourceLink({ href, label }: { href: string | null | undefined; label?: string }) {
   const t = useT();
-  if (!href) return <span className="text-[#E5E7EB]/40 font-mono">{t('verify.noSource')}</span>;
-  if (!/^https?:\/\//i.test(href)) return <span className="text-[#E5E7EB]/70 break-all">{href}</span>;
+  if (!href) return <span className="text-[var(--text)]/40 font-mono">{t('verify.noSource')}</span>;
+  if (!/^https?:\/\//i.test(href)) return <span className="text-[var(--text)]/70 break-all">{href}</span>;
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-[#818CF8] hover:text-white underline underline-offset-2 break-all"
+      className="text-[var(--accent-text)] hover:text-[var(--text-strong)] underline underline-offset-2 break-all"
     >
       {label ?? href}
     </a>

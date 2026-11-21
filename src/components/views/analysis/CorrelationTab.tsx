@@ -92,7 +92,7 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
             {t('an.corr.seriesLegend', { n: keys.length, max: MAX_SERIES })}
           </legend>
           {options.length === 0 ? (
-            <p className="text-xs text-[#E5E7EB]/55">{t('an.corr.noDatasets')}</p>
+            <p className="text-xs text-[var(--text)]/55">{t('an.corr.noDatasets')}</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {options.map((o) => {
@@ -102,10 +102,10 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
                   <label
                     key={o.key}
                     className={`inline-flex items-center gap-1.5 border rounded px-2 py-1 text-[11px] font-mono cursor-pointer ${
-                      checked ? 'border-[#6366F1] bg-[#6366F1]/15 text-white' : 'border-[#263244] text-[#E5E7EB]/75'
+                      checked ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--text-strong)]' : 'border-[var(--border)] text-[var(--text)]/75'
                     } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
                   >
-                    <input type="checkbox" className="accent-[#6366F1]" checked={checked} disabled={disabled} onChange={() => toggle(o.key)} />
+                    <input type="checkbox" className="accent-[var(--accent)]" checked={checked} disabled={disabled} onChange={() => toggle(o.key)} />
                     {o.label}
                   </label>
                 );
@@ -125,7 +125,7 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
           </div>
           <NumberField id="corr-minobs" label={t('an.corr.minObs')} value={minObs} onChange={setMinObs} min={2} />
         </div>
-        {loading && <p className="text-xs text-[#E5E7EB]/55">{t('an.loadingCandles')}</p>}
+        {loading && <p className="text-xs text-[var(--text)]/55">{t('an.loadingCandles')}</p>}
         {error && <Notice tone="error">{error}</Notice>}
         {data.map((s) => (
           <SeriesIntegrity key={s.option.key} s={s} />
@@ -135,9 +135,9 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
 
       {matrix && (
         <Panel title={t('an.corr.matrix')} subtitle={t('an.corr.matrixSub', { kind: kind === 'log' ? t('an.corr.log') : t('an.corr.simple') })}>
-          <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs font-mono text-[#E5E7EB]/80">
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs font-mono text-[var(--text)]/80">
             <span>
-              {t('an.corr.observations')} <span className="text-white">{fmtInt(matrix.n)}</span>
+              {t('an.corr.observations')} <span className="text-[var(--text-strong)]">{fmtInt(matrix.n)}</span>
             </span>
             <span>{t('an.corr.commonTs', { n: fmtInt(matrix.timestamps.length) })}</span>
             <span>
@@ -157,7 +157,7 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
                   <tr>
                     <th className="p-2" />
                     {matrix.labels.map((l) => (
-                      <th key={l} className="p-2 text-[#E5E7EB]/65 font-medium text-[10px] max-w-[120px] align-bottom">
+                      <th key={l} className="p-2 text-[var(--text)]/65 font-medium text-[10px] max-w-[120px] align-bottom">
                         {l}
                       </th>
                     ))}
@@ -166,11 +166,11 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
                 <tbody>
                   {matrix.labels.map((row, i) => (
                     <tr key={row}>
-                      <th className="p-2 text-left text-[#E5E7EB]/65 font-medium text-[10px] whitespace-nowrap">{row}</th>
+                      <th className="p-2 text-left text-[var(--text)]/65 font-medium text-[10px] whitespace-nowrap">{row}</th>
                       {matrix.matrix[i].map((v, j) => (
                         <td
                           key={j}
-                          className="p-2 text-center tabular-nums text-white border border-[#0B0E14] min-w-[64px]"
+                          className="p-2 text-center tabular-nums text-[var(--text-strong)] border border-[var(--bg)] min-w-[64px]"
                           style={{ backgroundColor: v === null ? 'transparent' : heatColor(v) }}
                           title={v === null ? t('an.corr.zeroVar') : `${row} / ${matrix.labels[j]}: ${fmtFixed(v, 4)}`}
                         >
@@ -181,7 +181,7 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
                   ))}
                 </tbody>
               </table>
-              <p className="text-[10px] text-[#E5E7EB]/45 mt-1">{t('an.corr.legend')}</p>
+              <p className="text-[10px] text-[var(--text)]/45 mt-1">{t('an.corr.legend')}</p>
             </div>
           )}
         </Panel>
@@ -215,7 +215,7 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
           {pairA && pairA === pairB && <Notice tone="warn">{t('an.corr.pickDifferent')}</Notice>}
           {pair && (
             <>
-              {pair.corr.status !== 'INVALID_INPUT' && <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs font-mono text-[#E5E7EB]/80">
+              {pair.corr.status !== 'INVALID_INPUT' && <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs font-mono text-[var(--text)]/80">
                 <span>{t('an.corr.aligned', { n: fmtInt(pair.corr.timestamps.length) })}</span>
                 <span>{t('an.corr.returnPairs', { n: fmtInt(Math.max(0, pair.corr.timestamps.length - 1)) })}</span>
                 <span>
@@ -251,8 +251,8 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
 function LatestLine({ r }: { r: { t: string; v: number } | null }) {
   const t = useT();
   return (
-    <p className="text-xs font-mono text-[#E5E7EB]/80">
-      {t('an.corr.latest')} <span className="text-white">{fmtNum(r?.v ?? null, 3)}</span> @ {fmtDate(r?.t)}
+    <p className="text-xs font-mono text-[var(--text)]/80">
+      {t('an.corr.latest')} <span className="text-[var(--text-strong)]">{fmtNum(r?.v ?? null, 3)}</span> @ {fmtDate(r?.t)}
     </p>
   );
 }

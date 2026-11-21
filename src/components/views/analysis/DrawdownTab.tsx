@@ -50,7 +50,7 @@ export function DrawdownTab({ options }: { options: SeriesOption[] }) {
         <div className="flex flex-wrap items-end gap-4">
           <SeriesSelect id="dd-series" label={t('an.series')} options={options} value={key} onChange={setKey} />
         </div>
-        {loading && <p className="text-xs text-[#E5E7EB]/55">{t('an.loadingCandles')}</p>}
+        {loading && <p className="text-xs text-[var(--text)]/55">{t('an.loadingCandles')}</p>}
         {error && <Notice tone="error">{error}</Notice>}
         {s && <SeriesIntegrity s={s} />}
       </Panel>
@@ -93,9 +93,9 @@ export function DrawdownTab({ options }: { options: SeriesOption[] }) {
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: 'neg' }) {
   return (
-    <div className="bg-[#0B0E14] border border-[#263244] rounded-md p-2.5">
-      <dt className="text-[11px] text-[#E5E7EB]/55">{label}</dt>
-      <dd className={`font-mono tabular-nums mt-0.5 ${tone === 'neg' ? 'text-[#EF4444]' : 'text-white'}`}>{value}</dd>
+    <div className="bg-[var(--bg)] border border-[var(--border)] rounded-md p-2.5">
+      <dt className="text-[11px] text-[var(--text)]/55">{label}</dt>
+      <dd className={`font-mono tabular-nums mt-0.5 ${tone === 'neg' ? 'text-[var(--negative)]' : 'text-[var(--text-strong)]'}`}>{value}</dd>
     </div>
   );
 }

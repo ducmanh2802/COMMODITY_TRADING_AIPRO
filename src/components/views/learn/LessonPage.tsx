@@ -71,7 +71,7 @@ function ExampleBlock({ calc, caption, instruments }: { calc: ExampleCalc; capti
       ) : instruments.length ? (
         <RefusalBox r={{ ok: false, reason }} />
       ) : (
-        <p className="text-xs text-[#F59E0B]">Đang tải hoặc không tải được đặc tả hợp đồng từ /api/instruments, nên chưa tính được ví dụ.</p>
+        <p className="text-xs text-[var(--warning)]">Đang tải hoặc không tải được đặc tả hợp đồng từ /api/instruments, nên chưa tính được ví dụ.</p>
       )}
     </div>
   );

@@ -43,7 +43,7 @@ function useCandles(symbol: string): { candles: MarketCandle[]; loading: boolean
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl p-4 sm:p-5 space-y-3">
-      <h2 className="text-2xl font-bold text-white">{title}</h2>
+      <h2 className="text-2xl font-bold text-[var(--text-strong)]">{title}</h2>
       {children}
     </section>
   );
@@ -142,7 +142,7 @@ export function SimpleDetail({ row, fx, onBack }: { row: SimpleRow; fx: UsdVnd |
       <button
         type="button"
         onClick={onBack}
-        className="min-h-[48px] inline-flex items-center gap-2 px-4 rounded-xl border-2 border-[var(--border)] text-lg font-semibold text-white hover:bg-[var(--surface-2)] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/70"
+        className="min-h-[48px] inline-flex items-center gap-2 px-4 rounded-xl border-2 border-[var(--border)] text-lg font-semibold text-[var(--text-strong)] hover:bg-[var(--surface-2)] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/70"
       >
         <ArrowLeft className="w-6 h-6" aria-hidden="true" />
         {t('sm.backList')}
@@ -150,19 +150,19 @@ export function SimpleDetail({ row, fx, onBack }: { row: SimpleRow; fx: UsdVnd |
 
       <CommodityHeroImage symbol={row.id} name={row.name} category={row.instrument.category} className="h-40 sm:h-56 w-full rounded-2xl" priority />
 
-      <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">{t('sm.d.title', { name: row.name })}</h1>
+      <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--text-strong)] leading-tight">{t('sm.d.title', { name: row.name })}</h1>
 
       <Section title={row.name}>
         <BigPrice row={row} t={t} size="detail" />
         <div className="flex flex-wrap items-center gap-3">
           <LightBadge light={row.light} t={t} big />
           {row.changePct !== null && row.period && (
-            <span className="text-2xl font-bold tabular-nums text-white">
+            <span className="text-2xl font-bold tabular-nums text-[var(--text-strong)]">
               {t('sm.d.change', { pct: fmtPct(row.changePct), period: t(row.period === 'd1' ? 'sm.per.d1' : 'sm.per.w1') })}
             </span>
           )}
         </div>
-        <p className="text-xl text-white leading-snug">{summary}</p>
+        <p className="text-xl text-[var(--text-strong)] leading-snug">{summary}</p>
         <p className="text-lg text-[var(--text)] leading-snug">
           {lines[0]}
           <br />
@@ -175,7 +175,7 @@ export function SimpleDetail({ row, fx, onBack }: { row: SimpleRow; fx: UsdVnd |
               type="button"
               onClick={toggleSpeak}
               aria-pressed={speaking}
-              className={`${bigBtn} sm:w-auto border-[#A5B4FC] text-[#E0E7FF] hover:bg-[#6366F1]/20`}
+              className={`${bigBtn} sm:w-auto border-[var(--accent-text)] text-[#E0E7FF] hover:bg-[var(--accent)]/20`}
             >
               {speaking ? <VolumeX className="w-6 h-6" aria-hidden="true" /> : <Volume2 className="w-6 h-6" aria-hidden="true" />}
               {speaking ? t('sm.b.stop') : t('sm.b.read')}
@@ -186,7 +186,7 @@ export function SimpleDetail({ row, fx, onBack }: { row: SimpleRow; fx: UsdVnd |
               type="button"
               onClick={() => setShowFormula((v) => !v)}
               aria-expanded={showFormula}
-              className={`${bigBtn} sm:w-auto border-[var(--border)] text-white hover:bg-[var(--surface-2)]`}
+              className={`${bigBtn} sm:w-auto border-[var(--border)] text-[var(--text-strong)] hover:bg-[var(--surface-2)]`}
             >
               {showFormula ? t('sm.formula.hide') : t('sm.formula.show')}
             </button>
@@ -196,7 +196,7 @@ export function SimpleDetail({ row, fx, onBack }: { row: SimpleRow; fx: UsdVnd |
           <p className="text-base text-[var(--muted)]">{t('sm.b.noVoice')}</p>
         )}
         {showFormula && row.conv && (
-          <div className="rounded-xl bg-[var(--bg)] border border-[var(--border)] p-4 text-lg text-white space-y-2">
+          <div className="rounded-xl bg-[var(--bg)] border border-[var(--border)] p-4 text-lg text-[var(--text-strong)] space-y-2">
             <p className="font-semibold">{t('sm.formula.title')}</p>
             <p className="font-mono text-base break-words">{row.conv.formula}</p>
             {fx?.asOf && <p className="text-base text-[var(--text)]">{t('sm.formula.fx', { time: fmtClock(fx.asOf) ?? '—' })}</p>}
@@ -213,7 +213,7 @@ export function SimpleDetail({ row, fx, onBack }: { row: SimpleRow; fx: UsdVnd |
               aria-pressed={range === r}
               onClick={() => setRange(r)}
               className={`min-h-[48px] rounded-xl border-2 text-lg font-bold focus:outline-none focus-visible:ring-4 focus-visible:ring-white/70 ${
-                range === r ? 'bg-[#6366F1] border-[#6366F1] text-white' : 'border-[var(--border)] text-white hover:bg-[var(--surface-2)]'
+                range === r ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--border)] text-white hover:bg-[var(--surface-2)]'
               }`}
             >
               {t(`sm.d.r${r}` as 'sm.d.r1m')}
@@ -243,11 +243,11 @@ export function SimpleDetail({ row, fx, onBack }: { row: SimpleRow; fx: UsdVnd |
               highLabel={t('sm.d.posHigh', { price: show(hi) })}
               ariaLabel={t('sm.d.posAria', { pct: fmtInt(pos) })}
             />
-            <p className="text-xl text-white">{t('sm.d.posAt', { pct: fmtInt(pos) })}</p>
+            <p className="text-xl text-[var(--text-strong)]">{t('sm.d.posAt', { pct: fmtInt(pos) })}</p>
             {spanDays < 330 && <p className="text-base text-[var(--muted)]">{t('sm.d.posDays', { n: year.length })}</p>}
           </>
         ) : pct10 !== null ? (
-          <p className="text-xl text-white">{t('sm.d.pos10y', { pct: fmtInt(pct10) })}</p>
+          <p className="text-xl text-[var(--text-strong)]">{t('sm.d.pos10y', { pct: fmtInt(pct10) })}</p>
         ) : (
           <p className="text-xl text-[var(--text)]">{t('sm.d.posNone')}</p>
         )}
@@ -286,7 +286,7 @@ export function SimpleDetail({ row, fx, onBack }: { row: SimpleRow; fx: UsdVnd |
 
       {shownFacts.length > 0 && (
         <Section title={t('sm.d.facts')}>
-          <ul className="list-disc pl-6 space-y-2 text-xl text-white">
+          <ul className="list-disc pl-6 space-y-2 text-xl text-[var(--text-strong)]">
             {shownFacts.map((f) => (
               <li key={f}>{f}</li>
             ))}
@@ -298,24 +298,24 @@ export function SimpleDetail({ row, fx, onBack }: { row: SimpleRow; fx: UsdVnd |
         <button
           type="button"
           onClick={() => openInstrumentIn(row.symbol, 'brief')}
-          className={`${bigBtn} border-[#6366F1] bg-[#6366F1] text-white hover:brightness-110`}
+          className={`${bigBtn} border-[var(--accent)] bg-[var(--accent)] text-white hover:brightness-110`}
         >
           <HelpCircle className="w-6 h-6" aria-hidden="true" />
           {t('sm.b.why')}
         </button>
         {paper && (
-          <button type="button" onClick={() => go(paper)} className={`${bigBtn} border-[#A5B4FC] text-white hover:bg-[#6366F1]/20`}>
+          <button type="button" onClick={() => go(paper)} className={`${bigBtn} border-[var(--accent-text)] text-[var(--text-strong)] hover:bg-[var(--accent)]/20`}>
             <PiggyBank className="w-6 h-6" aria-hidden="true" />
             {t('sm.b.paper')}
           </button>
         )}
         {hedge && (
-          <button type="button" onClick={() => go(hedge)} className={`${bigBtn} border-[#A5B4FC] text-white hover:bg-[#6366F1]/20`}>
+          <button type="button" onClick={() => go(hedge)} className={`${bigBtn} border-[var(--accent-text)] text-[var(--text-strong)] hover:bg-[var(--accent)]/20`}>
             <Shield className="w-6 h-6" aria-hidden="true" />
             {t('sm.b.hedge')}
           </button>
         )}
-        <button type="button" onClick={() => setActiveModule('learn')} className={`${bigBtn} border-[var(--border)] text-white hover:bg-[var(--surface-2)]`}>
+        <button type="button" onClick={() => setActiveModule('learn')} className={`${bigBtn} border-[var(--border)] text-[var(--text-strong)] hover:bg-[var(--surface-2)]`}>
           <BookOpen className="w-6 h-6" aria-hidden="true" />
           {t('sm.b.learn')}
         </button>

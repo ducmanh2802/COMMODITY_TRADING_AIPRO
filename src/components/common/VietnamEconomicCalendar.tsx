@@ -30,13 +30,13 @@ const impactLabel = (level: string): string => {
 function getSessionStateStyle(state: SessionLiveState): { text: string; label: string } {
   switch (state) {
     case 'OPEN':
-      return { text: 'text-[#22C55E]', label: tr('cal.state.OPEN') };
+      return { text: 'text-[var(--positive)]', label: tr('cal.state.OPEN') };
     case 'BREAK':
-      return { text: 'text-[#F59E0B]', label: tr('cal.state.BREAK') };
+      return { text: 'text-[var(--warning)]', label: tr('cal.state.BREAK') };
     case 'HOLIDAY_CLOSED':
-      return { text: 'text-[#EF4444]', label: tr('cal.state.HOLIDAY_CLOSED') };
+      return { text: 'text-[var(--negative)]', label: tr('cal.state.HOLIDAY_CLOSED') };
     default:
-      return { text: 'text-[#E5E7EB]/55', label: tr('cal.state.CLOSED') };
+      return { text: 'text-[var(--text)]/55', label: tr('cal.state.CLOSED') };
   }
 }
 
@@ -100,56 +100,56 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
       {/* 1. Live Vietnam Commodity Sessions Bar (ICT / UTC+7) */}
       <section
         aria-label={t('cal.sessions.aria')}
-        className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
+        className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden"
       >
-        <div className="px-4 py-3 border-b border-[#263244] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="px-4 py-3 border-b border-[var(--border)] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-[#6366F1] shrink-0" aria-hidden="true" />
+            <Clock className="w-4 h-4 text-[var(--accent)] shrink-0" aria-hidden="true" />
             <div>
-              <h2 className="text-sm font-semibold text-white">
+              <h2 className="text-sm font-semibold text-[var(--text-strong)]">
                 {t('cal.sessions.title')}
               </h2>
-              <p className="text-xs text-[#E5E7EB]/60">
+              <p className="text-xs text-[var(--text)]/60">
                 {t('cal.sessions.subtitle')}
               </p>
             </div>
           </div>
-          <span className="font-mono text-xs text-[#E5E7EB]/85 tabular-nums whitespace-nowrap">
+          <span className="font-mono text-xs text-[var(--text)]/85 tabular-nums whitespace-nowrap">
             {fmtDate(vnNow.dateIso)} · {String(vnNow.hour).padStart(2, '0')}:
             {String(vnNow.minute).padStart(2, '0')} ICT
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-[#263244]">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-[var(--border)]">
           {filteredSessions.map((sess) => {
             const st = getSessionStateStyle(sess.state);
             return (
               <div key={sess.id} className="p-4 space-y-2 flex flex-col justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-[11px] text-[#E5E7EB]/60">
+                    <span className="font-mono text-[11px] text-[var(--text)]/60">
                       {sess.exchange}
                     </span>
                     <span className={`font-mono text-xs font-semibold ${st.text}`} title={sess.state}>
                       {st.label}
                     </span>
                   </div>
-                  <h3 className="text-xs font-semibold text-white leading-snug">{sess.labelVi}</h3>
-                  <p className="font-mono text-[11px] text-[#E5E7EB]/80 tabular-nums">
+                  <h3 className="text-xs font-semibold text-[var(--text-strong)] leading-snug">{sess.labelVi}</h3>
+                  <p className="font-mono text-[11px] text-[var(--text)]/80 tabular-nums">
                     {sess.ictHoursLabel}
                   </p>
-                  <p className="text-[11px] text-[#E5E7EB]/60 leading-relaxed">
+                  <p className="text-[11px] text-[var(--text)]/60 leading-relaxed">
                     {sess.stateReason}
                   </p>
                 </div>
 
-                <div className="pt-2 border-t border-[#263244]/70 flex flex-wrap gap-1.5">
+                <div className="pt-2 border-t border-[var(--border)]/70 flex flex-wrap gap-1.5">
                   {sess.symbols.map((sym) => (
                     <button
                       key={sym}
                       type="button"
                       onClick={() => openInstrumentIn(sym, 'charts')}
-                      className="px-2 py-1 bg-[#0B0E14] hover:bg-[#6366F1] border border-[#263244] rounded text-[11px] font-mono text-white transition-colors"
+                      className="px-2 py-1 bg-[var(--bg)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-mono text-white transition-colors"
                     >
                       {sym}
                     </button>
@@ -164,23 +164,23 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
       {/* 2. Filtered Economic Calendar & Major Market Holidays */}
       <section
         aria-label={t('cal.events.aria')}
-        className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden"
+        className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden"
       >
-        <div className="px-4 py-3.5 border-b border-[#263244] space-y-3">
+        <div className="px-4 py-3.5 border-b border-[var(--border)] space-y-3">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div className="flex items-start gap-2.5">
-              <CalendarDays className="w-4 h-4 text-[#6366F1] shrink-0 mt-0.5" aria-hidden="true" />
+              <CalendarDays className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" aria-hidden="true" />
               <div>
-                <h2 className="text-sm font-semibold text-white">
+                <h2 className="text-sm font-semibold text-[var(--text-strong)]">
                   {t('cal.events.title')}
                 </h2>
-                <p className="text-xs text-[#E5E7EB]/60">
+                <p className="text-xs text-[var(--text)]/60">
                   {t('cal.events.subtitle')}
                 </p>
               </div>
             </div>
 
-            <span className="font-mono text-xs text-[#E5E7EB]/70 tabular-nums whitespace-nowrap">
+            <span className="font-mono text-xs text-[var(--text)]/70 tabular-nums whitespace-nowrap">
               {t('cal.events.count', { n: filteredEvents.length })}
             </span>
           </div>
@@ -191,7 +191,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
             <div
               role="group"
               aria-label={t('cal.filter.type')}
-              className="flex flex-wrap items-center gap-1 bg-[#0B0E14] border border-[#263244] rounded-md p-1"
+              className="flex flex-wrap items-center gap-1 bg-[var(--bg)] border border-[var(--border)] rounded-md p-1"
             >
               {(
                 [
@@ -211,8 +211,8 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                   }}
                   className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap shrink-0 ${
                     eventType === tab.id
-                      ? 'bg-[#6366F1] text-white'
-                      : 'text-[#E5E7EB]/70 hover:text-white'
+                      ? 'bg-[var(--accent)] text-white'
+                      : 'text-[var(--text)]/70 hover:text-white'
                   }`}
                 >
                   {t(tab.label)}
@@ -224,7 +224,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
             <div
               role="group"
               aria-label={t('cal.filter.session')}
-              className="flex flex-wrap items-center gap-1 bg-[#0B0E14] border border-[#263244] rounded-md p-1"
+              className="flex flex-wrap items-center gap-1 bg-[var(--bg)] border border-[var(--border)] rounded-md p-1"
             >
               {(
                 [
@@ -240,8 +240,8 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                   onClick={() => setSessionSlot(slot.id)}
                   className={`px-2.5 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap shrink-0 ${
                     sessionSlot === slot.id
-                      ? 'bg-[#172033] text-white border border-[#6366F1]/60'
-                      : 'text-[#E5E7EB]/65 hover:text-white border border-transparent'
+                      ? 'bg-[var(--surface-2)] text-[var(--text-strong)] border border-[var(--accent)]/60'
+                      : 'text-[var(--text)]/65 hover:text-[var(--text-strong)] border border-transparent'
                   }`}
                 >
                   {t(slot.label)}
@@ -256,7 +256,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
               onChange={(e) =>
                 setCategory(e.target.value as 'ALL' | ProductCategory | 'MACRO_FX')
               }
-              className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white max-w-full"
+              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)] max-w-full"
             >
               <option value="ALL">{t('cal.cat.ALL')}</option>
               <option value="SOFT_COMMODITIES">{t('cal.cat.SOFT')}</option>
@@ -270,7 +270,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
               aria-label={t('cal.horizon')}
               value={horizonDays}
               onChange={(e) => setHorizonDays(Number(e.target.value))}
-              className="bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-2 text-xs font-mono text-white max-w-full"
+              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)] max-w-full"
             >
               <option value={14}>{t('cal.horizon.14')}</option>
               <option value={30}>{t('cal.horizon.30')}</option>
@@ -283,8 +283,8 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
               onClick={() => setRegion((prev) => (prev === 'ALL' ? 'VIETNAM' : 'ALL'))}
               className={`px-3 py-2 text-xs font-medium rounded-md border transition-colors whitespace-nowrap shrink-0 ${
                 region === 'VIETNAM'
-                  ? 'bg-[#6366F1]/20 border-[#6366F1] text-white'
-                  : 'bg-[#0B0E14] border-[#263244] text-[#E5E7EB]/75 hover:text-white'
+                  ? 'bg-[var(--accent)]/20 border-[var(--accent)] text-[var(--text-strong)]'
+                  : 'bg-[var(--bg)] border-[var(--border)] text-[var(--text)]/75 hover:text-[var(--text-strong)]'
               }`}
             >
               {region === 'VIETNAM' ? t('cal.region.vn') : t('cal.region.all')}
@@ -294,12 +294,12 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
 
         {/* Results Table (Desktop) & Stacked Cards (Mobile) */}
         {filteredEvents.length === 0 ? (
-          <div className="p-6 text-xs font-mono text-[#E5E7EB]/65">
+          <div className="p-6 text-xs font-mono text-[var(--text)]/65">
             {t('cal.empty')}
           </div>
         ) : (
           <>
-            <div className="md:hidden divide-y divide-[#263244]/70">
+            <div className="md:hidden divide-y divide-[var(--border)]/70">
               {filteredEvents.slice(0, 60).map((ev) => {
                 const verifiedRec = findVerifiedMacroMatch(ev.titleEn);
                 const isHoliday = ev.type === 'MARKET_HOLIDAY';
@@ -307,16 +307,16 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                   <article key={ev.id} className="p-4 space-y-2 text-xs">
                     <div className="flex items-start justify-between gap-2">
                       <div className="font-mono tabular-nums">
-                        <span className="text-white font-medium">{fmtDate(ev.dateIso)}</span>
-                        <span className="text-[#E5E7EB]/60 ml-2 text-[11px]">{ev.ictTimeLabel}</span>
+                        <span className="text-[var(--text-strong)] font-medium">{fmtDate(ev.dateIso)}</span>
+                        <span className="text-[var(--text)]/60 ml-2 text-[11px]">{ev.ictTimeLabel}</span>
                       </div>
                       <span
                         className={`font-mono text-[11px] font-semibold shrink-0 ${
                           isHoliday
-                            ? 'text-[#EF4444]'
+                            ? 'text-[var(--negative)]'
                             : ev.impactLevel === 'HIGH'
-                              ? 'text-[#F59E0B]'
-                              : 'text-[#6366F1]'
+                              ? 'text-[var(--warning)]'
+                              : 'text-[var(--accent)]'
                         }`}
                       >
                         {isHoliday ? t('cal.holiday') : t('cal.macro', { level: impactLabel(ev.impactLevel) })}
@@ -324,16 +324,16 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                     </div>
 
                     <div>
-                      <h3 className="font-medium text-white">{lang === 'vi' ? ev.titleVi : ev.titleEn}</h3>
-                      <p className="text-[11px] text-[#E5E7EB]/55 mt-0.5">
+                      <h3 className="font-medium text-[var(--text-strong)]">{lang === 'vi' ? ev.titleVi : ev.titleEn}</h3>
+                      <p className="text-[11px] text-[var(--text)]/55 mt-0.5">
                         {lang === 'vi' ? ev.titleEn : ev.titleVi} · {ev.sourceAgency} · {sessionLabel(ev.sessionSlot)}
                       </p>
                     </div>
 
-                    <p className="text-[#E5E7EB]/80 leading-relaxed">{ev.mxvImpactNote}</p>
+                    <p className="text-[var(--text)]/80 leading-relaxed">{ev.mxvImpactNote}</p>
 
                     {verifiedRec && (
-                      <p className="font-mono text-[11px] text-[#22C55E]">
+                      <p className="font-mono text-[11px] text-[var(--positive)]">
                         {t('cal.verified', { value: verifiedRec.actualValue, unit: verifiedRec.unit, period: verifiedRec.dataPeriod })}
                       </p>
                     )}
@@ -344,7 +344,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                           key={sym}
                           type="button"
                           onClick={() => openInstrumentIn(sym, 'charts')}
-                          className="px-2 py-0.5 bg-[#0B0E14] hover:bg-[#6366F1] border border-[#263244] rounded text-[11px] font-mono text-white transition-colors"
+                          className="px-2 py-0.5 bg-[var(--bg)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-mono text-white transition-colors"
                         >
                           {sym}
                         </button>
@@ -358,7 +358,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[880px]">
                 <thead>
-                  <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
+                  <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">
                     <th className="py-2.5 px-4 font-medium">{t('cal.col.datetime')}</th>
                     <th className="py-2.5 px-3 font-medium">{t('cal.col.type')}</th>
                     <th className="py-2.5 px-3 font-medium">{t('cal.col.event')}</th>
@@ -367,42 +367,42 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                     <th className="py-2.5 px-4 font-medium">{t('cal.col.impact')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#263244]/70 text-xs">
+                <tbody className="divide-y divide-[var(--border)]/70 text-xs">
                   {filteredEvents.slice(0, 60).map((ev) => {
                     const verifiedRec = findVerifiedMacroMatch(ev.titleEn);
                     const isHoliday = ev.type === 'MARKET_HOLIDAY';
                     return (
-                      <tr key={ev.id} className="hover:bg-[#172033]/40 transition-colors align-top">
+                      <tr key={ev.id} className="hover:bg-[var(--surface-2)]/40 transition-colors align-top">
                         <td className="py-3 px-4 font-mono tabular-nums whitespace-nowrap">
-                          <div className="text-white font-medium">{fmtDate(ev.dateIso)}</div>
-                          <div className="text-[11px] text-[#E5E7EB]/65">{ev.ictTimeLabel}</div>
+                          <div className="text-[var(--text-strong)] font-medium">{fmtDate(ev.dateIso)}</div>
+                          <div className="text-[11px] text-[var(--text)]/65">{ev.ictTimeLabel}</div>
                         </td>
 
                         <td className="py-3 px-3 whitespace-nowrap">
                           <span
                             className={`font-mono text-[11px] font-semibold ${
                               isHoliday
-                                ? 'text-[#EF4444]'
+                                ? 'text-[var(--negative)]'
                                 : ev.impactLevel === 'HIGH'
-                                  ? 'text-[#F59E0B]'
-                                  : 'text-[#6366F1]'
+                                  ? 'text-[var(--warning)]'
+                                  : 'text-[var(--accent)]'
                             }`}
                           >
                             {isHoliday ? t('cal.holiday') : t('cal.macro', { level: impactLabel(ev.impactLevel) })}
                           </span>
-                          <div className="text-[11px] text-[#E5E7EB]/50 mt-0.5">
+                          <div className="text-[11px] text-[var(--text)]/50 mt-0.5">
                             {ev.sourceAgency}
                           </div>
                         </td>
 
                         <td className="py-3 px-3 max-w-xs">
-                          <div className="font-medium text-white">{lang === 'vi' ? ev.titleVi : ev.titleEn}</div>
-                          <div className="text-[11px] text-[#E5E7EB]/50 mt-0.5">
+                          <div className="font-medium text-[var(--text-strong)]">{lang === 'vi' ? ev.titleVi : ev.titleEn}</div>
+                          <div className="text-[11px] text-[var(--text)]/50 mt-0.5">
                             {lang === 'vi' ? ev.titleEn : ev.titleVi} · {ev.cadenceLabel}
                           </div>
                         </td>
 
-                        <td className="py-3 px-3 text-[#E5E7EB]/75 whitespace-nowrap">
+                        <td className="py-3 px-3 text-[var(--text)]/75 whitespace-nowrap">
                           {sessionLabel(ev.sessionSlot)}
                         </td>
 
@@ -413,7 +413,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                                 key={sym}
                                 type="button"
                                 onClick={() => openInstrumentIn(sym, 'charts')}
-                                className="px-1.5 py-0.5 bg-[#0B0E14] hover:bg-[#6366F1] border border-[#263244] rounded text-[11px] font-mono text-white transition-colors"
+                                className="px-1.5 py-0.5 bg-[var(--bg)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-mono text-white transition-colors"
                               >
                                 {sym}
                               </button>
@@ -422,9 +422,9 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                         </td>
 
                         <td className="py-3 px-4 max-w-md space-y-1">
-                          <p className="text-[#E5E7EB]/80 leading-relaxed">{ev.mxvImpactNote}</p>
+                          <p className="text-[var(--text)]/80 leading-relaxed">{ev.mxvImpactNote}</p>
                           {verifiedRec && (
-                            <p className="font-mono text-[11px] text-[#22C55E]">
+                            <p className="font-mono text-[11px] text-[var(--positive)]">
                               {t('cal.verified', { value: verifiedRec.actualValue, unit: verifiedRec.unit, period: verifiedRec.dataPeriod })}
                             </p>
                           )}

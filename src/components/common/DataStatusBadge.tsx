@@ -15,12 +15,12 @@ interface DataStatusBadgeProps {
 
 /** Technical code (shown only in the tooltip) and colours per status. */
 const STATUS_META: Record<DataQualityStatus, { code: string; text: string; dot: string }> = {
-  CURRENT: { code: 'CURRENT', text: 'text-[#4ADE80]', dot: 'bg-[#22C55E]' },
-  DELAYED: { code: 'DELAYED', text: 'text-[#FBBF24]', dot: 'bg-[#F59E0B]' },
-  HISTORICAL: { code: 'HISTORICAL', text: 'text-[#A5B4FC]', dot: 'bg-[#6366F1]' },
+  CURRENT: { code: 'CURRENT', text: 'text-[var(--positive)]', dot: 'bg-[var(--positive)]' },
+  DELAYED: { code: 'DELAYED', text: 'text-[var(--warning)]', dot: 'bg-[var(--warning)]' },
+  HISTORICAL: { code: 'HISTORICAL', text: 'text-[var(--accent-text)]', dot: 'bg-[var(--accent)]' },
   STALE: { code: 'STALE', text: 'text-[#FDBA74]', dot: 'bg-[#F97316]' },
-  UNAVAILABLE: { code: 'DATA_UNAVAILABLE', text: 'text-[#9CA3AF]', dot: 'bg-[#6B7280]' },
-  INVALID: { code: 'INVALID', text: 'text-[#F87171]', dot: 'bg-[#EF4444]' },
+  UNAVAILABLE: { code: 'DATA_UNAVAILABLE', text: 'text-[var(--muted)]', dot: 'bg-[#6B7280]' },
+  INVALID: { code: 'INVALID', text: 'text-[var(--negative)]', dot: 'bg-[var(--negative)]' },
 };
 
 /**
@@ -49,7 +49,7 @@ export function DataStatusBadge({ status, compact = false, sourceQuality, delayM
       </span>
       {showQuality && (
         <span
-          className="px-1.5 py-px rounded-full border border-[#F59E0B]/40 bg-[#F59E0B]/10 text-[10px] font-normal text-[#FCD34D] whitespace-nowrap"
+          className="px-1.5 py-px rounded-full border border-[var(--warning)]/40 bg-[var(--warning)]/10 text-[10px] font-normal text-[var(--warning)] whitespace-nowrap"
           title={t('fr.unofficial.desc')}
         >
           {t('fr.unofficial')}

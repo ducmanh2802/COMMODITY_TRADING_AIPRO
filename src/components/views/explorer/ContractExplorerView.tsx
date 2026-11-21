@@ -19,7 +19,7 @@ type Filter<T> = 'ALL' | T;
 type Loadable<T> = { state: 'idle' } | { state: 'loading' } | { state: 'ok'; data: T } | { state: 'error'; message: string };
 
 const selectClass =
-  'bg-[#111622] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-[#E5E7EB] focus:outline-none focus:border-[#6366F1]';
+  'bg-[var(--surface)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)]';
 
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
@@ -27,23 +27,23 @@ function todayUtc(): string {
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="py-1.5 grid grid-cols-[150px_1fr] gap-3 border-b border-[#263244]/50 last:border-b-0">
-      <dt className="text-[#E5E7EB]/55">{label}</dt>
-      <dd className="text-[#E5E7EB] font-mono break-words min-w-0">{children}</dd>
+    <div className="py-1.5 grid grid-cols-[150px_1fr] gap-3 border-b border-[var(--border)]/50 last:border-b-0">
+      <dt className="text-[var(--text)]/55">{label}</dt>
+      <dd className="text-[var(--text)] font-mono break-words min-w-0">{children}</dd>
     </div>
   );
 }
 
 function NullValue() {
   const t = useT();
-  return <span className="text-[#F59E0B]">{t('exp.unavailable')}</span>;
+  return <span className="text-[var(--warning)]">{t('exp.unavailable')}</span>;
 }
 
 function num(v: number | null, unit?: string): ReactNode {
   if (v === null) return <NullValue />;
   return (
     <span className="tabular-nums">
-      {fmtNum(v)} {unit ? <span className="text-[#E5E7EB]/55">{unit}</span> : null}
+      {fmtNum(v)} {unit ? <span className="text-[var(--text)]/55">{unit}</span> : null}
     </span>
   );
 }
@@ -110,8 +110,8 @@ export default function ContractExplorerView() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold text-white tracking-tight">{t('exp.title')}</h1>
-        <p className="text-sm text-[#E5E7EB]/65 mt-1">
+        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('exp.title')}</h1>
+        <p className="text-sm text-[var(--text)]/65 mt-1">
           {t('exp.subtitle')}
         </p>
       </div>
@@ -121,14 +121,14 @@ export default function ContractExplorerView() {
           <label htmlFor="explorer-search" className="sr-only">
             {t('exp.searchLabel')}
           </label>
-          <Search className="w-4 h-4 text-[#E5E7EB]/45 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+          <Search className="w-4 h-4 text-[var(--text)]/45 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
           <input
             id="explorer-search"
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('exp.searchPlaceholder')}
-            className="w-full bg-[#111622] border border-[#263244] rounded-md pl-9 pr-3 py-1.5 text-xs text-[#E5E7EB] placeholder:text-[#E5E7EB]/40 focus:outline-none focus:border-[#6366F1]"
+            className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-md pl-9 pr-3 py-1.5 text-xs text-[var(--text)] placeholder:text-[var(--text)]/40 focus:outline-none focus:border-[var(--accent)]"
           />
         </div>
         <select aria-label={t('exp.category')} value={category} onChange={(e) => setCategory(e.target.value as Filter<ProductCategory>)} className={selectClass}>
@@ -153,19 +153,19 @@ export default function ContractExplorerView() {
           <option value="UNVERIFIED">{t('verify.UNVERIFIED')} (UNVERIFIED)</option>
           <option value="UNAVAILABLE">{t('verify.UNAVAILABLE')} (UNAVAILABLE)</option>
         </select>
-        <label className="inline-flex items-center gap-1.5 text-xs text-[#E5E7EB]/75">
-          <input type="checkbox" checked={mxvOnly} onChange={(e) => setMxvOnly(e.target.checked)} className="accent-[#6366F1]" />
+        <label className="inline-flex items-center gap-1.5 text-xs text-[var(--text)]/75">
+          <input type="checkbox" checked={mxvOnly} onChange={(e) => setMxvOnly(e.target.checked)} className="accent-[var(--accent)]" />
           {t('exp.mxvOnly')}
         </label>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-4 items-start">
         {/* Instrument list */}
-        <div className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
-          <div className="px-3 py-2 border-b border-[#263244] text-xs text-[#E5E7EB]/55 font-mono">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
+          <div className="px-3 py-2 border-b border-[var(--border)] text-xs text-[var(--text)]/55 font-mono">
             {loading ? t('exp.loadingInstruments') : t('exp.instrumentsCount', { n: filtered.length, total: instruments.length })}
           </div>
-          <ul className="max-h-[70vh] overflow-y-auto divide-y divide-[#263244]/60" aria-label={t('exp.instruments')}>
+          <ul className="max-h-[70vh] overflow-y-auto divide-y divide-[var(--border)]/60" aria-label={t('exp.instruments')}>
             {filtered.map((i) => {
               const active = selected?.id === i.id;
               return (
@@ -175,12 +175,12 @@ export default function ContractExplorerView() {
                     onClick={() => setSelectedId(i.id)}
                     aria-current={active ? 'true' : undefined}
                     className={`w-full text-left px-3 py-2 flex items-center justify-between gap-2 text-xs transition-colors ${
-                      active ? 'bg-[#6366F1]/15 text-white' : 'hover:bg-[#172033]/60 text-[#E5E7EB]/85'
+                      active ? 'bg-[var(--accent)]/15 text-[var(--text-strong)]' : 'hover:bg-[var(--surface-2)]/60 text-[var(--text)]/85'
                     }`}
                   >
                     <span className="min-w-0">
                       <span className="block font-medium truncate">{i.productName}</span>
-                      <span className="block font-mono text-[#E5E7EB]/55">
+                      <span className="block font-mono text-[var(--text)]/55">
                         {i.exchange}:{i.exchangeSymbol}
                         {i.mxvMapping?.mxvSymbol ? ` · MXV ${i.mxvMapping.mxvSymbol}` : ''}
                       </span>
@@ -191,7 +191,7 @@ export default function ContractExplorerView() {
               );
             })}
             {!loading && filtered.length === 0 && (
-              <li className="px-3 py-6 text-center text-xs text-[#E5E7EB]/55">{t('exp.noMatch')}</li>
+              <li className="px-3 py-6 text-center text-xs text-[var(--text)]/55">{t('exp.noMatch')}</li>
             )}
           </ul>
         </div>
@@ -199,18 +199,18 @@ export default function ContractExplorerView() {
         {/* Detail */}
         {selected ? (
           <div className="space-y-4 min-w-0">
-            <section className="bg-[#111622] border border-[#263244] rounded-lg p-4">
+            <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div>
-                  <h2 className="text-base font-semibold text-white">
-                    {selected.productName} <span className="font-mono text-[#E5E7EB]/60">{selected.id}</span>
+                  <h2 className="text-base font-semibold text-[var(--text-strong)]">
+                    {selected.productName} <span className="font-mono text-[var(--text)]/60">{selected.id}</span>
                   </h2>
-                  <p className="text-xs text-[#E5E7EB]/55">
+                  <p className="text-xs text-[var(--text)]/55">
                     {selected.category.replace('_', ' ')} · {selected.exchange}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-[#E5E7EB]/55">{t('exp.specification')}</span>
+                  <span className="text-xs text-[var(--text)]/55">{t('exp.specification')}</span>
                   <VerificationBadge status={selected.specification.verificationStatus} />
                 </div>
               </div>
@@ -223,11 +223,11 @@ export default function ContractExplorerView() {
                 <Field label={t('exp.settlement')}>{selected.specification.settlementMethod}</Field>
                 <Field label={t('exp.tradingHours')}>
                   <span className="font-sans">{selected.specification.tradingHoursSummary || <NullValue />}</span>{' '}
-                  <span className="text-[#E5E7EB]/55">({selected.specification.tradingHoursTimezone})</span>
+                  <span className="text-[var(--text)]/55">({selected.specification.tradingHoursTimezone})</span>
                 </Field>
                 <Field label={t('term.margin')}>
                   {selected.specification.marginRequirement === null ? (
-                    <span className="text-[#F59E0B]">{t('exp.marginUnavailable')}</span>
+                    <span className="text-[var(--warning)]">{t('exp.marginUnavailable')}</span>
                   ) : (
                     `${selected.specification.marginRequirement} ${selected.specification.marginCurrency ?? ''}`
                   )}
@@ -239,17 +239,17 @@ export default function ContractExplorerView() {
             </section>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2 text-xs">
+              <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-2 text-xs">
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-sm font-semibold text-white">{t('exp.calendarRule')}</h2>
+                  <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('exp.calendarRule')}</h2>
                   {rule.state === 'ok' && rule.data.rule && <VerificationBadge status={rule.data.rule.verificationStatus} />}
                 </div>
                 {rule.state === 'loading' || rule.state === 'idle' ? (
-                  <p className="text-[#E5E7EB]/55">{t('common.loading')}</p>
+                  <p className="text-[var(--text)]/55">{t('common.loading')}</p>
                 ) : rule.state === 'error' ? (
-                  <p className="font-mono text-[#EF4444]">{rule.message}</p>
+                  <p className="font-mono text-[var(--negative)]">{rule.message}</p>
                 ) : !rule.data.rule ? (
-                  <p className="font-mono text-[#F59E0B]">{t('exp.noCalendarRule')}</p>
+                  <p className="font-mono text-[var(--warning)]">{t('exp.noCalendarRule')}</p>
                 ) : (
                   <dl>
                     <Field label={t('exp.listedMonths')}>
@@ -260,7 +260,7 @@ export default function ContractExplorerView() {
                     </Field>
                     {rule.data.rule.notes && (
                       <Field label={t('common.notes')}>
-                        <span className="font-sans text-[#E5E7EB]/75">{rule.data.rule.notes}</span>
+                        <span className="font-sans text-[var(--text)]/75">{rule.data.rule.notes}</span>
                       </Field>
                     )}
                     <Field label={t('common.source')}>
@@ -270,9 +270,9 @@ export default function ContractExplorerView() {
                 )}
               </section>
 
-              <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-2 text-xs">
+              <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-2 text-xs">
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-sm font-semibold text-white">{t('exp.mxvMapping')}</h2>
+                  <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('exp.mxvMapping')}</h2>
                   <VerificationBadge status={selected.mxvMapping?.mappingStatus ?? 'UNAVAILABLE'} />
                 </div>
                 {selected.mxvMapping ? (
@@ -283,29 +283,29 @@ export default function ContractExplorerView() {
                     </Field>
                     <Field label={t('exp.mxvListedFlag')}>{selected.isMvxListed ? t('exp.yes') : t('exp.no')}</Field>
                     <Field label={t('common.notes')}>
-                      <span className="font-sans text-[#E5E7EB]/75">{selected.mxvMapping.notes || '—'}</span>
+                      <span className="font-sans text-[var(--text)]/75">{selected.mxvMapping.notes || '—'}</span>
                     </Field>
                   </dl>
                 ) : (
-                  <p className="font-mono text-[#F59E0B]">{t('exp.noMxvMapping')}</p>
+                  <p className="font-mono text-[var(--warning)]">{t('exp.noMxvMapping')}</p>
                 )}
               </section>
             </div>
 
-            <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3">
+            <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-3">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <h2 className="text-sm font-semibold text-white">{t('exp.contractChain')}</h2>
-                  <p className="text-xs text-[#E5E7EB]/55">
+                  <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('exp.contractChain')}</h2>
+                  <p className="text-xs text-[var(--text)]/55">
                     {t('exp.from')} <span className="font-mono">GET /api/contracts/{selected.id}/chain</span>
                   </p>
                 </div>
                 <div className="flex items-end gap-2">
-                  <label className="text-xs text-[#E5E7EB]/65 space-y-1">
+                  <label className="text-xs text-[var(--text)]/65 space-y-1">
                     <span className="block">{t('exp.asOf')}</span>
                     <input type="date" value={asOf} onChange={(e) => setAsOf(e.target.value)} className={selectClass} />
                   </label>
-                  <label className="text-xs text-[#E5E7EB]/65 space-y-1">
+                  <label className="text-xs text-[var(--text)]/65 space-y-1">
                     <span className="block">{t('exp.tick.contracts')}</span>
                     <select value={count} onChange={(e) => setCount(Number(e.target.value))} className={selectClass}>
                       {[4, 8, 12, 24, 36].map((n) => (
@@ -318,11 +318,11 @@ export default function ContractExplorerView() {
                 </div>
               </div>
               {chain.state === 'loading' || chain.state === 'idle' ? (
-                <p className="text-xs text-[#E5E7EB]/55">{t('exp.loadingChain')}</p>
+                <p className="text-xs text-[var(--text)]/55">{t('exp.loadingChain')}</p>
               ) : chain.state === 'error' ? (
                 <div className="flex items-center gap-2 text-xs">
                   <DataStatusBadge status="UNAVAILABLE" />
-                  <span className="font-mono text-[#EF4444]">{chain.message}</span>
+                  <span className="font-mono text-[var(--negative)]">{chain.message}</span>
                 </div>
               ) : (
                 <ContractChainTable chain={chain.data} />
@@ -332,7 +332,7 @@ export default function ContractExplorerView() {
             <TickCalculator key={selected.id} spec={selected.specification} />
           </div>
         ) : (
-          <div className="bg-[#111622] border border-[#263244] rounded-lg p-6 text-xs text-[#E5E7EB]/55">
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6 text-xs text-[var(--text)]/55">
             {loading ? t('exp.loadingInstruments') : t('exp.selectInstrument')}
           </div>
         )}

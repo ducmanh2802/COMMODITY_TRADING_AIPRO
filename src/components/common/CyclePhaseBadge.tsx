@@ -5,28 +5,28 @@ import { useT } from '../../i18n';
 const PHASE_STYLES: Record<CyclePhase, { label: string; textClass: string; borderClass: string }> = {
   PHASE_1_ACCUMULATION: {
     label: 'Giai đoạn 1 · Tích lũy đáy',
-    textClass: 'text-[#38BDF8]',
-    borderClass: 'border-[#38BDF8]/40 bg-[#38BDF8]/10',
+    textClass: 'text-[var(--accent-text)]',
+    borderClass: 'border-[var(--accent-text)]/40 bg-[var(--accent-text)]/10',
   },
   PHASE_2_EARLY_RECOVERY: {
     label: 'Giai đoạn 2 · Phục hồi sớm',
-    textClass: 'text-[#22C55E]',
-    borderClass: 'border-[#22C55E]/40 bg-[#22C55E]/10',
+    textClass: 'text-[var(--positive)]',
+    borderClass: 'border-[var(--positive)]/40 bg-[var(--positive)]/10',
   },
   PHASE_3_MARKUP: {
     label: 'Giai đoạn 3 · Tăng trưởng',
-    textClass: 'text-[#6366F1]',
-    borderClass: 'border-[#6366F1]/40 bg-[#6366F1]/10',
+    textClass: 'text-[var(--accent)]',
+    borderClass: 'border-[var(--accent)]/40 bg-[var(--accent)]/10',
   },
   PHASE_4_DISTRIBUTION: {
     label: 'Giai đoạn 4 · Phân phối',
-    textClass: 'text-[#F59E0B]',
-    borderClass: 'border-[#F59E0B]/40 bg-[#F59E0B]/10',
+    textClass: 'text-[var(--warning)]',
+    borderClass: 'border-[var(--warning)]/40 bg-[var(--warning)]/10',
   },
   DATA_UNAVAILABLE: {
     label: 'DATA_UNAVAILABLE',
-    textClass: 'text-[#E5E7EB]/60',
-    borderClass: 'border-[#263244] bg-[#0B0E14]/80',
+    textClass: 'text-[var(--text)]/60',
+    borderClass: 'border-[var(--border)] bg-[var(--bg)]/80',
   },
 };
 
@@ -67,14 +67,14 @@ export function CyclePhaseBadge({ phase, compact = false }: { phase: CyclePhase;
           <span
             role="dialog"
             onClick={(e) => e.stopPropagation()}
-            className="absolute left-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] whitespace-normal rounded-lg border border-[var(--border,#263244)] bg-[var(--surface,#0F1623)] p-3 text-left text-xs leading-relaxed text-[#E5E7EB] shadow-xl"
+            className="absolute left-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] whitespace-normal rounded-lg border border-[var(--border,#263244)] bg-[var(--surface,#0F1623)] p-3 text-left text-xs leading-relaxed text-[var(--text)] shadow-xl"
           >
             <span className="mb-2 flex gap-1">
               {PHASE_ORDER.map((p, i) => (
                 <span
                   key={p}
                   className={`flex-1 rounded px-1 py-0.5 text-center text-[10px] ${
-                    p === key ? `${PHASE_STYLES[p].borderClass} ${PHASE_STYLES[p].textClass} border font-semibold` : 'bg-white/5 text-[#E5E7EB]/50'
+                    p === key ? `${PHASE_STYLES[p].borderClass} ${PHASE_STYLES[p].textClass} border font-semibold` : 'bg-white/5 text-[var(--text)]/50'
                   }`}
                 >
                   {i + 1}
@@ -82,14 +82,14 @@ export function CyclePhaseBadge({ phase, compact = false }: { phase: CyclePhase;
               ))}
             </span>
             <span className={`block text-sm font-semibold ${cfg.textClass}`}>{t(`fr.phase.${key}`)}</span>
-            <span className="mt-1 block text-[#E5E7EB]/70">{t('fr.phase.cycleIntro')}</span>
-            <span className="mt-2 block font-medium text-white">{t('fr.phase.lblWhat')}</span>
-            <span className="block text-[#E5E7EB]/85">{t(`fr.phase.${key}.what`)}</span>
-            <span className="mt-2 block font-medium text-white">{t('fr.phase.lblRule')}</span>
-            <span className="block text-[#E5E7EB]/85">{t(`fr.phase.${key}.rule`)}</span>
-            <span className="mt-2 block font-medium text-white">{t('fr.phase.lblWatch')}</span>
-            <span className="block text-[#E5E7EB]/85">{t(`fr.phase.${key}.watch`)}</span>
-            <span className="mt-2 block text-[10px] text-[#E5E7EB]/50">{t('fr.phase.disclaimer')}</span>
+            <span className="mt-1 block text-[var(--text)]/70">{t('fr.phase.cycleIntro')}</span>
+            <span className="mt-2 block font-medium text-[var(--text-strong)]">{t('fr.phase.lblWhat')}</span>
+            <span className="block text-[var(--text)]/85">{t(`fr.phase.${key}.what`)}</span>
+            <span className="mt-2 block font-medium text-[var(--text-strong)]">{t('fr.phase.lblRule')}</span>
+            <span className="block text-[var(--text)]/85">{t(`fr.phase.${key}.rule`)}</span>
+            <span className="mt-2 block font-medium text-[var(--text-strong)]">{t('fr.phase.lblWatch')}</span>
+            <span className="block text-[var(--text)]/85">{t(`fr.phase.${key}.watch`)}</span>
+            <span className="mt-2 block text-[10px] text-[var(--text)]/50">{t('fr.phase.disclaimer')}</span>
           </span>
         </>
       )}
@@ -101,14 +101,14 @@ export function getBottomScoreAccent(classification: BottomClassification): stri
   switch (classification) {
     case 'EXTREME_BOTTOM_OPPORTUNITY':
     case 'STRONG_BOTTOM_CANDIDATE':
-      return 'text-[#22C55E]';
+      return 'text-[var(--positive)]';
     case 'EARLY_ACCUMULATION_ZONE':
-      return 'text-[#38BDF8]';
+      return 'text-[var(--accent-text)]';
     case 'NEUTRAL':
-      return 'text-[#F59E0B]';
+      return 'text-[var(--warning)]';
     case 'NO_BOTTOM_SIGNAL':
-      return 'text-[#E5E7EB]/65';
+      return 'text-[var(--text)]/65';
     default:
-      return 'text-[#E5E7EB]/45';
+      return 'text-[var(--text)]/45';
   }
 }

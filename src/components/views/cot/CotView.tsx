@@ -126,8 +126,8 @@ export default function CotView() {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">{t('cot.title')}</h1>
-          <p className="text-sm text-[#E5E7EB]/65 mt-1">
+          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('cot.title')}</h1>
+          <p className="text-sm text-[var(--text)]/65 mt-1">
             {t('cot.subtitle')}
           </p>
         </div>
@@ -135,7 +135,7 @@ export default function CotView() {
           type="button"
           onClick={() => setReloadToken((t) => t + 1)}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[#172033] hover:bg-[#172033]/80 border border-[#263244] rounded-md text-xs font-medium text-white disabled:opacity-50 whitespace-nowrap self-start"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--surface-2)] hover:bg-[var(--surface-2)]/80 border border-[var(--border)] rounded-md text-xs font-medium text-[var(--text-strong)] disabled:opacity-50 whitespace-nowrap self-start"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
           <span>{t('cot.reload')}</span>
@@ -169,7 +169,7 @@ export default function CotView() {
           </div>
           <div>
             <span className={labelClass}>{t('cot.reportType')}</span>
-            <div className="flex gap-1 bg-[#0B0E14] border border-[#263244] rounded-md p-1" role="group" aria-label={t('cot.reportType')}>
+            <div className="flex gap-1 bg-[var(--bg)] border border-[var(--border)] rounded-md p-1" role="group" aria-label={t('cot.reportType')}>
               {(['DISAGGREGATED', 'LEGACY'] as const).map((rt) => {
                 const available = mapping?.reportTypes.includes(rt) ?? false;
                 return (
@@ -181,7 +181,7 @@ export default function CotView() {
                     onClick={() => setReportType(rt)}
                     title={t(`cot.rt.${rt}`)}
                     className={`px-2.5 py-1 text-[11px] font-mono rounded ${
-                      reportType === rt ? 'bg-[#6366F1] text-white' : 'text-[#E5E7EB]/70 hover:text-white'
+                      reportType === rt ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/70 hover:text-white'
                     } disabled:opacity-30`}
                   >
                     {rt}
@@ -203,7 +203,7 @@ export default function CotView() {
         </div>
         {paramError && <Notice tone="error">{paramError}</Notice>}
         {mapping?.evidence && (
-          <p className="text-[11px] font-mono text-[#E5E7EB]/55">
+          <p className="text-[11px] font-mono text-[var(--text)]/55">
             {t('cot.evidence', {
               names: mapping.evidence.marketAndExchangeNames,
               code: mapping.cftcContractMarketCode,
@@ -213,12 +213,12 @@ export default function CotView() {
         )}
         {mapping?.notes && <Notice tone="info">{mapping.notes}</Notice>}
         {notReported.length > 0 && (
-          <details className="text-xs text-[#E5E7EB]/70">
+          <details className="text-xs text-[var(--text)]/70">
             <summary className="cursor-pointer">{t('cot.notCovered', { n: notReported.length })}</summary>
             <ul className="mt-2 space-y-1.5">
               {notReported.map((m) => (
                 <li key={m.instrumentId}>
-                  <span className="font-mono text-white">{m.instrumentId}</span>: {m.notes}
+                  <span className="font-mono text-[var(--text-strong)]">{m.instrumentId}</span>: {m.notes}
                 </li>
               ))}
             </ul>
@@ -228,7 +228,7 @@ export default function CotView() {
 
       {mapping?.status === 'REPORTED' && <SyncPanel instrumentId={mapping.instrumentId} onSynced={() => setReloadToken((t) => t + 1)} />}
 
-      {loading && <p className="text-xs text-[#E5E7EB]/55">{t('cot.loading')}</p>}
+      {loading && <p className="text-xs text-[var(--text)]/55">{t('cot.loading')}</p>}
       {error && <Notice tone="error">{error}</Notice>}
       {data && <CotResults data={data} />}
     </div>
@@ -300,7 +300,7 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
           type="button"
           onClick={() => void run()}
           disabled={busy}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[#6366F1] hover:bg-[#6366F1]/85 rounded-md text-xs font-medium text-white disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/85 rounded-md text-xs font-medium text-white disabled:opacity-50"
         >
           <UploadCloud className={`w-3.5 h-3.5 ${busy ? 'animate-pulse' : ''}`} aria-hidden="true" />
           {busy ? t('cot.sync.syncing') : t('cot.sync.btn', { id: instrumentId })}
@@ -310,13 +310,13 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
       {result && (
         <div className="space-y-2 text-xs">
           <p className="font-mono">
-            {t('cot.sync.status')} <span className={result.status === 'SUCCESS' ? 'text-[#22C55E]' : result.status === 'PARTIAL' ? 'text-[#F59E0B]' : 'text-[#EF4444]'}>{result.status}</span>{' '}
+            {t('cot.sync.status')} <span className={result.status === 'SUCCESS' ? 'text-[var(--positive)]' : result.status === 'PARTIAL' ? 'text-[var(--warning)]' : 'text-[var(--negative)]'}>{result.status}</span>{' '}
             · {t('cot.sync.code', { code: result.cftcContractMarketCode })}
           </p>
           <div className="overflow-x-auto">
             <table className="text-[11px] font-mono min-w-[640px]">
               <thead>
-                <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
+                <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
                   {[
                     t('cot.sync.h.type'),
                     t('cot.sync.h.status'),
@@ -334,7 +334,7 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#263244]/70">
+              <tbody className="divide-y divide-[var(--border)]/70">
                 {result.results.map((r) => (
                   <tr key={r.reportType}>
                     <td className="py-1.5 px-2">{r.reportType}</td>
@@ -354,7 +354,7 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
             </table>
           </div>
           {result.results.flatMap((r) => r.warnings.map((w) => `${r.reportType}: ${w}`)).length > 0 && (
-            <ul className="list-disc pl-5 text-[11px] text-[#F59E0B]/90">
+            <ul className="list-disc pl-5 text-[11px] text-[var(--warning)]/90">
               {result.results
                 .flatMap((r) => r.warnings.map((w) => `${r.reportType}: ${w}`))
                 .slice(0, 10)
@@ -407,16 +407,16 @@ function CotResults({ data }: { data: CotQueryResponse }) {
       <Panel title={t('cot.prov.title')}>
         <dl className="grid gap-2 text-xs md:grid-cols-2">
           <div>
-            <dt className="text-[#E5E7EB]/55">{t('cot.prov.sources')}</dt>
-            <dd className="font-mono text-[11px] text-white break-all">
+            <dt className="text-[var(--text)]/55">{t('cot.prov.sources')}</dt>
+            <dd className="font-mono text-[11px] text-[var(--text-strong)] break-all">
               {data.provenance.sources.length ? data.provenance.sources.map((s) => <div key={s}>{s}</div>) : t('cot.prov.noReports')}
             </dd>
           </div>
           <div>
-            <dt className="text-[#E5E7EB]/55">{t('cot.prov.fetchedAt')}</dt>
-            <dd className="font-mono text-white">{data.provenance.fetchedAt ?? '—'}</dd>
-            <dt className="text-[#E5E7EB]/55 mt-1">{t('cot.prov.retrievedAt')}</dt>
-            <dd className="font-mono text-white">{data.retrievedAt}</dd>
+            <dt className="text-[var(--text)]/55">{t('cot.prov.fetchedAt')}</dt>
+            <dd className="font-mono text-[var(--text-strong)]">{data.provenance.fetchedAt ?? '—'}</dd>
+            <dt className="text-[var(--text)]/55 mt-1">{t('cot.prov.retrievedAt')}</dt>
+            <dd className="font-mono text-[var(--text-strong)]">{data.retrievedAt}</dd>
           </div>
         </dl>
         <Notice tone="warn">
@@ -440,11 +440,11 @@ function CotResults({ data }: { data: CotQueryResponse }) {
         {rows.length === 0 && a.status !== 'INVALID_INPUT' && <Notice tone="info">{t('cot.an.noReports')}</Notice>}
         {a.gaps.length > 0 && (
           <div>
-            <p className="text-xs text-[#F59E0B] font-medium mb-1">{t('cot.gaps.title', { n: a.gaps.length })}</p>
+            <p className="text-xs text-[var(--warning)] font-medium mb-1">{t('cot.gaps.title', { n: a.gaps.length })}</p>
             <div className="overflow-x-auto">
               <table className="text-[11px] font-mono">
                 <thead>
-                  <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
+                  <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
                     <th className="py-1 pr-3 text-left font-medium">{t('cot.gaps.after')}</th>
                     <th className="py-1 px-3 text-left font-medium">{t('cot.gaps.before')}</th>
                     <th className="py-1 px-3 text-right font-medium">{t('cot.gaps.days')}</th>
@@ -452,7 +452,7 @@ function CotResults({ data }: { data: CotQueryResponse }) {
                     <th className="py-1 px-3 text-left font-medium">{t('cot.gaps.kind')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#263244]/70">
+                <tbody className="divide-y divide-[var(--border)]/70">
                   {a.gaps.map((g) => (
                     <tr key={`${g.after}-${g.before}`}>
                       <td className="py-1 pr-3">{fmtDate(g.after)}</td>
@@ -467,7 +467,7 @@ function CotResults({ data }: { data: CotQueryResponse }) {
             </div>
           </div>
         )}
-        <details className="text-[11px] text-[#E5E7EB]/60">
+        <details className="text-[11px] text-[var(--text)]/60">
           <summary className="cursor-pointer">{t('cot.formulas')}</summary>
           <ul className="mt-1 space-y-0.5 font-mono">
             {Object.entries(a.formula).map(([k, v]) => (
@@ -487,7 +487,7 @@ function CotResults({ data }: { data: CotQueryResponse }) {
           <div className="overflow-x-auto">
             <table className="w-full text-xs font-mono min-w-[720px]">
               <thead>
-                <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
+                <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
                   {[
                     t('cot.col.category'),
                     t('cot.col.long'),
@@ -504,16 +504,16 @@ function CotResults({ data }: { data: CotQueryResponse }) {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#263244]/70">
+              <tbody className="divide-y divide-[var(--border)]/70">
                 {cats.map((c) => {
                   const v = latest.categories[c];
                   return (
                     <tr key={c}>
-                      <td className="py-1.5 px-2 text-white">{categoryLabel(c)}</td>
+                      <td className="py-1.5 px-2 text-[var(--text-strong)]">{categoryLabel(c)}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">{fmtInt(v?.long)}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">{fmtInt(v?.short)}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">{fmtInt(v?.spread)}</td>
-                      <td className="py-1.5 px-2 text-right tabular-nums text-white">{fmtSigned(v?.net)}</td>
+                      <td className="py-1.5 px-2 text-right tabular-nums text-[var(--text-strong)]">{fmtSigned(v?.net)}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">{v?.netChangeWoW === null ? <span title={t('cot.gapTitle')}>— {t('cot.gap')}</span> : fmtSigned(v?.netChangeWoW)}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">{v?.netPctOi === null || v?.netPctOi === undefined ? '—' : `${fmtFixed(v.netPctOi, 1)}%`}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">{a.status === 'OK' && v?.cotIndex !== null && v?.cotIndex !== undefined ? v.cotIndex.toFixed(0) : '—'}</td>
@@ -547,7 +547,7 @@ function CotResults({ data }: { data: CotQueryResponse }) {
             <div className="overflow-x-auto">
               <table className="w-full text-[11px] font-mono min-w-[860px]">
                 <thead>
-                  <tr className="text-[#E5E7EB]/60 border-b border-[#263244]">
+                  <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
                     <th className="py-1.5 px-2 text-left font-medium">{t('cot.recent.date')}</th>
                     <th className="py-1.5 px-2 text-left font-medium">{t('cot.recent.release')}</th>
                     <th className="py-1.5 px-2 text-right font-medium" title={t('term.openInterest')}>
@@ -560,19 +560,19 @@ function CotResults({ data }: { data: CotQueryResponse }) {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#263244]/70">
+                <tbody className="divide-y divide-[var(--border)]/70">
                   {recent.map((r) => (
                     <tr key={r.reportDate}>
-                      <td className="py-1.5 px-2 text-white">{fmtDate(r.reportDate)}</td>
-                      <td className="py-1.5 px-2 text-[#E5E7EB]/60">{fmtDate(r.expectedReleaseDate)}</td>
+                      <td className="py-1.5 px-2 text-[var(--text-strong)]">{fmtDate(r.reportDate)}</td>
+                      <td className="py-1.5 px-2 text-[var(--text)]/60">{fmtDate(r.expectedReleaseDate)}</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">{fmtInt(r.openInterest)}</td>
                       {cats.map((c) => {
                         const v = r.categories[c];
                         const d = v?.netChangeWoW ?? null;
                         return (
                           <td key={c} className="py-1.5 px-2 text-right tabular-nums">
-                            <span className="text-white">{fmtSigned(v?.net)}</span>
-                            <span className={`ml-1.5 ${d === null ? 'text-[#F59E0B]/80' : d > 0 ? 'text-[#22C55E]' : d < 0 ? 'text-[#EF4444]' : 'text-[#E5E7EB]/60'}`}>
+                            <span className="text-[var(--text-strong)]">{fmtSigned(v?.net)}</span>
+                            <span className={`ml-1.5 ${d === null ? 'text-[var(--warning)]/80' : d > 0 ? 'text-[var(--positive)]' : d < 0 ? 'text-[var(--negative)]' : 'text-[var(--text)]/60'}`}>
                               {d === null ? t('cot.gap') : fmtSigned(d)}
                             </span>
                           </td>
@@ -610,15 +610,15 @@ function OpenInterestPanel({ data }: { data: CotQueryResponse }) {
     <Panel title={t('cot.oi.title')} subtitle={t('cot.oi.subtitle')}>
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 mb-3">
         <div>
-          <span className="text-[11px] text-[#E5E7EB]/60">{t('cot.oi.chartTitle')}</span>
-          <div className="text-xl font-semibold text-white tabular-nums">{fmtIntDisplay(latest.openInterest)}</div>
-          <div className="text-[11px] text-[#E5E7EB]/50">{fmtDate(latest.reportDate)}</div>
+          <span className="text-[11px] text-[var(--text)]/60">{t('cot.oi.chartTitle')}</span>
+          <div className="text-xl font-semibold text-[var(--text-strong)] tabular-nums">{fmtIntDisplay(latest.openInterest)}</div>
+          <div className="text-[11px] text-[var(--text)]/50">{fmtDate(latest.reportDate)}</div>
         </div>
         <div>
-          <span className="text-[11px] text-[#E5E7EB]/60">{t('cot.oi.change4w')}</span>
+          <span className="text-[11px] text-[var(--text)]/60">{t('cot.oi.change4w')}</span>
           <div
             className={`text-xl font-semibold tabular-nums ${
-              ch === null ? 'text-[#E5E7EB]/50' : ch > 0 ? 'text-[#22C55E]' : ch < 0 ? 'text-[#EF4444]' : 'text-[#E5E7EB]'
+              ch === null ? 'text-[var(--text)]/50' : ch > 0 ? 'text-[var(--positive)]' : ch < 0 ? 'text-[var(--negative)]' : 'text-[var(--text)]'
             }`}
           >
             {ch === null ? '—' : `${ch > 0 ? '+' : ''}${fmtIntDisplay(ch)}`}
@@ -637,14 +637,14 @@ function OpenInterestPanel({ data }: { data: CotQueryResponse }) {
               width={Math.max(1, bw)}
               height={h}
               rx={1.5}
-              className={up ? 'fill-[#22C55E]/70' : 'fill-[#60A5FA]/60'}
+              className={up ? 'fill-[var(--positive)]/70' : 'fill-[#60A5FA]/60'}
             >
               <title>{`${fmtDate(r.reportDate)}: ${fmtIntDisplay(r.openInterest)}`}</title>
             </rect>
           );
         })}
       </svg>
-      <p className="mt-2 text-xs text-[#E5E7EB]/70">{t('cot.oi.explanation')}</p>
+      <p className="mt-2 text-xs text-[var(--text)]/70">{t('cot.oi.explanation')}</p>
     </Panel>
   );
 }

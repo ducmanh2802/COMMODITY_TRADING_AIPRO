@@ -36,14 +36,14 @@ export function SessionHistory({ state, notes, instrumentName, onUpdateTrade, on
   const open = rows.find((r) => r.s.id === openId) ?? null;
 
   if (rows.length === 0) {
-    return <div className={`${cardCls} text-sm text-[#E5E7EB]/70`}>{t('pt.hist.none')}</div>;
+    return <div className={`${cardCls} text-sm text-[var(--text)]/70`}>{t('pt.hist.none')}</div>;
   }
 
   return (
     <div className="space-y-4">
       <div className={cardCls}>
-        <h3 className="text-sm font-semibold text-white mb-1">{t('pt.hist.compare')}</h3>
-        <p className="text-[11px] text-[#E5E7EB]/55 mb-2">{t('pt.hist.compareNote')}</p>
+        <h3 className="text-sm font-semibold text-[var(--text-strong)] mb-1">{t('pt.hist.compare')}</h3>
+        <p className="text-[11px] text-[var(--text)]/55 mb-2">{t('pt.hist.compareNote')}</p>
         <PnlBars items={rows.map((r) => ({ key: r.s.id, label: r.s.name, value: r.sum.pnlVnd }))} label={t('pt.hist.compare')} />
       </div>
 
@@ -64,18 +64,18 @@ export function SessionHistory({ state, notes, instrumentName, onUpdateTrade, on
                     value={renaming.name}
                     maxLength={80}
                     onChange={(e) => setRenaming({ id: s.id, name: e.target.value })}
-                    className="bg-[#0B0E14] border border-[#263244] rounded-md px-2 py-1 text-sm text-white"
+                    className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1 text-sm text-[var(--text-strong)]"
                     aria-label={t('pt.session.name')}
                   />
-                  <button type="submit" className="px-3 py-1 bg-[#6366F1] text-white text-xs rounded-md">{t('pt.save')}</button>
+                  <button type="submit" className="px-3 py-1 bg-[var(--accent)] text-white text-xs rounded-md">{t('pt.save')}</button>
                 </form>
               ) : (
-                <h3 className="text-sm font-semibold text-white">{s.name}</h3>
+                <h3 className="text-sm font-semibold text-[var(--text-strong)]">{s.name}</h3>
               )}
-              <span className={`text-[11px] px-2 py-0.5 rounded-full border ${s.status === 'active' ? 'border-[#22C55E] text-[#4ADE80]' : 'border-[#6B7280] text-[#9CA3AF]'}`}>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full border ${s.status === 'active' ? 'border-[var(--positive)] text-[var(--positive)]' : 'border-[#6B7280] text-[var(--muted)]'}`}>
                 {s.status === 'active' ? t('pt.session.active') : t('pt.session.closed')}
               </span>
-              <span className="text-[11px] text-[#E5E7EB]/55">
+              <span className="text-[11px] text-[var(--text)]/55">
                 {fmtDate(s.createdAtMs)}{s.closedAtMs !== null ? ` → ${fmtDate(s.closedAtMs)}` : ''}
               </span>
             </div>
@@ -90,11 +90,11 @@ export function SessionHistory({ state, notes, instrumentName, onUpdateTrade, on
               <Stat label={t('pt.hist.worst')} value={sum.worstTradeVnd === null ? '—' : signedVnd(sum.worstTradeVnd)} tone={sum.worstTradeVnd === null ? undefined : pnlColor(sum.worstTradeVnd)} />
             </div>
             <div className="flex flex-wrap gap-2">
-              <button type="button" className="px-4 py-2 bg-[#6366F1] text-white text-xs font-medium rounded-md" onClick={() => setOpenId(openId === s.id ? null : s.id)}>
+              <button type="button" className="px-4 py-2 bg-[var(--accent)] text-white text-xs font-medium rounded-md" onClick={() => setOpenId(openId === s.id ? null : s.id)}>
                 {openId === s.id ? t('pt.hist.hide') : t('pt.hist.open')}
               </button>
-              <button type="button" className="px-4 py-2 border border-[#263244] text-xs rounded-md" onClick={() => setRenaming({ id: s.id, name: s.name })}>{t('pt.session.rename')}</button>
-              <button type="button" className="px-4 py-2 border border-[#EF4444]/60 text-[#F87171] text-xs rounded-md" onClick={() => onDeleteSession(s)}>{t('pt.session.delete')}</button>
+              <button type="button" className="px-4 py-2 border border-[var(--border)] text-xs rounded-md" onClick={() => setRenaming({ id: s.id, name: s.name })}>{t('pt.session.rename')}</button>
+              <button type="button" className="px-4 py-2 border border-[var(--negative)]/60 text-[var(--negative)] text-xs rounded-md" onClick={() => onDeleteSession(s)}>{t('pt.session.delete')}</button>
             </div>
             {open?.s.id === s.id && (
               <SessionReport

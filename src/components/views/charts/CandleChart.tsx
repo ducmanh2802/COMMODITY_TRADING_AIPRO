@@ -227,15 +227,15 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
   return (
     <div className="relative">
       {legend && (
-        <div className="absolute left-3 top-2 z-10 pointer-events-none font-mono text-[11px] tabular-nums text-[#E5E7EB]/80 bg-[#111622]/80 rounded px-1.5 py-0.5">
-          <span className="text-white">{legend.time}</span>{' '}
-          O <span className="text-white">{legend.o}</span> H <span className="text-white">{legend.h}</span> L{' '}
-          <span className="text-white">{legend.l}</span> C{' '}
-          <span className={legend.c >= legend.o ? 'text-[#22C55E]' : 'text-[#EF4444]'}>{legend.c}</span>
+        <div className="absolute left-3 top-2 z-10 pointer-events-none font-mono text-[11px] tabular-nums text-[var(--text)]/80 bg-[var(--surface)]/80 rounded px-1.5 py-0.5">
+          <span className="text-[var(--text-strong)]">{legend.time}</span>{' '}
+          O <span className="text-[var(--text-strong)]">{legend.o}</span> H <span className="text-[var(--text-strong)]">{legend.h}</span> L{' '}
+          <span className="text-[var(--text-strong)]">{legend.l}</span> C{' '}
+          <span className={legend.c >= legend.o ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}>{legend.c}</span>
           {legend.v !== null && (
             <>
               {' '}
-              V <span className="text-white">{fmtNum(legend.v)}</span>
+              V <span className="text-[var(--text-strong)]">{fmtNum(legend.v)}</span>
             </>
           )}
         </div>

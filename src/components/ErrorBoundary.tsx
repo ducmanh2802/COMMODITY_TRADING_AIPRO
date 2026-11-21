@@ -31,22 +31,22 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   render(): React.ReactNode {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#0B0E14] text-[#E5E7EB] flex items-center justify-center p-6">
-          <div className="max-w-lg w-full bg-[#111622] border border-[#263244] rounded-lg p-6 space-y-4">
-            <div className="flex items-center gap-3 text-[#EF4444]">
+        <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex items-center justify-center p-6">
+          <div className="max-w-lg w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6 space-y-4">
+            <div className="flex items-center gap-3 text-[var(--negative)]">
               <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden="true" />
               <h1 className="text-base font-semibold">{tr('error.title')}</h1>
             </div>
-            <p className="text-sm text-[#E5E7EB]/80 leading-relaxed">
+            <p className="text-sm text-[var(--text)]/80 leading-relaxed">
               {tr('error.body')}
             </p>
-            <pre className="text-xs font-mono bg-[#0B0E14] border border-[#263244] rounded p-3 overflow-x-auto text-[#F59E0B]">
+            <pre className="text-xs font-mono bg-[var(--bg)] border border-[var(--border)] rounded p-3 overflow-x-auto text-[var(--warning)]">
               {this.state.message}
             </pre>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium bg-[#6366F1] hover:bg-[#6366F1]/90 text-white rounded-md transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white rounded-md transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
               {tr('error.reload')}

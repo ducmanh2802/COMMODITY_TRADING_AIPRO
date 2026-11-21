@@ -138,6 +138,13 @@ export function computeScorecard(x: ScorecardInputs): Scorecard {
   }
   // Day change only from two stored closes (never invented): last close vs previous close, when price is the last bar.
   if (price.status === 'HISTORICAL' && !(hasQuote && quote?.kind === 'BENCHMARK') && n >= 2 && closes[n - 2] > 0) price.changePct = closes[n - 1] / closes[n - 2] - 1;
+  // Futures quote present: change vs the last stored close from an EARLIER session than the quote (both real values).
+  else if (hasQuote && quote && quote.kind !== 'BENCHMARK' && quote.price !== null && quote.timestamp && n >= 1) {
+    const qDay = quote.timestamp.slice(0, 10);
+    let i = n - 1;
+    while (i >= 0 && bars[i].timestamp.slice(0, 10) >= qDay) i--;
+    if (i >= 0 && closes[i] > 0) price.changePct = quote.price / closes[i] - 1;
+  }
 
   const used = dimensions.filter((d) => d.status === 'OK').map((d) => d.id);
   const excluded = dimensions.filter((d) => d.status !== 'OK').map((d) => d.id) as ScorecardDimensionId[];

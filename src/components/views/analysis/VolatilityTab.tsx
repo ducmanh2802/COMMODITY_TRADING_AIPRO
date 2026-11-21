@@ -103,7 +103,7 @@ export function VolatilityTab({ options }: { options: SeriesOption[] }) {
         {option && !Number.isFinite(af) && (
           <Notice tone="warn">{t('an.vol.noAf', { tf: option.timeframe })}</Notice>
         )}
-        {loading && <p className="text-xs text-[#E5E7EB]/55">{t('an.loadingCandles')}</p>}
+        {loading && <p className="text-xs text-[var(--text)]/55">{t('an.loadingCandles')}</p>}
         {error && <Notice tone="error">{error}</Notice>}
         {s && <SeriesIntegrity s={s} />}
       </Panel>
@@ -114,29 +114,29 @@ export function VolatilityTab({ options }: { options: SeriesOption[] }) {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs min-w-[560px]">
                 <thead>
-                  <tr className="border-b border-[#263244] text-[#E5E7EB]/60">
+                  <tr className="border-b border-[var(--border)] text-[var(--text)]/60">
                     <th className="py-2 pr-3 font-medium">{t('an.vol.metric')}</th>
                     <th className="py-2 px-3 font-medium">{t('common.status')}</th>
                     <th className="py-2 px-3 font-medium text-right">{t('an.vol.latestCol')}</th>
                     <th className="py-2 px-3 font-medium">{t('an.vol.asOf')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#263244]/70">
+                <tbody className="divide-y divide-[var(--border)]/70">
                   {rows.map(({ label, r, annualized }) => {
                     const lv = r.status === 'OK' ? latestValue(r.timestamps, r.values) : null;
                     return (
                       <tr key={label}>
-                        <td className="py-2 pr-3 text-[#E5E7EB]/85">
+                        <td className="py-2 pr-3 text-[var(--text)]/85">
                           {label}
-                          <span className="block text-[10px] text-[#E5E7EB]/45">{annualized ? t('an.vol.annualized', { af: Number.isFinite(af) ? fmtLocaleNum(af) : '—' }) : t('an.vol.notAnnualized')}</span>
+                          <span className="block text-[10px] text-[var(--text)]/45">{annualized ? t('an.vol.annualized', { af: Number.isFinite(af) ? fmtLocaleNum(af) : '—' }) : t('an.vol.notAnnualized')}</span>
                         </td>
                         <td className="py-2 px-3 font-mono">
                           <StatusChip status={r.status} />
                         </td>
-                        <td className="py-2 px-3 font-mono text-right tabular-nums text-white">
+                        <td className="py-2 px-3 font-mono text-right tabular-nums text-[var(--text-strong)]">
                           {r.status === 'OK' ? (lv ? (annualized ? fmtPct(lv.v) : `${fmtFixed(lv.v, 2)}%`) : '—') : '—'}
                         </td>
-                        <td className="py-2 px-3 font-mono text-[#E5E7EB]/60">{r.status === 'OK' && lv ? fmtDate(lv.t) : '—'}</td>
+                        <td className="py-2 px-3 font-mono text-[var(--text)]/60">{r.status === 'OK' && lv ? fmtDate(lv.t) : '—'}</td>
                       </tr>
                     );
                   })}

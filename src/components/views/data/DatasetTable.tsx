@@ -12,35 +12,35 @@ interface DatasetTableProps {
 }
 
 const QUALITY_COLOR: Record<string, string> = {
-  OFFICIAL: 'text-[#22C55E]',
-  LICENSED_VENDOR: 'text-[#6366F1]',
-  UNOFFICIAL: 'text-[#F59E0B]',
-  USER_PROVIDED: 'text-[#F59E0B]',
+  OFFICIAL: 'text-[var(--positive)]',
+  LICENSED_VENDOR: 'text-[var(--accent)]',
+  UNOFFICIAL: 'text-[var(--warning)]',
+  USER_PROVIDED: 'text-[var(--warning)]',
 };
 
 export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDelete }: DatasetTableProps) {
   const t = useT();
   return (
-    <section aria-label={t('data.ds.title')} className="bg-[#111622] border border-[#263244] rounded-lg overflow-hidden">
-      <div className="px-4 py-3 border-b border-[#263244] flex items-center justify-between gap-3">
+    <section aria-label={t('data.ds.title')} className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
+      <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-white">{t('data.ds.title')}</h2>
-          <p className="text-xs text-[#E5E7EB]/55 mt-0.5">{t('data.ds.subtitle')}</p>
+          <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('data.ds.title')}</h2>
+          <p className="text-xs text-[var(--text)]/55 mt-0.5">{t('data.ds.subtitle')}</p>
         </div>
         <button
           type="button"
           onClick={onRefresh}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-[#263244] text-[#E5E7EB]/80 hover:text-white hover:bg-[#172033]"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-[var(--border)] text-[var(--text)]/80 hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
           {t('common.refresh')}
         </button>
       </div>
-      {error && <p className="px-4 py-2 text-xs text-[#EF4444] border-b border-[#263244]">{error}</p>}
+      {error && <p className="px-4 py-2 text-xs text-[var(--negative)] border-b border-[var(--border)]">{error}</p>}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[1080px]">
           <thead>
-            <tr className="border-b border-[#263244] bg-[#172033]/50 text-xs text-[#E5E7EB]/65">
+            <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">
               <th className="py-3 px-4 font-medium">{t('data.ds.instrument')}</th>
               <th className="py-3 px-3 font-medium">{t('data.ds.contract')}</th>
               <th className="py-3 px-3 font-medium">{t('data.ds.tf')}</th>
@@ -55,25 +55,25 @@ export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDel
               <th className="py-3 px-4 font-medium text-right">{t('data.ds.action')}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#263244]/70 text-xs">
+          <tbody className="divide-y divide-[var(--border)]/70 text-xs">
             {datasets.length === 0 ? (
               <tr>
-                <td colSpan={12} className="py-10 px-4 text-center text-[#E5E7EB]/55">
+                <td colSpan={12} className="py-10 px-4 text-center text-[var(--text)]/55">
                   {loading ? t('data.ds.loading') : t('data.ds.empty')}
                 </td>
               </tr>
             ) : (
               datasets.map((d) => (
-                <tr key={d.id} className="hover:bg-[#172033]/40 transition-colors">
-                  <td className="py-2.5 px-4 font-mono text-white whitespace-nowrap">{d.instrumentId}</td>
-                  <td className="py-2.5 px-3 font-mono text-white whitespace-nowrap">
+                <tr key={d.id} className="hover:bg-[var(--surface-2)]/40 transition-colors">
+                  <td className="py-2.5 px-4 font-mono text-[var(--text-strong)] whitespace-nowrap">{d.instrumentId}</td>
+                  <td className="py-2.5 px-3 font-mono text-[var(--text-strong)] whitespace-nowrap">
                     {d.contractCode}
                     {d.continuousAdjustment !== 'NONE' && (
-                      <span className="text-[#E5E7EB]/50"> · {d.continuousAdjustment}</span>
+                      <span className="text-[var(--text)]/50"> · {d.continuousAdjustment}</span>
                     )}
                   </td>
-                  <td className="py-2.5 px-3 font-mono text-[#E5E7EB]/80">{d.timeframe}</td>
-                  <td className="py-2.5 px-3 text-[#E5E7EB]/85 max-w-[180px] truncate" title={d.sourceLabel}>
+                  <td className="py-2.5 px-3 font-mono text-[var(--text)]/80">{d.timeframe}</td>
+                  <td className="py-2.5 px-3 text-[var(--text)]/85 max-w-[180px] truncate" title={d.sourceLabel}>
                     {d.sourceLabel}
                   </td>
                   <td
@@ -82,21 +82,21 @@ export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDel
                   >
                     {d.sourceQuality}
                   </td>
-                  <td className="py-2.5 px-3 font-mono text-[#E5E7EB]/80 whitespace-nowrap">
+                  <td className="py-2.5 px-3 font-mono text-[var(--text)]/80 whitespace-nowrap">
                     {d.priceUnit}
-                    {d.priceUnitDeclared && <span className="text-[#F59E0B]"> {t('data.ds.declared')}</span>}
+                    {d.priceUnitDeclared && <span className="text-[var(--warning)]"> {t('data.ds.declared')}</span>}
                   </td>
-                  <td className="py-2.5 px-3 font-mono tabular-nums text-right text-[#E5E7EB]/80 whitespace-nowrap">
+                  <td className="py-2.5 px-3 font-mono tabular-nums text-right text-[var(--text)]/80 whitespace-nowrap">
                     {fmtInt(d.rowCount)} ({fmtInt(d.insertedCount)})
                   </td>
-                  <td className="py-2.5 px-3 font-mono tabular-nums text-[#E5E7EB]/80 whitespace-nowrap">
+                  <td className="py-2.5 px-3 font-mono tabular-nums text-[var(--text)]/80 whitespace-nowrap">
                     {formatStoredTimestamp(d.firstTimestamp, d.timeframe)} → {formatStoredTimestamp(d.lastTimestamp, d.timeframe)}
                   </td>
-                  <td className="py-2.5 px-3 font-mono text-[#E5E7EB]/60 whitespace-nowrap">{d.timezone}</td>
-                  <td className="py-2.5 px-3 font-mono text-[#E5E7EB]/60" title={d.checksum}>
+                  <td className="py-2.5 px-3 font-mono text-[var(--text)]/60 whitespace-nowrap">{d.timezone}</td>
+                  <td className="py-2.5 px-3 font-mono text-[var(--text)]/60" title={d.checksum}>
                     {d.checksum.slice(0, 12)}…
                   </td>
-                  <td className="py-2.5 px-3 font-mono tabular-nums text-[#E5E7EB]/60 whitespace-nowrap">
+                  <td className="py-2.5 px-3 font-mono tabular-nums text-[var(--text)]/60 whitespace-nowrap">
                     {d.importedAt.slice(0, 16).replace('T', ' ')}
                   </td>
                   <td className="py-2.5 px-4 text-right">
@@ -104,7 +104,7 @@ export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDel
                       type="button"
                       onClick={() => onRequestDelete(d)}
                       aria-label={t('data.ds.deleteAria', { id: `${d.instrumentId} ${d.contractCode} ${d.timeframe}` })}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded text-[#EF4444]/85 hover:text-[#EF4444] hover:bg-[#EF4444]/10"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded text-[var(--negative)]/85 hover:text-[var(--negative)] hover:bg-[var(--negative)]/10"
                     >
                       <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                       {t('common.delete')}
@@ -146,27 +146,27 @@ export function ConfirmDeleteDialog({ dataset, busy, error, onCancel, onConfirm 
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-delete-title"
-        className="w-full max-w-md bg-[#111622] border border-[#263244] rounded-lg p-5 space-y-4"
+        className="w-full max-w-md bg-[var(--surface)] border border-[var(--border)] rounded-lg p-5 space-y-4"
       >
-        <h2 id="confirm-delete-title" className="text-sm font-semibold text-white">
+        <h2 id="confirm-delete-title" className="text-sm font-semibold text-[var(--text-strong)]">
           {t('data.ds.confirmTitle')}
         </h2>
-        <p className="text-xs text-[#E5E7EB]/75 leading-relaxed">
-          {t('data.ds.confirm1')} <span className="font-mono text-white">{dataset.id.slice(0, 8)}</span> (
+        <p className="text-xs text-[var(--text)]/75 leading-relaxed">
+          {t('data.ds.confirm1')} <span className="font-mono text-[var(--text-strong)]">{dataset.id.slice(0, 8)}</span> (
           <span className="font-mono">
             {dataset.instrumentId} · {dataset.contractCode} · {dataset.timeframe}
           </span>
           {t('data.ds.confirm2', { source: dataset.sourceLabel })}{' '}
-          <span className="font-mono text-white">{fmtInt(dataset.insertedCount)}</span> {t('data.ds.confirm3')}
+          <span className="font-mono text-[var(--text-strong)]">{fmtInt(dataset.insertedCount)}</span> {t('data.ds.confirm3')}
         </p>
-        {error && <p className="text-xs text-[#EF4444]">{error}</p>}
+        {error && <p className="text-xs text-[var(--negative)]">{error}</p>}
         <div className="flex justify-end gap-2">
           <button
             ref={cancelRef}
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="px-3 py-1.5 text-xs rounded-md border border-[#263244] text-[#E5E7EB]/85 hover:bg-[#172033] disabled:opacity-50"
+            className="px-3 py-1.5 text-xs rounded-md border border-[var(--border)] text-[var(--text)]/85 hover:bg-[var(--surface-2)] disabled:opacity-50"
           >
             {t('common.cancel')}
           </button>
@@ -174,7 +174,7 @@ export function ConfirmDeleteDialog({ dataset, busy, error, onCancel, onConfirm 
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="px-3 py-1.5 text-xs rounded-md bg-[#EF4444] text-white hover:bg-[#DC2626] disabled:opacity-50"
+            className="px-3 py-1.5 text-xs rounded-md bg-[var(--negative)] text-white hover:bg-[#DC2626] disabled:opacity-50"
           >
             {busy ? t('data.ds.deleting') : t('data.ds.deleteBtn')}
           </button>

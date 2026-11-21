@@ -59,21 +59,21 @@ export function RadarBell() {
       >
         <Bell className="w-3.5 h-3.5" aria-hidden="true" />
         {radar.unread > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#EF4444] text-white text-[10px] leading-4 text-center">
+          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[var(--negative)] text-white text-[10px] leading-4 text-center">
             {radar.unread > 9 ? '9+' : radar.unread}
           </span>
         )}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-w-[90vw] z-40 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl p-3 space-y-2 text-xs text-[#E5E7EB]">
+        <div className="absolute right-0 mt-2 w-80 max-w-[90vw] z-40 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl p-3 space-y-2 text-xs text-[var(--text)]">
           <div className="flex items-center justify-between">
             <strong>{t('rd.bell.title')}</strong>
-            <button type="button" onClick={goRadar} className="text-[#93C5FD] hover:underline">
+            <button type="button" onClick={goRadar} className="text-[var(--accent-text)] hover:underline">
               {t('rd.bell.open')}
             </button>
           </div>
           {radar.notes.length === 0 ? (
-            <p className="text-[#E5E7EB]/60">{t('rd.bell.noNotes')}</p>
+            <p className="text-[var(--text)]/60">{t('rd.bell.noNotes')}</p>
           ) : (
             <ul className="space-y-1.5 max-h-64 overflow-auto">
               {radar.notes.map((n) => (
@@ -84,7 +84,7 @@ export function RadarBell() {
                     onClick={() => toggleMute(n.instrumentId)}
                     title={settings.muted.includes(n.instrumentId) ? t('rd.unmute') : t('rd.mute')}
                     aria-label={settings.muted.includes(n.instrumentId) ? t('rd.unmute').replace('mã này', n.name) : t('rd.mute').replace('mã này', n.name)}
-                    className="shrink-0 text-[#E5E7EB]/60 hover:text-white"
+                    className="shrink-0 text-[var(--text)]/60 hover:text-[var(--text-strong)]"
                   >
                     <BellOff className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
@@ -94,36 +94,36 @@ export function RadarBell() {
           )}
           <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/10">
             {settings.browserNotify ? (
-              <button type="button" onClick={disableBrowserNotify} className="text-[#E5E7EB]/80 hover:text-white">
+              <button type="button" onClick={disableBrowserNotify} className="text-[var(--text)]/80 hover:text-[var(--text-strong)]">
                 {t('rd.bell.browserOff')}
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => void enableBrowserNotify().then((r) => setMsg(r === 'granted' ? t('rd.bell.browserGranted') : r === 'denied' ? t('rd.bell.browserDenied') : t('rd.bell.browserUnsupported')))}
-                className="text-[#93C5FD] hover:underline"
+                className="text-[var(--accent-text)] hover:underline"
               >
                 {t('rd.bell.browserOn')}
               </button>
             )}
             {radar.notes.length > 0 && (
-              <button type="button" onClick={clearRadarNotes} className="ml-auto text-[#E5E7EB]/60 hover:text-white">
+              <button type="button" onClick={clearRadarNotes} className="ml-auto text-[var(--text)]/60 hover:text-[var(--text-strong)]">
                 {t('rd.bell.clear')}
               </button>
             )}
           </div>
-          {msg && <p className="text-[#E5E7EB]/70">{msg}</p>}
-          {settings.muted.length > 0 && <p className="text-[#E5E7EB]/50">{t('rd.bell.mutedCount').replace('{count}', String(settings.muted.length))}</p>}
+          {msg && <p className="text-[var(--text)]/70">{msg}</p>}
+          {settings.muted.length > 0 && <p className="text-[var(--text)]/50">{t('rd.bell.mutedCount').replace('{count}', String(settings.muted.length))}</p>}
         </div>
       )}
       {radar.toasts.length > 0 && (
         <div className="fixed bottom-4 right-4 z-50 space-y-2 w-80 max-w-[90vw]" role="status" aria-live="polite">
           {radar.toasts.map((t) => (
-            <div key={t.id} className="flex items-start gap-2 bg-[var(--surface)] border border-[#3B82F6]/50 rounded-xl shadow-xl p-3 text-xs text-white">
+            <div key={t.id} className="flex items-start gap-2 bg-[var(--surface)] border border-[var(--accent)]/50 rounded-xl shadow-xl p-3 text-xs text-[var(--text-strong)]">
               <button type="button" onClick={goRadar} className="flex-1 text-left">
                 {t.text}
               </button>
-              <button type="button" onClick={() => dismissToast(t.id)} aria-label="Đóng thông báo" className="text-[#E5E7EB]/60 hover:text-white">
+              <button type="button" onClick={() => dismissToast(t.id)} aria-label="Đóng thông báo" className="text-[var(--text)]/60 hover:text-[var(--text-strong)]">
                 <X className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>

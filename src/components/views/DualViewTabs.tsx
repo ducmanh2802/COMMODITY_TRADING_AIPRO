@@ -27,15 +27,15 @@ export function DualViewTabs({ tabs, initialTabId }: { tabs: DualViewTab[]; init
             title={tab.note}
             className={`px-3 py-1.5 text-xs rounded-md border ${
               tab.id === current?.id
-                ? 'border-[#3B82F6] bg-[#3B82F6]/15 text-white'
-                : 'border-white/10 text-[#E5E7EB]/70 hover:text-white'
+                ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--text-strong)]'
+                : 'border-white/10 text-[var(--text)]/70 hover:text-[var(--text-strong)]'
             }`}
           >
             {tab.label}
           </button>
         ))}
       </div>
-      {current && <p className="text-[11px] text-[#E5E7EB]/50">{current.note}</p>}
+      {current && <p className="text-[11px] text-[var(--text)]/50">{current.note}</p>}
       {current?.render()}
     </div>
   );

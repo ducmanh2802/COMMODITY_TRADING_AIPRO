@@ -7,7 +7,7 @@ import { LineChartSvg } from './LineChartSvg';
 import { fmtDate as fmtDisplayDate, fmtFixed, fmtInt, tr, useT } from '../../../i18n';
 
 const selectClass =
-  'bg-[#0B0E14] border border-[#263244] rounded-md px-2.5 py-1.5 text-xs text-[#E5E7EB] font-mono focus:outline-none focus:border-[#6366F1]';
+  'bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs text-[var(--text)] font-mono focus:outline-none focus:border-[var(--accent)]';
 
 type LegsState =
   | { state: 'idle' }
@@ -83,17 +83,17 @@ export function SpreadHistoryPanel({
   const lastZ = computed?.ok && computed.z.status === 'OK' ? computed.z.values[computed.z.values.length - 1] : null;
 
   return (
-    <section className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-3" aria-labelledby="spread-hist-title">
+    <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-3" aria-labelledby="spread-hist-title">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="spread-hist-title" className="text-sm font-semibold text-white">
+          <h2 id="spread-hist-title" className="text-sm font-semibold text-[var(--text-strong)]">
             {t('ts.sp.title')}
           </h2>
-          <p className="text-xs text-[#E5E7EB]/55">
+          <p className="text-xs text-[var(--text)]/55">
             {t('ts.sp.subtitle', { tf: CURVE_TIMEFRAME })}
           </p>
         </div>
-        <div className="flex flex-wrap items-end gap-2 text-xs text-[#E5E7EB]/65">
+        <div className="flex flex-wrap items-end gap-2 text-xs text-[var(--text)]/65">
           <label className="space-y-1">
             <span className="block">{t('ts.sp.near')}</span>
             <select value={nearCode} onChange={(e) => setNearCode(e.target.value)} className={selectClass}>
@@ -128,33 +128,33 @@ export function SpreadHistoryPanel({
       </div>
 
       {contracts.length < 2 ? (
-        <p className="text-xs font-mono text-[#F59E0B]">{t('ts.sp.needTwo', { tf: CURVE_TIMEFRAME })}</p>
+        <p className="text-xs font-mono text-[var(--warning)]">{t('ts.sp.needTwo', { tf: CURVE_TIMEFRAME })}</p>
       ) : nearCode === farCode ? (
-        <p className="text-xs font-mono text-[#F59E0B]">{t('ts.sp.pickTwo')}</p>
+        <p className="text-xs font-mono text-[var(--warning)]">{t('ts.sp.pickTwo')}</p>
       ) : legs.state === 'loading' || legs.state === 'idle' ? (
-        <p className="text-xs text-[#E5E7EB]/55">{t('ts.sp.loadingLegs')}</p>
+        <p className="text-xs text-[var(--text)]/55">{t('ts.sp.loadingLegs')}</p>
       ) : legs.state === 'error' ? (
-        <p className="text-xs font-mono text-[#EF4444]">{legs.message}</p>
+        <p className="text-xs font-mono text-[var(--negative)]">{legs.message}</p>
       ) : !computed || !computed.ok ? (
-        <p className="text-xs font-mono text-[#F59E0B]">{computed && !computed.ok ? computed.error : t('ts.sp.unavailable')}</p>
+        <p className="text-xs font-mono text-[var(--warning)]">{computed && !computed.ok ? computed.error : t('ts.sp.unavailable')}</p>
       ) : (
         <div className="space-y-3">
           <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div>
-              <dt className="text-[#E5E7EB]/55">{t('ts.sp.commonDates')}</dt>
-              <dd className="font-mono tabular-nums text-white">{fmtInt(computed.spreadSeries.length)}</dd>
+              <dt className="text-[var(--text)]/55">{t('ts.sp.commonDates')}</dt>
+              <dd className="font-mono tabular-nums text-[var(--text-strong)]">{fmtInt(computed.spreadSeries.length)}</dd>
             </div>
             <div>
-              <dt className="text-[#E5E7EB]/55">{t('ts.sp.lastSpread', { date: last ? fmtDisplayDate(last.t.slice(0, 10)) : '—' })}</dt>
-              <dd className="font-mono tabular-nums text-white">
-                {last ? fmtFixed(last.v, 4) : '—'} <span className="text-[#E5E7EB]/50">{computed.unit ?? ''}</span>
+              <dt className="text-[var(--text)]/55">{t('ts.sp.lastSpread', { date: last ? fmtDisplayDate(last.t.slice(0, 10)) : '—' })}</dt>
+              <dd className="font-mono tabular-nums text-[var(--text-strong)]">
+                {last ? fmtFixed(last.v, 4) : '—'} <span className="text-[var(--text)]/50">{computed.unit ?? ''}</span>
               </dd>
             </div>
             <div>
-              <dt className="text-[#E5E7EB]/55">{t('ts.sp.lastZ')}</dt>
-              <dd className="font-mono tabular-nums text-white">
+              <dt className="text-[var(--text)]/55">{t('ts.sp.lastZ')}</dt>
+              <dd className="font-mono tabular-nums text-[var(--text-strong)]">
                 {computed.z.status !== 'OK' ? (
-                  <span className="text-[#F59E0B]">{computed.z.status}</span>
+                  <span className="text-[var(--warning)]">{computed.z.status}</span>
                 ) : lastZ === null ? (
                   t('ts.undefined')
                 ) : (
@@ -203,12 +203,12 @@ export function SpreadHistoryPanel({
               height={200}
             />
           ) : (
-            <p className="text-xs font-mono text-[#F59E0B]">
+            <p className="text-xs font-mono text-[var(--warning)]">
               {t('ts.sp.zStatus', { status: computed.z.status, reason: computed.z.reason })}
             </p>
           )}
           {computed.warnings.length > 0 && (
-            <ul className="text-[11px] font-mono text-[#F59E0B]/85 list-disc pl-4 space-y-0.5">
+            <ul className="text-[11px] font-mono text-[var(--warning)]/85 list-disc pl-4 space-y-0.5">
               {computed.warnings.map((w) => (
                 <li key={w}>{w}</li>
               ))}

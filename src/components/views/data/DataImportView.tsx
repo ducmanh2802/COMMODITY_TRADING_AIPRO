@@ -40,9 +40,9 @@ const COMMON_TIMEZONES = [
 ];
 
 const inputCls =
-  'w-full bg-[#0B0E14] border border-[#263244] rounded-md px-3 py-2 text-xs text-[#E5E7EB] placeholder:text-[#E5E7EB]/35 focus:outline-none focus:border-[#6366F1] disabled:opacity-50';
-const labelCls = 'block text-xs font-medium text-[#E5E7EB]/75 mb-1';
-const hintCls = 'mt-1 text-[11px] text-[#E5E7EB]/45 leading-snug';
+  'w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs text-[var(--text)] placeholder:text-[var(--text)]/35 focus:outline-none focus:border-[var(--accent)] disabled:opacity-50';
+const labelCls = 'block text-xs font-medium text-[var(--text)]/75 mb-1';
+const hintCls = 'mt-1 text-[11px] text-[var(--text)]/45 leading-snug';
 
 interface FormState {
   instrumentId: string;
@@ -252,8 +252,8 @@ export function DataImportView() {
     <div className="space-y-5">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">{t('data.title')}</h1>
-          <p className="text-sm text-[#E5E7EB]/65 mt-1">
+          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('data.title')}</h1>
+          <p className="text-sm text-[var(--text)]/65 mt-1">
             {t('data.subtitle')}
           </p>
         </div>
@@ -275,7 +275,7 @@ export function DataImportView() {
       </div>
 
       <form
-        className="bg-[#111622] border border-[#263244] rounded-lg p-4 space-y-4"
+        className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
           void run(true);
@@ -293,16 +293,16 @@ export function DataImportView() {
               type="file"
               accept=".csv,text/csv,text/plain"
               onChange={(e) => onFileChosen(e.target.files?.[0])}
-              className="text-xs text-[#E5E7EB]/80 file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border file:border-[#263244] file:bg-[#172033] file:text-[#E5E7EB] file:text-xs hover:file:bg-[#1E293B]"
+              className="text-xs text-[var(--text)]/80 file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border file:border-[var(--border)] file:bg-[var(--surface-2)] file:text-[var(--text)] file:text-xs hover:file:bg-[var(--surface-3)]"
             />
             {file && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-mono text-[#E5E7EB]/70">
-                <FileUp className="w-3.5 h-3.5 text-[#6366F1]" aria-hidden="true" />
+              <span className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--text)]/70">
+                <FileUp className="w-3.5 h-3.5 text-[var(--accent)]" aria-hidden="true" />
                 {file.name} · {(file.size / 1024).toFixed(1)} KB · {t('data.file.lines', { n: fmtInt(file.text.split(/\r?\n/).length) })}
               </span>
             )}
           </div>
-          {fileError && <p className="mt-1 text-xs text-[#EF4444]">{fileError}</p>}
+          {fileError && <p className="mt-1 text-xs text-[var(--negative)]">{fileError}</p>}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -384,7 +384,7 @@ export function DataImportView() {
 
           <div>
             <label htmlFor="imp-tz" className={labelCls}>
-              {t('data.timezone')} <span className="text-[#EF4444]">*</span>
+              {t('data.timezone')} <span className="text-[var(--negative)]">*</span>
             </label>
             <select
               id="imp-tz"
@@ -483,7 +483,7 @@ export function DataImportView() {
 
           <div>
             <label htmlFor="imp-source" className={labelCls}>
-              {t('data.sourceLabel')} <span className="text-[#EF4444]">*</span>
+              {t('data.sourceLabel')} <span className="text-[var(--negative)]">*</span>
             </label>
             <input
               id="imp-source"
@@ -497,7 +497,7 @@ export function DataImportView() {
 
           <div>
             <label htmlFor="imp-quality" className={labelCls}>
-              {t('data.sourceQuality')} <span className="text-[#EF4444]">*</span>
+              {t('data.sourceQuality')} <span className="text-[var(--negative)]">*</span>
             </label>
             <select
               id="imp-quality"
@@ -541,19 +541,19 @@ export function DataImportView() {
               type="checkbox"
               checked={form.sort}
               onChange={(e) => update('sort', e.target.checked)}
-              className="mt-0.5 accent-[#6366F1]"
+              className="mt-0.5 accent-[var(--accent)]"
             />
-            <label htmlFor="imp-sort" className="text-xs text-[#E5E7EB]/75">
+            <label htmlFor="imp-sort" className="text-xs text-[var(--text)]/75">
               {t('data.sort')}
             </label>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-[#263244]">
+        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-[var(--border)]">
           <button
             type="submit"
             disabled={!request || busy !== null}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-[#6366F1] text-white hover:bg-[#5458E8] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-[var(--accent)] text-white hover:bg-[#5458E8] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Play className="w-3.5 h-3.5" aria-hidden="true" />
             {busy === 'dry' ? t('data.dryRunning') : t('data.dryRun')}
@@ -562,12 +562,12 @@ export function DataImportView() {
             type="button"
             onClick={() => void run(false)}
             disabled={!canImport}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-[#22C55E] text-[#0B0E14] hover:bg-[#16A34A] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-[var(--positive)] text-[var(--bg)] hover:bg-[#16A34A] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Upload className="w-3.5 h-3.5" aria-hidden="true" />
             {busy === 'import' ? t('data.importing') : t('data.import')}
           </button>
-          <span className="text-xs text-[#E5E7EB]/55">
+          <span className="text-xs text-[var(--text)]/55">
             {missing.length > 0
               ? t('data.required', { list: missing.join(', ') })
               : !dryRunMatches
@@ -583,8 +583,8 @@ export function DataImportView() {
             role="alert"
             className={`text-xs rounded-md px-3 py-2 border ${
               requestError.auth
-                ? 'text-[#F59E0B] border-[#F59E0B]/40 bg-[#F59E0B]/10'
-                : 'text-[#EF4444] border-[#EF4444]/40 bg-[#EF4444]/10'
+                ? 'text-[var(--warning)] border-[var(--warning)]/40 bg-[var(--warning)]/10'
+                : 'text-[var(--negative)] border-[var(--negative)]/40 bg-[var(--negative)]/10'
             }`}
           >
             {requestError.message}
