@@ -48,6 +48,8 @@ export interface SchedulerDeps {
   fredSync?: (() => Promise<{ synced: number; error?: string }>) | null;
   /** Official FRED Public CSV macro sync (no API key required). */
   fredPublicSync?: (() => Promise<{ synced: number; error?: string }>) | null;
+  /** Yahoo UNOFFICIAL daily history (10y backfill once, then incremental); only passed when YAHOO_ENABLED. */
+  yahooHistorySync?: (() => Promise<{ results: Array<{ status: string }> }>) | null;
   env?: Record<string, string | undefined>;
   now?: () => Date;
 }
@@ -143,6 +145,21 @@ export function buildSchedulerJobs(deps: SchedulerDeps): SchedulerJob[] {
       async run() {
         const r = await fredPublicSync();
         if (r.synced === 0 && r.error) throw new Error(r.error);
+      },
+    });
+  }
+  if (deps.yahooHistorySync) {
+    const yahooHistorySync = deps.yahooHistorySync;
+    jobs.push({
+      id: 'yahoo-history',
+      description: 'Yahoo daily history for charts (10y backfill once, then daily incremental; UNOFFICIAL)',
+      next: (n) => new Date(n.getTime() + DAY / 2),
+      runOnStart: true,
+      async run() {
+        const r = await yahooHistorySync();
+        if (r.results.length > 0 && r.results.every((x) => x.status === 'FAILED' || x.status === 'UNAVAILABLE')) {
+          throw new Error('Yahoo history: no instrument synced.');
+        }
       },
     });
   }

@@ -467,6 +467,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     const targets = symbol ? all.filter((i) => i.exchangeSymbol.toUpperCase() === symbol.toUpperCase()) : all;
     return reg.syncYahooHistory(targets);
   };
+  app.locals.runYahooHistory = runYahooHistory;
   app.post('/api/providers/yahoo/history', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const parsed = z.object({ symbol: z.string().min(1).max(24).optional() }).safeParse(req.body ?? {});

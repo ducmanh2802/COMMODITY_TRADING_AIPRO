@@ -95,6 +95,10 @@ async function startServer(): Promise<void> {
           cot: () => (cotService ??= new CotService()),
           macro,
           fredSync: fred?.syncMacroSeries ? () => fred.syncMacroSeries!() : null,
+          yahooHistorySync:
+            (process.env.YAHOO_ENABLED ?? '').trim().toLowerCase() === 'true' && typeof app.locals.runYahooHistory === 'function'
+              ? () => app.locals.runYahooHistory()
+              : null,
           fredPublicSync: fred?.syncPublicCsvMacroSeries
             ? async () => {
                 const macroRes = await fred.syncPublicCsvMacroSeries!();

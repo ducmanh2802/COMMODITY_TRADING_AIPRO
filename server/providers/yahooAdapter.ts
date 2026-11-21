@@ -51,6 +51,11 @@ export interface YahooSymbolMapping {
   fullExchangeName: string;
   expectedCurrency: YahooCurrency;
   delayMinutes: number;
+  /**
+   * ICE softs: Yahoo's daily close is the exchange SETTLEMENT, which can lie outside the traded high/low.
+   * When true, high/low are widened to include the close (labelled in the reason); open must still be in range.
+   */
+  settlementClose?: boolean;
 }
 
 /**
@@ -64,9 +69,9 @@ export const YAHOO_SYMBOL_MAP: Readonly<Record<string, YahooSymbolMapping>> = {
   ZL: { yahooSymbol: 'ZL=F', expectedExchangeName: 'CBT', fullExchangeName: 'CBOT', expectedCurrency: 'USX', delayMinutes: 10 },
   ZW: { yahooSymbol: 'ZW=F', expectedExchangeName: 'CBT', fullExchangeName: 'CBOT', expectedCurrency: 'USX', delayMinutes: 10 },
   ZR: { yahooSymbol: 'ZR=F', expectedExchangeName: 'CBT', fullExchangeName: 'CBOT', expectedCurrency: 'USD', delayMinutes: 10 },
-  KC: { yahooSymbol: 'KC=F', expectedExchangeName: 'NYB', fullExchangeName: 'ICE Futures', expectedCurrency: 'USX', delayMinutes: 30 },
-  SB: { yahooSymbol: 'SB=F', expectedExchangeName: 'NYB', fullExchangeName: 'ICE Futures', expectedCurrency: 'USX', delayMinutes: 30 },
-  CC: { yahooSymbol: 'CC=F', expectedExchangeName: 'NYB', fullExchangeName: 'ICE Futures', expectedCurrency: 'USD', delayMinutes: 30 },
+  KC: { yahooSymbol: 'KC=F', expectedExchangeName: 'NYB', fullExchangeName: 'ICE Futures', expectedCurrency: 'USX', delayMinutes: 30, settlementClose: true },
+  SB: { yahooSymbol: 'SB=F', expectedExchangeName: 'NYB', fullExchangeName: 'ICE Futures', expectedCurrency: 'USX', delayMinutes: 30, settlementClose: true },
+  CC: { yahooSymbol: 'CC=F', expectedExchangeName: 'NYB', fullExchangeName: 'ICE Futures', expectedCurrency: 'USD', delayMinutes: 30, settlementClose: true },
   HG: { yahooSymbol: 'HG=F', expectedExchangeName: 'CMX', fullExchangeName: 'COMEX', expectedCurrency: 'USD', delayMinutes: 30 },
   GC: { yahooSymbol: 'GC=F', expectedExchangeName: 'CMX', fullExchangeName: 'COMEX', expectedCurrency: 'USD', delayMinutes: 30 },
   SI: { yahooSymbol: 'SI=F', expectedExchangeName: 'CMX', fullExchangeName: 'COMEX', expectedCurrency: 'USD', delayMinutes: 30 },
@@ -816,7 +821,24 @@ export class YahooFinanceAdapter implements MarketDataProvider {
       this.lastError = parsed.reason;
       return { candles: [], status: 'INVALID', reason: parsed.reason };
     }
-    const validation = validateCandleSeries(parsed.candles);
+    // Yahoo continuous series occasionally carry a settlement close outside that day's high/low. Drop only those
+    // individual bars (never repair them) when they are rare (<=2%); anything else still fails closed.
+    const ohlcOk = (c: MarketCandle) =>
+      c.high >= c.low && c.high >= c.open && c.high >= c.close && c.low <= c.open && c.low <= c.close;
+    let widened = 0;
+    const base = mapping.settlementClose
+      ? parsed.candles.map((c) => {
+          if (c.high >= c.low && c.open <= c.high && c.open >= c.low && (c.close > c.high || c.close < c.low)) {
+            widened++;
+            return { ...c, high: Math.max(c.high, c.close), low: Math.min(c.low, c.close) };
+          }
+          return c;
+        })
+      : parsed.candles;
+    const badOhlc = base.filter((c) => !ohlcOk(c)).length;
+    const candlesIn = badOhlc > 0 && badOhlc <= Math.max(1, Math.floor(base.length * 0.02)) ? base.filter(ohlcOk) : base;
+    const droppedOhlc = base.length - candlesIn.length;
+    const validation = validateCandleSeries(candlesIn);
     if (!validation.valid) {
       this.lastError = validation.errors.join('; ');
       return { candles: [], status: 'INVALID', reason: this.lastError };
@@ -836,7 +858,7 @@ export class YahooFinanceAdapter implements MarketDataProvider {
     return {
       candles: validation.validCandles,
       status: 'HISTORICAL',
-      reason: `UNOFFICIAL Yahoo ${mapping.yahooSymbol} D1 (${range}), ${YAHOO_CONTRACT_LABEL}; personal use only.${parsed.dropped ? ` ${parsed.dropped} incomplete/null bar(s) dropped.` : ''}`,
+      reason: `UNOFFICIAL Yahoo ${mapping.yahooSymbol} D1 (${range}), ${YAHOO_CONTRACT_LABEL}; personal use only.${parsed.dropped ? ` ${parsed.dropped} incomplete/null bar(s) dropped.` : ''}${droppedOhlc ? ` ${droppedOhlc} bar(s) with inconsistent OHLC dropped.` : ''}${widened ? ` ${widened} bar(s): high/low widened to include the settlement close.` : ''}`,
     };
   }
 
