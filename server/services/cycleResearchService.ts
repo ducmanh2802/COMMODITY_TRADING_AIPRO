@@ -373,13 +373,28 @@ export function createCycleResearchService(deps: CycleServiceDeps) {
     instrument: InstrumentDefinition,
     preloadedQuote?: MarketQuote
   ): Promise<CommodityProfileDossier> {
-    const [quote, d1Res, w1Res, h4Res, cotSnap] = await Promise.all([
+    const [rawQuote, d1Res, w1Res, h4Res, cotSnap] = await Promise.all([
       preloadedQuote ? Promise.resolve(preloadedQuote) : deps.providers.getQuoteForInstrument(instrument),
       loadEngineCandles(deps.candles, instrument, 'D1'),
       loadEngineCandles(deps.candles, instrument, 'W1'),
       loadEngineCandles(deps.candles, instrument, 'H4'),
       getCotSnapshotSafe(instrument),
     ]);
+
+    // Licensed live feeds (CME/ICE) usually need keys; when unavailable, fall back to the last daily close we
+    // already hold, clearly labelled HISTORICAL with its own source (never presented as a live quote).
+    const lastBar = d1Res.candles.at(-1);
+    const quote: MarketQuote =
+      rawQuote.price !== null || !lastBar || !Number.isFinite(lastBar.close)
+        ? rawQuote
+        : {
+            ...rawQuote,
+            price: lastBar.close,
+            timestamp: lastBar.timestamp,
+            source: lastBar.source,
+            status: 'HISTORICAL',
+            statusReason: `Last daily close (${lastBar.timestamp.slice(0, 10)}); live feed unavailable.`,
+          };
 
     const effectiveWeeklyCandles: MarketCandle[] =
       w1Res.candles.length > 0

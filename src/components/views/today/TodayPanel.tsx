@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, CalendarClock, ChevronRight, Minus, Sparkles, TrendingDown, TrendingUp, Zap } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { useI18n } from '../../../i18n';
 import type { CycleMarketOverview } from '../../../shared/types/cycle';
-import type { ScorecardListResponse } from '../../../shared/types/scorecard';
+import type { Scorecard, ScorecardListResponse } from '../../../shared/types/scorecard';
 import type { TodayResponse } from '../../../shared/types/today';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
 import { buildVietnamEconomicCalendar } from '../../../shared/utils/vietnamCalendar';
@@ -12,18 +12,23 @@ import { EmptyState } from '../../ui/EmptyState';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
 
-interface TodayItem {
-  key: string;
-  text: string;
-  symbol: string | null;
-}
-interface TodaySection {
-  id: string;
-  title: string;
-  items: TodayItem[];
+const FLAT = 0.002; // |change| below 0.2% counts as "flat"
+
+function pctText(v: number): string {
+  const s = (v * 100).toFixed(2);
+  return `${v > 0 ? '+' : ''}${s}%`;
 }
 
-/** "Hôm nay nên chú ý gì": neutral, plain-language pointers built only from existing endpoints. */
+/** Trend direction from the scorecard's trend dimension: 1 up, -1 down, 0 sideways/unknown. */
+function trendDir(c: Scorecard): -1 | 0 | 1 {
+  const d = c.dimensions.find((x) => x.id === 'trend');
+  const lvl = String((d as { level?: string } | undefined)?.level ?? '');
+  if (lvl.includes('UP')) return 1;
+  if (lvl.includes('DOWN')) return -1;
+  return 0;
+}
+
+/** "Hôm nay nên chú ý gì": visual, neutral pointers built only from existing endpoints. */
 export function TodayPanel() {
   const { t, lang } = useI18n();
   const { openInstrumentIn } = useTerminal();
@@ -33,7 +38,6 @@ export function TodayPanel() {
 
   useEffect(() => {
     const ctrl = new AbortController();
-    // One round-trip: the server serves scorecard + cycle overview from a stale-while-revalidate cache.
     void fetchJsonWithRetry<TodayResponse>('/api/today', { signal: ctrl.signal })
       .then((r) => {
         if (ctrl.signal.aborted) return;
@@ -47,135 +51,337 @@ export function TodayPanel() {
     return () => ctrl.abort();
   }, []);
 
-  const sections = useMemo<TodaySection[]>(() => {
-    const out: TodaySection[] = [];
+  const view = useMemo(() => {
     const cards = score?.scorecards ?? [];
-    const names = new Map<string, string>();
-    for (const c of cards) names.set(c.exchangeSymbol, (lang === 'vi' && c.vietnameseName) || c.productName);
-    const nameOf = (sym: string, fallback?: string) => names.get(sym) ?? fallback ?? sym;
+    const nameOf = (c: Scorecard) => (lang === 'vi' && c.vietnameseName) || c.productName;
+    const nameBySym = new Map(cards.map((c) => [c.exchangeSymbol, nameOf(c)]));
 
-    const moves = cards
-      .filter((c) => c.price.changePct !== null && Math.abs(c.price.changePct) >= 0.005)
+    const priced = cards.filter((c) => c.price.changePct !== null);
+    const up = priced.filter((c) => (c.price.changePct ?? 0) > FLAT).length;
+    const down = priced.filter((c) => (c.price.changePct ?? 0) < -FLAT).length;
+    const flat = priced.length - up - down;
+
+    const moves = [...priced]
       .sort((a, b) => Math.abs(b.price.changePct ?? 0) - Math.abs(a.price.changePct ?? 0))
-      .slice(0, 3)
-      .map((c) => ({
-        key: `mv-${c.exchangeSymbol}`,
-        symbol: c.exchangeSymbol,
-        text: t('n2.td.move', {
-          name: nameOf(c.exchangeSymbol),
-          dir: t((c.price.changePct ?? 0) >= 0 ? 'n2.td.up' : 'n2.td.down'),
-          pct: Math.abs((c.price.changePct ?? 0) * 100).toFixed(2),
-        }),
-      }));
-    if (moves.length) out.push({ id: 'moves', title: t('n2.td.sec.moves'), items: moves });
+      .slice(0, 8)
+      .map((c) => ({ sym: c.exchangeSymbol, name: nameOf(c), pct: c.price.changePct ?? 0 }));
+    const maxAbs = Math.max(0.005, ...moves.map((m) => Math.abs(m.pct)));
 
+    const trends = cards
+      .filter((c) => c.overall.trendClarity.score !== null)
+      .sort((a, b) => (b.overall.trendClarity.score ?? 0) - (a.overall.trendClarity.score ?? 0))
+      .slice(0, 6)
+      .map((c) => ({
+        sym: c.exchangeSymbol,
+        name: nameOf(c),
+        clarity: c.overall.trendClarity.score ?? 0,
+        dir: trendDir(c),
+        dirLabel: (c.dimensions.find((x) => x.id === 'trend') as { label?: { vi: string; en: string } } | undefined)?.label?.[lang] ?? '',
+        volHigh: c.overall.volatilityRisk.level === 'HIGH',
+      }));
+
+    const phases: { sym: string; name: string; phase: 2 | 4 }[] = [];
     const seen = new Set<string>();
-    const cycleItems: TodayItem[] = [];
     for (const c of cycle?.commodities ?? []) {
       const sym = c.instrument.exchangeSymbol;
       if (seen.has(sym)) continue;
-      const key =
-        c.cyclePhase === 'PHASE_2_EARLY_RECOVERY' ? 'n2.td.phase2' : c.cyclePhase === 'PHASE_4_DISTRIBUTION' ? 'n2.td.phase4' : null;
-      if (!key) continue;
+      const phase = c.cyclePhase === 'PHASE_2_EARLY_RECOVERY' ? 2 : c.cyclePhase === 'PHASE_4_DISTRIBUTION' ? 4 : null;
+      if (!phase) continue;
       seen.add(sym);
-      cycleItems.push({ key: `cy-${sym}`, symbol: sym, text: t(key, { name: nameOf(sym, c.instrument.productName) }) });
+      phases.push({ sym, name: nameBySym.get(sym) ?? c.instrument.productName, phase });
     }
-    if (cycleItems.length) out.push({ id: 'cycle', title: t('n2.td.sec.cycle'), items: cycleItems.slice(0, 6) });
 
-    const trendItems: TodayItem[] = cards
-      .filter((c) => c.overall.trendClarity.level === 'CLEAR')
-      .sort((a, b) => (b.overall.trendClarity.score ?? 0) - (a.overall.trendClarity.score ?? 0))
-      .slice(0, 3)
-      .map((c) => ({
-        key: `tr-${c.exchangeSymbol}`,
-        symbol: c.exchangeSymbol,
-        text: t('n2.td.clear', { name: nameOf(c.exchangeSymbol), score: c.overall.trendClarity.score ?? 0 }),
-      }));
-    for (const c of cards.filter((x) => x.overall.volatilityRisk.level === 'HIGH').slice(0, 3)) {
-      trendItems.push({ key: `vol-${c.exchangeSymbol}`, symbol: c.exchangeSymbol, text: t('n2.td.volHigh', { name: nameOf(c.exchangeSymbol) }) });
-    }
-    if (trendItems.length) out.push({ id: 'trend', title: t('n2.td.sec.trend'), items: trendItems });
-
-    const events = buildVietnamEconomicCalendar(new Date(), 7)
+    const now = new Date();
+    const today0 = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const events = buildVietnamEconomicCalendar(now, 7)
       .filter((e) => e.type === 'MACRO_RELEASE')
       .sort((a, b) => a.ictIsoTimestamp.localeCompare(b.ictIsoTimestamp))
-      .slice(0, 5)
+      .slice(0, 6)
       .map((e) => ({
-        key: `ev-${e.id}`,
-        symbol: e.relatedSymbols[0] ?? null,
-        text: t('n2.td.report', {
-          date: `${e.dateIso.slice(8, 10)}/${e.dateIso.slice(5, 7)}`,
-          time: e.ictTimeLabel,
-          title: lang === 'vi' ? e.titleVi : e.titleEn,
-        }),
+        id: e.id,
+        sym: e.relatedSymbols[0] ?? null,
+        day: e.dateIso.slice(8, 10),
+        month: e.dateIso.slice(5, 7),
+        time: e.ictTimeLabel,
+        title: lang === 'vi' ? e.titleVi : e.titleEn,
+        inDays: Math.max(0, Math.round((Date.parse(`${e.dateIso}T00:00:00Z`) - today0) / 86_400_000)),
       }));
-    if (events.length) out.push({ id: 'reports', title: t('n2.td.sec.reports'), items: events });
 
-    const quality = new Map<string, TodayItem>();
-    for (const c of cycle?.commodities ?? []) {
-      const sym = c.instrument.exchangeSymbol;
-      const bad = c.dataStatus === 'STALE' ? 'n2.td.stale' : c.dataStatus === 'UNAVAILABLE' || c.quote.price === null ? 'n2.td.noPrice' : null;
-      if (bad) quality.set(sym, { key: `q-${sym}`, symbol: sym, text: t(bad, { name: nameOf(sym, c.instrument.productName) }) });
-    }
+    const quality = new Map<string, { sym: string; text: string }>();
     for (const c of cards) {
-      const bad = c.price.status === 'STALE' ? 'n2.td.stale' : c.price.status === 'UNAVAILABLE' ? 'n2.td.noPrice' : null;
-      if (bad) quality.set(c.exchangeSymbol, { key: `q-${c.exchangeSymbol}`, symbol: c.exchangeSymbol, text: t(bad, { name: nameOf(c.exchangeSymbol) }) });
+      const bad = c.price.status === 'STALE' ? 'n2.td.stale' : c.price.status === 'UNAVAILABLE' || c.price.value === null ? 'n2.td.noPrice' : null;
+      if (bad) quality.set(c.exchangeSymbol, { sym: c.exchangeSymbol, text: t(bad, { name: nameOf(c) }) });
     }
-    if (quality.size) out.push({ id: 'quality', title: t('n2.td.sec.quality'), items: [...quality.values()].slice(0, 8) });
-    return out;
+
+    return { up, down, flat, total: priced.length, moves, maxAbs, trends, phases: phases.slice(0, 6), events, quality: [...quality.values()] };
   }, [score, cycle, lang, t]);
 
+  const open = (sym: string | null) => sym && openInstrumentIn(sym, 'instrument');
+
   let body: ReactNode;
-  if (loading)
+  if (loading) {
     body = (
-      <div className="grid gap-3 md:grid-cols-2" aria-busy="true" aria-label={t('n2.td.loading')}>
-        {[0, 1, 2, 3].map((i) => (
-          <Card key={i}>
-            <Skeleton className="h-4 w-1/3 mb-3" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6" />
-              <Skeleton className="h-4 w-2/3" />
-            </div>
-          </Card>
-        ))}
+      <div className="space-y-3" aria-busy="true" aria-label={t('n2.td.loading')}>
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
+        </div>
       </div>
     );
-  else if (sections.length === 0) body = <EmptyState icon={<Sparkles className="w-5 h-5" aria-hidden="true" />} title={t('n2.td.empty')} />;
-  else
+  } else if (view.total === 0 && view.events.length === 0) {
+    body = <EmptyState icon={<Sparkles className="w-5 h-5" aria-hidden="true" />} title={t('n2.td.empty')} />;
+  } else {
+    const top = view.moves[0];
+    const next = view.events[0];
     body = (
-      <div className="grid gap-3 md:grid-cols-2">
-        {sections.map((s) => (
-          <Card key={s.id} as="section" aria-label={s.title}>
-            <h3 className="text-sm font-semibold text-[var(--text-strong)] mb-2">{s.title}</h3>
-            <ul className="space-y-1">
-              {s.items.map((it) => (
-                <li key={it.key}>
-                  {it.symbol ? (
+      <div className="space-y-4">
+        {/* KPI strip */}
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          <Kpi icon={<ArrowUpRight className="w-5 h-5" />} tone="up" label={t('n2.td.kpi.up')} value={String(view.up)} sub={t('n2.td.kpi.of', { n: view.total })} />
+          <Kpi icon={<ArrowDownRight className="w-5 h-5" />} tone="down" label={t('n2.td.kpi.down')} value={String(view.down)} sub={t('n2.td.kpi.flat', { n: view.flat })} />
+          <Kpi
+            icon={<Zap className="w-5 h-5" />}
+            tone={top && top.pct >= 0 ? 'up' : 'down'}
+            label={t('n2.td.kpi.top')}
+            value={top ? pctText(top.pct) : '—'}
+            sub={top?.name ?? ''}
+            onClick={top ? () => open(top.sym) : undefined}
+          />
+          <Kpi
+            icon={<CalendarClock className="w-5 h-5" />}
+            tone="info"
+            label={t('n2.td.kpi.next')}
+            value={next ? (next.inDays === 0 ? t('n2.td.kpi.today') : t('n2.td.kpi.inDays', { n: next.inDays })) : '—'}
+            sub={next ? `${next.day}/${next.month} · ${next.time}` : ''}
+          />
+        </div>
+
+        {/* Market breadth bar */}
+        {view.total > 0 && (
+          <Card>
+            <div className="flex items-center justify-between text-xs text-[var(--muted)] mb-2">
+              <span>{t('n2.td.breadth')}</span>
+              <span>
+                <span className="text-[var(--positive)]">{view.up}↑</span> · <span>{view.flat}→</span> · <span className="text-[var(--negative)]">{view.down}↓</span>
+              </span>
+            </div>
+            <div className="flex h-3 w-full overflow-hidden rounded-full bg-[var(--surface-2)]" role="img" aria-label={t('n2.td.breadth')}>
+              <div className="bg-[var(--positive)]" style={{ width: `${(view.up / view.total) * 100}%` }} />
+              <div className="bg-[var(--faint)]/50" style={{ width: `${(view.flat / view.total) * 100}%` }} />
+              <div className="bg-[var(--negative)]" style={{ width: `${(view.down / view.total) * 100}%` }} />
+            </div>
+          </Card>
+        )}
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Biggest moves: diverging bars */}
+          {view.moves.length > 0 && (
+            <Card as="section" aria-label={t('n2.td.sec.moves')}>
+              <CardTitle title={t('n2.td.sec.moves')} hint={t('n2.td.movesHint')} />
+              <ul className="space-y-1.5">
+                {view.moves.map((m) => {
+                  const w = (Math.abs(m.pct) / view.maxAbs) * 50;
+                  const isUp = m.pct >= 0;
+                  return (
+                    <li key={m.sym}>
+                      <button
+                        type="button"
+                        onClick={() => open(m.sym)}
+                        title={t('n2.td.open')}
+                        className="w-full grid grid-cols-[7.5rem_1fr_4.5rem] items-center gap-2 rounded-md px-1.5 py-1 hover:bg-[var(--surface-2)] text-left"
+                      >
+                        <span className="truncate text-sm text-[var(--text)]">{m.name}</span>
+                        <span className="relative h-4">
+                          <span className="absolute left-1/2 top-0 bottom-0 w-px bg-[var(--border)]" />
+                          <span
+                            className={`absolute top-0.5 bottom-0.5 rounded ${isUp ? 'bg-[var(--positive)]' : 'bg-[var(--negative)]'}`}
+                            style={isUp ? { left: '50%', width: `${w}%` } : { right: '50%', width: `${w}%` }}
+                          />
+                        </span>
+                        <span className={`text-right text-sm font-semibold tabular-nums ${isUp ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>{pctText(m.pct)}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Card>
+          )}
+
+          {/* Reports timeline */}
+          {view.events.length > 0 && (
+            <Card as="section" aria-label={t('n2.td.sec.reports')}>
+              <CardTitle title={t('n2.td.sec.reports')} hint={t('n2.td.reportsHint')} />
+              <ol className="space-y-2">
+                {view.events.map((e) => (
+                  <li key={e.id}>
                     <button
                       type="button"
-                      title={t('n2.td.open')}
-                      onClick={() => openInstrumentIn(it.symbol as string, 'instrument')}
-                      className="w-full flex items-center justify-between gap-2 text-left text-sm text-[var(--text)] rounded-md px-2 py-1.5 hover:bg-[var(--surface-2)]"
+                      disabled={!e.sym}
+                      onClick={() => open(e.sym)}
+                      className="w-full flex items-center gap-3 rounded-lg px-1.5 py-1.5 text-left hover:bg-[var(--surface-2)] disabled:hover:bg-transparent"
                     >
-                      <span>{it.text}</span>
-                      <ChevronRight className="w-4 h-4 shrink-0 text-[var(--faint)]" aria-hidden="true" />
+                      <span className={`flex w-12 shrink-0 flex-col items-center rounded-lg border py-1 ${e.inDays <= 1 ? 'border-[var(--warning)] text-[var(--warning)]' : 'border-[var(--border)] text-[var(--text-strong)]'}`}>
+                        <span className="text-lg font-bold leading-none">{e.day}</span>
+                        <span className="text-[10px] opacity-80">{t('n2.td.month', { m: e.month })}</span>
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm text-[var(--text)] leading-snug">{e.title}</span>
+                        <span className="text-xs text-[var(--muted)]">
+                          {e.time} · {e.inDays === 0 ? t('n2.td.kpi.today') : t('n2.td.kpi.inDays', { n: e.inDays })}
+                        </span>
+                      </span>
+                      {e.sym && <ChevronRight className="w-4 h-4 shrink-0 text-[var(--faint)]" aria-hidden="true" />}
                     </button>
-                  ) : (
-                    <p className="text-sm text-[var(--text)] px-2 py-1.5">{it.text}</p>
+                  </li>
+                ))}
+              </ol>
+            </Card>
+          )}
+        </div>
+
+        {/* Trend clarity cards */}
+        {view.trends.length > 0 && (
+          <section aria-label={t('n2.td.sec.trend')}>
+            <CardTitle title={t('n2.td.sec.trend')} hint={t('n2.td.trendHint')} />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {view.trends.map((x) => (
+                <button
+                  key={x.sym}
+                  type="button"
+                  onClick={() => open(x.sym)}
+                  className="text-left rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 hover:border-[var(--accent)] transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-[var(--text-strong)] truncate">{x.name}</span>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                        x.dir > 0 ? 'bg-[var(--positive)]/15 text-[var(--positive)]' : x.dir < 0 ? 'bg-[var(--negative)]/15 text-[var(--negative)]' : 'bg-[var(--surface-2)] text-[var(--muted)]'
+                      }`}
+                    >
+                      {x.dir > 0 ? <TrendingUp className="w-3.5 h-3.5" /> : x.dir < 0 ? <TrendingDown className="w-3.5 h-3.5" /> : <Minus className="w-3.5 h-3.5" />}
+                      {x.dirLabel || '—'}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-xs text-[var(--muted)]">
+                    <span>{t('n2.td.clarity')}</span>
+                    <span className="font-semibold text-[var(--text)] tabular-nums">{x.clarity}/100</span>
+                  </div>
+                  <div className="mt-1 h-2 w-full rounded-full bg-[var(--surface-2)] overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${x.clarity >= 70 ? 'bg-[var(--accent)]' : x.clarity >= 40 ? 'bg-[var(--accent-text)]' : 'bg-[var(--faint)]'}`}
+                      style={{ width: `${Math.min(100, Math.max(0, x.clarity))}%` }}
+                    />
+                  </div>
+                  {x.volHigh && (
+                    <span className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--warning)]">
+                      <AlertTriangle className="w-3.5 h-3.5" /> {t('n2.td.volHighShort')}
+                    </span>
                   )}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Cycle phases */}
+        {view.phases.length > 0 && (
+          <Card as="section" aria-label={t('n2.td.sec.cycle')}>
+            <CardTitle title={t('n2.td.sec.cycle')} hint={t('n2.td.cycleHint')} />
+            <div className="flex flex-wrap gap-2">
+              {view.phases.map((p) => (
+                <button
+                  key={p.sym}
+                  type="button"
+                  onClick={() => open(p.sym)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm hover:bg-[var(--surface-2)] ${
+                    p.phase === 2 ? 'border-[var(--positive)]/50' : 'border-[var(--warning)]/50'
+                  }`}
+                >
+                  <span className={`h-2 w-2 rounded-full ${p.phase === 2 ? 'bg-[var(--positive)]' : 'bg-[var(--warning)]'}`} />
+                  <span className="text-[var(--text)]">{p.name}</span>
+                  <span className="text-xs text-[var(--muted)]">{t(p.phase === 2 ? 'n2.td.phase2Short' : 'n2.td.phase4Short')}</span>
+                </button>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Data quality (collapsed) */}
+        {view.quality.length > 0 && (
+          <details className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm">
+            <summary className="cursor-pointer text-[var(--muted)]">
+              <AlertTriangle className="inline w-4 h-4 mr-1 text-[var(--warning)]" aria-hidden="true" />
+              {t('n2.td.qualityCount', { n: view.quality.length })}
+            </summary>
+            <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+              {view.quality.map((q) => (
+                <li key={q.sym}>
+                  <button type="button" onClick={() => open(q.sym)} className="text-left text-[var(--text)] hover:underline">
+                    {q.text}
+                  </button>
                 </li>
               ))}
             </ul>
-          </Card>
-        ))}
+          </details>
+        )}
       </div>
     );
+  }
 
   return (
     <div className="space-y-3">
       <SectionHeader title={t('n2.td.title')} subtitle={t('n2.td.disclaimer')} />
       {body}
     </div>
+  );
+}
+
+function CardTitle({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div className="mb-3">
+      <h3 className="text-base font-semibold text-[var(--text-strong)]">{title}</h3>
+      {hint && <p className="text-xs text-[var(--muted)] mt-0.5">{hint}</p>}
+    </div>
+  );
+}
+
+function Kpi({
+  icon,
+  label,
+  value,
+  sub,
+  tone,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  sub?: string;
+  tone: 'up' | 'down' | 'info';
+  onClick?: () => void;
+}) {
+  const color = tone === 'up' ? 'text-[var(--positive)] bg-[var(--positive)]/12' : tone === 'down' ? 'text-[var(--negative)] bg-[var(--negative)]/12' : 'text-[var(--accent-text)] bg-[var(--accent-text)]/12';
+  const inner = (
+    <>
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${color}`} aria-hidden="true">
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-xs text-[var(--muted)]">{label}</span>
+        <span className="block text-xl font-bold text-[var(--text-strong)] tabular-nums leading-tight">{value}</span>
+        {sub && <span className="block truncate text-xs text-[var(--muted)]">{sub}</span>}
+      </span>
+    </>
+  );
+  const cls = 'flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 text-left';
+  return onClick ? (
+    <button type="button" onClick={onClick} className={`${cls} hover:border-[var(--accent)]`}>
+      {inner}
+    </button>
+  ) : (
+    <div className={cls}>{inner}</div>
   );
 }

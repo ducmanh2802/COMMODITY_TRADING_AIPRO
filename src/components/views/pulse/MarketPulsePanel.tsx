@@ -228,7 +228,19 @@ export function MarketPulsePanel() {
         {data.summary.length === 0 ? (
           <p className="text-sm text-[var(--muted)]">{t('pulse.summaryEmpty')}</p>
         ) : (
-          <p className="text-sm text-[var(--text)] leading-relaxed">{data.summary.map((s) => text(s, l)).join(' ')}</p>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {data.summary
+              .flatMap((s) => text(s, l).split(/;\s+|\.\s+(?=[A-ZĐÂĂÊÔƠƯ])/))
+              .map((x) => x.trim().replace(/\.$/, ''))
+              .map((x) => x.charAt(0).toUpperCase() + x.slice(1))
+              .filter(Boolean)
+              .map((x, i) => (
+                <li key={i} className="flex gap-2 rounded-lg bg-[var(--surface-2)] px-3 py-2 text-sm text-[var(--text)] leading-snug">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" aria-hidden="true" />
+                  <span>{x}</span>
+                </li>
+              ))}
+          </ul>
         )}
       </Card>
 
