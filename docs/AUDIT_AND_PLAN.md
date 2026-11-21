@@ -168,3 +168,17 @@ Ghi chú phạm vi: app **chỉ mô phỏng giao dịch** cho mục đích học
 | T73 | Xuất/nhập dữ liệu cá nhân (lệnh thử, ghi chú) ra CSV/Excel; sao lưu | Giữ dữ liệu của mình |
 | T74 | Theo dõi lỗi & hiệu năng khi chạy thật (log có cấu trúc, trang trạng thái hệ thống) | Chuẩn bị deploy |
 | T75 | Hình minh hoạ & sơ đồ trong bài học (cách đọc nến, ký quỹ, phòng hộ) | Dễ hiểu hơn chữ |
+
+### Wave 9 — Bổ sung (2026-11-21, sau khi soát 10 cấp học)
+| ID | Task | Vì sao / Tiêu chí xong |
+|---|---|---|
+| T76 | Biểu đồ tham chiếu (benchmark FRED/IMF hằng tháng, Brent DCOILBRENTEU hằng ngày) cho 6 mã chưa có lịch sử futures: RC, CT, CME:TIO, SGX:FEF, ICE:BRN, MXV:JRU — ghi rõ "giá tham chiếu, không phải giá hợp đồng" | Phần Phân tích không còn ô trống; nhãn nguồn rõ |
+| T77 | Trang chi tiết mã theo mockup Claude Design (Instrument.dc.html): giá lớn, biểu đồ, thẻ tóm tắt "vì sao tăng/giảm", chi tiết chuyên sâu thu gọn | Hoàn tất T65 cho trang quan trọng nhất |
+| T78 | Ôn tập ngắt quãng: câu đố sai được hỏi lại sau 1/3/7 ngày; thẻ "Ôn hôm nay" ở trang Hôm nay | Nhớ lâu, 276 câu đố được tận dụng |
+| T79 | Mô phỏng "chơi lại quá khứ" (bar replay): ẩn phần giá tương lai, người học vào lệnh từng nến với dữ liệu D1 thật 10 năm, chấm điểm kỷ luật | Luyện Cấp 5/8 không cần chờ thị trường |
+| T80 | Máy tính lệnh tổng hợp (Cấp 10): nhập vốn VND, % rủi ro, giá vào/cắt lỗ/mục tiêu → số hợp đồng, lãi/lỗ VND, tỷ lệ R, ký quỹ ước tính; mở được từ Giao dịch thử | Gom các phép tính rời rạc thành một công cụ |
+| T81 | Lịch kinh tế tiếng Việt: WASDE, EIA, COT, Fed, PMI Trung Quốc — giờ Việt Nam tự đổi theo mùa hè/đông Mỹ, mức ảnh hưởng tới từng mã | Bài Cấp 2/3 cần; tránh vào lệnh trước báo cáo |
+| T82 | Kiểm thử nội dung học tự động: test xác nhận mọi thông số trong bài (tick, khối lượng hợp đồng) khớp instruments.ts, mỗi bài ≥3 câu đố, đáp án hợp lệ, không trùng id | Chống sai số liệu khi sửa bài |
+| T83 | Hoàn thiện đồng bộ giao diện sáng/tối: rà các màn còn màu cứng, kiểm tra tương phản WCAG AA cả 2 nền, ảnh chụp e2e cho cả 2 chế độ | Phần còn lại của T72/T65 |
+| T84 | Hướng dẫn lần đầu cho phần Học: chọn mục tiêu (hiểu thị trường / phòng hộ / lướt sóng) → đề xuất lộ trình cấp phù hợp | Người mới không bị ngợp 10 cấp |
+| T85 | Firestore emulator test cho rules (paperTrades, tiến độ học, bảng xếp hạng T63) chạy trong CI | Điều kiện trước khi làm T63 |
