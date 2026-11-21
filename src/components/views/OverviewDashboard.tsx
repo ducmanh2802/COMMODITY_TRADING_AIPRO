@@ -748,7 +748,7 @@ export function OverviewDashboard() {
                 type="button"
                 onClick={() => setHeatmapHorizon(h)}
                 className={`px-2.5 py-1 rounded text-xs transition-colors whitespace-nowrap ${
-                  heatmapHorizon === h ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/70 hover:text-white'
+                  heatmapHorizon === h ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/70 hover:text-[var(--text-strong)]'
                 }`}
               >
                 {t(`fr.ov2.h.${h}`)}

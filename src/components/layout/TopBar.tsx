@@ -48,7 +48,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
   return (
     <header className="sticky top-0 z-30 bg-[var(--surface)]/90 backdrop-blur border-b border-[var(--border)] px-3 sm:px-5 py-2 flex flex-wrap items-center justify-between gap-3 shrink-0">
       {/* Left zone: Mobile menu trigger + Market selection + Instrument search */}
-      <div className="flex items-center gap-2.5 flex-1 min-w-[240px]">
+      <div className="flex items-center gap-2.5 flex-1 min-w-fit">
         <button
           type="button"
           onClick={onOpenMobileMenu}
@@ -67,7 +67,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
               className={`h-8 px-3 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                 marketScope === scope
                   ? 'bg-[var(--accent)] text-white shadow-sm'
-                  : 'text-[var(--text)]/70 hover:text-white'
+                  : 'text-[var(--text)]/70 hover:text-[var(--text-strong)]'
               }`}
             >
               {t(`topbar.scope.${scope}`)}
@@ -75,7 +75,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           ))}
         </div>
 
-        <div className="relative flex-1 max-w-xs hidden sm:block">
+        <div className="relative w-40 2xl:w-56 hidden sm:block">
           <label htmlFor="topbar-instrument-search" className="sr-only">
             {t('topbar.search')}
           </label>
@@ -101,7 +101,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
 
       {/* Right zone: Timeframe + Data status + Local ICT clock + Refresh + User Profile */}
       <div className="flex items-center gap-3 shrink-0">
-        <div className="flex items-center gap-1.5">
+        <div className="hidden 2xl:flex items-center gap-1.5">
           <label htmlFor="topbar-timeframe" className="sr-only">
             {t('topbar.timeframe')}
           </label>
@@ -119,7 +119,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           </select>
         </div>
 
-        <div className="hidden md:flex items-center gap-3 h-9 px-3 bg-[var(--bg)] border border-[var(--border)] rounded-[10px]">
+        <div className="hidden 2xl:flex items-center gap-3 h-9 px-3 bg-[var(--bg)] border border-[var(--border)] rounded-[10px]">
           <DataStatusBadge status={overallDataStatus} />
           <span className="text-[var(--border)]" aria-hidden="true">
             |

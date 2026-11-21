@@ -26,6 +26,7 @@ import { fmtDate, fmtInt, useT } from '../../../i18n';
 import { BenchmarkReferencePanel } from './BenchmarkReferencePanel';
 import { ChartCompareSection } from './ChartCompare';
 import { CandleChart, type LineSpec, type LowerPaneSpec } from './CandleChart';
+import { cssVar, withAlpha } from '../../../shared/theme/chartColors';
 
 type LowerIndicator = 'NONE' | 'RSI' | 'MACD' | 'ATR';
 
@@ -244,8 +245,8 @@ export function ChartsView() {
               label: 'Hist',
               timestamps: r.timestamps,
               values: r.values.map((v) => v?.histogram ?? null),
-              positiveColor: 'rgba(34, 197, 94, 0.55)',
-              negativeColor: 'rgba(239, 68, 68, 0.55)',
+              positiveColor: withAlpha(cssVar('--positive', '#6CB4E4'), 0.55),
+              negativeColor: withAlpha(cssVar('--negative', '#E8A27C'), 0.55),
             },
           ],
           levels: [],

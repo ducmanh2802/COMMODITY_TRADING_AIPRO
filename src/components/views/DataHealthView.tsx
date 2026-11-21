@@ -368,7 +368,7 @@ export function DataHealthView() {
               className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
                 selected
                   ? 'bg-[var(--accent)] text-white'
-                  : 'bg-[var(--surface)] text-[var(--text)]/70 hover:text-white border border-[var(--border)]'
+                  : 'bg-[var(--surface)] text-[var(--text)]/70 hover:text-[var(--text-strong)] border border-[var(--border)]'
               }`}
             >
               <Icon className="w-3.5 h-3.5" aria-hidden="true" />

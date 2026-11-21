@@ -562,7 +562,7 @@ export function DataImportView() {
             type="button"
             onClick={() => void run(false)}
             disabled={!canImport}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-[var(--positive)] text-[var(--bg)] hover:bg-[#16A34A] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-[var(--positive)] text-[var(--bg)] hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Upload className="w-3.5 h-3.5" aria-hidden="true" />
             {busy === 'import' ? t('data.importing') : t('data.import')}

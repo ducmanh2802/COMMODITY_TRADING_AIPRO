@@ -23,7 +23,7 @@ export function RangeBar({ low, high, current, lowLabel, highLabel, ariaLabel, c
       <div className="relative h-5 mt-3 mb-2">
         <div
           className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-3 rounded-full"
-          style={{ background: 'linear-gradient(90deg,#4ADE80 0%,#FBBF24 50%,#F87171 100%)' }}
+          style={{ background: 'linear-gradient(90deg,var(--positive) 0%,var(--warning) 50%,var(--negative) 100%)' }}
         />
         <div
           className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-4 border-[var(--bg)] shadow"

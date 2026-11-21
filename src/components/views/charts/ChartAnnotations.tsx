@@ -275,10 +275,10 @@ export function ChartAnnotations({ api, candles, times, timeframe, children }: P
 
   // ---- rendering ----
   const colors = {
-    line: cssVar('--accent-text', '#7DD3A8'),
-    fib: cssVar('--warning', '#FBBF24'),
-    pos: cssVar('--positive', '#4ADE80'),
-    neg: cssVar('--negative', '#F87171'),
+    line: cssVar('--accent-text', '#A8C2E8'),
+    fib: cssVar('--warning', '#D9BE6C'),
+    pos: cssVar('--positive', '#6CB4E4'),
+    neg: cssVar('--negative', '#E8A27C'),
     text: cssVar('--text-strong', '#FFFFFF'),
   };
   let W = wrapRef.current?.clientWidth ?? 0;

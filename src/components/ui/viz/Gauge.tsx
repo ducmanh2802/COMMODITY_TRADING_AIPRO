@@ -25,7 +25,7 @@ function arc(from: number, to: number): string {
   return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${R} ${R} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
 }
 
-export function Gauge({ value, labels, ariaLabel, colors = ['#4ADE80', '#FBBF24', '#F87171'], className = '' }: GaugeProps) {
+export function Gauge({ value, labels, ariaLabel, colors = ['var(--positive)', 'var(--warning)', 'var(--negative)'], className = '' }: GaugeProps) {
   const v = value === null || !Number.isFinite(value) ? null : Math.min(100, Math.max(0, value));
   const [nx, ny] = pt(v ?? 50, R - 14);
   return (

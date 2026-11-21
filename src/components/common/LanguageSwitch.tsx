@@ -21,7 +21,7 @@ export function LanguageSwitch({ showLabel = false }: { showLabel?: boolean }) {
             aria-pressed={lang === l}
             title={t(l === 'vi' ? 'lang.vi' : 'lang.en')}
             className={`h-full px-2.5 text-[11px] font-semibold rounded-lg transition-colors ${
-              lang === l ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/70 hover:text-white'
+              lang === l ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/70 hover:text-[var(--text-strong)]'
             }`}
           >
             {l.toUpperCase()}

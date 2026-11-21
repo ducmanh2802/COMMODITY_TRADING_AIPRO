@@ -127,7 +127,7 @@ export function MarketWatchView() {
             className={`h-8 px-3.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
               categoryFilter === cat
                 ? 'bg-[var(--accent)] text-white shadow-sm'
-                : 'text-[var(--text)]/70 hover:text-white hover:bg-[var(--surface-2)]'
+                : 'text-[var(--text)]/70 hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
             }`}
           >
             {t(`dash.cat.${cat}`)}
@@ -264,7 +264,7 @@ export function MarketWatchView() {
                           <button
                             type="button"
                             onClick={() => openInstrumentIn(inst.exchangeSymbol, 'charts')}
-                            className="px-2 py-1 bg-[var(--surface-2)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-medium text-[var(--text)] hover:text-white transition-colors"
+                            className="px-2 py-1 bg-[var(--surface-2)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-medium text-[var(--text)] hover:text-[var(--text-strong)] transition-colors"
                           >
                             {t('dash.mw.chart')}
                           </button>

@@ -63,7 +63,7 @@ export default function AnalysisView() {
             aria-selected={tab === tb.id}
             onClick={() => setTab(tb.id)}
             className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-              tab === tb.id ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/70 hover:text-white hover:bg-[var(--surface-2)]'
+              tab === tb.id ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/70 hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
             }`}
           >
             {t(tb.label)}

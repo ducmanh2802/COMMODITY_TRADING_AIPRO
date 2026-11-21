@@ -181,7 +181,7 @@ export default function CotView() {
                     onClick={() => setReportType(rt)}
                     title={t(`cot.rt.${rt}`)}
                     className={`px-2.5 py-1 text-[11px] font-mono rounded ${
-                      reportType === rt ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/70 hover:text-white'
+                      reportType === rt ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/70 hover:text-[var(--text-strong)]'
                     } disabled:opacity-30`}
                   >
                     {rt}

@@ -11,7 +11,7 @@ export function heatColor(pct: number | null, maxAbs = 3): string {
   if (pct === null || !Number.isFinite(pct)) return '#1D2840';
   const k = Math.min(1, Math.abs(pct) / maxAbs);
   const a = 0.25 + 0.6 * k;
-  return pct >= 0 ? `rgba(34,197,94,${a.toFixed(2)})` : `rgba(239,68,68,${a.toFixed(2)})`;
+  return pct >= 0 ? `color-mix(in srgb, var(--positive) ${Math.round(a * 100)}%, transparent)` : `color-mix(in srgb, var(--negative) ${Math.round(a * 100)}%, transparent)`;
 }
 
 export function Heatmap({

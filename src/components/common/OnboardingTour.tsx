@@ -66,7 +66,7 @@ export function OnboardingTour() {
           )}
           {step === 5 &&
             (user ? (
-              <span className="text-lg text-emerald-300 self-center">{t('ob.s5.signedIn')}</span>
+              <span className="text-lg text-[var(--accent-text)] self-center">{t('ob.s5.signedIn')}</span>
             ) : (
               <button type="button" onClick={() => void signInWithGoogle()} className={`${btn} border-[var(--accent-text)] hover:bg-[var(--accent)]/20`}>
                 {t('ob.s5.go')}

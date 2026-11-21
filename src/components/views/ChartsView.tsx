@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { chartPalette, useThemeKey, withAlpha } from '../../shared/theme/chartColors';
 import {
   CandlestickSeries,
   ColorType,
@@ -73,39 +74,42 @@ export function ChartsView() {
     };
   }, [selectedSymbol, timeframe, datasets.length]);
 
+  const themeKey = useThemeKey();
+
   useEffect(() => {
     const container = chartContainerRef.current;
     if (!container || !candleData || candleData.candles.length === 0) {
       return;
     }
 
+    const pal = chartPalette();
     const chart = createChart(container, {
       layout: {
-        background: { type: ColorType.Solid, color: '#0B0E14' },
-        textColor: '#E5E7EB',
+        background: { type: ColorType.Solid, color: pal.surface },
+        textColor: pal.text,
       },
       grid: {
-        vertLines: { color: '#172033' },
-        horzLines: { color: '#172033' },
+        vertLines: { color: withAlpha(pal.border, 0.5) },
+        horzLines: { color: withAlpha(pal.border, 0.5) },
       },
       width: container.clientWidth,
       height: 440,
       timeScale: {
-        borderColor: '#263244',
+        borderColor: pal.border,
         timeVisible: true,
         secondsVisible: false,
       },
       rightPriceScale: {
-        borderColor: '#263244',
+        borderColor: pal.border,
       },
     });
 
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#22C55E',
-      downColor: '#EF4444',
+      upColor: pal.up,
+      downColor: pal.down,
       borderVisible: false,
-      wickUpColor: '#22C55E',
-      wickDownColor: '#EF4444',
+      wickUpColor: pal.up,
+      wickDownColor: pal.down,
     });
 
     const candles = candleData.candles;
@@ -136,7 +140,7 @@ export function ChartsView() {
         candles.map((c) => ({
           time: Math.floor(new Date(c.timestamp).getTime() / 1000) as UTCTimestamp,
           value: c.volume ?? 0,
-          color: c.close >= c.open ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)',
+          color: withAlpha(c.close >= c.open ? pal.up : pal.down, 0.3),
         }))
       );
     }
@@ -165,9 +169,9 @@ export function ChartsView() {
       }
     };
 
-    addEmaLine(candleData.overlays.ema20, '#6366F1', showEma20);
-    addEmaLine(candleData.overlays.ema50, '#F59E0B', showEma50);
-    addEmaLine(candleData.overlays.ema200, '#E5E7EB', showEma200);
+    addEmaLine(candleData.overlays.ema20, pal.accentText, showEma20);
+    addEmaLine(candleData.overlays.ema50, pal.warning, showEma50);
+    addEmaLine(candleData.overlays.ema200, pal.text, showEma200);
 
     chart.timeScale().fitContent();
 
@@ -191,7 +195,7 @@ export function ChartsView() {
       resizeObserver.disconnect();
       chart.remove();
     };
-  }, [candleData, showEma20, showEma50, showEma200]);
+  }, [candleData, showEma20, showEma50, showEma200, themeKey]);
 
   const status = candleData?.status ?? 'UNAVAILABLE';
   const candles = candleData?.candles ?? [];

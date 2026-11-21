@@ -6,9 +6,9 @@ import type { SimpleRow } from './model';
 import type { Light } from './units';
 
 export const LIGHT_STYLE: Record<Light, { dot: string; text: string; border: string; bg: string }> = {
-  green: { dot: '#22C55E', text: '#86EFAC', border: '#22C55E', bg: 'rgba(34,197,94,0.14)' },
-  red: { dot: '#EF4444', text: '#FCA5A5', border: '#EF4444', bg: 'rgba(239,68,68,0.14)' },
-  yellow: { dot: '#FBBF24', text: '#FDE68A', border: '#FBBF24', bg: 'rgba(251,191,36,0.14)' },
+  green: { dot: 'var(--positive)', text: 'var(--positive)', border: 'var(--positive)', bg: 'color-mix(in srgb, var(--positive) 14%, transparent)' },
+  red: { dot: 'var(--negative)', text: 'var(--negative)', border: 'var(--negative)', bg: 'color-mix(in srgb, var(--negative) 14%, transparent)' },
+  yellow: { dot: 'var(--warning)', text: 'var(--warning)', border: 'var(--warning)', bg: 'color-mix(in srgb, var(--warning) 14%, transparent)' },
   gray: { dot: '#94A3B8', text: '#CBD5E1', border: '#64748B', bg: 'rgba(148,163,184,0.12)' },
 };
 

@@ -119,7 +119,7 @@ export function CommodityWorldView() {
                 className={`px-3 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
                   active
                     ? 'bg-[var(--accent)] text-white'
-                    : 'text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
+                    : 'text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
                 }`}
               >
                 {group === 'ALL' ? `Tất cả (${overview?.commodities.length ?? 21})` : COMMODITY_GROUP_LABELS_VI[group]}

@@ -96,7 +96,7 @@ export const COMMODITY_VISUALS: Record<string, CommodityVisualAsset> = {
     category: 'AGRICULTURE',
     imageUrl: webp('commodity_rice_zr_1795004529547'),
     imageAlt: 'Ruộng lúa bậc thang vàng chín ở Đông Nam Á',
-    accentHex: '#84CC16',
+    accentHex: '#C9B58A',
     originTag: 'ĐBSCL Việt Nam · Thái Lan · Ấn Độ',
   },
   'ICE:KC': {
@@ -106,7 +106,7 @@ export const COMMODITY_VISUALS: Record<string, CommodityVisualAsset> = {
     category: 'SOFT_COMMODITIES',
     imageUrl: webp('commodity_arabica_kc_1795004530565'),
     imageAlt: 'Vườn cà phê Arabica quả chín đỏ vùng cao nguyên',
-    accentHex: '#EF4444',
+    accentHex: '#E3A9C8',
     originTag: 'Brazil · Colombia · Lâm Đồng',
   },
   'ICE:RC': {
@@ -116,7 +116,7 @@ export const COMMODITY_VISUALS: Record<string, CommodityVisualAsset> = {
     category: 'SOFT_COMMODITIES',
     imageUrl: webp('commodity_robusta_rc_1795004530552'),
     imageAlt: 'Hạt cà phê Robusta Tây Nguyên Việt Nam và cây cà phê xanh',
-    accentHex: '#10B981',
+    accentHex: '#8FC9C3',
     originTag: 'Tây Nguyên VN (#1 Thế giới) · MXV LRC',
   },
   'ICE:SB': {
@@ -126,7 +126,7 @@ export const COMMODITY_VISUALS: Record<string, CommodityVisualAsset> = {
     category: 'SOFT_COMMODITIES',
     imageUrl: webp('commodity_sugar_sb_1795004530789'),
     imageAlt: 'Cánh đồng mía đường xanh mướt dưới ánh nắng sớm',
-    accentHex: '#22C55E',
+    accentHex: '#7FB2E5',
     originTag: 'Brazil UNICA · Ấn Độ · Thái Lan',
   },
   'ICE:CC': {
@@ -236,7 +236,7 @@ export const COMMODITY_VISUALS: Record<string, CommodityVisualAsset> = {
     category: 'METALS',
     imageUrl: webp('commodity_ironore_tio_1795004602229'),
     imageAlt: 'Khai trường quặng sắt lộ thiên quy mô lớn',
-    accentHex: '#DC2626',
+    accentHex: '#B59CE0',
     originTag: 'Úc · Brazil · Thép Trung Quốc & VN',
   },
 };

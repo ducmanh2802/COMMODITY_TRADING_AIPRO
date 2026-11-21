@@ -212,7 +212,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                   className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap shrink-0 ${
                     eventType === tab.id
                       ? 'bg-[var(--accent)] text-white'
-                      : 'text-[var(--text)]/70 hover:text-white'
+                      : 'text-[var(--text)]/70 hover:text-[var(--text-strong)]'
                   }`}
                 >
                   {t(tab.label)}

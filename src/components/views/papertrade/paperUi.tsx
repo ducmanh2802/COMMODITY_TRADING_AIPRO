@@ -37,7 +37,7 @@ export function EquityCurve({ points, baseline, label }: { points: { t: number; 
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-40" role="img" aria-label={label}>
       <line x1={pad} x2={W - pad} y1={y(baseline)} y2={y(baseline)} stroke="#263244" strokeDasharray="4 4" />
       {points.length > 1 ? (
-        <path d={d} fill="none" stroke={last >= baseline ? '#4ADE80' : '#F87171'} strokeWidth={2} />
+        <path d={d} fill="none" stroke={last >= baseline ? 'var(--positive)' : 'var(--negative)'} strokeWidth={2} />
       ) : (
         <circle cx={x(0)} cy={y(last)} r={3} fill="#6366F1" />
       )}
@@ -64,7 +64,7 @@ export function PnlBars({ items, label }: { items: { key: string; label: string;
         return (
           <g key={it.key}>
             <text x={4} y={yy + 13} fontSize={11} fill="#E5E7EB">{it.label.length > 28 ? `${it.label.slice(0, 27)}…` : it.label}</text>
-            <rect x={it.value >= 0 ? mid : mid - w} y={yy} width={Math.max(1, w)} height={18} rx={2} fill={it.value >= 0 ? '#22C55E' : '#EF4444'} />
+            <rect x={it.value >= 0 ? mid : mid - w} y={yy} width={Math.max(1, w)} height={18} rx={2} fill={it.value >= 0 ? 'var(--positive)' : 'var(--negative)'} />
             <text x={it.value >= 0 ? mid + w + 4 : mid - w - 4} y={yy + 13} fontSize={10} fill="#9CA3AF" textAnchor={it.value >= 0 ? 'start' : 'end'} >{fmtInt(it.value)}</text>
           </g>
         );

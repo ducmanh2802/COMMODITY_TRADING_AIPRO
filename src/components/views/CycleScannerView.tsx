@@ -131,7 +131,7 @@ export function CycleScannerView() {
             className={`w-full px-3 py-2 rounded border text-xs font-medium transition-colors whitespace-nowrap ${
               mxvOnly
                 ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                : 'bg-[var(--bg)] border-[var(--border)] text-[var(--text)]/80 hover:text-white'
+                : 'bg-[var(--bg)] border-[var(--border)] text-[var(--text)]/80 hover:text-[var(--text-strong)]'
             }`}
           >
             {mxvOnly ? 'Đang lọc: Liên thông MXV' : 'Bao gồm cả MXV & Quốc tế'}

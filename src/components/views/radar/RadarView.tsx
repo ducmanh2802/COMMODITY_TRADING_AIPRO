@@ -53,7 +53,7 @@ function ItemCard({ item, rank, muted, onOpen }: { item: RadarItem; rank: number
         <div className="text-xs text-[var(--text)]/70 tabular-nums">
           Giá {fmt(item.lastClose)}
           {item.changePct !== null && (
-            <span className={up ? 'text-[#34D399]' : 'text-[var(--negative)]'}>
+            <span className={up ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}>
               {up ? ` (+${fmt(item.changePct)}%)` : ` (${fmt(item.changePct)}%)`}
             </span>
           )}

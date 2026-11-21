@@ -174,7 +174,7 @@ export function ConfirmDeleteDialog({ dataset, busy, error, onCancel, onConfirm 
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="px-3 py-1.5 text-xs rounded-md bg-[var(--negative)] text-white hover:bg-[#DC2626] disabled:opacity-50"
+            className="px-3 py-1.5 text-xs rounded-md bg-[var(--negative)] text-white hover:brightness-110 disabled:opacity-50"
           >
             {busy ? t('data.ds.deleting') : t('data.ds.deleteBtn')}
           </button>

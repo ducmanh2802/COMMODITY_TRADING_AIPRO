@@ -30,7 +30,7 @@ const numFmt = (v: number) => fmtFixed(v, 2);
 /** Diverging cell color: blue for negative, red for positive correlation. */
 function heatColor(r: number): string {
   const a = Math.min(1, Math.abs(r));
-  return r >= 0 ? `rgba(239, 68, 68, ${0.12 + 0.6 * a})` : `rgba(59, 130, 246, ${0.12 + 0.6 * a})`;
+  return r >= 0 ? `rgba(232, 162, 124, ${0.12 + 0.6 * a})` : `rgba(108, 180, 228, ${0.12 + 0.6 * a})`;
 }
 
 export function CorrelationTab({ options }: { options: SeriesOption[] }) {

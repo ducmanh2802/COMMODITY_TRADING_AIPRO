@@ -4,41 +4,42 @@
   --font-sans: "Be Vietnam Pro", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  --color-terminal-bg: #0B0E14;
-  --color-terminal-panel: #111622;
-  --color-terminal-panel-alt: #172033;
-  --color-terminal-border: #263244;
-  --color-terminal-primary: #6366F1;
-  --color-terminal-bullish: #22C55E;
-  --color-terminal-bearish: #EF4444;
-  --color-terminal-warning: #F59E0B;
-  --color-terminal-text: #E5E7EB;
+  --color-terminal-bg: #11141A;
+  --color-terminal-panel: #171B23;
+  --color-terminal-panel-alt: #1E232D;
+  --color-terminal-border: #2E3542;
+  --color-terminal-primary: #6F93C9;
+  --color-terminal-bullish: #6CB4E4;
+  --color-terminal-bearish: #E8A27C;
+  --color-terminal-warning: #D9BE6C;
+  --color-terminal-text: #E4E7EC;
 }
 
-/* Design tokens. Dark is the default; light via <html data-theme="light">. Use var(--token) or src/components/ui. */
+/* Design tokens. Dark is the default; light via <html data-theme="light">. Use var(--token) or src/components/ui.
+   Calm palette: NO green/red. Up/positive = blue, down/negative = apricot (colour-blind friendly). */
 :root {
   color-scheme: dark;
-  --bg: #0D1210;
-  --surface: #141B18;
-  --surface-2: #1B2420;
-  --surface-3: #232E29;
-  --border: #2A3631;
-  --text: #E6ECE8;
-  --text-strong: #FFFFFF;
-  --muted: rgba(230, 236, 232, 0.68);
-  --faint: rgba(230, 236, 232, 0.46);
-  --accent: #2F9E66;
-  --accent-soft: rgba(47, 158, 102, 0.16);
-  --accent-text: #7DD3A8;
-  --positive: #4ADE80;
-  --negative: #F87171;
-  --warning: #FBBF24;
-  --series-1: #4DA3FF;
-  --series-2: #F59E0B;
-  --series-3: #34D399;
-  --series-4: #F472B6;
-  --series-5: #A78BFA;
-  --series-6: #22D3EE;
+  --bg: #11141A;
+  --surface: #171B23;
+  --surface-2: #1E232D;
+  --surface-3: #262C38;
+  --border: #2E3542;
+  --text: #E4E7EC;
+  --text-strong: #F5F7FA;
+  --muted: rgba(228, 231, 236, 0.68);
+  --faint: rgba(228, 231, 236, 0.46);
+  --accent: #6F93C9;
+  --accent-soft: rgba(111, 147, 201, 0.16);
+  --accent-text: #A8C2E8;
+  --positive: #6CB4E4;
+  --negative: #E8A27C;
+  --warning: #D9BE6C;
+  --series-1: #7FB2E5;
+  --series-2: #E8A27C;
+  --series-3: #B59CE0;
+  --series-4: #D9BE6C;
+  --series-5: #8FC9C3;
+  --series-6: #E3A9C8;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -48,32 +49,32 @@
 }
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #F6F5F0;
+  --bg: #F5F6F8;
   --surface: #FFFFFF;
-  --surface-2: #F0EEE6;
-  --surface-3: #E7E4DA;
-  --border: #E1DED4;
-  --text: #1B1F1C;
-  --text-strong: #0F1210;
-  --muted: rgba(27, 31, 28, 0.7);
-  --faint: rgba(27, 31, 28, 0.52);
-  --accent: #1F6B45;
-  --accent-soft: rgba(31, 107, 69, 0.12);
-  --accent-text: #1F6B45;
-  --positive: #1F7A4D;
-  --negative: #B42318;
-  --warning: #A15C00;
-  --series-1: #1D6FD1;
-  --series-2: #B45F06;
-  --series-3: #12805C;
-  --series-4: #C2327D;
-  --series-5: #6D4AD0;
-  --series-6: #0E7C93;
-  --shadow-card: 0 1px 2px rgba(20, 30, 25, 0.06), 0 4px 14px -6px rgba(20, 30, 25, 0.12);
+  --surface-2: #EEF1F5;
+  --surface-3: #E4E8EE;
+  --border: #DDE2E9;
+  --text: #1E2430;
+  --text-strong: #121721;
+  --muted: rgba(30, 36, 48, 0.7);
+  --faint: rgba(30, 36, 48, 0.52);
+  --accent: #3F679E;
+  --accent-soft: rgba(63, 103, 158, 0.12);
+  --accent-text: #34598C;
+  --positive: #2D72A8;
+  --negative: #A9561F;
+  --warning: #8C6A12;
+  --series-1: #2D72A8;
+  --series-2: #A9561F;
+  --series-3: #7356B8;
+  --series-4: #8C6A12;
+  --series-5: #2A7770;
+  --series-6: #B04F86;
+  --shadow-card: 0 1px 2px rgba(20, 28, 40, 0.06), 0 4px 14px -6px rgba(20, 28, 40, 0.12);
 }
 /* Light theme: soften translucent-white helpers that assumed a dark background. */
 :root[data-theme="light"] .bg-white/5,
-:root[data-theme="light"] .bg-white/10 { background-color: rgba(27, 31, 28, 0.05); }
+:root[data-theme="light"] .bg-white/10 { background-color: rgba(30, 36, 48, 0.05); }
 :root[data-theme="light"] .border-white/10,
 :root[data-theme="light"] .border-white/5 { border-color: var(--border); }
 

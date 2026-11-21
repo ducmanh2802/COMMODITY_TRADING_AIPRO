@@ -24,7 +24,7 @@ interface Props {
   ariaLabel: string;
 }
 
-export const CHART_COLORS = ['#6366F1', '#22C55E', '#F59E0B', '#06B6D4', '#EC4899', '#A3E635', '#EF4444', '#94A3B8'];
+export const CHART_COLORS = ['#7FB2E5', '#E8A27C', '#B59CE0', '#D9BE6C', '#8FC9C3', '#E3A9C8', '#E8A27C', '#94A3B8'];
 
 function toTime(t: string): UTCTimestamp {
   return Math.floor(Date.parse(t) / 1000) as UTCTimestamp;

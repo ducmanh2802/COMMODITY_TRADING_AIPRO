@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { chartPalette, useThemeKey, withAlpha } from '../../shared/theme/chartColors';
 import {
   ArrowLeft,
   Bot,
@@ -90,31 +91,34 @@ export function CommodityProfileView() {
     return sorted.filter((c) => Date.parse(c.timestamp) >= cutoffMs);
   }, [candles, horizon]);
 
+  const themeKey = useThemeKey();
+
   useEffect(() => {
     const container = chartContainerRef.current;
     if (!container || visibleCandles.length === 0) return;
+    const pal = chartPalette();
 
     const chart = createChart(container, {
       layout: {
-        background: { type: ColorType.Solid, color: '#0B0E14' },
-        textColor: '#9CA3AF',
+        background: { type: ColorType.Solid, color: pal.surface },
+        textColor: withAlpha(pal.text, 0.7),
       },
       grid: {
-        vertLines: { color: '#172033' },
-        horzLines: { color: '#172033' },
+        vertLines: { color: withAlpha(pal.border, 0.5) },
+        horzLines: { color: withAlpha(pal.border, 0.5) },
       },
       width: container.clientWidth,
       height: 300,
-      rightPriceScale: { borderColor: '#263244' },
-      timeScale: { borderColor: '#263244' },
+      rightPriceScale: { borderColor: pal.border },
+      timeScale: { borderColor: pal.border },
     });
 
     const series = chart.addSeries(CandlestickSeries, {
-      upColor: '#22C55E',
-      downColor: '#EF4444',
+      upColor: pal.up,
+      downColor: pal.down,
       borderVisible: false,
-      wickUpColor: '#22C55E',
-      wickDownColor: '#EF4444',
+      wickUpColor: pal.up,
+      wickDownColor: pal.down,
     });
 
     const dedup = new Map<string, MarketCandle>();
@@ -143,7 +147,7 @@ export function CommodityProfileView() {
       observer.disconnect();
       chart.remove();
     };
-  }, [visibleCandles]);
+  }, [visibleCandles, themeKey]);
 
   const handleRunVerdict = async () => {
     setVerdictLoading(true);
@@ -360,7 +364,7 @@ export function CommodityProfileView() {
                   type="button"
                   onClick={() => setHorizon(h)}
                   className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                    horizon === h ? 'bg-[var(--accent)] text-white' : 'text-[var(--muted)] hover:text-white'
+                    horizon === h ? 'bg-[var(--accent)] text-white' : 'text-[var(--muted)] hover:text-[var(--text-strong)]'
                   }`}
                 >
                   {h}

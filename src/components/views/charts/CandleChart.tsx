@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { chartPalette, useThemeKey, withAlpha } from '../../../shared/theme/chartColors';
 import {
   CandlestickSeries,
   ColorType,
@@ -52,8 +53,6 @@ interface CandleChartProps {
   annotations?: boolean;
 }
 
-const UP = '#22C55E';
-const DOWN = '#EF4444';
 
 /**
  * D1/W1 bars are stored at 00:00Z of the session date: pass the date as a business-day string so the
@@ -90,27 +89,31 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
   const [api, setApi] = useState<ChartApiPair | null>(null);
   const times = useMemo(() => candles.map((c) => toChartTime(c.timestamp, timeframe)), [candles, timeframe]);
   const t = useT();
+  const themeKey = useThemeKey();
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const intraday = !isSessionDateTimeframe(timeframe);
+    const pal = chartPalette();
+    const UP = pal.up;
+    const DOWN = pal.down;
 
     const chart = createChart(el, {
       autoSize: true,
       layout: {
-        background: { type: ColorType.Solid, color: '#111622' },
-        textColor: 'rgba(229, 231, 235, 0.75)',
+        background: { type: ColorType.Solid, color: pal.surface },
+        textColor: withAlpha(pal.text, 0.75),
         fontSize: 11,
-        panes: { separatorColor: '#263244', separatorHoverColor: 'rgba(99, 102, 241, 0.3)' },
+        panes: { separatorColor: pal.border, separatorHoverColor: withAlpha(pal.accent, 0.3) },
       },
       grid: {
-        vertLines: { color: 'rgba(38, 50, 68, 0.45)' },
-        horzLines: { color: 'rgba(38, 50, 68, 0.45)' },
+        vertLines: { color: withAlpha(pal.border, 0.45) },
+        horzLines: { color: withAlpha(pal.border, 0.45) },
       },
       crosshair: { mode: CrosshairMode.Normal },
-      rightPriceScale: { borderColor: '#263244' },
-      timeScale: { borderColor: '#263244', timeVisible: intraday, secondsVisible: false },
+      rightPriceScale: { borderColor: pal.border },
+      timeScale: { borderColor: pal.border, timeVisible: intraday, secondsVisible: false },
       localization: intraday
         ? {
             timeFormatter: (t: Time) =>
@@ -159,7 +162,7 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
           .map((c) => ({
             time: toChartTime(c.timestamp, timeframe),
             value: c.volume as number,
-            color: c.close >= c.open ? 'rgba(34, 197, 94, 0.35)' : 'rgba(239, 68, 68, 0.35)',
+            color: withAlpha(c.close >= c.open ? UP : DOWN, 0.35),
           }))
       );
     }
@@ -229,7 +232,7 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
       setApi(null);
       chart.remove();
     };
-  }, [candles, timeframe, overlays, lowerPane, showVolume]);
+  }, [candles, timeframe, overlays, lowerPane, showVolume, themeKey]);
 
   const chartBody = (
     <div className="relative">

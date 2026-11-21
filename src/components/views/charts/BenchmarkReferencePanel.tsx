@@ -58,7 +58,7 @@ function BenchmarkLine({ points, unit, ariaLabel }: { points: BenchmarkSeries['p
       localization: { priceFormatter: (v: number) => fmtFixed(v, 2) },
     });
     const s = chart.addSeries(LineSeries, {
-      color: cssVar('--accent-text', '#7DD3A8'),
+      color: cssVar('--accent-text', '#A8C2E8'),
       lineWidth: 2,
       title: unit,
       priceLineVisible: false,

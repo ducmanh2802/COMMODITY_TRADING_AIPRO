@@ -44,7 +44,7 @@ export function InstrumentToolbar({ showTimeframe = true, rightSlot }: Instrumen
                 className={`px-2 py-1 text-xs font-mono rounded transition-colors ${
                   timeframe === tf
                     ? 'bg-[var(--accent)] text-white'
-                    : 'text-[var(--text)]/65 hover:text-white'
+                    : 'text-[var(--text)]/65 hover:text-[var(--text-strong)]'
                 }`}
               >
                 {tf}
