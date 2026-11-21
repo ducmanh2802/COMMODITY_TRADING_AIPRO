@@ -182,3 +182,18 @@ Ghi chú phạm vi: app **chỉ mô phỏng giao dịch** cho mục đích học
 | T83 | Hoàn thiện đồng bộ giao diện sáng/tối: rà các màn còn màu cứng, kiểm tra tương phản WCAG AA cả 2 nền, ảnh chụp e2e cho cả 2 chế độ | Phần còn lại của T72/T65 |
 | T84 | Hướng dẫn lần đầu cho phần Học: chọn mục tiêu (hiểu thị trường / phòng hộ / lướt sóng) → đề xuất lộ trình cấp phù hợp | Người mới không bị ngợp 10 cấp |
 | T85 | Firestore emulator test cho rules (paperTrades, tiến độ học, bảng xếp hạng T63) chạy trong CI | Điều kiện trước khi làm T63 |
+
+### Wave 10 — So sánh với app giao dịch phổ biến (2026-11-21)
+Đối chiếu TradingView, Investing.com, Barchart, CME QuikStrike, app môi giới MXV. App đã có: biểu đồ nến + chỉ báo, COT, cấu trúc kỳ hạn, spread, mùa vụ, heatmap, tin tức, lịch báo cáo, giao dịch thử, backtest, nhật ký, máy tính lệnh, học viện, thị trường quốc tế, danh sách theo dõi (đang làm). Còn thiếu:
+| ID | Task | Có ở app nào / vì sao |
+|---|---|---|
+| T86 | Vẽ trên biểu đồ: đường xu hướng, vùng hỗ trợ/kháng cự, Fibonacci, ghi chú — lưu theo mã | TradingView; cần cho Price Action (Cấp 5) |
+| T87 | Giá nội địa Việt Nam (cà phê nhân Đắk Lắk, tiêu, cao su, ngô/khô đậu cảng) cạnh giá quốc tế + chênh lệch (basis), nguồn công khai có ghi rõ | App môi giới/giacaphe; người trồng & doanh nghiệp VN cần nhất |
+| T88 | Đồng bộ giá hiện tại và biểu đồ về cùng một hợp đồng tháng (sửa lệch do chuyển kỳ), hiển thị tháng hợp đồng đang xem | Barchart; tránh hiểu sai giá |
+| T89 | So sánh % hiệu suất nhiều mã trên một biểu đồ + bố cục nhiều biểu đồ (2×2) | TradingView/Investing |
+| T90 | Bản đồ thời tiết vùng trồng (Brazil, Tây Nguyên, vành đai ngô Mỹ, Tây Phi): mưa/nhiệt bất thường 14 ngày (Open-Meteo miễn phí) | Barchart/agri apps; thời tiết là động lực giá nông sản số 1 |
+| T91 | Tin tức gắn mã: lọc theo mã, tóm tắt tiếng Việt, nhãn mức ảnh hưởng, hiện trên trang chi tiết mã | Investing.com |
+| T92 | Lịch đáo hạn FND/LTD từng hợp đồng + nhắc chuyển kỳ cho vị thế Giao dịch thử | CME/app môi giới |
+| T93 | Thống kê hiệu suất Giao dịch thử: đường vốn, sụt giảm tối đa, tỉ lệ thắng, kỳ vọng (R trung bình), theo mã/theo setup | Myfxbook/Tradervue |
+| T94 | Tự nhận diện mẫu nến (búa, nhấn chìm, pin bar) và vùng hỗ trợ/kháng cự tự động trên biểu đồ, có giải thích | TradingView scripts; nối với bài Cấp 5 |
+| T95 | Khối lượng & OI theo từng tháng hợp đồng (bảng chuỗi kỳ hạn) + volume profile | CME QuikStrike/Barchart |
