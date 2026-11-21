@@ -223,6 +223,12 @@ export function LessonPage({
       </div>
       {lesson.example && <ExampleBlock calc={lesson.example.calc} caption={lesson.example.caption} instruments={instruments} />}
       {lesson.textExample && <p className="text-xs rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3">Ví dụ: {lesson.textExample}</p>}
+      {lesson.examples?.map((ex) => (
+        <div key={ex.title} className="rounded-md border border-[var(--border)] border-l-4 border-l-[var(--accent)] bg-[var(--surface-2)] p-3">
+          <p className="text-xs font-semibold text-[var(--accent-text)] mb-1">Ví dụ tình huống: {ex.title}</p>
+          <p className="text-sm leading-relaxed">{ex.text}</p>
+        </div>
+      ))}
       {lesson.instrumentIds && (
         <Card>
           <p className="text-xs font-semibold mb-2">Đặc tả hợp đồng (Instrument Master)</p>

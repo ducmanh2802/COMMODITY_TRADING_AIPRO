@@ -34,6 +34,8 @@ export interface Lesson {
   example?: { caption: string; calc: ExampleCalc };
   /** Free-text illustrative example (no spec numbers). */
   textExample?: string;
+  /** Extra worked scenarios shown as titled cards. */
+  examples?: { title: string; text: string }[];
   /** "Ghi nhớ" box. */
   remember: string[];
   quiz: QuizQuestion[];
