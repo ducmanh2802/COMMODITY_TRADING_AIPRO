@@ -18,10 +18,19 @@ import * as drivers from './dict/drivers';
 import * as hedge from './dict/hedge';
 import * as onboarding from './dict/onboarding';
 import * as radar from './dict/radar';
+import * as watchlist from './dict/watchlist';
 import * as world from './dict/world';
 import * as ordercalc from './dict/ordercalc';
 import * as benchmark from './dict/benchmark';
+import * as domestic from './dict/domestic';
+import * as chain from './dict/chain';
 import * as instrument from './dict/instrument';
+import * as checklist from './dict/checklist';
+import * as paperstats from './dict/paperstats';
+import * as compare from './dict/compare';
+import * as drawing from './dict/drawing';
+import * as weather from './dict/weather';
+import * as news2 from './dict/news2';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
@@ -46,8 +55,17 @@ export const en: Record<TKey, string> = {
   ...hedge.en,
   ...onboarding.en,
   ...radar.en,
+  ...watchlist.en,
   ...world.en,
   ...ordercalc.en,
   ...instrument.en,
+  ...checklist.en,
+  ...paperstats.en,
+  ...compare.en,
+  ...drawing.en,
   ...benchmark.en,
+  ...domestic.en,
+  ...chain.en,
+  ...weather.en,
+  ...news2.en,
 };

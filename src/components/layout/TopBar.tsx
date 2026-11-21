@@ -9,6 +9,7 @@ import { DataStatusBadge } from '../common/DataStatusBadge';
 import { LanguageSwitch } from '../common/LanguageSwitch';
 import { ThemeSwitch } from '../common/ThemeSwitch';
 import { RadarBell } from '../radar/RadarBell';
+import { WatchlistAlerts } from '../watchlist/WatchlistAlerts';
 import { useT } from '../../i18n';
 
 interface TopBarProps {
@@ -129,6 +130,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
         </div>
 
         <RadarBell />
+        <WatchlistAlerts />
         <ThemeSwitch />
         <LanguageSwitch />
 

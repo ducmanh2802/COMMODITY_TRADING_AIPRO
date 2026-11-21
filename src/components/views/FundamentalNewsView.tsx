@@ -10,6 +10,7 @@ import { MacroRecordCards } from '../common/MacroRecordCards';
 import { MacroDataPanel } from '../common/MacroDataPanel';
 import { VietnamEconomicCalendar } from '../common/VietnamEconomicCalendar';
 import { hasKey, tr, useT } from '../../i18n';
+import { TaggedNewsPanel } from './news/TaggedNewsPanel';
 
 interface NewsRecord {
   id: string;
@@ -201,6 +202,8 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
           {syncMessage}
         </div>
       )}
+
+      {mode === 'news' && <TaggedNewsPanel />}
 
       {/* T21: sourced EIA / WASDE / DXY / USD-VND (server-fetched, cached, fail-closed) */}
       {mode === 'fundamental' && <MacroDataPanel />}

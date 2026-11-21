@@ -18,10 +18,19 @@ import * as drivers from './dict/drivers';
 import * as hedge from './dict/hedge';
 import * as onboarding from './dict/onboarding';
 import * as radar from './dict/radar';
+import * as watchlist from './dict/watchlist';
 import * as world from './dict/world';
 import * as ordercalc from './dict/ordercalc';
 import * as benchmark from './dict/benchmark';
+import * as domestic from './dict/domestic';
+import * as chain from './dict/chain';
 import * as instrument from './dict/instrument';
+import * as checklist from './dict/checklist';
+import * as paperstats from './dict/paperstats';
+import * as compare from './dict/compare';
+import * as drawing from './dict/drawing';
+import * as weather from './dict/weather';
+import * as news2 from './dict/news2';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
@@ -45,10 +54,19 @@ export const vi = {
   ...hedge.vi,
   ...onboarding.vi,
   ...radar.vi,
+  ...watchlist.vi,
   ...world.vi,
   ...ordercalc.vi,
   ...instrument.vi,
+  ...checklist.vi,
+  ...paperstats.vi,
+  ...compare.vi,
+  ...drawing.vi,
   ...benchmark.vi,
+  ...domestic.vi,
+  ...chain.vi,
+  ...weather.vi,
+  ...news2.vi,
 };
 
 export type TKey = keyof typeof vi;

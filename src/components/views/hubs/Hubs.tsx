@@ -11,11 +11,14 @@ import { LegacyModule } from '../LegacyModule';
 import { LazyPaperTradingView, LazyResearchNotebookView } from '../LazyOwnerViews';
 import { TodayPanel } from '../today/TodayPanel';
 import { RadarView } from '../radar/RadarView';
+import { WatchlistPanel } from '../../watchlist/WatchlistPanel';
 import { MarketPulsePanel } from '../pulse/MarketPulsePanel';
 import { WorldMarketsPanel } from '../world/WorldMarketsPanel';
+import { WeatherPanel } from '../weather/WeatherPanel';
 import { DriversPanel } from '../drivers/DriversPanel';
 import { HedgeWizard } from '../hedge/HedgeWizard';
 import { InstrumentOverview } from '../instrument/InstrumentOverview';
+import { DomesticPricesPanel } from '../domestic/DomesticPricesPanel';
 
 interface HubProps {
   tab?: string;
@@ -60,7 +63,10 @@ export function MarketHub({ tab, sub }: HubProps) {
           render: () => <MarketPulsePanel />,
         },
         { id: 'world', label: t('wd.tab'), note: t('wd.tabNote'), render: () => <WorldMarketsPanel /> },
+        { id: 'weather', label: t('wx.tab'), note: t('wx.tabNote'), render: () => <WeatherPanel /> },
         { id: 'radar', label: t('n2.mk.radar'), note: t('n2.mk.radarNote'), render: () => <RadarView /> },
+        { id: 'watchlist', label: t('wl.panel.title'), note: t('wl.panel.subtitle'), render: () => <WatchlistPanel /> },
+        { id: 'domestic', label: t('dm.tab'), note: t('dm.tabNote'), render: () => <DomesticPricesPanel /> },
         { id: 'prices', label: t('n2.mk.prices'), note: t('n2.mk.pricesNote'), render: () => <PricesTab initial={sub ?? 'cards'} /> },
         { id: 'news', label: t('n2.mk.news'), note: t('n2.mk.newsNote'), render: () => <LegacyModule id="news" /> },
         { id: 'macro', label: t('n2.mk.macro'), note: t('n2.mk.macroNote'), render: () => <LegacyModule id="fundamental" /> },

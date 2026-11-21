@@ -53,6 +53,10 @@ export interface MarketQuote {
   sourceQuality?: SourceQualityLabel;
   /** Provenance (optional): which contract the price refers to, e.g. a continuous front month. */
   contract?: string;
+  /** Human label of the actual contract month when the provider reports it, e.g. "Mar-2027" (contractMonth is 'YYYY-MM'). */
+  contractLabel?: string | null;
+  /** Machine flag set by the server consistency check, e.g. 'ROLL_MISMATCH' (quote vs last daily close on different contracts). */
+  consistencyFlag?: string | null;
   /** Provider's current regular trading period (epoch seconds), when reported. */
   tradingPeriod?: { start: number | null; end: number | null } | null;
   /** 'BENCHMARK' = a monthly/daily reference series (e.g. IMF via FRED), NOT a futures quote. Absent = futures/market quote. */

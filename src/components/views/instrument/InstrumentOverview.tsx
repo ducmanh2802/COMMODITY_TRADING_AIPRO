@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, HelpCircle } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
-import { fmtDate, fmtDateTime, fmtFixed, fmtNum, useI18n } from '../../../i18n';
+import { fmtDate, fmtDateTime, fmtFixed, fmtNum, useI18n, type TKey } from '../../../i18n';
 import { atr } from '../../../shared/analytics';
 import { getCommodityVisual } from '../../../shared/data/commodityVisuals';
 import type { CommodityProfileDossier, CycleTimeframeKey } from '../../../shared/types/cycle';
@@ -10,10 +10,21 @@ import type { MarketCandle } from '../../../shared/types/market';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
 import { CyclePhaseBadge } from '../../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
+import { WatchButton } from '../../watchlist/WatchButton';
 import { Card } from '../../ui/Card';
 import { Skeleton } from '../../ui/Skeleton';
 import { CandleChart } from '../charts/CandleChart';
 import { LegacyModule } from '../LegacyModule';
+import { RelatedNews } from './RelatedNews';
+import {
+  cotLight,
+  fundamentalLight,
+  seasonalLight,
+  trendLight,
+  upcomingWarningDays,
+  type ContextLight,
+  type LightTone,
+} from './contextLights';
 
 type RangeKey = '1M' | '6M' | '1Y' | 'ALL';
 const RANGE_DAYS: Record<RangeKey, number> = { '1M': 31, '6M': 183, '1Y': 366, ALL: 365 * 60 };
@@ -73,6 +84,53 @@ function StatTile({ label, value, say, tone, children }: { label: string; value:
       {children}
       <span className="text-xs leading-relaxed text-[var(--text)]">{say}</span>
     </div>
+  );
+}
+
+const TONE_VAR: Record<LightTone, string> = {
+  green: 'var(--positive)',
+  yellow: 'var(--warning)',
+  red: 'var(--negative)',
+  grey: 'var(--muted)',
+};
+
+/** One of the 4 context cards: colored dot + one sentence + "?" tooltip with method, source and date. */
+function ContextCard({ light, t }: { light: ContextLight; t: (k: TKey, p?: Record<string, string | number>) => string }) {
+  const [tip, setTip] = useState(false);
+  const color = TONE_VAR[light.tone];
+  const sentence = t(`ins.ctx.${light.id}.${light.msg}` as TKey, light.params);
+  const meta = [
+    light.source ? t('ins.ctx.src', { s: light.source }) : null,
+    light.asOf ? t('ins.ctx.asOf', { d: light.asOf.length >= 10 ? fmtDate(light.asOf.slice(0, 10)) : light.asOf }) : t('ins.ctx.noDate'),
+  ].filter(Boolean);
+  const tipId = `ins-ctx-tip-${light.id}`;
+  return (
+    <li className="relative bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 min-w-0 flex flex-col gap-1.5" data-testid={`ctx-light-${light.id}`} data-tone={light.tone}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2 min-w-0">
+          <span aria-hidden="true" className="w-3 h-3 rounded-full shrink-0" style={{ background: color }} />
+          <span className="text-xs font-semibold text-[var(--muted)] truncate">{t(`ins.ctx.label.${light.id}` as TKey)}</span>
+        </span>
+        <button
+          type="button"
+          aria-label={t('ins.ctx.help')}
+          aria-expanded={tip}
+          aria-controls={tipId}
+          onClick={() => setTip((v) => !v)}
+          onBlur={() => setTip(false)}
+          className="shrink-0 w-7 h-7 -m-1 flex items-center justify-center text-[var(--muted)] hover:text-[var(--text-strong)]"
+        >
+          <HelpCircle className="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
+      <p className="text-sm leading-snug text-[var(--text-strong)]">{sentence}</p>
+      {tip && (
+        <div id={tipId} role="tooltip" className="text-xs leading-relaxed text-[var(--text)] bg-[var(--surface-2)] border border-[var(--border)] rounded-lg p-2.5 space-y-1">
+          <p>{t(`ins.ctx.${light.id}.help` as TKey)}</p>
+          <p className="text-[var(--muted)]">{meta.join(' · ')}</p>
+        </div>
+      )}
+    </li>
   );
 }
 
@@ -214,6 +272,18 @@ export function InstrumentOverview() {
     rangePos === null ? '—' : rangePos <= 25 ? t('ins.stat.rangeLow') : rangePos >= 75 ? t('ins.stat.rangeHigh') : t('ins.stat.rangeMid');
 
   const nextEvent = drivers?.events.upcoming[0] ?? null;
+  const eventDays = upcomingWarningDays(nextEvent?.date);
+  const weekly = timeframes.WEEKLY;
+  const lastDailyDate = stats ? stats.last.timestamp.slice(0, 10) : null;
+  const lights: ContextLight[] = [
+    trendLight(
+      { available: daily.available, trendDirection: daily.trendDirection, asOf: lastDailyDate },
+      { available: weekly.available, trendDirection: weekly.trendDirection },
+    ),
+    fundamentalLight({ bias: summary.supplyDemandBias, matrix: dossier.supplyDemandMatrix }),
+    seasonalLight(drivers?.seasonality, drivers?.asOf ?? null),
+    cotLight(cotSnapshot),
+  ];
   const attribution = drivers?.attribution;
   const whySentence =
     attribution && attribution.status !== 'UNAVAILABLE' && attribution.horizons.length > 0
@@ -253,8 +323,9 @@ export function InstrumentOverview() {
               {instrument.mxvMapping?.mxvSymbol ? ` · ${t('ins.mxvLine', { code: instrument.mxvMapping.mxvSymbol })}` : ''}
               {spec.contractSize !== null ? ` · ${t('ins.contractLine', { size: fmtNum(spec.contractSize), unit: spec.contractSizeUnit })}` : ''}
             </p>
-            <div className="mt-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <CyclePhaseBadge phase={summary.cyclePhase} />
+              <WatchButton symbol={instrument.exchangeSymbol} />
             </div>
           </div>
         </div>
@@ -289,13 +360,38 @@ export function InstrumentOverview() {
           <p className="mt-1 text-xs text-[var(--muted)]">
             {updatedText ? t('ins.updatedAt', { v: updatedText }) : t('ins.noPriceHint')}
             {!hasQuote && stats ? ` · ${t('ins.priceFromCandle')}` : ''}
+            {hasQuote && quote.contractMonth ? ` · ${t('ins.contractViewed', { m: lang === 'en' ? (quote.contractLabel ?? quote.contractMonth) : `${Number(quote.contractMonth.slice(5, 7))}/${quote.contractMonth.slice(0, 4)}` })}` : ''}
           </p>
+          {eventDays !== null && nextEvent && (
+            <p className="mt-1.5 sm:flex sm:justify-end" data-testid="instrument-event-chip">
+              <span
+                title={t('ins.ctx.eventTip', { label: nextEvent.label[lang === 'en' ? 'en' : 'vi'], d: fmtDate(nextEvent.date) })}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border border-[var(--warning)] text-[var(--warning)] bg-[var(--surface-2)]"
+              >
+                <span aria-hidden="true">⏰</span>
+                {eventDays === 0 ? t('ins.ctx.eventToday', { kind: nextEvent.kind }) : t('ins.ctx.event', { n: eventDays, kind: nextEvent.kind })}
+              </span>
+            </p>
+          )}
           {showMismatch && stats && mismatchPct !== null && (
             <p className="mt-1.5 max-w-md sm:ml-auto text-xs text-[var(--warning)]" data-testid="instrument-roll-mismatch">
-              ⚠ {t('ins.rollMismatch', { quote: fmtPrice(quote.price ?? 0), close: fmtPrice(stats.last.close), pct: fmtFixed(Math.abs(mismatchPct), 1) })}
+              ⚠ {quote.contractMonth
+                ? t('ins.rollMismatchContract', { quote: fmtPrice(quote.price ?? 0), contract: lang === 'en' ? (quote.contractLabel ?? quote.contractMonth) : `${Number(quote.contractMonth.slice(5, 7))}/${quote.contractMonth.slice(0, 4)}`, close: fmtPrice(stats.last.close), pct: fmtFixed(Math.abs(mismatchPct), 1) })
+                : t('ins.rollMismatch', { quote: fmtPrice(quote.price ?? 0), close: fmtPrice(stats.last.close), pct: fmtFixed(Math.abs(mismatchPct), 1) })}
             </p>
           )}
         </div>
+      </section>
+
+      {/* Bảng 4 yếu tố: context clarity lights (not buy/sell) */}
+      <section aria-label={t('ins.ctx.title')} className="space-y-2" data-testid="context-lights">
+        <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('ins.ctx.title')}</h2>
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {lights.map((l) => (
+            <ContextCard key={l.id} light={l} t={t} />
+          ))}
+        </ul>
+        <p className="text-[11px] text-[var(--faint)]">{t('ins.ctx.note')}</p>
       </section>
 
       {/* Why up/down + key stats */}
@@ -337,6 +433,8 @@ export function InstrumentOverview() {
           />
         </div>
       </div>
+
+      <RelatedNews symbol={selectedSymbol} />
 
       {/* Main price chart (T76 plugs a benchmark fallback into the empty-state branch below) */}
       <section className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 space-y-3 min-w-0" aria-label={t('ins.chart.title')}>

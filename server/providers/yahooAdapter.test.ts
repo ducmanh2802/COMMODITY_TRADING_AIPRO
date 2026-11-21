@@ -155,6 +155,8 @@ test('real ZC=F fixture: price in cents/bushel with market timestamp, DELAYED â†
     assert.equal(q.ask, null);
     assert.equal(q.openInterest, null);
     assert.equal(q.volume, 168915);
+    assert.equal(q.contractMonth, '2026-12', 'contract month parsed from meta.shortName (Dec-2026)');
+    assert.equal(q.contractLabel, 'Dec-2026');
 
     // Cached for 15 s: no second request.
     h.clock.t += 10_000;

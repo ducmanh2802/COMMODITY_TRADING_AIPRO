@@ -24,6 +24,7 @@ import type { MarketCandle } from '../../../shared/types/market';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { fmtDate, fmtInt, useT } from '../../../i18n';
 import { BenchmarkReferencePanel } from './BenchmarkReferencePanel';
+import { ChartCompareSection } from './ChartCompare';
 import { CandleChart, type LineSpec, type LowerPaneSpec } from './CandleChart';
 
 type LowerIndicator = 'NONE' | 'RSI' | 'MACD' | 'ATR';
@@ -515,6 +516,8 @@ export function ChartsView() {
           </div>
         )}
       </div>
+
+      <ChartCompareSection />
 
       <BenchmarkReferencePanel />
     </div>

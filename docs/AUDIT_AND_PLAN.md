@@ -197,3 +197,10 @@ Ghi chú phạm vi: app **chỉ mô phỏng giao dịch** cho mục đích học
 | T93 | Thống kê hiệu suất Giao dịch thử: đường vốn, sụt giảm tối đa, tỉ lệ thắng, kỳ vọng (R trung bình), theo mã/theo setup | Myfxbook/Tradervue |
 | T94 | Tự nhận diện mẫu nến (búa, nhấn chìm, pin bar) và vùng hỗ trợ/kháng cự tự động trên biểu đồ, có giải thích | TradingView scripts; nối với bài Cấp 5 |
 | T95 | Khối lượng & OI theo từng tháng hợp đồng (bảng chuỗi kỳ hạn) + volume profile | CME QuikStrike/Barchart |
+
+### Ghi chú sau Wave 9–10 (2026-11-21)
+- T96: Dựng chuỗi giá D1 theo từng hợp đồng tháng (ZCZ26, ZCH27…) để biểu đồ và giá hiện tại luôn cùng một hợp đồng; hiện chỉ cảnh báo ROLL_MISMATCH (T88).
+- T97: Bật lưu `plan` (checklist) lên Firestore: thêm trường `plan` vào isValidPaperPosition/isValidPaperOrder trong firestore.rules + test emulator (làm cùng T85), rồi đặt PERSIST_PLAN_TO_FIRESTORE = true.
+- T98: Lỗi console "Object is disposed" từ lightweight-charts (autoSize resize sau chart.remove()) khi đổi khung thời gian; không ảnh hưởng hiển thị.
+- T99: Nguồn tự động cho giá trong nước (cà phê, tiêu, cao su) — hiện chỉ nhập tay có nguồn; tìm nguồn có cấu trúc/được phép.
+- T100: Bản đồ thời tiết có đường bờ biển (TopoJSON nhẹ) thay vì lưới kinh vĩ.

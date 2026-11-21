@@ -164,6 +164,21 @@ interface YahooTradingPeriod {
   gmtoffset?: number;
 }
 
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+/**
+ * Parses the contract month Yahoo embeds in meta.shortName of a continuous futures symbol
+ * (e.g. "Corn Futures,Mar-2027" -> { month: '2027-03', label: 'Mar-2027' }). null when absent.
+ */
+export function parseYahooContractMonth(shortName: string | undefined | null): { month: string; label: string } | null {
+  if (typeof shortName !== 'string') return null;
+  const m = /(?:^|[\s,])([A-Za-z]{3})-(\d{4})\s*$/.exec(shortName.trim());
+  if (!m) return null;
+  const idx = MONTHS.indexOf(m[1].toLowerCase());
+  if (idx < 0) return null;
+  return { month: `${m[2]}-${String(idx + 1).padStart(2, '0')}`, label: `${m[1][0].toUpperCase()}${m[1].slice(1).toLowerCase()}-${m[2]}` };
+}
+
 export interface YahooChartMeta {
   currency?: string;
   symbol?: string;
@@ -176,6 +191,7 @@ export interface YahooChartMeta {
   gmtoffset?: number;
   exchangeTimezoneName?: string;
   shortName?: string;
+  longName?: string;
   currentTradingPeriod?: { regular?: YahooTradingPeriod };
 }
 
@@ -496,10 +512,12 @@ export class YahooFinanceAdapter implements MarketDataProvider {
     if (!conv.ok) return null;
     const start = typeof series?.start === 'number' ? series.start : (meta?.currentTradingPeriod?.regular?.start ?? null);
     const end = typeof series?.end === 'number' ? series.end : (meta?.currentTradingPeriod?.regular?.end ?? null);
+    const cm = parseYahooContractMonth(meta?.shortName);
     const quote: MarketQuote = {
       symbol: inst.exchangeSymbol,
       exchange: inst.exchange,
-      contractMonth: null,
+      contractMonth: cm?.month ?? null,
+      contractLabel: cm?.label ?? null,
       price: applyUnitFactor(last.price, conv.factor),
       bid: null,
       ask: null,
@@ -511,7 +529,7 @@ export class YahooFinanceAdapter implements MarketDataProvider {
       timestamp: new Date(last.time * 1000).toISOString(),
       retrievedAt: new Date(this.now()).toISOString(),
       status: 'DELAYED',
-      statusReason: `UNOFFICIAL Yahoo Finance ${mapping.yahooSymbol} (${mapping.fullExchangeName}) last 1m close via batch spark, exchange delay ~${mapping.delayMinutes} min, ${YAHOO_CONTRACT_LABEL}; personal use only. ${conv.note}`,
+      statusReason: `UNOFFICIAL Yahoo Finance ${mapping.yahooSymbol} (${mapping.fullExchangeName}) last 1m close via batch spark, exchange delay ~${mapping.delayMinutes} min, ${YAHOO_CONTRACT_LABEL}${cm ? ` (currently ${cm.label})` : ''}; personal use only. ${conv.note}`,
       delayMinutes: mapping.delayMinutes,
       sourceQuality: 'UNOFFICIAL',
       contract: YAHOO_CONTRACT_LABEL,
@@ -637,10 +655,12 @@ export class YahooFinanceAdapter implements MarketDataProvider {
 
     const timestamp = new Date(rawTime * 1000).toISOString();
     const vol = m.regularMarketVolume;
+    const cm = parseYahooContractMonth(m.shortName);
     const quote: MarketQuote = {
       symbol: inst.exchangeSymbol,
       exchange: inst.exchange,
-      contractMonth: null,
+      contractMonth: cm?.month ?? null,
+      contractLabel: cm?.label ?? null,
       price: applyUnitFactor(rawPrice, unitConv.factor),
       bid: null, // not provided by the chart endpoint; never filled
       ask: null,
@@ -652,7 +672,7 @@ export class YahooFinanceAdapter implements MarketDataProvider {
       timestamp,
       retrievedAt: new Date(this.now()).toISOString(),
       status: 'DELAYED',
-      statusReason: `UNOFFICIAL Yahoo Finance ${mapping.yahooSymbol} (${mapping.fullExchangeName}), exchange delay ~${mapping.delayMinutes} min, ${YAHOO_CONTRACT_LABEL}; personal use only. ${unitConv.note}`,
+      statusReason: `UNOFFICIAL Yahoo Finance ${mapping.yahooSymbol} (${mapping.fullExchangeName}), exchange delay ~${mapping.delayMinutes} min, ${YAHOO_CONTRACT_LABEL}${cm ? ` (currently ${cm.label})` : ''}; personal use only. ${unitConv.note}`,
       delayMinutes: mapping.delayMinutes,
       sourceQuality: 'UNOFFICIAL',
       contract: YAHOO_CONTRACT_LABEL,

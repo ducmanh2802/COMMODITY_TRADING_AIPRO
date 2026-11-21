@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CandlestickSeries,
   ColorType,
@@ -13,6 +13,7 @@ import {
 import type { MarketCandle } from '../../../shared/types/market';
 import { isSessionDateTimeframe } from '../../../api/dataApi';
 import { fmtNum, useT } from '../../../i18n';
+import { ChartAnnotations, type ChartApiPair } from './ChartAnnotations';
 
 /** A drawable line: values index-aligned to `timestamps` (null = gap / warm-up). */
 export interface LineSpec {
@@ -47,6 +48,8 @@ interface CandleChartProps {
   overlays: LineSpec[];
   lowerPane: LowerPaneSpec | null;
   showVolume: boolean;
+  /** Drawing toolbar + auto pattern / S-R aids (default on). */
+  annotations?: boolean;
 }
 
 const UP = '#22C55E';
@@ -80,10 +83,12 @@ interface Legend {
   v: number | null;
 }
 
-export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolume }: CandleChartProps) {
+export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolume, annotations = true }: CandleChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [legend, setLegend] = useState<Legend | null>(null);
+  const [api, setApi] = useState<ChartApiPair | null>(null);
+  const times = useMemo(() => candles.map((c) => toChartTime(c.timestamp, timeframe)), [candles, timeframe]);
   const t = useT();
 
   useEffect(() => {
@@ -138,6 +143,7 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
       wickDownColor: DOWN,
     });
     candleSeries.setData(candleData);
+    setApi({ chart, series: candleSeries });
 
     if (showVolume) {
       const vol = chart.addSeries(HistogramSeries, {
@@ -220,11 +226,12 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
 
     return () => {
       chartRef.current = null;
+      setApi(null);
       chart.remove();
     };
   }, [candles, timeframe, overlays, lowerPane, showVolume]);
 
-  return (
+  const chartBody = (
     <div className="relative">
       {legend && (
         <div className="absolute left-3 top-2 z-10 pointer-events-none font-mono text-[11px] tabular-nums text-[var(--text)]/80 bg-[var(--surface)]/80 rounded px-1.5 py-0.5">
@@ -248,6 +255,13 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
         aria-label={t('chart.candle.aria', { n: candles.length })}
       />
     </div>
+  );
+
+  if (!annotations) return chartBody;
+  return (
+    <ChartAnnotations api={api} candles={candles} times={times} timeframe={timeframe}>
+      {chartBody}
+    </ChartAnnotations>
   );
 }
 

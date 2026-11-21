@@ -7,6 +7,8 @@ import { CURVE_TIMEFRAME, groupContractDatasets, loadCurveSnapshot, type CurveSn
 import { LineChartSvg, type ChartSeries } from './LineChartSvg';
 import { SpreadHistoryPanel } from './SpreadHistoryPanel';
 import { YahooCurvePanel } from './YahooCurvePanel';
+import { FuturesChainPanel } from './FuturesChainPanel';
+import { VolumeProfilePanel } from './VolumeProfilePanel';
 import { fmtDate, fmtFixed, fmtNum, tr, useT, type TFunction } from '../../../i18n';
 
 type Loadable<T> = { state: 'idle' } | { state: 'loading' } | { state: 'ok'; data: T } | { state: 'error'; message: string };
@@ -301,6 +303,8 @@ export default function TermStructureView() {
       </div>
 
       {instrument && <YahooCurvePanel instrumentId={instrument.id} />}
+      {instrument && <FuturesChainPanel instrumentId={instrument.id} />}
+      {instrument && <VolumeProfilePanel instrumentId={instrument.id} />}
 
       {datasets.state === 'error' ? (
         <p className="text-xs font-mono text-[var(--negative)]">{datasets.message}</p>

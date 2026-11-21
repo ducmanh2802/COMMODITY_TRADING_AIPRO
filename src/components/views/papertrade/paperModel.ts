@@ -4,6 +4,7 @@
  * shared by both backends. No Firebase imports (timestamps are injected) so it is unit-testable.
  * Limits MUST stay in sync with the paper* functions in firestore.rules.
  */
+import { normalizePlan, type PaperPlan } from './checklist';
 import { DEFAULT_SETTINGS, balanceAfterOpen, type ClosedTradeCalc, type CloseReason, type PaperSettings, type PositionLike, type Side } from './paperMath';
 
 export const PAPER_LIMITS = {
@@ -37,6 +38,8 @@ export interface PaperPosition extends PositionLike {
   journal: string;
   researchNoteId: string;
   openedAtMs: number;
+  /** Pre-trade checklist result (optional: absent on records saved before this feature). */
+  plan?: PaperPlan;
 }
 
 export interface PaperTrade {
@@ -60,6 +63,8 @@ export interface PaperTrade {
   researchNoteId: string;
   openedAtMs: number;
   closedAtMs: number;
+  /** Copied from the position at close (optional: absent on older trades). */
+  plan?: PaperPlan;
 }
 
 export interface PaperState {
@@ -67,6 +72,12 @@ export interface PaperState {
   positions: PaperPosition[];
   trades: PaperTrade[];
 }
+
+/**
+ * Whether `plan` is written to Firestore. Keep false until firestore.rules allows the optional `plan` field on
+ * paperPositions / paperTrades (rules not changed by this feature). Local (signed-out) storage always keeps it.
+ */
+export const PERSIST_PLAN_TO_FIRESTORE = false;
 
 export const EMPTY_STATE: PaperState = { sessions: [], positions: [], trades: [] };
 
@@ -248,6 +259,7 @@ export function buildPositionCreate<T>(userId: string, p: PaperPosition, f: TsFn
     journal: p.journal.slice(0, PAPER_LIMITS.journalMax),
     researchNoteId: p.researchNoteId.slice(0, PAPER_LIMITS.noteIdMax),
     openedAt: preserveDates ? f.ts(p.openedAtMs) : f.now,
+    ...(PERSIST_PLAN_TO_FIRESTORE && p.plan ? { plan: p.plan } : {}),
   };
 }
 
@@ -273,6 +285,7 @@ export function buildTradeCreate<T>(userId: string, t: PaperTrade, f: TsFns<T>, 
     researchNoteId: t.researchNoteId.slice(0, PAPER_LIMITS.noteIdMax),
     openedAt: f.ts(t.openedAtMs),
     closedAt: preserveDates ? f.ts(t.closedAtMs) : f.now,
+    ...(PERSIST_PLAN_TO_FIRESTORE && t.plan ? { plan: t.plan } : {}),
   };
 }
 
@@ -287,6 +300,12 @@ function tsToMs(v: unknown): number | null {
 const n = (v: unknown, d = 0): number => (typeof v === 'number' && Number.isFinite(v) ? v : d);
 const nn = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 const side = (v: unknown): Side => (v === 'SHORT' ? 'SHORT' : 'LONG');
+
+/** Spreadable optional `plan` (no key at all for old records). */
+function planField(v: unknown): { plan?: PaperPlan } {
+  const plan = normalizePlan(v);
+  return plan ? { plan } : {};
+}
 
 export function parseSessionDoc(id: string, d: Record<string, unknown>): PaperSession {
   const raw = (d.settings && typeof d.settings === 'object' ? d.settings : {}) as Partial<PaperSettings>;
@@ -320,6 +339,7 @@ export function parsePositionDoc(id: string, d: Record<string, unknown>): PaperP
     journal: String(d.journal ?? ''),
     researchNoteId: String(d.researchNoteId ?? ''),
     openedAtMs: tsToMs(d.openedAt) ?? Date.now(),
+    ...planField(d.plan),
   };
 }
 
@@ -348,6 +368,7 @@ export function parseTradeDoc(id: string, d: Record<string, unknown>): PaperTrad
     researchNoteId: String(d.researchNoteId ?? ''),
     openedAtMs: tsToMs(d.openedAt) ?? Date.now(),
     closedAtMs: tsToMs(d.closedAt) ?? Date.now(),
+    ...planField(d.plan),
   };
 }
 
@@ -429,6 +450,7 @@ export function closeOps(session: PaperSession, closes: CloseSpec[], newBalanceV
         researchNoteId: p.researchNoteId,
         openedAtMs: p.openedAtMs,
         closedAtMs: nowMs,
+        ...(p.plan ? { plan: p.plan } : {}),
       },
     });
     ops.push({ t: 'positionDelete', id: p.id });

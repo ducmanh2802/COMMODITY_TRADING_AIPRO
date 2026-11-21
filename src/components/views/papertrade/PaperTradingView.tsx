@@ -42,9 +42,26 @@ import {
 } from './paperModel';
 import { SessionHistory } from './SessionHistory';
 import { SessionReport, type NoteOption } from './SessionReport';
+import { PaperStatsPanel } from './PaperStatsPanel';
+import { ExpiryCalendar, RollReminderChip } from './ExpiryCalendar';
 import { Stat, bigBtn, cardCls, fmtPct, fmtVnd, inputCls, labelCls, pnlColor, signedVnd } from './paperUi';
 import { usePaperStore } from './usePaperStore';
 import { OrderCalculator } from '../learn/OrderCalculator';
+import { fetchJsonWithRetry } from '../../../shared/utils/http';
+import { PlanBadge, PreTradeChecklist } from './PreTradeChecklist';
+import {
+  DEFAULT_RISK_LIMIT_PCT,
+  EMPTY_ANSWERS,
+  buildPlan,
+  computeRisk,
+  eventsState,
+  scoreChecklist,
+  warnCount,
+  type Answer,
+  type Answers,
+  type EventState,
+  type PaperPlan,
+} from './checklist';
 
 interface FxState {
   rate: number | null;
@@ -114,6 +131,9 @@ interface PendingOrder {
   explicitMarginUsd: number | null;
   check: Extract<OrderCheck, { ok: true }>;
   delayed: boolean;
+  plan: PaperPlan;
+  /** Checklist items not met (+1 if risk over limit); 0 = nothing to warn about. */
+  warn: number;
 }
 
 /** T58 "Giao dịch thử": paper trading with virtual money in practice sessions. LEARNING ONLY — no broker. */
@@ -127,7 +147,7 @@ export function PaperTradingView() {
   const vcb = useVcbRate();
   const notes = useNoteOptions(cloud, user?.uid ?? null);
 
-  const [tab, setTab] = useState<'trade' | 'history'>('trade');
+  const [tab, setTab] = useState<'trade' | 'stats' | 'history'>('trade');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [importDismissed, setImportDismissed] = useState(false);
@@ -148,6 +168,10 @@ export function PaperTradingView() {
   const [orderError, setOrderError] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingOrder | null>(null);
   const [calcOpen, setCalcOpen] = useState(false);
+  const [answers, setAnswers] = useState<Answers>(EMPTY_ANSWERS);
+  const [eventsManual, setEventsManual] = useState<Answer>(null);
+  const [limitText, setLimitText] = useState(String(DEFAULT_RISK_LIMIT_PCT));
+  const [upcoming, setUpcoming] = useState<{ date: string }[] | null>(null);
 
   // position editing + settings draft
   const [editPos, setEditPos] = useState<{ id: string; sl: string; tp: string; journal: string; noteId: string } | null>(null);
@@ -213,6 +237,36 @@ export function PaperTradingView() {
   const specRes = inst ? validateSpec(inst.specification) : null;
   const gate = inst ? checkQuoteTradable(quotesBySymbol[inst.exchangeSymbol]) : null;
 
+  // Auto-check "no major report in 24h": needs the drivers calendar; null (manual item) when unavailable.
+  const driverSymbol = inst?.exchangeSymbol ?? null;
+  useEffect(() => {
+    setUpcoming(null);
+    if (!driverSymbol) return;
+    const ctrl = new AbortController();
+    fetchJsonWithRetry<{ events?: { status?: string; upcoming?: { date: string }[] } }>(`/api/drivers/${encodeURIComponent(driverSymbol)}`, { signal: ctrl.signal })
+      .then((d) => {
+        const ev = d?.events;
+        if (!ctrl.signal.aborted && ev && ev.status !== 'UNAVAILABLE' && Array.isArray(ev.upcoming)) setUpcoming(ev.upcoming);
+      })
+      .catch(() => undefined);
+    return () => ctrl.abort();
+  }, [driverSymbol]);
+  const events: EventState = useMemo(() => eventsState(upcoming, Date.now()), [upcoming]);
+  const limitPct = (() => {
+    const v = Number(limitText.replace(',', '.'));
+    return Number.isFinite(v) && v > 0 && v <= 100 ? v : DEFAULT_RISK_LIMIT_PCT;
+  })();
+  const score = useMemo(() => scoreChecklist(answers, events, eventsManual), [answers, events, eventsManual]);
+  const slNow = numOrNull(slText);
+  const tpNow = numOrNull(tpText);
+  const riskNow = useMemo(() => {
+    if (!session || !snap || !specRes || !specRes.ok || !gate || !gate.ok || !fx) return null;
+    const contracts = Number(qty);
+    if (slNow === 'bad' || tpNow === 'bad' || !Number.isInteger(contracts)) return null;
+    const fill = fillPrice(specRes.spec, side, gate.price, session.settings.slippageTicks, true);
+    return computeRisk({ side, fill, stopLoss: slNow, takeProfit: tpNow, contracts, pointValueUsd: specRes.spec.pointValueUsd, feePerContractUsd: session.settings.feePerContractUsd, fx, equityVnd: snap.equityVnd, limitPct });
+  }, [session, snap, specRes, gate, fx, qty, side, slNow, tpNow, limitPct]);
+
   const createSession = async () => {
     const name = validateSessionName(newName);
     if (name) return setFormError(t(`pt.err.${name}` as TKey));
@@ -242,7 +296,10 @@ export function PaperTradingView() {
     const fill = fillPrice(specRes.spec, side, gate.price, session.settings.slippageTicks, true);
     const check = checkOrder(specRes.spec, { side, contracts, fill, stopLoss: sl, takeProfit: tp, explicitMarginUsd: mg }, snap, fx, session.settings);
     if (!check.ok) return setOrderError(t(`pt.order.${check.reason}` as TKey));
-    setPending({ instId: inst.id, side, contracts, quote: gate.price, fill, stopLoss: sl, takeProfit: tp, explicitMarginUsd: mg, check, delayed: gate.delayed });
+    const risk = computeRisk({ side, fill, stopLoss: sl, takeProfit: tp, contracts, pointValueUsd: specRes.spec.pointValueUsd, feePerContractUsd: session.settings.feePerContractUsd, fx, equityVnd: snap.equityVnd, limitPct });
+    const plan = buildPlan(answers, events, eventsManual, risk, limitPct);
+    const warn = warnCount(scoreChecklist(answers, events, eventsManual), risk);
+    setPending({ instId: inst.id, side, contracts, quote: gate.price, fill, stopLoss: sl, takeProfit: tp, explicitMarginUsd: mg, check, delayed: gate.delayed, plan, warn });
   };
 
   const confirmOrder = async () => {
@@ -263,6 +320,7 @@ export function PaperTradingView() {
       journal: '',
       researchNoteId: '',
       openedAtMs: Date.now(),
+      plan: pending.plan,
     };
     const err = await dispatch(openOps(session, position));
     setPending(null);
@@ -271,6 +329,8 @@ export function PaperTradingView() {
       setMessage(t('pt.order.filled'));
       setSlText('');
       setTpText('');
+      setAnswers(EMPTY_ANSWERS);
+      setEventsManual(null);
     }
   };
 
@@ -387,7 +447,7 @@ export function PaperTradingView() {
       {message && <p className="text-xs text-[var(--accent-text)]" role="status">{message}</p>}
 
       <div className="flex gap-2" role="tablist">
-        {(['trade', 'history'] as const).map((k) => (
+        {(['trade', 'stats', 'history'] as const).map((k) => (
           <button
             key={k}
             type="button"
@@ -396,13 +456,15 @@ export function PaperTradingView() {
             onClick={() => setTab(k)}
             className={`px-4 py-2 text-sm rounded-md border ${tab === k ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--border)] text-[var(--text)]/80'}`}
           >
-            {t(k === 'trade' ? 'pt.tab.trade' : 'pt.tab.history')}
+            {t(k === 'trade' ? 'pt.tab.trade' : k === 'stats' ? 'ps.tab' : 'pt.tab.history')}
           </button>
         ))}
       </div>
 
       {!store.ready ? (
         <p className="text-sm text-[var(--text)]/60">{t('pt.loading')}</p>
+      ) : tab === 'stats' ? (
+        <PaperStatsPanel startingCapitalVnd={session?.startingCapitalVnd ?? 0} trades={trades} instrumentName={instrumentName} />
       ) : tab === 'history' ? (
         <SessionHistory
           state={state}
@@ -555,9 +617,23 @@ export function PaperTradingView() {
                   </div>
                 </div>
                 <p className="text-[11px] text-[var(--text)]/60">{t('pt.order.marginAssumed')}</p>
+                <PreTradeChecklist
+                  answers={answers}
+                  onAnswer={(id, v) => setAnswers((a) => ({ ...a, [id]: v }))}
+                  events={events}
+                  eventsManual={eventsManual}
+                  onEventsManual={setEventsManual}
+                  limitText={limitText}
+                  limitPct={limitPct}
+                  onLimitText={setLimitText}
+                  score={score}
+                  risk={riskNow}
+                />
                 <button type="button" onClick={prepareOrder} className={`${bigBtn} w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white`}>{t('pt.order.review')}</button>
                 {orderError && <p className="text-xs text-[var(--negative)]" role="alert">{orderError}</p>}
               </div>
+
+              <ExpiryCalendar instruments={instruments} heldIds={positions.map((x) => x.instrumentId)} />
 
               {/* Open positions */}
               <div className={cardCls}>
@@ -578,7 +654,9 @@ export function PaperTradingView() {
                             <span className={p.side === 'LONG' ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}>{p.side === 'LONG' ? t('pt.side.long') : t('pt.side.short')} × {p.contracts}</span>
                             <span className="font-mono">{t('pt.pos.entry')} {fmtFixed(p.entryPrice, 2)}</span>
                             <span className="font-mono">{t('pt.pos.now')} {pi?.price != null ? fmtFixed(pi.price, 2) : t('pt.pos.noPrice')}</span>
+                            <PlanBadge plan={p.plan} />
                           </div>
+                          <RollReminderChip inst={instById.get(p.instrumentId)} />
                           <div className="flex flex-wrap gap-x-4 gap-y-1">
                             <span className={`font-mono font-semibold ${upl === null ? '' : pnlColor(upl)}`}>
                               {upl === null ? t('pt.pos.noPnl') : `${upl >= 0 ? '+' : ''}${fmtFixed(upl, 2)} USD ≈ ${signedVnd(upl * fxForView)}`}
@@ -677,10 +755,16 @@ export function PaperTradingView() {
             </p>
             <p className="text-[11px] text-[var(--text)]/60">{t('pt.confirm.assumptions', { slip: session.settings.slippageTicks, fee: session.settings.feePerContractUsd })}</p>
             {pending.delayed && <p className="text-[11px] text-[var(--warning)]">{t('pt.order.delayed', { min: 15 })}</p>}
+            {pending.warn > 0 && (
+              <div role="alert" className="border border-[var(--warning)]/50 bg-[var(--warning)]/10 rounded-md p-2 text-xs text-[var(--warning)] space-y-1">
+                <p className="font-semibold">{t('ck.warn.body', { n: pending.warn })}</p>
+                <p>{t('ck.warn.items', { n: scoreChecklist(pending.plan.answers, pending.plan.eventsOk === null ? null : pending.plan.eventsOk ? 'clear' : 'event').notMet, over: pending.plan.riskPct !== null && pending.plan.riskPct > pending.plan.limitPct ? t('ck.warn.overYes') : t('ck.warn.overNo') })}</p>
+              </div>
+            )}
             <p className="text-[11px] text-[var(--warning)]">{t('pt.confirm.virtual')}</p>
             <div className="grid grid-cols-2 gap-3">
-              <button type="button" className={`${bigBtn} border border-[var(--border)]`} onClick={() => setPending(null)}>{t('pt.cancel')}</button>
-              <button type="button" className={`${bigBtn} bg-[var(--positive)] text-[#05210F]`} onClick={() => void confirmOrder()}>{t('pt.confirm.ok')}</button>
+              <button type="button" className={`${bigBtn} border border-[var(--border)]`} onClick={() => setPending(null)}>{pending.warn > 0 ? t('ck.warn.back') : t('pt.cancel')}</button>
+              <button type="button" className={`${bigBtn} bg-[var(--positive)] text-[#05210F]`} onClick={() => void confirmOrder()}>{pending.warn > 0 ? t('ck.warn.go') : t('pt.confirm.ok')}</button>
             </div>
           </div>
         </div>

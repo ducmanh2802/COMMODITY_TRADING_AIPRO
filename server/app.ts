@@ -7,6 +7,7 @@ import { instrumentRepository as defaultInstrumentRepository } from './services/
 import { ProviderRegistry } from './providers/registry.ts';
 import { registerDataRoutes } from './routes/dataRoutes.ts';
 import { registerContractRoutes } from './routes/contracts.ts';
+import { registerFuturesChainRoutes } from './routes/futuresChain.ts';
 import { registerCotRoutes } from './routes/cot.ts';
 import { registerCycleRoutes } from './routes/cycleRoutes.ts';
 import { registerBriefRoutes } from './routes/brief.ts';
@@ -23,6 +24,9 @@ import { registerMxvEstimateRoutes } from './routes/mxvEstimate.ts';
 import { registerMacroRoutes, type MacroServiceLike } from './routes/macro.ts';
 import { registerBenchmarkRoutes, type BenchmarkServiceLike } from './routes/benchmarks.ts';
 import { registerFxRoutes } from './routes/fx.ts';
+import { registerDomesticRoutes } from './routes/domestic.ts';
+import { registerWeatherRoutes } from './routes/weather.ts';
+import { registerNewsRoutes } from './routes/news.ts';
 import type { ICandleRepository } from './storage/candleRepository.ts';
 import { getDefaultCandleRepository } from './storage/sqliteCandleRepository.ts';
 import type { ProviderHealth } from '../src/shared/types/market.ts';
@@ -56,6 +60,7 @@ import {
   buildFundamentalDomainsStatus,
   fundamentalStore,
 } from './services/fundamentalService.ts';
+import { withRollCheck } from './services/rollCheck.ts';
 import { loadEngineCandles, type EngineCandleResult } from './services/engineCandles.ts';
 import { buildFullDataHealthReport } from './services/dataHealthService.ts';
 
@@ -356,6 +361,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   app.post('/api/providers/sync', requireAdmin);
   app.post('/api/providers/yahoo/history', requireAdmin);
   app.post('/api/fundamental/records', requireAdmin);
+  app.post('/api/domestic-prices', requireAdmin);
 
   // The CSV import route accepts larger bodies; registered first so the 256kb parser below skips it
   // (body-parser does not re-parse an already parsed body).
@@ -537,7 +543,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
 
       const instruments = await instrumentRepository.list(parsed.data);
       const quotes = await Promise.all(
-        instruments.map((inst) => providerRegistry.getQuoteForInstrument(inst))
+        instruments.map(async (inst) => withRollCheck(candleRepository, inst, await providerRegistry.getQuoteForInstrument(inst)))
       );
 
       const hasHistorical = quotes.some((q) => q.status === 'HISTORICAL');
@@ -593,7 +599,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
         return;
       }
 
-      const quote = await providerRegistry.getQuoteForInstrument(instrument);
+      const quote = await withRollCheck(candleRepository, instrument, await providerRegistry.getQuoteForInstrument(instrument));
       res.json({ instrument, quote });
     } catch (err) {
       next(err);
@@ -606,6 +612,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     requireAdmin,
   });
   registerContractRoutes(app, { instruments: instrumentRepository });
+  registerFuturesChainRoutes(app, { instruments: instrumentRepository });
   registerCotRoutes(app);
   let lazyCotService: CotService | null | undefined;
   const cotBridge = options.candles
@@ -657,6 +664,24 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   registerMacroRoutes(app, { service: options.macro });
   registerBenchmarkRoutes(app, { service: options.benchmarks });
   registerFxRoutes(app);
+  // Vietnam domestic prices vs international (manual/CSV entry; basis uses VCB USD/VND).
+  let domesticMacro: MacroServiceLike | null = options.macro ?? null;
+  registerDomesticRoutes(app, {
+    candles: candleRepository,
+    macro: { getFx: () => (domesticMacro ??= new MacroService()).getFx() },
+  });
+  const weatherRoutes = registerWeatherRoutes(app);
+  registerNewsRoutes(app, {
+    manual: () =>
+      fundamentalStore.listNews().map((n) => ({
+        id: n.id,
+        headline: n.headline,
+        source: n.source,
+        publicationTimestamp: n.publicationTimestamp,
+        relatedSymbols: n.relatedSymbols,
+        summary: n.summary,
+      })),
+  });
   app.locals.providerRegistry = providerRegistry;
   app.get('/api/scheduler/status', (_req: Request, res: Response) => {
     res.json(options.schedulerStatus ? options.schedulerStatus() : { enabled: false, jobs: [] });
@@ -721,6 +746,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     getWasde: () => (driversMacro ??= new MacroService()).getWasde(),
   });
   (app.locals.warmers as { name: string; refresh: () => Promise<void> }[]).push({ name: 'radar', refresh: () => radarCache.refresh() });
+  (app.locals.warmers as { name: string; refresh: () => Promise<void> }[]).push({ name: 'weather', refresh: weatherRoutes.warm });
   registerScorecardRoutes(app, {
     service: scorecardService,
     rateLimiter: aiRateLimiter,

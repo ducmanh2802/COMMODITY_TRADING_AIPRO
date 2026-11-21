@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { fmtDateTime, fmtFixed, useT, type TKey } from '../../../i18n';
 import { breakdownByInstrument, computeStats, type PnlBreakdown } from './paperMath';
 import { PAPER_LIMITS, type PaperTrade, type TradePatch } from './paperModel';
+import { PlanBadge } from './PreTradeChecklist';
 import { EquityCurve, PnlBars, Stat, cardCls, fmtPct, fmtVnd, inputCls, pnlColor, signedVnd } from './paperUi';
 
 export interface NoteOption {
@@ -120,6 +121,7 @@ export function SessionReport({ startingCapitalVnd, trades, breakdown, notes, in
                     <span className={`font-mono font-semibold ${pnlColor(x.pnlVnd)}`}>{signedVnd(x.pnlVnd)}</span>
                     <span className="font-mono text-[var(--text)]/70">{x.rMultiple === null ? t('pt.trades.noR') : `${x.rMultiple}R`}</span>
                     <span className="text-[var(--text)]/60">{t(`pt.reason.${x.closeReason}` as TKey)}</span>
+                    <PlanBadge plan={x.plan} />
                   </div>
                   <div className="text-[var(--text)]/55">
                     {fmtDateTime(x.openedAtMs)} → {fmtDateTime(x.closedAtMs)} · {t('pt.col.fees')} {fmtVnd(x.feesVnd)} · USD {fmtFixed(x.pnlUsd, 2)} @ {fmtVnd(x.fxRate)}
