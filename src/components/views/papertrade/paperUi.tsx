@@ -1,4 +1,5 @@
 import { fmtInt } from '../../../i18n';
+import { EquityChart } from '../../ui/viz/EquityChart';
 
 export const inputCls = 'w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-sm text-[var(--text-strong)]';
 export const labelCls = 'block text-xs text-[var(--text)]/65 mb-1';
@@ -20,30 +21,16 @@ export function Stat({ label, value, tone, hint }: { label: string; value: strin
   );
 }
 
-/** Equity curve as an inline SVG polyline (VND). Baseline = starting capital. */
+/** Equity curve (VND). Baseline = starting capital. */
 export function EquityCurve({ points, baseline, label }: { points: { t: number; equityVnd: number }[]; baseline: number; label: string }) {
-  const W = 600;
-  const H = 160;
-  const pad = 8;
-  const ys = points.map((p) => p.equityVnd).concat(baseline);
-  const lo = Math.min(...ys);
-  const hi = Math.max(...ys);
-  const span = hi - lo || 1;
-  const x = (i: number) => pad + (points.length <= 1 ? 0 : (i / (points.length - 1)) * (W - 2 * pad));
-  const y = (v: number) => H - pad - ((v - lo) / span) * (H - 2 * pad);
-  const d = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.equityVnd).toFixed(1)}`).join(' ');
-  const last = points[points.length - 1]?.equityVnd ?? baseline;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-40" role="img" aria-label={label}>
-      <line x1={pad} x2={W - pad} y1={y(baseline)} y2={y(baseline)} stroke="#263244" strokeDasharray="4 4" />
-      {points.length > 1 ? (
-        <path d={d} fill="none" stroke={last >= baseline ? 'var(--positive)' : 'var(--negative)'} strokeWidth={2} />
-      ) : (
-        <circle cx={x(0)} cy={y(last)} r={3} fill="#6366F1" />
-      )}
-      <text x={pad} y={12} fontSize={10} fill="#9CA3AF">{fmtInt(hi)}</text>
-      <text x={pad} y={H - 2} fontSize={10} fill="#9CA3AF">{fmtInt(lo)}</text>
-    </svg>
+    <EquityChart
+      points={points.map((p, i) => ({ label: `#${i + 1}`, v: p.equityVnd }))}
+      baseline={baseline}
+      ariaLabel={label}
+      format={fmtInt}
+      className="h-40"
+    />
   );
 }
 
@@ -57,15 +44,15 @@ export function PnlBars({ items, label }: { items: { key: string; label: string;
   const scale = (W * 0.26) / max;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }} role="img" aria-label={label}>
-      <line x1={mid} x2={mid} y1={0} y2={H} stroke="#263244" />
+      <line x1={mid} x2={mid} y1={0} y2={H} stroke="var(--chart-axis)" />
       {items.map((it, i) => {
         const w = Math.abs(it.value) * scale;
         const yy = i * rowH + 4;
         return (
           <g key={it.key}>
-            <text x={4} y={yy + 13} fontSize={11} fill="#E5E7EB">{it.label.length > 28 ? `${it.label.slice(0, 27)}…` : it.label}</text>
-            <rect x={it.value >= 0 ? mid : mid - w} y={yy} width={Math.max(1, w)} height={18} rx={2} fill={it.value >= 0 ? 'var(--positive)' : 'var(--negative)'} />
-            <text x={it.value >= 0 ? mid + w + 4 : mid - w - 4} y={yy + 13} fontSize={10} fill="#9CA3AF" textAnchor={it.value >= 0 ? 'start' : 'end'} >{fmtInt(it.value)}</text>
+            <text x={4} y={yy + 13} fontSize={11} fill="var(--text)">{it.label.length > 28 ? `${it.label.slice(0, 27)}…` : it.label}</text>
+            <rect x={it.value >= 0 ? mid : mid - w} y={yy} width={Math.max(1, w)} height={16} rx={4} fill={it.value >= 0 ? 'var(--positive)' : 'var(--negative)'} />
+            <text x={it.value >= 0 ? mid + w + 4 : mid - w - 4} y={yy + 13} fontSize={10} fill="var(--muted)" textAnchor={it.value >= 0 ? 'start' : 'end'} >{fmtInt(it.value)}</text>
           </g>
         );
       })}

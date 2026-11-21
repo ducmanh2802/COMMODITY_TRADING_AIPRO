@@ -68,8 +68,8 @@ export function WatchlistPanel() {
                         </span>
                       )}
                     </div>
-                    <div className="h-1.5 rounded-full bg-[var(--surface-2)] overflow-hidden" role="presentation">
-                      <div className="h-full rounded-full" style={{ width: `${closenessPct(dist)}%`, background: inZone ? 'var(--warning)' : 'var(--accent)' }} />
+                    <div className="h-1.5 rounded-full bg-[var(--surface-2)]" role="presentation">
+                      <div className="h-full rounded-r-[4px]" style={{ width: `${closenessPct(dist)}%`, background: inZone ? 'var(--series-1)' : 'var(--series-other)' }} />
                     </div>
                   </div>
                 ) : (
@@ -83,7 +83,6 @@ export function WatchlistPanel() {
           })}
         </ul>
       )}
-      <p className="text-xs text-[var(--muted)]">{t('wl.panel.disclaimer')}</p>
     </div>
   );
 }

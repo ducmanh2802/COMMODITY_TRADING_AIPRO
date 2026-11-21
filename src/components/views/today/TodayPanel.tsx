@@ -168,10 +168,10 @@ export function TodayPanel() {
                 <span className="text-[var(--positive)]">{view.up}↑</span> · <span>{view.flat}→</span> · <span className="text-[var(--negative)]">{view.down}↓</span>
               </span>
             </div>
-            <div className="flex h-3 w-full overflow-hidden rounded-full bg-[var(--surface-2)]" role="img" aria-label={t('n2.td.breadth')}>
-              <div className="bg-[var(--positive)]" style={{ width: `${(view.up / view.total) * 100}%` }} />
-              <div className="bg-[var(--faint)]/50" style={{ width: `${(view.flat / view.total) * 100}%` }} />
-              <div className="bg-[var(--negative)]" style={{ width: `${(view.down / view.total) * 100}%` }} />
+            <div className="flex h-2 w-full gap-0.5" role="img" aria-label={`${t('n2.td.breadth')}: ${view.up} ↑ · ${view.flat} → · ${view.down} ↓`}>
+              <div className="rounded-[4px] bg-[var(--positive)] hover:brightness-110" title={`${view.up} ↑`} style={{ width: `${(view.up / view.total) * 100}%` }} />
+              <div className="rounded-[4px] bg-[var(--div-mid)]" title={`${view.flat} →`} style={{ width: `${(view.flat / view.total) * 100}%` }} />
+              <div className="rounded-[4px] bg-[var(--negative)] hover:brightness-110" title={`${view.down} ↓`} style={{ width: `${(view.down / view.total) * 100}%` }} />
             </div>
           </Card>
         )}
@@ -195,13 +195,13 @@ export function TodayPanel() {
                       >
                         <span className="truncate text-sm text-[var(--text)]">{m.name}</span>
                         <span className="relative h-4">
-                          <span className="absolute left-1/2 top-0 bottom-0 w-px bg-[var(--border)]" />
+                          <span className="absolute left-1/2 top-0 bottom-0 w-px bg-[var(--chart-axis)]" />
                           <span
-                            className={`absolute top-0.5 bottom-0.5 rounded ${isUp ? 'bg-[var(--positive)]' : 'bg-[var(--negative)]'}`}
+                            className={`absolute top-1 bottom-1 max-w-[50%] ${isUp ? 'rounded-r-[4px]' : 'rounded-l-[4px]'} ${isUp ? 'bg-[var(--positive)]' : 'bg-[var(--negative)]'}`}
                             style={isUp ? { left: '50%', width: `${w}%` } : { right: '50%', width: `${w}%` }}
                           />
                         </span>
-                        <span className={`text-right text-sm font-semibold tabular-nums ${isUp ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>{pctText(m.pct)}</span>
+                        <span className="text-right text-sm font-semibold tabular-nums text-[var(--text-strong)]">{pctText(m.pct)}</span>
                       </button>
                     </li>
                   );
@@ -269,9 +269,9 @@ export function TodayPanel() {
                     <span>{t('n2.td.clarity')}</span>
                     <span className="font-semibold text-[var(--text)] tabular-nums">{x.clarity}/100</span>
                   </div>
-                  <div className="mt-1 h-2 w-full rounded-full bg-[var(--surface-2)] overflow-hidden">
+                  <div className="mt-1 h-2 w-full rounded-full bg-[var(--surface-2)]">
                     <div
-                      className={`h-full rounded-full ${x.clarity >= 70 ? 'bg-[var(--accent)]' : x.clarity >= 40 ? 'bg-[var(--accent-text)]' : 'bg-[var(--faint)]'}`}
+                      className={`h-full rounded-r-[4px] ${x.clarity >= 70 ? 'bg-[var(--seq-5)]' : x.clarity >= 40 ? 'bg-[var(--seq-3)]' : 'bg-[var(--seq-1)]'}`}
                       style={{ width: `${Math.min(100, Math.max(0, x.clarity))}%` }}
                     />
                   </div>
@@ -333,7 +333,7 @@ export function TodayPanel() {
 
   return (
     <div className="space-y-3">
-      <SectionHeader title={t('n2.td.title')} subtitle={t('n2.td.disclaimer')} />
+      <SectionHeader title={t('n2.td.title')} />
       {body}
     </div>
   );

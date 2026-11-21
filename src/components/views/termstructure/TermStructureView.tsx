@@ -234,7 +234,7 @@ export default function TermStructureView() {
   if (primary.state === 'ok' && primary.data.result?.status === 'OK') {
     chartSeries.push({
       name: t('ts.seriesAsOf', { date: fmtDate(primary.data.asOf) }),
-      color: '#818CF8',
+      color: 'var(--series-1)',
       showDots: true,
       points: primary.data.result.points.map((p) => ({ x: p.daysToExpiry, y: p.price, label: p.contract })),
     });
@@ -242,7 +242,7 @@ export default function TermStructureView() {
   if (compareOn && secondary.state === 'ok' && secondary.data.result?.status === 'OK') {
     chartSeries.push({
       name: t('ts.seriesAsOf', { date: fmtDate(secondary.data.asOf) }),
-      color: '#F59E0B',
+      color: 'var(--series-3)',
       dashed: true,
       showDots: true,
       points: secondary.data.result.points.map((p) => ({ x: p.daysToExpiry, y: p.price, label: p.contract })),

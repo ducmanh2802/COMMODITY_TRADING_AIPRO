@@ -17,8 +17,8 @@ function ScoreBar({ score }: { score: number }) {
   const t = useT();
   return (
     <div className="flex items-center gap-2" role="img" aria-label={`${t('rd.scoreLabel')} ${score} trên 100`}>
-      <div className="h-2 flex-1 rounded-full bg-white/10 overflow-hidden">
-        <div className="h-full rounded-full bg-[var(--warning)]" style={{ width: `${score}%` }} />
+      <div className="h-2 flex-1 rounded-full bg-[var(--surface-3)]">
+        <div className="h-full rounded-r-[4px] bg-[var(--series-1)]" style={{ width: `${score}%` }} />
       </div>
       <span className="text-sm font-semibold tabular-nums text-[var(--text-strong)] w-14 text-right">{score}/100</span>
     </div>
@@ -199,7 +199,6 @@ export function RadarView() {
           ))}
         </ul>
       </section>
-      <p className="text-xs text-[var(--text)]/60 border-t border-white/10 pt-3">{data.disclaimer}</p>
     </div>
   );
 }

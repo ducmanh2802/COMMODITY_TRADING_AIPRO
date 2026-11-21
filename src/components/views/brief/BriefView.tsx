@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, Layers, ListChecks, RefreshCw } from 'lucide-react';
+import { Layers, ListChecks, RefreshCw } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { fmtDate, fmtDateTime, useI18n } from '../../../i18n';
 import type { AnalysisBrief } from '../../../shared/types/brief';
@@ -69,15 +69,6 @@ export function BriefView() {
           )
         }
       />
-
-      <Card tone="warning" className="space-y-1">
-        <div className="flex items-start gap-2">
-          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-          <span>
-            <strong className="font-semibold">{t('brief.disclaimer')}</strong> <span className="text-[var(--warning)]/80">{t('brief.disclaimerDetail')}</span>
-          </span>
-        </div>
-      </Card>
 
       <Card className="space-y-3" padded={false}>
         <div className="p-3 flex flex-wrap items-center justify-between gap-3">

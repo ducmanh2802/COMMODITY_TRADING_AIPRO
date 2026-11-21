@@ -31,6 +31,7 @@ import * as compare from './dict/compare';
 import * as drawing from './dict/drawing';
 import * as weather from './dict/weather';
 import * as news2 from './dict/news2';
+import * as pwa from './dict/pwa';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
@@ -68,4 +69,5 @@ export const en: Record<TKey, string> = {
   ...chain.en,
   ...weather.en,
   ...news2.en,
+  ...pwa.en,
 };

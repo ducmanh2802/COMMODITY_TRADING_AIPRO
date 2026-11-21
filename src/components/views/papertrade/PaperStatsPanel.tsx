@@ -1,45 +1,30 @@
 import { useMemo } from 'react';
-import { fmtFixed, useT } from '../../../i18n';
+import { fmtFixed, fmtInt, useT } from '../../../i18n';
+import { EquityChart } from '../../ui/viz/EquityChart';
 import type { PaperTrade } from './paperModel';
 import { MIN_TRADES_TO_CONCLUDE, computePerformance, planTakeaway, type CurvePoint, type Drawdown, type GroupStats } from './paperStats';
 import { Stat, cardCls, fmtPct, fmtVnd, pnlColor, signedVnd } from './paperUi';
 
 const rText = (v: number | null) => (v === null ? '—' : `${v > 0 ? '+' : v < 0 ? '−' : ''}${fmtFixed(Math.abs(v), 1)}R`);
 
-/** Equity curve (SVG, theme tokens only) with the max-drawdown span shaded. */
+/** Equity curve (theme tokens only) with the max-drawdown span shaded. */
 function StatsCurve({ curve, dd, baseline, label, ddLabel }: { curve: CurvePoint[]; dd: Drawdown; baseline: number; label: string; ddLabel: string }) {
-  const W = 600;
-  const H = 180;
-  const pad = 10;
-  const ys = curve.map((p) => p.equityVnd).concat(baseline);
-  const lo = Math.min(...ys);
-  const hi = Math.max(...ys);
-  const span = hi - lo || 1;
-  const x = (i: number) => pad + (curve.length <= 1 ? 0 : (i / (curve.length - 1)) * (W - 2 * pad));
-  const y = (v: number) => H - pad - ((v - lo) / span) * (H - 2 * pad);
-  const d = curve.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.equityVnd).toFixed(1)}`).join(' ');
   const hasDd = dd.vnd > 0;
-  const x1 = x(dd.peakIndex);
-  const x2 = x(dd.troughIndex);
   return (
     <figure>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-44" role="img" aria-label={label}>
-        <line x1={pad} x2={W - pad} y1={y(baseline)} y2={y(baseline)} stroke="var(--border)" strokeDasharray="4 4" />
-        {hasDd && <rect x={x1} y={pad} width={Math.max(2, x2 - x1)} height={H - 2 * pad} fill="var(--negative)" opacity={0.14} />}
-        {curve.length > 1 && <path d={d} fill="none" stroke="var(--accent)" strokeWidth={2} strokeLinejoin="round" />}
-        {curve.map((p, i) => <circle key={p.i} cx={x(i)} cy={y(p.equityVnd)} r={curve.length > 60 ? 0 : 2.5} fill="var(--accent)" />)}
-        {hasDd && (
-          <>
-            <circle cx={x1} cy={y(curve[dd.peakIndex].equityVnd)} r={4} fill="var(--positive)" />
-            <circle cx={x2} cy={y(curve[dd.troughIndex].equityVnd)} r={4} fill="var(--negative)" />
-          </>
-        )}
-      </svg>
-      <figcaption className="flex flex-wrap items-center gap-x-4 text-[11px] text-[var(--text)]/60">
+      <EquityChart
+        points={curve.map((p, i) => ({ label: `#${i + 1}`, v: p.equityVnd }))}
+        baseline={baseline}
+        ariaLabel={label}
+        format={fmtInt}
+        drawdown={hasDd ? { peakIndex: dd.peakIndex, troughIndex: dd.troughIndex } : null}
+        className="h-44"
+      />
+      <figcaption className="mt-1 flex flex-wrap items-center gap-x-4 text-[11px] text-[var(--muted)]">
         <span>{label}</span>
         {hasDd && (
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded-sm bg-[var(--negative)] opacity-30" aria-hidden="true" />
+            <span className="inline-block h-2.5 w-2.5 rounded-[2px] bg-[var(--negative)] opacity-30" aria-hidden="true" />
             {ddLabel}
           </span>
         )}

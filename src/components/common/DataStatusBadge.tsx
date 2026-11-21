@@ -1,3 +1,4 @@
+import { AlertTriangle, CircleCheck, CircleSlash, Clock, History, XCircle, type LucideIcon } from 'lucide-react';
 import type { DataQualityStatus } from '../../shared/types/market';
 import { useT } from '../../i18n';
 
@@ -14,13 +15,13 @@ interface DataStatusBadgeProps {
 }
 
 /** Technical code (shown only in the tooltip) and colours per status. */
-const STATUS_META: Record<DataQualityStatus, { code: string; text: string; dot: string }> = {
-  CURRENT: { code: 'CURRENT', text: 'text-[var(--positive)]', dot: 'bg-[var(--positive)]' },
-  DELAYED: { code: 'DELAYED', text: 'text-[var(--warning)]', dot: 'bg-[var(--warning)]' },
-  HISTORICAL: { code: 'HISTORICAL', text: 'text-[var(--accent-text)]', dot: 'bg-[var(--accent)]' },
-  STALE: { code: 'STALE', text: 'text-[#FDBA74]', dot: 'bg-[#F97316]' },
-  UNAVAILABLE: { code: 'DATA_UNAVAILABLE', text: 'text-[var(--muted)]', dot: 'bg-[#6B7280]' },
-  INVALID: { code: 'INVALID', text: 'text-[var(--negative)]', dot: 'bg-[var(--negative)]' },
+const STATUS_META: Record<DataQualityStatus, { code: string; text: string; dot: string; Icon: LucideIcon }> = {
+  CURRENT: { code: 'CURRENT', text: 'text-[var(--positive)]', dot: 'bg-[var(--positive)]', Icon: CircleCheck },
+  DELAYED: { code: 'DELAYED', text: 'text-[var(--warning)]', dot: 'bg-[var(--warning)]', Icon: Clock },
+  HISTORICAL: { code: 'HISTORICAL', text: 'text-[var(--accent-text)]', dot: 'bg-[var(--accent)]', Icon: History },
+  STALE: { code: 'STALE', text: 'text-[var(--negative)]', dot: 'bg-[var(--negative)]', Icon: AlertTriangle },
+  UNAVAILABLE: { code: 'DATA_UNAVAILABLE', text: 'text-[var(--muted)]', dot: 'bg-[var(--faint)]', Icon: CircleSlash },
+  INVALID: { code: 'INVALID', text: 'text-[var(--negative)]', dot: 'bg-[var(--negative)]', Icon: XCircle },
 };
 
 /**
@@ -44,7 +45,7 @@ export function DataStatusBadge({ status, compact = false, sourceQuality, delayM
       title={title}
     >
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className={`w-2 h-2 rounded-full shrink-0 ${meta.dot}`} aria-hidden="true" />
+        <meta.Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
         <span>{label}</span>
       </span>
       {showQuality && (

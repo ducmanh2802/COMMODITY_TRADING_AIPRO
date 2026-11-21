@@ -7,12 +7,13 @@ import { AnalysisHub, InstrumentPage, MarketHub, MineHub } from './components/vi
 import { resolveModule } from './components/layout/navMap';
 import { AuthProvider } from './contexts/AuthContext';
 import { TerminalProvider, useTerminal } from './contexts/TerminalContext';
-import { I18nProvider } from './i18n';
+import { I18nProvider, useT } from './i18n';
 import { UiModeProvider } from './contexts/UiModeContext';
 import { OnboardingTour } from './components/common/OnboardingTour';
 
 function TerminalWorkspace() {
   const { activeModule, selectedSymbol } = useTerminal();
+  const t = useT();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mainRef = useRef<HTMLElement | null>(null);
 
@@ -48,6 +49,10 @@ function TerminalWorkspace() {
         <main ref={mainRef} className="flex-1 p-4 sm:p-6 overflow-y-auto">
           {renderActiveView()}
         </main>
+
+        <footer className="px-4 sm:px-6 pb-3 text-[11px] text-[var(--faint)] text-center">
+          {t('app.disclaimer')}
+        </footer>
       </div>
     </div>
   );

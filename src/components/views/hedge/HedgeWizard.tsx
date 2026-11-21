@@ -10,6 +10,7 @@ import { SectionHeader } from '../../ui/SectionHeader';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { RangeBar } from '../../ui/viz/RangeBar';
+import { ChartLegend } from '../../ui/viz/ChartLegend';
 
 const USABLE = new Set(['CURRENT', 'DELAYED', 'HISTORICAL', 'STALE']);
 
@@ -345,11 +346,16 @@ export function HedgeWizard() {
             {scenarios.map((s) => (
               <div key={s.changePct} className="space-y-0.5">
                 <div className="text-xs text-[var(--faint)]">{s.changePct === 0 ? t('hd.s4.flat') : `${s.changePct > 0 ? '+' : ''}${s.changePct}%`}</div>
-                <div className="h-3 rounded bg-[var(--surface-2)]" style={{ width: `${Math.max(2, (Math.abs(s.withoutHedge) / maxBar) * 100)}%` }} />
-                <div className="h-3 rounded bg-[var(--accent)]" style={{ width: `${Math.max(2, (Math.abs(s.withHedge) / maxBar) * 100)}%` }} />
+                <div className="h-3 max-w-full rounded-r-[4px] bg-[var(--series-other)] hover:brightness-110" title={`${t('hd.s4.col.without')}: ${f(s.withoutHedge)}`} style={{ width: `${Math.max(2, (Math.abs(s.withoutHedge) / maxBar) * 100)}%` }} />
+                <div className="h-3 max-w-full rounded-r-[4px] bg-[var(--series-1)] hover:brightness-110" title={`${t('hd.s4.col.with')}: ${f(s.withHedge)}`} style={{ width: `${Math.max(2, (Math.abs(s.withHedge) / maxBar) * 100)}%` }} />
               </div>
             ))}
-            <figcaption className="text-xs text-[var(--faint)]">{t('hd.s4.chart')}</figcaption>
+            <ChartLegend
+              items={[
+                { id: 'without', label: t('hd.s4.col.without'), color: 'var(--series-other)', shape: 'rect' },
+                { id: 'with', label: t('hd.s4.col.with'), color: 'var(--series-1)', shape: 'rect' },
+              ]}
+            />
           </figure>
           {worst && worst.extraCashNeeded > 0 && (
             <Card tone="warning" className="space-y-1">

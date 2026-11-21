@@ -162,7 +162,7 @@ export function DataHealthView() {
     score >= 75 ? 'text-[var(--positive)]' : score >= 45 ? 'text-[var(--warning)]' : 'text-[var(--negative)]';
 
   const scoreBarColor = (score: number) =>
-    score >= 75 ? 'bg-[var(--positive)]' : score >= 45 ? 'bg-[var(--warning)]' : 'bg-[var(--negative)]';
+    score >= 75 ? 'bg-[var(--series-1)]' : score >= 45 ? 'bg-[var(--warning)]' : 'bg-[var(--negative)]';
 
   return (
     <div className="space-y-6">

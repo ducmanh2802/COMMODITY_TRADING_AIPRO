@@ -37,6 +37,7 @@ export const vi = {
   'dm.empty.title': 'Chưa có dữ liệu giá trong nước',
   'dm.empty.desc':
     'Ứng dụng không tự cào giá từ trang tin. Hãy nhập giá thu mua kèm tên nguồn, đường dẫn và ngày bằng biểu mẫu hoặc dán CSV bên dưới.',
+  'dm.empty.cta': 'Nhập giá',
   'dm.entry.title': 'Nhập giá trong nước',
   'dm.entry.note': 'Bắt buộc có tên nguồn, đường dẫn (URL) và ngày. Không nhập số liệu bạn không có nguồn.',
   'dm.entry.commodity': 'Mặt hàng',
@@ -93,6 +94,7 @@ export const en: Record<keyof typeof vi, string> = {
   'dm.empty.title': 'No domestic price data yet',
   'dm.empty.desc':
     'The app does not scrape news sites. Enter purchase prices with source name, URL and date using the form or paste CSV below.',
+  'dm.empty.cta': 'Enter price',
   'dm.entry.title': 'Enter domestic price',
   'dm.entry.note': 'Source name, URL and date are required. Do not enter numbers you cannot source.',
   'dm.entry.commodity': 'Commodity',

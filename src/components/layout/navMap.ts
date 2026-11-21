@@ -41,7 +41,6 @@ export function resolveModule(id: AppModuleId): Resolved | null {
 
 export const SETTINGS_ITEMS: AppModuleId[] = ['settings', 'data-health', 'data-import'];
 export const ADVANCED_ITEMS: AppModuleId[] = [
-  'overview',
   'backtest',
   'term-structure',
   'scanner',

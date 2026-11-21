@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronDown, HelpCircle } from 'lucide-react';
+import { AlertTriangle, ChevronDown, CircleAlert, CircleCheck, CircleSlash, HelpCircle } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { fmtDate, fmtDateTime, fmtFixed, fmtNum, useI18n, type TKey } from '../../../i18n';
 import { atr } from '../../../shared/analytics';
@@ -87,6 +87,14 @@ function StatTile({ label, value, say, tone, children }: { label: string; value:
   );
 }
 
+const TONE_ICON = { green: CircleCheck, yellow: AlertTriangle, red: CircleAlert, grey: CircleSlash } as const;
+
+/** Status marker = icon + colour (never colour alone); the sentence beside it carries the label. */
+function ToneIcon({ tone, color }: { tone: LightTone; color: string }) {
+  const Icon = TONE_ICON[tone];
+  return <Icon aria-hidden="true" className="w-4 h-4 shrink-0" style={{ color }} />;
+}
+
 const TONE_VAR: Record<LightTone, string> = {
   green: 'var(--positive)',
   yellow: 'var(--warning)',
@@ -108,7 +116,7 @@ function ContextCard({ light, t }: { light: ContextLight; t: (k: TKey, p?: Recor
     <li className="relative bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 min-w-0 flex flex-col gap-1.5" data-testid={`ctx-light-${light.id}`} data-tone={light.tone}>
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-2 min-w-0">
-          <span aria-hidden="true" className="w-3 h-3 rounded-full shrink-0" style={{ background: color }} />
+          <ToneIcon tone={light.tone} color={color} />
           <span className="text-xs font-semibold text-[var(--muted)] truncate">{t(`ins.ctx.label.${light.id}` as TKey)}</span>
         </span>
         <button
@@ -564,8 +572,6 @@ export function InstrumentOverview() {
           </ul>
         </MoreSection>
       </section>
-
-      <p className="text-xs text-[var(--faint)] text-center">{t('ins.disclaimer')}</p>
     </div>
   );
 }

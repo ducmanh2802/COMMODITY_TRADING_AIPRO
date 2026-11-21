@@ -3,6 +3,7 @@ import { RefreshCw } from 'lucide-react';
 import { fmtDate, fmtFixed, tr, useI18n, useT } from '../../../i18n';
 import { safeReadJson } from '../../../shared/utils/http';
 import { Card } from '../../ui/Card';
+import { Sparkline } from '../../ui/viz/Sparkline';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
 import { Badge } from '../../ui/Badge';
@@ -32,23 +33,6 @@ export interface FxResponse {
 const signed = (v: number | null, d = 2, suffix = ''): string => (v === null ? '—' : `${v > 0 ? '+' : ''}${fmtFixed(v, d)}${suffix}`);
 const tone = (v: number | null): string => (v === null || v === 0 ? 'text-[var(--muted)]' : v > 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]');
 
-function Spark({ points }: { points: { date: string; value: number }[] }) {
-  if (points.length < 2) return null;
-  const W = 120;
-  const H = 32;
-  const vals = points.map((p) => p.value);
-  const min = Math.min(...vals);
-  const span = Math.max(...vals) - min || 1;
-  const d = points
-    .map((p, i) => `${i === 0 ? 'M' : 'L'}${((i / (points.length - 1)) * W).toFixed(1)},${(H - 2 - ((p.value - min) / span) * (H - 4)).toFixed(1)}`)
-    .join(' ');
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-8 text-[var(--accent)]" aria-hidden="true">
-      <path d={d} fill="none" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
 function FxCard({ rate, lang }: { rate: FxRate; lang: 'vi' | 'en' }) {
   const t = useT();
   const label = rate.label[lang];
@@ -65,7 +49,7 @@ function FxCard({ rate, lang }: { rate: FxRate; lang: 'vi' | 'en' }) {
       <p className="text-2xl font-semibold tabular-nums text-[var(--text-strong)]">
         {rate.value === null ? <span className="text-sm text-[var(--faint)]">{t('pulse.unavailable')}</span> : `${fmtFixed(rate.value, 4)} ${unit}`}
       </p>
-      <Spark points={rate.spark} />
+      <Sparkline points={rate.spark.map((q) => ({ label: fmtDate(q.date), value: q.value }))} format={(v) => fmtFixed(v, 4)} />
       <div className="flex gap-4 text-xs tabular-nums">
         <span>
           <span className="text-[var(--faint)]">{t('fx.change1w')} </span>

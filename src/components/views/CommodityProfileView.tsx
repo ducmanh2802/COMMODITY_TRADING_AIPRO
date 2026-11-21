@@ -9,7 +9,8 @@ import {
   ShieldAlert,
   TrendingUp,
 } from 'lucide-react';
-import { ColorType, createChart, CandlestickSeries } from 'lightweight-charts';
+import { createChart, CandlestickSeries } from 'lightweight-charts';
+import { lwBase } from '../../shared/theme/chartTheme';
 import { useTerminal } from '../../contexts/TerminalContext';
 import { getCommodityVisual } from '../../shared/data/commodityVisuals';
 import type {
@@ -99,18 +100,10 @@ export function CommodityProfileView() {
     const pal = chartPalette();
 
     const chart = createChart(container, {
-      layout: {
-        background: { type: ColorType.Solid, color: pal.surface },
-        textColor: withAlpha(pal.text, 0.7),
-      },
-      grid: {
-        vertLines: { color: withAlpha(pal.border, 0.5) },
-        horzLines: { color: withAlpha(pal.border, 0.5) },
-      },
+      ...lwBase(),
+      autoSize: false,
       width: container.clientWidth,
       height: 300,
-      rightPriceScale: { borderColor: pal.border },
-      timeScale: { borderColor: pal.border },
     });
 
     const series = chart.addSeries(CandlestickSeries, {

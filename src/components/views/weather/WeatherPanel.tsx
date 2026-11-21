@@ -5,6 +5,7 @@ import type { TFunction } from '../../../i18n';
 import type { TKey } from '../../../i18n/vi';
 import type { WeatherRegionResult, WeatherRegionsResponse } from '../../../shared/types/weather';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
+import { AlertOctagon, AlertTriangle, CircleCheck } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
@@ -47,10 +48,10 @@ function RegionMap({ regions, onPick, t }: { regions: WeatherRegionResult[]; onP
   return (
     <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t('wx.mapLabel')} className="w-full h-auto rounded-md bg-[var(--surface-2)] border border-[var(--border)]">
       {[-60, -30, 0, 30, 60].map((lat) => (
-        <line key={`la${lat}`} x1={0} x2={W} y1={y(lat)} y2={y(lat)} stroke="var(--border)" strokeWidth={lat === 0 ? 0.8 : 0.4} strokeDasharray={lat === 0 ? undefined : '2 3'} />
+        <line key={`la${lat}`} x1={0} x2={W} y1={y(lat)} y2={y(lat)} stroke={lat === 0 ? 'var(--chart-axis)' : 'var(--chart-grid)'} strokeWidth={1} />
       ))}
       {[-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150].map((lon) => (
-        <line key={`lo${lon}`} x1={x(lon)} x2={x(lon)} y1={0} y2={H} stroke="var(--border)" strokeWidth={0.4} strokeDasharray="2 3" />
+        <line key={`lo${lon}`} x1={x(lon)} x2={x(lon)} y1={0} y2={H} stroke="var(--chart-grid)" strokeWidth={1} />
       ))}
       {regions.map((r) => {
         const c = centroid(r);
@@ -59,7 +60,7 @@ function RegionMap({ regions, onPick, t }: { regions: WeatherRegionResult[]; onP
           <g key={r.regionId} className="cursor-pointer" onClick={() => onPick(r.regionId)}>
             <title>{r.nameVi}</title>
             <circle cx={x(c.lon)} cy={y(c.lat)} r={9} fill={color} opacity={0.18} />
-            <circle cx={x(c.lon)} cy={y(c.lat)} r={4.5} fill={color} stroke="var(--surface)" strokeWidth={1} />
+            <SevShape sev={severity(r)} cx={x(c.lon)} cy={y(c.lat)} color={color} />
           </g>
         );
       })}
@@ -67,12 +68,25 @@ function RegionMap({ regions, onPick, t }: { regions: WeatherRegionResult[]; onP
   );
 }
 
+/** Severity marker: shape + colour (never colour alone): circle = normal, triangle = watch, diamond = alert. */
+function SevShape({ sev, cx, cy, color }: { sev: Severity; cx: number; cy: number; color: string }) {
+  const common = { fill: color, stroke: 'var(--surface)', strokeWidth: 2 } as const;
+  if (sev === 'watch') return <polygon points={`${cx},${cy - 6} ${cx + 5.5},${cy + 4} ${cx - 5.5},${cy + 4}`} {...common} />;
+  if (sev === 'alert') return <polygon points={`${cx},${cy - 6.5} ${cx + 6.5},${cy} ${cx},${cy + 6.5} ${cx - 6.5},${cy}`} {...common} />;
+  return <circle cx={cx} cy={cy} r={4.5} {...common} />;
+}
+
+function SevIcon({ sev, className = '' }: { sev: Severity; className?: string }) {
+  const Icon = sev === 'alert' ? AlertOctagon : sev === 'watch' ? AlertTriangle : CircleCheck;
+  return <Icon aria-hidden="true" className={className} style={{ color: SEV_COLOR[sev] }} />;
+}
+
 function Legend({ t }: { t: TFunction }) {
   return (
     <div className="flex flex-wrap gap-3 text-xs text-[var(--muted)]">
       {(['normal', 'watch', 'alert'] as const).map((s) => (
         <span key={s} className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: SEV_COLOR[s] }} />
+          <SevIcon sev={s} className="h-3.5 w-3.5" />
           {t(`wx.legend.${s}` as TKey)}
         </span>
       ))}
@@ -91,7 +105,10 @@ function RegionCard({ r, t }: { r: WeatherRegionResult; t: TFunction }) {
     <Card id={`wx-${r.regionId}`} tone={sev === 'normal' ? 'default' : 'warning'} className="space-y-3">
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-sm font-semibold text-[var(--text-strong)]">{r.nameVi}</h3>
-        <span className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: SEV_COLOR[sev] }} />
+        <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-[11px] text-[var(--muted)]">
+          <SevIcon sev={sev} className="h-4 w-4" />
+          {t(`wx.legend.${sev}` as TKey)}
+        </span>
       </div>
 
       {r.flags.length > 0 && (
@@ -118,13 +135,13 @@ function RegionCard({ r, t }: { r: WeatherRegionResult; t: TFunction }) {
           </span>
         </div>
         {([
-          ['wx.rainForecast', n.precipMm, 'var(--accent)'],
-          ['wx.rainNormal', n.precipNormalMm, 'var(--muted)'],
+          ['wx.rainForecast', n.precipMm, 'var(--series-1)'],
+          ['wx.rainNormal', n.precipNormalMm, 'var(--series-other)'],
         ] as const).map(([label, v, color]) => (
           <div key={label} className="flex items-center gap-2 text-xs">
             <span className="w-16 shrink-0 text-[var(--muted)]">{t(label)}</span>
-            <div className="h-2 flex-1 rounded-full bg-[var(--surface-2)]">
-              <div className="h-2 rounded-full" style={{ width: `${(v / maxRain) * 100}%`, background: color }} />
+            <div className="h-2 flex-1 bg-[var(--surface-2)]">
+              <div className="h-2 rounded-r-[4px]" style={{ width: `${(v / maxRain) * 100}%`, background: color }} />
             </div>
             <span className="w-16 shrink-0 text-right tabular-nums text-[var(--text-strong)]">{t('wx.mm', { n: Math.round(v) })}</span>
           </div>
@@ -140,9 +157,9 @@ function RegionCard({ r, t }: { r: WeatherRegionResult; t: TFunction }) {
 
       <div>
         <div className="mb-1 text-xs text-[var(--muted)]">{t('wx.daily')}</div>
-        <div className="flex h-10 items-end gap-0.5" aria-hidden="true">
+        <div className="flex h-10 items-end gap-0.5" role="img" aria-label={t('wx.daily')}>
           {r.daily.map((d) => (
-            <div key={d.date} className="flex-1 rounded-t-sm bg-[var(--accent)]/70" title={`${d.date}: ${d.precipMm} mm, ${d.tmin}–${d.tmax}°C`} style={{ height: `${Math.max(4, (d.precipMm / maxDay) * 100)}%` }} />
+            <div key={d.date} className="max-w-[24px] flex-1 rounded-t-[4px] bg-[var(--series-1)] hover:brightness-125" title={`${d.date}: ${d.precipMm} mm, ${d.tmin}–${d.tmax}°C`} style={{ height: `${Math.max(4, (d.precipMm / maxDay) * 100)}%` }} />
           ))}
         </div>
       </div>
@@ -199,7 +216,6 @@ export function WeatherPanel() {
     <section className="space-y-4">
       <SectionHeader
         title={t('wx.title')}
-        subtitle={t('wx.disclaimer')}
         actions={data && <span className="text-xs text-[var(--muted)]">{t('wx.updated', { time: fmtDateTime(data.retrievedAt) })}</span>}
       />
       {state === 'loading' && !data && (

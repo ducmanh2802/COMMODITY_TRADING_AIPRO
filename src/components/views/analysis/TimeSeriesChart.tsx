@@ -6,7 +6,11 @@
  * - The chart is recreated when the series list changes; it is resized with a ResizeObserver.
  */
 import { useEffect, useRef } from 'react';
-import { ColorType, LineSeries, createChart, type IChartApi, type UTCTimestamp } from 'lightweight-charts';
+import { LineSeries, createChart, type IChartApi, type UTCTimestamp } from 'lightweight-charts';
+import { useThemeKey } from '../../../shared/theme/chartColors';
+import { LINE_WIDTH, lwBase, resolveColor } from '../../../shared/theme/chartTheme';
+import { ChartLegend } from '../../ui/viz/ChartLegend';
+import { ChartTable } from '../../ui/viz/ChartTable';
 
 export interface ChartLine {
   name: string;
@@ -24,7 +28,12 @@ interface Props {
   ariaLabel: string;
 }
 
-export const CHART_COLORS = ['#7FB2E5', '#E8A27C', '#B59CE0', '#D9BE6C', '#8FC9C3', '#E3A9C8', '#E8A27C', '#94A3B8'];
+/** Categorical slots as theme tokens (fixed order, never cycled). Resolved to concrete colours when the chart is built. */
+export const CHART_COLORS = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)', 'var(--series-5)', 'var(--series-6)'];
+
+function cssVarAxis(): string {
+  return resolveColor('var(--chart-crosshair)');
+}
 
 function toTime(t: string): UTCTimestamp {
   return Math.floor(Date.parse(t) / 1000) as UTCTimestamp;
@@ -32,23 +41,22 @@ function toTime(t: string): UTCTimestamp {
 
 export function TimeSeriesChart({ lines, height = 260, valueFormatter, referenceLines, ariaLabel }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const themeKey = useThemeKey();
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const chart: IChartApi = createChart(el, {
+      ...lwBase(),
+      autoSize: false,
       height,
       width: el.clientWidth,
-      layout: { background: { type: ColorType.Solid, color: '#111622' }, textColor: '#E5E7EBB3', fontSize: 11 },
-      grid: { vertLines: { color: '#26324466' }, horzLines: { color: '#26324466' } },
-      rightPriceScale: { borderColor: '#263244' },
-      timeScale: { borderColor: '#263244', timeVisible: false },
       localization: valueFormatter ? { priceFormatter: valueFormatter } : undefined,
     });
     lines.forEach((line, idx) => {
       const s = chart.addSeries(LineSeries, {
-        color: line.color,
-        lineWidth: 2,
+        color: resolveColor(line.color),
+        lineWidth: LINE_WIDTH,
         title: line.name,
         priceLineVisible: false,
         lastValueVisible: true,
@@ -58,7 +66,7 @@ export function TimeSeriesChart({ lines, height = 260, valueFormatter, reference
       s.setData(data);
       if (idx === 0 && referenceLines) {
         for (const r of referenceLines) {
-          s.createPriceLine({ price: r, color: '#E5E7EB55', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
+          s.createPriceLine({ price: r, color: cssVarAxis(), lineWidth: 1, lineStyle: 0, axisLabelVisible: false, title: '' });
         }
       }
     });
@@ -69,19 +77,22 @@ export function TimeSeriesChart({ lines, height = 260, valueFormatter, reference
       ro.disconnect();
       chart.remove();
     };
-  }, [lines, height, valueFormatter, referenceLines]);
+  }, [lines, height, valueFormatter, referenceLines, themeKey]);
 
   return (
     <div>
       <div ref={containerRef} role="img" aria-label={ariaLabel} className="w-full" style={{ height }} />
-      <div className="flex flex-wrap gap-3 mt-2 text-[11px] text-[var(--text)]/70">
-        {lines.map((l) => (
-          <span key={l.name} className="inline-flex items-center gap-1.5">
-            <span className="w-3 h-0.5 inline-block" style={{ backgroundColor: l.color }} aria-hidden="true" />
-            {l.name}
-          </span>
-        ))}
-      </div>
+      <ChartLegend className="mt-2" items={lines.map((l) => ({ id: l.name, label: l.name, color: l.color }))} />
+      <ChartTable
+        columns={['', ...lines.map((l) => l.name)]}
+        rows={(lines[0]?.points ?? []).map((p, i) => [
+          p.t.slice(0, 10),
+          ...lines.map((l) => {
+            const v = l.points[i]?.v;
+            return v === null || v === undefined ? '—' : valueFormatter ? valueFormatter(v) : String(Math.round(v * 1e4) / 1e4);
+          }),
+        ])}
+      />
     </div>
   );
 }

@@ -1,5 +1,9 @@
 /** Minimal dependency-free SVG line chart (multi-series, numeric x). */
+import { useState } from 'react';
 import { fmtFixed } from '../../../i18n';
+import { ChartLegend } from '../../ui/viz/ChartLegend';
+import { ChartTable } from '../../ui/viz/ChartTable';
+import { ChartTooltip, useChartTooltip } from '../../ui/viz/ChartTooltip';
 
 export interface ChartPoint {
   x: number;
@@ -46,6 +50,8 @@ export function LineChartSvg({
   height = 280,
   ariaLabel,
 }: LineChartSvgProps) {
+  const { wrapRef, tip, show, hide } = useChartTooltip();
+  const [hoverX, setHoverX] = useState<number | null>(null);
   const all = series.flatMap((s) => s.points);
   if (all.length === 0) return null;
   const H = height;
@@ -64,36 +70,51 @@ export function LineChartSvg({
   const sx = (x: number) => PAD.l + ((x - xMin) / (xMax - xMin)) * (W - PAD.l - PAD.r);
   const sy = (y: number) => PAD.t + (1 - (y - yMin) / (yMax - yMin)) * (H - PAD.t - PAD.b);
 
+  const xs = [...new Set(all.map((p) => p.x))].sort((a, b) => a - b);
+  const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const vx = ((e.clientX - r.left) / r.width) * W;
+    let best = xs[0];
+    for (const x of xs) if (Math.abs(sx(x) - vx) < Math.abs(sx(best) - vx)) best = x;
+    setHoverX(best);
+    const rows = series.flatMap((s) => {
+      const p = s.points.find((q) => q.x === best);
+      return p ? [{ label: s.name, value: formatY(p.y), color: s.color }] : [];
+    });
+    const lbl = series.flatMap((s) => s.points.filter((q) => q.x === best && q.label).map((q) => q.label as string))[0];
+    show(e, `${lbl ? `${lbl} · ` : ''}${formatX(best)}`, rows);
+  };
   return (
     <div className="w-full overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[520px] h-auto" role="img" aria-label={ariaLabel}>
+      <div ref={wrapRef} className="relative min-w-[520px]">
+      <svg onPointerMove={onMove} onPointerLeave={() => { setHoverX(null); hide(); }} viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={ariaLabel}>
         {ticks(yMin, yMax, 5).map((t) => (
           <g key={`y${t}`}>
-            <line x1={PAD.l} x2={W - PAD.r} y1={sy(t)} y2={sy(t)} stroke="#263244" strokeWidth={1} />
-            <text x={PAD.l - 6} y={sy(t) + 3} textAnchor="end" fontSize={10} fill="#9CA3AF" fontFamily="monospace">
+            <line x1={PAD.l} x2={W - PAD.r} y1={sy(t)} y2={sy(t)} stroke="var(--chart-grid)" strokeWidth={1} />
+            <text x={PAD.l - 6} y={sy(t) + 3} textAnchor="end" fontSize={10} fill="var(--muted)" fontFamily="monospace">
               {formatY(t)}
             </text>
           </g>
         ))}
         {ticks(xMin, xMax, 6).map((t) => (
-          <text key={`x${t}`} x={sx(t)} y={H - PAD.b + 14} textAnchor="middle" fontSize={10} fill="#9CA3AF" fontFamily="monospace">
+          <text key={`x${t}`} x={sx(t)} y={H - PAD.b + 14} textAnchor="middle" fontSize={10} fill="var(--muted)" fontFamily="monospace">
             {formatX(t)}
           </text>
         ))}
         {refLines.map((r) => (
           <g key={`r${r.y}`}>
-            <line x1={PAD.l} x2={W - PAD.r} y1={sy(r.y)} y2={sy(r.y)} stroke="#6B7280" strokeDasharray="3 3" strokeWidth={1} />
+            <line x1={PAD.l} x2={W - PAD.r} y1={sy(r.y)} y2={sy(r.y)} stroke="var(--chart-axis)" strokeWidth={1} />
             {r.label && (
-              <text x={W - PAD.r - 2} y={sy(r.y) - 3} textAnchor="end" fontSize={9} fill="#6B7280" fontFamily="monospace">
+              <text x={W - PAD.r - 2} y={sy(r.y) - 3} textAnchor="end" fontSize={9} fill="var(--muted)" fontFamily="monospace">
                 {r.label}
               </text>
             )}
           </g>
         ))}
-        <text x={(PAD.l + W - PAD.r) / 2} y={H - 6} textAnchor="middle" fontSize={10} fill="#9CA3AF">
+        <text x={(PAD.l + W - PAD.r) / 2} y={H - 6} textAnchor="middle" fontSize={10} fill="var(--muted)">
           {xLabel}
         </text>
-        <text x={12} y={(PAD.t + H - PAD.b) / 2} textAnchor="middle" fontSize={10} fill="#9CA3AF" transform={`rotate(-90 12 ${(PAD.t + H - PAD.b) / 2})`}>
+        <text x={12} y={(PAD.t + H - PAD.b) / 2} textAnchor="middle" fontSize={10} fill="var(--muted)" transform={`rotate(-90 12 ${(PAD.t + H - PAD.b) / 2})`}>
           {yLabel}
         </text>
         {series.map((s) => {
@@ -102,33 +123,24 @@ export function LineChartSvg({
           return (
             <g key={s.name}>
               <path d={d} fill="none" stroke={s.color} strokeWidth={2} strokeDasharray={s.dashed ? '6 4' : undefined} />
-              {s.showDots &&
-                pts.map((p) => (
-                  <g key={`${s.name}-${p.x}`}>
-                    <circle cx={sx(p.x)} cy={sy(p.y)} r={3.5} fill={s.color}>
-                      <title>{`${p.label ?? ''} ${formatX(p.x)}: ${formatY(p.y)}`}</title>
-                    </circle>
-                    {p.label && (
-                      <text x={sx(p.x)} y={sy(p.y) - 8} textAnchor="middle" fontSize={9} fill={s.color} fontFamily="monospace">
-                        {p.label}
-                      </text>
-                    )}
-                  </g>
-                ))}
+              {hoverX !== null &&
+                pts
+                  .filter((p) => p.x === hoverX)
+                  .map((p) => <circle key={`${s.name}-${p.x}`} cx={sx(p.x)} cy={sy(p.y)} r={4} fill={s.color} stroke="var(--surface)" strokeWidth={2} />)}
             </g>
           );
         })}
+      {hoverX !== null && <line x1={sx(hoverX)} x2={sx(hoverX)} y1={PAD.t} y2={H - PAD.b} stroke="var(--chart-crosshair)" strokeWidth={1} />}
       </svg>
+      <ChartTooltip tip={tip} />
+      </div>
       {series.length > 1 && (
-        <div className="flex flex-wrap gap-4 mt-1 text-[11px] font-mono text-[var(--text)]/70">
-          {series.map((s) => (
-            <span key={s.name} className="inline-flex items-center gap-1.5">
-              <span className="inline-block w-4 h-0.5" style={{ backgroundColor: s.color }} aria-hidden="true" />
-              {s.name}
-            </span>
-          ))}
-        </div>
+        <ChartLegend className="mt-1" items={series.map((x) => ({ id: x.name, label: x.name, color: x.color, dashed: x.dashed }))} />
       )}
+      <ChartTable
+        columns={[xLabel, ...series.map((x) => x.name)]}
+        rows={xs.map((xv) => [formatX(xv), ...series.map((x) => { const p = x.points.find((q) => q.x === xv); return p ? formatY(p.y) : '—'; })])}
+      />
     </div>
   );
 }

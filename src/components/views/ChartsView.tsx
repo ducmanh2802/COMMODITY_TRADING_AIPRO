@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { chartPalette, useThemeKey, withAlpha } from '../../shared/theme/chartColors';
+import { LINE_WIDTH, lwBase, seriesColor, seriesVar } from '../../shared/theme/chartTheme';
 import {
   CandlestickSeries,
-  ColorType,
   createChart,
   HistogramSeries,
   LineSeries,
@@ -84,24 +84,10 @@ export function ChartsView() {
 
     const pal = chartPalette();
     const chart = createChart(container, {
-      layout: {
-        background: { type: ColorType.Solid, color: pal.surface },
-        textColor: pal.text,
-      },
-      grid: {
-        vertLines: { color: withAlpha(pal.border, 0.5) },
-        horzLines: { color: withAlpha(pal.border, 0.5) },
-      },
+      ...lwBase({ timeVisible: true }),
+      autoSize: false,
       width: container.clientWidth,
       height: 440,
-      timeScale: {
-        borderColor: pal.border,
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      rightPriceScale: {
-        borderColor: pal.border,
-      },
     });
 
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
@@ -161,7 +147,7 @@ export function ChartsView() {
       if (lineData.length > 0) {
         const series = chart.addSeries(LineSeries, {
           color,
-          lineWidth: 2,
+          lineWidth: LINE_WIDTH,
           priceLineVisible: false,
           lastValueVisible: false,
         });
@@ -169,9 +155,9 @@ export function ChartsView() {
       }
     };
 
-    addEmaLine(candleData.overlays.ema20, pal.accentText, showEma20);
-    addEmaLine(candleData.overlays.ema50, pal.warning, showEma50);
-    addEmaLine(candleData.overlays.ema200, pal.text, showEma200);
+    addEmaLine(candleData.overlays.ema20, seriesColor(2), showEma20);
+    addEmaLine(candleData.overlays.ema50, seriesColor(3), showEma50);
+    addEmaLine(candleData.overlays.ema200, seriesColor(4), showEma200);
 
     chart.timeScale().fitContent();
 
@@ -222,8 +208,9 @@ export function ChartsView() {
                 type="checkbox"
                 checked={showEma20}
                 onChange={(e) => setShowEma20(e.target.checked)}
-                className="accent-[var(--accent)]"
+                className="accent-[var(--series-3)]"
               />
+              <span aria-hidden="true" className="inline-block h-0.5 w-3 rounded-full" style={{ background: seriesVar(2) }} />
               <span>EMA 20</span>
             </label>
             <label className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--text)]/80 cursor-pointer">
@@ -231,8 +218,9 @@ export function ChartsView() {
                 type="checkbox"
                 checked={showEma50}
                 onChange={(e) => setShowEma50(e.target.checked)}
-                className="accent-[var(--warning)]"
+                className="accent-[var(--series-4)]"
               />
+              <span aria-hidden="true" className="inline-block h-0.5 w-3 rounded-full" style={{ background: seriesVar(3) }} />
               <span>EMA 50</span>
             </label>
             <label className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--text)]/80 cursor-pointer">
@@ -240,8 +228,9 @@ export function ChartsView() {
                 type="checkbox"
                 checked={showEma200}
                 onChange={(e) => setShowEma200(e.target.checked)}
-                className="accent-[var(--text)]"
+                className="accent-[var(--series-5)]"
               />
+              <span aria-hidden="true" className="inline-block h-0.5 w-3 rounded-full" style={{ background: seriesVar(4) }} />
               <span>EMA 200</span>
             </label>
             <button

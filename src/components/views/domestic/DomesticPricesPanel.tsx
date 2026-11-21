@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { fmtDate, fmtFixed, fmtInt, useI18n } from '../../../i18n';
 import type { TKey } from '../../../i18n/vi';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
@@ -9,6 +9,7 @@ import { Card } from '../../ui/Card';
 import { EmptyState } from '../../ui/EmptyState';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
+import { ChartTooltip, useChartTooltip } from '../../ui/viz/ChartTooltip';
 import { getAdminToken, describeAuthError } from '../../../api/dataApi';
 
 interface OverviewItem {
@@ -32,6 +33,9 @@ function statusFor(date: string): DataQualityStatus {
 }
 
 function DualLine({ history, label }: { history: OverviewItem['history']; label: string }) {
+  const { t } = useI18n();
+  const { wrapRef, tip, show, hide } = useChartTooltip();
+  const [hover, setHover] = useState<number | null>(null);
   const W = 320;
   const H = 110;
   const pad = 10;
@@ -51,11 +55,38 @@ function DualLine({ history, label }: { history: OverviewItem['history']; label:
     });
     return d;
   };
+  const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const i = Math.round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * (history.length - 1));
+    setHover(i);
+    const h = history[i];
+    const rows = [
+      { label: t('dm.legend.domestic'), value: h.domesticVndPerKg === null ? '—' : fmtInt(h.domesticVndPerKg), color: 'var(--series-1)' },
+      { label: t('dm.legend.intl'), value: h.intlVndPerKg === null ? '—' : fmtInt(h.intlVndPerKg), color: 'var(--series-3)' },
+    ];
+    show(e, fmtDate(h.date), rows);
+  };
+  const hv = hover !== null ? history[hover] : null;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }} preserveAspectRatio="none" role="img" aria-label={label}>
-      <path d={path('intlVndPerKg')} fill="none" stroke="var(--muted)" strokeWidth="2" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
-      <path d={path('domesticVndPerKg')} fill="none" stroke="var(--accent)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
-    </svg>
+    <div ref={wrapRef} className="relative" style={{ height: H }} onPointerMove={onMove} onPointerLeave={() => { setHover(null); hide(); }}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }} preserveAspectRatio="none" role="img" aria-label={label}>
+        <path d={path('intlVndPerKg')} fill="none" stroke="var(--series-3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        <path d={path('domesticVndPerKg')} fill="none" stroke="var(--series-1)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={0} y2={H} stroke="var(--chart-crosshair)" strokeWidth="1" vectorEffect="non-scaling-stroke" />}
+      </svg>
+      {hv &&
+        ([['domesticVndPerKg', 'var(--series-1)'], ['intlVndPerKg', 'var(--series-3)']] as const).map(([k, c]) =>
+          hv[k] === null ? null : (
+            <span
+              key={k}
+              aria-hidden="true"
+              className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--surface)] box-content"
+              style={{ left: `${(x(hover as number) / W) * 100}%`, top: `${(y(hv[k] as number) / H) * 100}%`, background: c }}
+            />
+          ),
+        )}
+      <ChartTooltip tip={tip} />
+    </div>
   );
 }
 
@@ -115,11 +146,11 @@ function CommodityCard({ item, fxRate }: { item: OverviewItem; fxRate: number | 
           <DualLine history={item.history} label={t('dm.chartLabel', { name })} />
           <div className="flex gap-3 text-xs text-[var(--muted)]">
             <span className="inline-flex items-center gap-1">
-              <span className="inline-block h-0.5 w-4 bg-[var(--accent)]" />
+              <span className="inline-block h-0.5 w-4 rounded-full bg-[var(--series-1)]" />
               {t('dm.legend.domestic')}
             </span>
             <span className="inline-flex items-center gap-1">
-              <span className="inline-block h-0.5 w-4 border-t-2 border-dashed border-[var(--muted)]" />
+              <span className="inline-block h-0.5 w-4 rounded-full bg-[var(--series-3)]" />
               {t('dm.legend.intl')}
             </span>
           </div>
@@ -269,6 +300,7 @@ export function DomesticPricesPanel() {
   const [loading, setLoading] = useState(true);
   const [nonce, setNonce] = useState(0);
   const reload = useCallback(() => setNonce((n) => n + 1), []);
+  const entryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -298,15 +330,31 @@ export function DomesticPricesPanel() {
               ? t('dm.fxLine', { fx: fmtInt(data.fx.usdVnd), source: data.fx.source, date: data.fx.asOf ? fmtDate(data.fx.asOf) : '—' })
               : t('dm.fxMissing')}
           </p>
-          {!hasAny && <EmptyState title={t('dm.empty.title')} description={t('dm.empty.desc')} />}
-          <div className="grid gap-4 md:grid-cols-2">
-            {data.items.map((it) => (
-              <CommodityCard key={it.commodity} item={it} fxRate={data.fx?.usdVnd ?? null} />
-            ))}
-          </div>
+          {hasAny ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {data.items.map((it) => (
+                <CommodityCard key={it.commodity} item={it} fxRate={data.fx?.usdVnd ?? null} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title={t('dm.empty.title')}
+              action={
+                <button
+                  type="button"
+                  onClick={() => entryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className="mt-1 rounded-md bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-[var(--on-accent,var(--bg))]"
+                >
+                  {t('dm.empty.cta')}
+                </button>
+              }
+            />
+          )}
         </>
       ) : null}
-      <EntryForm onSaved={reload} />
+      <div ref={entryRef}>
+        <EntryForm onSaved={reload} />
+      </div>
     </div>
   );
 }

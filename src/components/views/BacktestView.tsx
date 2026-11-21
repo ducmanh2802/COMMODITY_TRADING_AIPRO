@@ -4,7 +4,8 @@ import { useTerminal } from '../../contexts/TerminalContext';
 import type { StrategyDefinition, StrategyId } from '../../shared/types/analysis';
 import type { Timeframe } from '../../shared/types/instrument';
 import { formatTimestampInZone } from '../../shared/utils/time';
-import { fmtFixed, hasKey, tr, useT, type TKey } from '../../i18n';
+import { fmtFixed, fmtNum, hasKey, tr, useT, type TKey } from '../../i18n';
+import { EquityChart } from '../ui/viz/EquityChart';
 
 interface BacktestResponse {
   valid: boolean;
@@ -55,31 +56,16 @@ interface BacktestResponse {
 
 function EquityCurveSvg({ points }: { points: Array<{ equity: number }> }) {
   if (points.length < 2) return null;
-  const width = 760;
-  const height = 180;
-  const pad = 12;
-  const values = points.map((p) => p.equity);
-  const minVal = Math.min(...values);
-  const maxVal = Math.max(...values);
-  const span = maxVal - minVal || 1;
-
-  const polyPoints = values
-    .map((v, i) => {
-      const x = pad + (i / (values.length - 1)) * (width - pad * 2);
-      const y = height - pad - ((v - minVal) / span) * (height - pad * 2);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
-
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      className="w-full h-44 bg-[var(--bg)] border border-[var(--border)] rounded-md"
-      role="img"
-      aria-label={tr('bt.equityAria')}
-    >
-      <polyline fill="none" stroke="#6366F1" strokeWidth="2.2" points={polyPoints} />
-    </svg>
+    <div className="bg-[var(--bg)] border border-[var(--border)] rounded-md p-2">
+      <EquityChart
+        points={points.map((p, i) => ({ label: `#${i + 1}`, v: p.equity }))}
+        baseline={points[0].equity}
+        ariaLabel={tr('bt.equityAria')}
+        format={(v) => fmtNum(v, { maximumFractionDigits: 0 })}
+        className="h-44"
+      />
+    </div>
   );
 }
 

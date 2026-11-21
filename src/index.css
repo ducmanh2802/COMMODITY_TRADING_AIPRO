@@ -34,12 +34,26 @@
   --positive: #6CB4E4;
   --negative: #E8A27C;
   --warning: #D9BE6C;
-  --series-1: #7FB2E5;
-  --series-2: #E8A27C;
-  --series-3: #B59CE0;
-  --series-4: #D9BE6C;
-  --series-5: #8FC9C3;
-  --series-6: #E3A9C8;
+  /* Categorical (identity) - fixed order, never cycled, 6 slots. Validated with dataviz validate_palette.js (dark #171B23). */
+  --series-1: #4F91E2;
+  --series-2: #BE7E51;
+  --series-3: #7F5BB6;
+  --series-4: #0D9298;
+  --series-5: #8A6E1F;
+  --series-6: #C86E93;
+  --series-other: #6B7280;
+  /* Sequential (magnitude): one hue, low -> high; dark mode flips the anchor (low = dim). */
+  --seq-1: #336295;
+  --seq-2: #4177AE;
+  --seq-3: #5B8FC8;
+  --seq-4: #7BA9DB;
+  --seq-5: #9CC4EE;
+  /* Diverging (polarity): --positive <-> neutral gray <-> --negative. */
+  --div-mid: #3A4150;
+  /* Chart furniture */
+  --chart-grid: rgba(228, 231, 236, 0.07);
+  --chart-axis: rgba(228, 231, 236, 0.16);
+  --chart-crosshair: rgba(228, 231, 236, 0.45);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -64,12 +78,22 @@
   --positive: #2D72A8;
   --negative: #A9561F;
   --warning: #8C6A12;
-  --series-1: #2D72A8;
-  --series-2: #A9561F;
-  --series-3: #7356B8;
-  --series-4: #8C6A12;
-  --series-5: #2A7770;
-  --series-6: #B04F86;
+  --series-1: #4081D2;
+  --series-2: #E1791B;
+  --series-3: #7652AC;
+  --series-4: #0D9298;
+  --series-5: #816512;
+  --series-6: #9D486C;
+  --series-other: #8A93A3;
+  --seq-1: #93BADF;
+  --seq-2: #6FA0D2;
+  --seq-3: #4C85BF;
+  --seq-4: #2F69A5;
+  --seq-5: #164F89;
+  --div-mid: #D5DAE2;
+  --chart-grid: rgba(30, 36, 48, 0.07);
+  --chart-axis: rgba(30, 36, 48, 0.18);
+  --chart-crosshair: rgba(30, 36, 48, 0.45);
   --shadow-card: 0 1px 2px rgba(20, 28, 40, 0.06), 0 4px 14px -6px rgba(20, 28, 40, 0.12);
 }
 /* Light theme: soften translucent-white helpers that assumed a dark background. */

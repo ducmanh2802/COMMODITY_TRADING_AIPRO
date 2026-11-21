@@ -1,3 +1,5 @@
+import { divergingFill } from '../../../shared/theme/chartTheme';
+
 /** Tile heatmap of % change. Colour intensity + an explicit signed number (never colour alone). */
 export interface HeatTile {
   id: string;
@@ -8,10 +10,8 @@ export interface HeatTile {
 }
 
 export function heatColor(pct: number | null, maxAbs = 3): string {
-  if (pct === null || !Number.isFinite(pct)) return '#1D2840';
-  const k = Math.min(1, Math.abs(pct) / maxAbs);
-  const a = 0.25 + 0.6 * k;
-  return pct >= 0 ? `color-mix(in srgb, var(--positive) ${Math.round(a * 100)}%, transparent)` : `color-mix(in srgb, var(--negative) ${Math.round(a * 100)}%, transparent)`;
+  if (pct === null || !Number.isFinite(pct)) return 'var(--surface-2)';
+  return divergingFill(pct, maxAbs);
 }
 
 export function Heatmap({

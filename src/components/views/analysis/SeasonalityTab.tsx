@@ -21,12 +21,15 @@ import {
   useOptionMap,
 } from './shared';
 import { fmtFixed, fmtInt, useT } from '../../../i18n';
+import { ChartTooltip, useChartTooltip } from '../../ui/viz/ChartTooltip';
 
 const MONTH_NUMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 const MONTH_START_IDX = [1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336];
 
 function PathChart({ path }: { path: PathPoint[] }) {
   const t = useT();
+  const { wrapRef, tip, show, hide } = useChartTooltip();
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const pts = path.filter((p) => p.mean !== null) as (PathPoint & { mean: number })[];
   if (pts.length < 2) return <p className="text-xs text-[var(--text)]/55">{t('an.seas.notEnough')}</p>;
   const W = 800;
@@ -47,27 +50,42 @@ function PathChart({ path }: { path: PathPoint[] }) {
   }
   // Isolated days (weekends break daily continuity) — also draw as dots so sparse paths stay visible.
   const ticks = [yMin, (yMin + yMax) / 2, yMax];
+  const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const vx = ((e.clientX - r.left) / r.width) * W;
+    let best = pts[0];
+    for (const p of pts) if (Math.abs(x(p.dayIndex) - vx) < Math.abs(x(best.dayIndex) - vx)) best = p;
+    setHoverIdx(best.dayIndex);
+    show(e, t('an.seas.dayN', { n: best.dayIndex }), [{ label: '', value: fmtFixed(best.mean, 1), color: 'var(--series-1)' }]);
+  };
+  const hp = hoverIdx === null ? null : pts.find((p) => p.dayIndex === hoverIdx) ?? null;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={t('an.seas.pathAria')}>
-      {ticks.map((tk) => (
-        <g key={tk}>
-          <line x1={pad.l} x2={W - pad.r} y1={y(tk)} y2={y(tk)} stroke="#263244" strokeWidth={1} />
-          <text x={pad.l - 4} y={y(tk) + 3} fontSize={10} textAnchor="end" fill="#E5E7EB99">
-            {fmtFixed(tk, 1)}
+    <div ref={wrapRef} className="relative" onPointerMove={onMove} onPointerLeave={() => { setHoverIdx(null); hide(); }}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={t('an.seas.pathAria')}>
+        {ticks.map((tk) => (
+          <g key={tk}>
+            <line x1={pad.l} x2={W - pad.r} y1={y(tk)} y2={y(tk)} stroke="var(--chart-grid)" strokeWidth={1} />
+            <text x={pad.l - 4} y={y(tk) + 3} fontSize={10} textAnchor="end" fill="var(--muted)">
+              {fmtFixed(tk, 1)}
+            </text>
+          </g>
+        ))}
+        <line x1={pad.l} x2={W - pad.r} y1={y(100)} y2={y(100)} stroke="var(--chart-axis)" strokeWidth={1} />
+        {MONTH_START_IDX.map((idx, i) => (
+          <text key={idx} x={x(idx)} y={H - 6} fontSize={10} fill="var(--muted)">
+            {t(`an.month.${MONTH_NUMS[i]}`)}
           </text>
-        </g>
-      ))}
-      <line x1={pad.l} x2={W - pad.r} y1={y(100)} y2={y(100)} stroke="#E5E7EB55" strokeDasharray="4 3" />
-      {MONTH_START_IDX.map((idx, i) => (
-        <text key={idx} x={x(idx)} y={H - 6} fontSize={10} fill="#E5E7EB99">
-          {t(`an.month.${MONTH_NUMS[i]}`)}
-        </text>
-      ))}
-      <path d={d} fill="none" stroke="#6366F1" strokeWidth={1.5} />
-      {pts.map((p) => (
-        <circle key={p.dayIndex} cx={x(p.dayIndex)} cy={y(p.mean)} r={1.2} fill="#6366F1" />
-      ))}
-    </svg>
+        ))}
+        <path d={d} fill="none" stroke="var(--series-1)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        {hp && (
+          <>
+            <line x1={x(hp.dayIndex)} x2={x(hp.dayIndex)} y1={pad.t} y2={H - pad.b} stroke="var(--chart-crosshair)" strokeWidth={1} />
+            <circle cx={x(hp.dayIndex)} cy={y(hp.mean)} r={4} fill="var(--series-1)" stroke="var(--surface)" strokeWidth={2} />
+          </>
+        )}
+      </svg>
+      <ChartTooltip tip={tip} />
+    </div>
   );
 }
 

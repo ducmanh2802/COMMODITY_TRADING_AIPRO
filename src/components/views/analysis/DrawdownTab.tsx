@@ -37,7 +37,7 @@ export function DrawdownTab({ options }: { options: SeriesOption[] }) {
   const ddLines = useMemo<ChartLine[]>(
     () =>
       res && res.dd.status === 'OK'
-        ? [{ name: t('an.dd.drawdown'), color: CHART_COLORS[6], points: res.dd.timestamps.map((ts, i) => ({ t: ts, v: res.dd.values[i] === null ? null : (res.dd.values[i] as number) * 100 })) }]
+        ? [{ name: t('an.dd.drawdown'), color: 'var(--negative)', points: res.dd.timestamps.map((ts, i) => ({ t: ts, v: res.dd.values[i] === null ? null : (res.dd.values[i] as number) * 100 })) }]
         : [],
     [res, t]
   );

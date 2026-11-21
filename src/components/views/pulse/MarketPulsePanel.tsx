@@ -5,6 +5,7 @@ import type { MarketPulse, PulseGroupStats, PulseIndicator, PulseMover, PulseTex
 import { safeReadJson } from '../../../shared/utils/http';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
+import { Sparkline } from '../../ui/viz/Sparkline';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
 import { Heatmap } from '../../ui/viz/Heatmap';
@@ -13,23 +14,6 @@ import { FxPanel } from './FxPanel';
 const signed = (v: number | null, d = 2, suffix = ''): string => (v === null ? '-' : `${v > 0 ? '+' : ''}${fmtFixed(v, d)}${suffix}`);
 const tone = (v: number | null): string =>
   v === null || v === 0 ? 'text-[var(--muted)]' : v > 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]';
-
-function Spark({ points }: { points: { value: number }[] }) {
-  if (points.length < 2) return null;
-  const W = 120;
-  const H = 32;
-  const vals = points.map((p) => p.value);
-  const min = Math.min(...vals);
-  const span = Math.max(...vals) - min || 1;
-  const d = points
-    .map((p, i) => `${i === 0 ? 'M' : 'L'}${((i / (points.length - 1)) * W).toFixed(1)},${(H - 2 - ((p.value - min) / span) * (H - 4)).toFixed(1)}`)
-    .join(' ');
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-8 text-[var(--accent)]" aria-hidden="true">
-      <path d={d} fill="none" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
 
 function IndicatorCard({ ind, lang }: { ind: PulseIndicator; lang: 'vi' | 'en' }) {
   const { t } = useI18n();
@@ -44,7 +28,7 @@ function IndicatorCard({ ind, lang }: { ind: PulseIndicator; lang: 'vi' | 'en' }
       <p className="text-2xl font-semibold tabular-nums text-[var(--text-strong)]">
         {ind.value === null ? <span className="text-sm text-[var(--faint)]">{t('pulse.unavailable')}</span> : `${fmtFixed(ind.value, 2)}${unit}`}
       </p>
-      <Spark points={ind.spark} />
+      <Sparkline points={ind.spark.map((q) => ({ label: (q as { date?: string }).date, value: q.value }))} format={(v) => fmtFixed(v, 2)} />
       <div className="flex gap-4 text-xs tabular-nums">
         <span>
           <span className="text-[var(--faint)]">{t('pulse.change1m')} </span>
@@ -75,10 +59,10 @@ function BreadthBar({ up, down, flat, label }: { up: number; down: number; flat:
           {up} {t('pulse.up')} · {down} {t('pulse.down')} · {flat} {t('pulse.flat')}
         </span>
       </div>
-      <div className="flex h-2 rounded overflow-hidden bg-[var(--surface-2)]" role="img" aria-label={`${up}/${down}/${flat}`}>
-        <div className="bg-[var(--positive)]" style={{ width: `${(up / total) * 100}%` }} />
-        <div className="bg-[var(--faint)]" style={{ width: `${(flat / total) * 100}%` }} />
-        <div className="bg-[var(--negative)]" style={{ width: `${(down / total) * 100}%` }} />
+      <div className="flex h-2 gap-0.5" role="img" aria-label={`${up} ${t('pulse.up')} / ${down} ${t('pulse.down')} / ${flat} ${t('pulse.flat')}`}>
+        <div className="rounded-[4px] bg-[var(--positive)] hover:brightness-110" title={`${up} ${t('pulse.up')}`} style={{ width: `${(up / total) * 100}%` }} />
+        <div className="rounded-[4px] bg-[var(--div-mid)]" title={`${flat} ${t('pulse.flat')}`} style={{ width: `${(flat / total) * 100}%` }} />
+        <div className="rounded-[4px] bg-[var(--negative)] hover:brightness-110" title={`${down} ${t('pulse.down')}`} style={{ width: `${(down / total) * 100}%` }} />
       </div>
     </div>
   );

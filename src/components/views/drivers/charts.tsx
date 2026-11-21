@@ -1,10 +1,10 @@
 import type { DriverPart, DriverPartId } from '../../../shared/types/drivers';
 
 const COLORS: Record<DriverPartId, string> = {
-  group: 'var(--accent)',
-  usd: 'var(--warning)',
-  rates: 'var(--positive)',
-  own: 'var(--muted)',
+  group: 'var(--series-1)',
+  usd: 'var(--series-3)',
+  rates: 'var(--series-4)',
+  own: 'var(--series-5)',
 };
 const f1 = (n: number) => n.toFixed(2);
 
@@ -34,7 +34,7 @@ export function AttributionBar({ parts, total, labels, ariaLabel }: { parts: Dri
     <div className="space-y-2">
       <svg viewBox={`0 0 ${W} 34`} className="w-full h-9" role="img" aria-label={ariaLabel}>
         {rects.map(({ p, x, w }) => (
-          <rect key={p.id} x={x} y={4} width={Math.max(w, 0.5)} height={22} fill={COLORS[p.id]}>
+          <rect key={p.id} x={x + 1} y={4} width={Math.max(w - 2, 0.5)} height={22} rx={4} fill={COLORS[p.id]} className="hover:brightness-110">
             <title>{`${labels[p.id]}: ${f1(p.pct)} pp`}</title>
           </rect>
         ))}
@@ -79,11 +79,11 @@ export function ConeChart({
   const poly = (lo: 'lo50' | 'lo80', hi: 'hi50' | 'hi80') =>
     [...path.map((p) => `${X(base + p.d).toFixed(1)},${Y(p[hi]).toFixed(1)}`), ...[...path].reverse().map((p) => `${X(base + p.d).toFixed(1)},${Y(p[lo]).toFixed(1)}`)].join(' ');
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-32 text-[var(--accent)]" role="img" aria-label={ariaLabel}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-32 text-[var(--series-1)]" role="img" aria-label={ariaLabel}>
       <polygon points={poly('lo80', 'hi80')} fill="currentColor" opacity="0.12" />
       <polygon points={poly('lo50', 'hi50')} fill="currentColor" opacity="0.22" />
-      <line x1={X(base)} x2={X(base)} y1={0} y2={H} stroke="currentColor" strokeDasharray="3 3" opacity="0.4" />
-      <path d={line} fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <line x1={X(base)} x2={X(base)} y1={0} y2={H} stroke="var(--chart-axis)" strokeWidth="1" />
+      <path d={line} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
@@ -99,12 +99,12 @@ export function SeasonBars({ samples, hitLabel }: { samples: { year: number; ret
   return (
     <div className="space-y-1">
       <svg viewBox={`0 0 ${W} ${H + 12}`} className="w-full h-24" role="img" aria-label={hitLabel}>
-        <line x1={0} x2={W} y1={mid} y2={mid} stroke="currentColor" className="text-[var(--muted)]" strokeWidth="0.5" />
+        <line x1={0} x2={W} y1={mid} y2={mid} stroke="var(--chart-axis)" strokeWidth="1" />
         {samples.map((s, i) => {
           const h = (Math.abs(s.ret) / max) * (mid - 4);
           return (
             <g key={s.year}>
-              <rect x={i * bw + 1} width={Math.max(bw - 2, 1)} y={s.ret >= 0 ? mid - h : mid} height={h} fill={s.ret >= 0 ? 'var(--positive)' : 'var(--negative)'}>
+              <rect x={i * bw + 1} width={Math.max(bw - 2, 1)} y={s.ret >= 0 ? mid - h : mid} height={h} rx={2} className="hover:brightness-110" fill={s.ret >= 0 ? 'var(--positive)' : 'var(--negative)'}>
                 <title>{`${s.year}: ${s.ret.toFixed(1)}%`}</title>
               </rect>
               <text x={i * bw + bw / 2} y={H + 9} fontSize="6" textAnchor="middle" fill="currentColor" className="text-[var(--faint)]">

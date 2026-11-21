@@ -413,6 +413,27 @@ service cloud.firestore {
       return v == null || isValidPaperPrice(v);
     }
 
+    // Pre-trade checklist plan (optional on paper positions/orders). Must be a map with known fields only.
+    function isValidPaperPlan(plan) {
+      return plan is map
+        && plan.size() <= 12
+        && plan.keys().hasOnly(['answers', 'eventsOk', 'r', 'riskPct', 'limitPct', 'onPlan'])
+        && plan.answers is map
+        && plan.answers.keys().hasOnly(['trend', 'zone', 'signal', 'volume', 'plan'])
+        && plan.answers.trend in ['yes', 'no', null]
+        && plan.answers.zone in ['yes', 'no', null]
+        && plan.answers.signal in ['yes', 'no', null]
+        && plan.answers.volume in ['yes', 'no', null]
+        && plan.answers.plan in ['yes', 'no', null]
+        && (plan.eventsOk == null || plan.eventsOk is bool)
+        && (plan.r == null || (plan.r is number && plan.r >= -100 && plan.r <= 100))
+        && (plan.riskPct == null || (plan.riskPct is number && plan.riskPct >= 0 && plan.riskPct <= 100))
+        && plan.limitPct is number
+        && plan.limitPct >= 0.05
+        && plan.limitPct <= 100
+        && plan.onPlan is bool;
+    }
+
     function isValidPaperJournal(data) {
       return data.journal is string
         && data.journal.size() <= 1000
@@ -422,7 +443,7 @@ service cloud.firestore {
 
     function isValidPaperPosition(data) {
       return data.keys().hasAll(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'stopLoss', 'takeProfit', 'marginPerContractUsd', 'entryFeeVnd', 'entryFxRate', 'journal', 'researchNoteId', 'openedAt'])
-        && data.keys().hasOnly(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'stopLoss', 'takeProfit', 'marginPerContractUsd', 'entryFeeVnd', 'entryFxRate', 'journal', 'researchNoteId', 'openedAt'])
+        && data.keys().hasOnly(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'stopLoss', 'takeProfit', 'marginPerContractUsd', 'entryFeeVnd', 'entryFxRate', 'journal', 'researchNoteId', 'openedAt', 'plan'])
         && data.userId is string
         && data.userId == request.auth.uid
         && data.sessionId is string
@@ -446,12 +467,13 @@ service cloud.firestore {
         && data.entryFxRate > 0
         && data.entryFxRate <= 1000000
         && isValidPaperJournal(data)
-        && data.openedAt is timestamp;
+        && data.openedAt is timestamp
+        && (!('plan' in data) || isValidPaperPlan(data.plan));
     }
 
     function isValidPaperOrder(data) {
       return data.keys().hasAll(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'exitPrice', 'stopLoss', 'takeProfit', 'closeReason', 'grossPnlUsd', 'feesVnd', 'pnlUsd', 'pnlVnd', 'rMultiple', 'fxRate', 'journal', 'researchNoteId', 'openedAt', 'closedAt'])
-        && data.keys().hasOnly(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'exitPrice', 'stopLoss', 'takeProfit', 'closeReason', 'grossPnlUsd', 'feesVnd', 'pnlUsd', 'pnlVnd', 'rMultiple', 'fxRate', 'journal', 'researchNoteId', 'openedAt', 'closedAt'])
+        && data.keys().hasOnly(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'exitPrice', 'stopLoss', 'takeProfit', 'closeReason', 'grossPnlUsd', 'feesVnd', 'pnlUsd', 'pnlVnd', 'rMultiple', 'fxRate', 'journal', 'researchNoteId', 'openedAt', 'closedAt', 'plan'])
         && data.userId is string
         && data.userId == request.auth.uid
         && data.sessionId is string
@@ -478,7 +500,8 @@ service cloud.firestore {
         && data.fxRate <= 1000000
         && isValidPaperJournal(data)
         && data.openedAt is timestamp
-        && data.closedAt is timestamp;
+        && data.closedAt is timestamp
+        && (!('plan' in data) || isValidPaperPlan(data.plan));
     }
 
     // Users collection (PII isolated to verified owner only; list completely disabled)

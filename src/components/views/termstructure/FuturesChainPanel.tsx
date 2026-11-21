@@ -34,8 +34,8 @@ const dash = '—';
 function Bar({ share }: { share: number | null }) {
   if (share === null) return null;
   return (
-    <span className="block h-1 mt-0.5 rounded-sm bg-[var(--border)]/60" aria-hidden="true">
-      <span className="block h-1 rounded-sm bg-[var(--accent)]" style={{ width: `${Math.max(2, Math.round(share * 100))}%` }} />
+    <span className="block h-1 mt-0.5 bg-[var(--chart-grid)]" aria-hidden="true">
+      <span className="block h-1 rounded-r-[4px] bg-[var(--series-1)]" style={{ width: `${Math.max(2, Math.round(share * 100))}%` }} />
     </span>
   );
 }

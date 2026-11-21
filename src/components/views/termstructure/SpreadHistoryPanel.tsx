@@ -168,7 +168,7 @@ export function SpreadHistoryPanel({
             series={[
               {
                 name: `${nearCode} − ${farCode}`,
-                color: '#818CF8',
+                color: 'var(--series-1)',
                 points: computed.spreadSeries.map((p) => ({ x: Date.parse(p.t), y: p.v })),
                 showDots: computed.spreadSeries.length <= 40,
               },
@@ -186,7 +186,7 @@ export function SpreadHistoryPanel({
               series={[
                 {
                   name: `z-score (${zWindow})`,
-                  color: '#F59E0B',
+                  color: 'var(--series-3)',
                   points: computed.z.timestamps
                     .map((t, i) => ({ x: Date.parse(t), y: computed.z.values[i] }))
                     .filter((p): p is { x: number; y: number } => p.y !== null),

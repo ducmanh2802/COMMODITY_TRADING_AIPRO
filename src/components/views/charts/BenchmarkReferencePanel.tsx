@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { ColorType, LineSeries, createChart, type UTCTimestamp } from 'lightweight-charts';
+import { LineSeries, createChart, type UTCTimestamp } from 'lightweight-charts';
 import { ExternalLink, Info } from 'lucide-react';
 import { fmtDate, fmtFixed, useT } from '../../../i18n';
+import { LINE_WIDTH, lwBase, seriesColor } from '../../../shared/theme/chartTheme';
 
 /** T76: reference (benchmark) line chart for instruments with no futures history. Never a contract price. */
 interface BenchmarkItem {
@@ -24,14 +25,6 @@ interface BenchmarkSeries {
   reason: string | null;
 }
 
-function cssVar(name: string, fallback: string): string {
-  try {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 function BenchmarkLine({ points, unit, ariaLabel }: { points: BenchmarkSeries['points']; unit: string; ariaLabel: string }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [themeKey, setThemeKey] = useState(0);
@@ -46,20 +39,16 @@ function BenchmarkLine({ points, unit, ariaLabel }: { points: BenchmarkSeries['p
   useEffect(() => {
     const el = ref.current;
     if (!el || points.length === 0) return;
-    const text = cssVar('--text', '#888');
-    const border = cssVar('--border', '#444');
     const chart = createChart(el, {
+      ...lwBase(),
+      autoSize: false,
       height: 340,
       width: el.clientWidth,
-      layout: { background: { type: ColorType.Solid, color: cssVar('--surface', 'transparent') }, textColor: text, fontSize: 11 },
-      grid: { vertLines: { color: border }, horzLines: { color: border } },
-      rightPriceScale: { borderColor: border },
-      timeScale: { borderColor: border, timeVisible: false },
       localization: { priceFormatter: (v: number) => fmtFixed(v, 2) },
     });
     const s = chart.addSeries(LineSeries, {
-      color: cssVar('--accent-text', '#A8C2E8'),
-      lineWidth: 2,
+      color: seriesColor(0),
+      lineWidth: LINE_WIDTH,
       title: unit,
       priceLineVisible: false,
     });

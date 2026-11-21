@@ -26,7 +26,6 @@ import { fmtDate, fmtInt, useT } from '../../../i18n';
 import { BenchmarkReferencePanel } from './BenchmarkReferencePanel';
 import { ChartCompareSection } from './ChartCompare';
 import { CandleChart, type LineSpec, type LowerPaneSpec } from './CandleChart';
-import { cssVar, withAlpha } from '../../../shared/theme/chartColors';
 
 type LowerIndicator = 'NONE' | 'RSI' | 'MACD' | 'ATR';
 
@@ -201,21 +200,21 @@ export function ChartsView() {
     if (s.smaOn) {
       const r = sma(series, s.smaPeriod);
       reports.push(report(`SMA(${s.smaPeriod})`, r));
-      if (r.status === 'OK') overlays.push({ id: 'sma', label: `SMA ${s.smaPeriod}`, color: '#F59E0B', timestamps: r.timestamps, values: r.values, lineWidth: 2 });
+      if (r.status === 'OK') overlays.push({ id: 'sma', label: `SMA ${s.smaPeriod}`, color: 'var(--series-3)', timestamps: r.timestamps, values: r.values, lineWidth: 2 });
     }
     if (s.emaOn) {
       const r = ema(series, s.emaPeriod);
       reports.push(report(`EMA(${s.emaPeriod})`, r));
-      if (r.status === 'OK') overlays.push({ id: 'ema', label: `EMA ${s.emaPeriod}`, color: '#38BDF8', timestamps: r.timestamps, values: r.values, lineWidth: 2 });
+      if (r.status === 'OK') overlays.push({ id: 'ema', label: `EMA ${s.emaPeriod}`, color: 'var(--series-4)', timestamps: r.timestamps, values: r.values, lineWidth: 2 });
     }
     if (s.bbOn) {
       const r = bollingerBands(series, { period: s.bbPeriod, k: s.bbK });
       reports.push(report(`Bollinger(${s.bbPeriod}, ${s.bbK})`, r));
       if (r.status === 'OK') {
         const pick = (k: 'upper' | 'middle' | 'lower') => r.values.map((v) => (v ? v[k] : null));
-        overlays.push({ id: 'bb-u', label: 'BB up', color: 'rgba(167, 139, 250, 0.9)', timestamps: r.timestamps, values: pick('upper') });
-        overlays.push({ id: 'bb-m', label: 'BB mid', color: 'rgba(167, 139, 250, 0.5)', timestamps: r.timestamps, values: pick('middle') });
-        overlays.push({ id: 'bb-l', label: 'BB low', color: 'rgba(167, 139, 250, 0.9)', timestamps: r.timestamps, values: pick('lower') });
+        overlays.push({ id: 'bb-u', label: 'BB up', color: 'var(--series-5)', timestamps: r.timestamps, values: pick('upper') });
+        overlays.push({ id: 'bb-m', label: 'BB mid', color: 'var(--series-5)', timestamps: r.timestamps, values: pick('middle') });
+        overlays.push({ id: 'bb-l', label: 'BB low', color: 'var(--series-5)', timestamps: r.timestamps, values: pick('lower') });
       }
     }
     if (s.lower === 'RSI') {
@@ -224,7 +223,7 @@ export function ChartsView() {
       if (r.status === 'OK') {
         lowerPane = {
           title: `RSI ${s.rsiPeriod}`,
-          lines: [{ id: 'rsi', label: `RSI ${s.rsiPeriod}`, color: '#A78BFA', timestamps: r.timestamps, values: r.values, lineWidth: 2 }],
+          lines: [{ id: 'rsi', label: `RSI ${s.rsiPeriod}`, color: 'var(--series-3)', timestamps: r.timestamps, values: r.values, lineWidth: 2 }],
           histograms: [],
           levels: [70, 30],
         };
@@ -236,8 +235,8 @@ export function ChartsView() {
         lowerPane = {
           title: 'MACD',
           lines: [
-            { id: 'macd', label: 'MACD', color: '#38BDF8', timestamps: r.timestamps, values: r.values.map((v) => v?.macd ?? null), lineWidth: 2 },
-            { id: 'signal', label: 'Signal', color: '#F59E0B', timestamps: r.timestamps, values: r.values.map((v) => v?.signal ?? null) },
+            { id: 'macd', label: 'MACD', color: 'var(--series-3)', timestamps: r.timestamps, values: r.values.map((v) => v?.macd ?? null), lineWidth: 2 },
+            { id: 'signal', label: 'Signal', color: 'var(--series-4)', timestamps: r.timestamps, values: r.values.map((v) => v?.signal ?? null) },
           ],
           histograms: [
             {
@@ -245,8 +244,8 @@ export function ChartsView() {
               label: 'Hist',
               timestamps: r.timestamps,
               values: r.values.map((v) => v?.histogram ?? null),
-              positiveColor: withAlpha(cssVar('--positive', '#6CB4E4'), 0.55),
-              negativeColor: withAlpha(cssVar('--negative', '#E8A27C'), 0.55),
+              positiveColor: 'var(--positive)',
+              negativeColor: 'var(--negative)',
             },
           ],
           levels: [],
@@ -258,7 +257,7 @@ export function ChartsView() {
       if (r.status === 'OK') {
         lowerPane = {
           title: `ATR ${s.atrPeriod}`,
-          lines: [{ id: 'atr', label: `ATR ${s.atrPeriod}`, color: '#F472B6', timestamps: r.timestamps, values: r.values, lineWidth: 2 }],
+          lines: [{ id: 'atr', label: `ATR ${s.atrPeriod}`, color: 'var(--series-6)', timestamps: r.timestamps, values: r.values, lineWidth: 2 }],
           histograms: [],
           levels: [],
         };
@@ -427,17 +426,20 @@ export function ChartsView() {
       {/* Indicator controls */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         <label className="inline-flex items-center gap-2 text-xs text-[var(--text)]/85">
-          <input type="checkbox" checked={settings.smaOn} onChange={(e) => set('smaOn', e.target.checked)} className="accent-[var(--warning)]" />
+          <input type="checkbox" checked={settings.smaOn} onChange={(e) => set('smaOn', e.target.checked)} className="accent-[var(--series-3)]" />
+          <span aria-hidden="true" className="inline-block h-0.5 w-3 rounded-full" style={{ background: 'var(--series-3)' }} />
           SMA
         </label>
         <NumInput label={t('chart.period')} value={settings.smaPeriod} onChange={(v) => set('smaPeriod', v)} />
         <label className="inline-flex items-center gap-2 text-xs text-[var(--text)]/85">
-          <input type="checkbox" checked={settings.emaOn} onChange={(e) => set('emaOn', e.target.checked)} className="accent-[var(--accent-text)]" />
+          <input type="checkbox" checked={settings.emaOn} onChange={(e) => set('emaOn', e.target.checked)} className="accent-[var(--series-4)]" />
+          <span aria-hidden="true" className="inline-block h-0.5 w-3 rounded-full" style={{ background: 'var(--series-4)' }} />
           EMA
         </label>
         <NumInput label={t('chart.period')} value={settings.emaPeriod} onChange={(v) => set('emaPeriod', v)} />
         <label className="inline-flex items-center gap-2 text-xs text-[var(--text)]/85">
-          <input type="checkbox" checked={settings.bbOn} onChange={(e) => set('bbOn', e.target.checked)} className="accent-[#A78BFA]" />
+          <input type="checkbox" checked={settings.bbOn} onChange={(e) => set('bbOn', e.target.checked)} className="accent-[var(--series-5)]" />
+          <span aria-hidden="true" className="inline-block h-0.5 w-3 rounded-full" style={{ background: 'var(--series-5)' }} />
           Bollinger
         </label>
         <NumInput label={t('chart.period')} value={settings.bbPeriod} onChange={(v) => set('bbPeriod', v)} />

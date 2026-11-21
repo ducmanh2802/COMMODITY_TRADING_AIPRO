@@ -628,7 +628,6 @@ function OpenInterestPanel({ data }: { data: CotQueryResponse }) {
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-32" role="img" aria-label={t('cot.oi.chartTitle')}>
         {rows.map((r, i) => {
           const h = Math.max(1, (r.openInterest / max) * (H - 4));
-          const up = r.openInterestChange4w !== null && r.openInterestChange4w > 0;
           return (
             <rect
               key={r.reportDate}
@@ -636,8 +635,8 @@ function OpenInterestPanel({ data }: { data: CotQueryResponse }) {
               y={H - h}
               width={Math.max(1, bw)}
               height={h}
-              rx={1.5}
-              className={up ? 'fill-[var(--positive)]/70' : 'fill-[#60A5FA]/60'}
+              rx={3}
+              className="fill-[var(--series-1)] hover:brightness-125"
             >
               <title>{`${fmtDate(r.reportDate)}: ${fmtIntDisplay(r.openInterest)}`}</title>
             </rect>

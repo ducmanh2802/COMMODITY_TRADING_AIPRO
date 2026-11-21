@@ -29,7 +29,6 @@ const SMALL_KEY: Partial<Record<AppModuleId, TKey>> = {
   settings: 'n2.item.settings',
   'data-health': 'n2.item.data-health',
   'data-import': 'n2.item.data-import',
-  overview: 'n2.item.overview',
   backtest: 'n2.item.backtest',
   'term-structure': 'n2.item.term-structure',
   scanner: 'n2.item.scanner',

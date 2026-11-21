@@ -31,6 +31,7 @@ import * as compare from './dict/compare';
 import * as drawing from './dict/drawing';
 import * as weather from './dict/weather';
 import * as news2 from './dict/news2';
+import * as pwa from './dict/pwa';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
@@ -67,6 +68,7 @@ export const vi = {
   ...chain.vi,
   ...weather.vi,
   ...news2.vi,
+  ...pwa.vi,
 };
 
 export type TKey = keyof typeof vi;

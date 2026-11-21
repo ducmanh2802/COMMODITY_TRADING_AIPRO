@@ -22,16 +22,15 @@ import {
   useOptionMap,
 } from './shared';
 import { fmtFixed, fmtInt, useT } from '../../../i18n';
+import { divergingFill } from '../../../shared/theme/chartTheme';
+import { ScaleLegend } from '../../ui/viz/ScaleLegend';
 
 const MAX_SERIES = 8;
 const ZERO_LINE = [0];
 const numFmt = (v: number) => fmtFixed(v, 2);
 
-/** Diverging cell color: blue for negative, red for positive correlation. */
-function heatColor(r: number): string {
-  const a = Math.min(1, Math.abs(r));
-  return r >= 0 ? `rgba(232, 162, 124, ${0.12 + 0.6 * a})` : `rgba(108, 180, 228, ${0.12 + 0.6 * a})`;
-}
+/** Diverging cell colour: --positive <-> neutral gray <-> --negative (|r| = intensity). */
+const heatColor = (r: number) => divergingFill(r, 1);
 
 export function CorrelationTab({ options }: { options: SeriesOption[] }) {
   const t = useT();
@@ -181,7 +180,10 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
                   ))}
                 </tbody>
               </table>
-              <p className="text-[10px] text-[var(--text)]/45 mt-1">{t('an.corr.legend')}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <ScaleLegend kind="diverging" low="-1" mid="0" high="+1" />
+                <p className="text-[11px] text-[var(--muted)]">{t('an.corr.legend')}</p>
+              </div>
             </div>
           )}
         </Panel>

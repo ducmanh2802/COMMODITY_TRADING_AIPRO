@@ -325,9 +325,9 @@ function CurveQuiz() {
             <p className="text-xs text-[var(--text-strong)]">{c.label} (minh hoạ)</p>
             <div className="flex flex-wrap items-center gap-4">
               <svg width={W} height={H} role="img" aria-label={`${c.label}: ${c.points.map((p) => `${p.month} ${p.price}`).join(', ')}`}>
-                <polyline points={xy.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#6366F1" strokeWidth="2" />
+                <polyline points={xy.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke="var(--series-1)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 {xy.map((p, i) => (
-                  <circle key={i} cx={p.x} cy={p.y} r="3" fill="#6366F1" />
+                  <circle key={i} cx={p.x} cy={p.y} r="4" fill="var(--series-1)" stroke="var(--surface)" strokeWidth="2" />
                 ))}
               </svg>
               <p className="text-[11px] font-mono text-[var(--text)]/70">{c.points.map((p) => `${p.month}: ${p.price}`).join(' · ')}</p>

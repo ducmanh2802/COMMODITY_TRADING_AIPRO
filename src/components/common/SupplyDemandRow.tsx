@@ -19,11 +19,11 @@ function Bars({ cur, prev }: { cur: number; prev: number | null }) {
   const max = Math.max(cur, prev) || 1;
   return (
     <div className="mt-1 space-y-0.5" aria-hidden="true">
-      <div className="h-1 rounded bg-[var(--border)] w-full overflow-hidden" title="Kỳ trước">
-        <div className="h-full bg-[#64748B]" style={{ width: `${(prev / max) * 100}%` }} />
+      <div className="h-1 w-full bg-[var(--chart-grid)]" title="Kỳ trước">
+        <div className="h-full rounded-r-[4px] bg-[var(--series-other)]" style={{ width: `${(prev / max) * 100}%` }} />
       </div>
-      <div className="h-1 rounded bg-[var(--border)] w-full overflow-hidden" title="Kỳ này">
-        <div className="h-full bg-[var(--accent)]" style={{ width: `${(cur / max) * 100}%` }} />
+      <div className="h-1 w-full bg-[var(--chart-grid)]" title="Kỳ này">
+        <div className="h-full rounded-r-[4px] bg-[var(--series-1)]" style={{ width: `${(cur / max) * 100}%` }} />
       </div>
     </div>
   );
@@ -49,7 +49,7 @@ export function SupplyDemandRow({ item }: { item: TailoredSupplyDemandItem }) {
         <>
           {item.changeText ? (
             <p className="flex items-center gap-1 text-[11px] text-[var(--muted)]">
-              <Arrow className="w-3 h-3 text-[#94A3B8]" aria-hidden="true" />
+              <Arrow className="w-3 h-3 text-[var(--muted)]" aria-hidden="true" />
               {item.changeText}
             </p>
           ) : null}

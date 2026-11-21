@@ -25,19 +25,19 @@ function arc(from: number, to: number): string {
   return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${R} ${R} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
 }
 
-export function Gauge({ value, labels, ariaLabel, colors = ['var(--positive)', 'var(--warning)', 'var(--negative)'], className = '' }: GaugeProps) {
+export function Gauge({ value, labels, ariaLabel, colors = ['var(--seq-2)', 'var(--seq-3)', 'var(--seq-5)'], className = '' }: GaugeProps) {
   const v = value === null || !Number.isFinite(value) ? null : Math.min(100, Math.max(0, value));
   const [nx, ny] = pt(v ?? 50, R - 14);
   return (
     <figure className={className} role="img" aria-label={ariaLabel}>
       <svg viewBox="0 0 200 118" className="w-full max-w-[280px] mx-auto" aria-hidden="true">
-        <path d={arc(0, 33.2)} stroke={colors[0]} strokeWidth="16" fill="none" />
-        <path d={arc(33.8, 66.2)} stroke={colors[1]} strokeWidth="16" fill="none" />
-        <path d={arc(66.8, 100)} stroke={colors[2]} strokeWidth="16" fill="none" />
+        <path d={arc(0, 33.2)} stroke={colors[0]} strokeWidth="10" fill="none" />
+        <path d={arc(33.8, 66.2)} stroke={colors[1]} strokeWidth="10" fill="none" />
+        <path d={arc(66.8, 100)} stroke={colors[2]} strokeWidth="10" fill="none" />
         {v !== null && (
           <>
-            <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-            <circle cx={CX} cy={CY} r="7" fill="#FFFFFF" />
+            <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="var(--text-strong)" strokeWidth="3" strokeLinecap="round" />
+            <circle cx={CX} cy={CY} r="5" fill="var(--text-strong)" />
           </>
         )}
       </svg>

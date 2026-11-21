@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { CircleCheck, CircleSlash } from 'lucide-react';
+import { divergingFill } from '../../../shared/theme/chartTheme';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { fmtFixed, useI18n } from '../../../i18n';
 import type { TFunction } from '../../../i18n';
@@ -72,10 +74,7 @@ function ExchangeClockCard({ schedule, now }: { schedule: ExchangeSchedule; now:
         <span
           className={`inline-flex items-center gap-1.5 text-xs font-medium shrink-0 ${status.open ? 'text-[var(--positive)]' : 'text-[var(--muted)]'}`}
         >
-          <span
-            className={`h-2 w-2 rounded-full ${status.open ? 'bg-[var(--positive)]' : 'bg-[var(--muted)]'}`}
-            aria-hidden="true"
-          />
+          {status.open ? <CircleCheck className="h-3.5 w-3.5" aria-hidden="true" /> : <CircleSlash className="h-3.5 w-3.5" aria-hidden="true" />}
           {status.open ? t('wd.clock.open') : t('wd.clock.closed')}
         </span>
       </div>
@@ -336,9 +335,7 @@ function pctText(v: number): string {
 
 /** Background tint scaled to the move (saturates at 3%). */
 function tint(pct: number): string {
-  const strength = Math.min(1, Math.abs(pct) / 0.03);
-  const colour = pct >= 0 ? 'var(--positive)' : 'var(--negative)';
-  return `color-mix(in srgb, ${colour} ${Math.round(12 + strength * 48)}%, var(--surface-2))`;
+  return divergingFill(pct, 0.03);
 }
 
 function ExchangePerformance() {
@@ -411,14 +408,14 @@ function ExchangePerformance() {
                   <div className="text-sm font-semibold text-[var(--text-strong)]">
                     {exLabel(g.ex)} <span className="text-[11px] font-normal text-[var(--muted)]">· {t('wd.perf.count', { n: g.items.length })}</span>
                   </div>
-                  <span className={`text-xs font-semibold tabular-nums ${up ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>
+                  <span className="text-xs font-semibold tabular-nums text-[var(--text-strong)]">
                     {t('wd.perf.avg', { v: pctText(g.avg) })}
                   </span>
                 </div>
                 <div className="relative h-2 rounded-full bg-[var(--surface-2)]" aria-hidden="true">
-                  <div className="absolute inset-y-0 left-1/2 w-px bg-[var(--border)]" />
+                  <div className="absolute inset-y-0 left-1/2 w-px bg-[var(--chart-axis)]" />
                   <div
-                    className={`absolute inset-y-0 rounded-full ${up ? 'bg-[var(--positive)]' : 'bg-[var(--negative)]'}`}
+                    className={`absolute inset-y-0 ${up ? 'rounded-r-[4px]' : 'rounded-l-[4px]'} ${up ? 'bg-[var(--positive)]' : 'bg-[var(--negative)]'}`}
                     style={up ? { left: '50%', width: `${w}%` } : { right: '50%', width: `${w}%` }}
                   />
                 </div>
@@ -433,7 +430,7 @@ function ExchangePerformance() {
                       style={{ background: tint(it.pct) }}
                     >
                       <div className="truncate text-[11px] text-[var(--text-strong)]">{it.name}</div>
-                      <div className={`text-xs font-semibold tabular-nums ${it.pct >= 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>{pctText(it.pct)}</div>
+                      <div className="text-xs font-semibold tabular-nums text-[var(--text-strong)]">{pctText(it.pct)}</div>
                     </button>
                   ))}
                 </div>
@@ -457,7 +454,6 @@ export function WorldMarketsPanel() {
       <ExchangeClock />
       <GlobalMacro />
       <ExchangePerformance />
-      <p className="text-xs text-[var(--muted)]">{t('wd.disclaimer')}</p>
     </div>
   );
 }

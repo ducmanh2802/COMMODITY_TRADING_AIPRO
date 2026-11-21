@@ -99,9 +99,9 @@ export function VolumeProfilePanel({ instrumentId }: { instrumentId: string }) {
               return (
                 <div key={i} className="flex items-center gap-2 text-[10px] font-mono tabular-nums" title={`${price(b.low)} – ${price(b.high)}: ${fmtInt(Math.round(b.volume))}`}>
                   <span className="w-14 text-right text-[var(--text)]/60 shrink-0">{price((b.low + b.high) / 2)}</span>
-                  <span className="flex-1 h-2.5 bg-[var(--border)]/30 rounded-sm overflow-hidden">
+                  <span className="flex-1 h-2.5">
                     <span
-                      className={`block h-full rounded-sm ${isPoc ? 'bg-[var(--warning)]' : inVa ? 'bg-[var(--accent)]' : 'bg-[var(--accent)]/35'}`}
+                      className={`block h-full rounded-r-[4px] hover:brightness-125 ${isPoc ? 'bg-[var(--series-1)]' : inVa ? 'bg-[var(--series-1)]/60' : 'bg-[var(--series-1)]/25'}`}
                       style={{ width: `${maxVol > 0 ? Math.max(1, (b.volume / maxVol) * 100) : 0}%` }}
                     />
                   </span>
@@ -111,10 +111,10 @@ export function VolumeProfilePanel({ instrumentId }: { instrumentId: string }) {
           </div>
           <ul className="text-[11px] font-mono text-[var(--text)]/75 space-y-0.5">
             <li>
-              <span className="text-[var(--warning)]">■</span> {t('vp.poc', { price: price(profile.poc) })}
+              <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-[2px] bg-[var(--series-1)] align-[-1px]" /> {t('vp.poc', { price: price(profile.poc) })}
             </li>
             <li>
-              <span className="text-[var(--accent-text)]">■</span> {t('vp.va', { low: price(profile.vaLow), high: price(profile.vaHigh) })}
+              <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-[2px] bg-[var(--series-1)]/60 align-[-1px]" /> {t('vp.va', { low: price(profile.vaLow), high: price(profile.vaHigh) })}
             </li>
             <li className="text-[var(--text)]/50">{t('vp.bars', { used: profile.usedBars, skipped: profile.skippedBars })}</li>
             {candles.data.provenance[0] && <li className="text-[var(--text)]/50">{t('vp.source', { source: candles.data.provenance[0].sourceLabel })}</li>}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react';
+import { ArrowDown, ArrowUp, RefreshCw } from 'lucide-react';
 import { fmtDateTime, useI18n, type TKey } from '../../../i18n';
 import type { Scorecard, ScorecardListResponse } from '../../../shared/types/scorecard';
 import type { DataQualityStatus } from '../../../shared/types/market';
@@ -118,13 +118,6 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
           </button>
         }
       />
-
-      <Card tone="warning" className="flex items-start gap-2">
-        <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-        <span>
-          <strong className="font-semibold">{t('sc.disclaimer')}</strong> <span className="text-[var(--warning)]/80">{t('sc.disclaimerDetail')}</span>
-        </span>
-      </Card>
 
       <div role="group" aria-label={t('sc.filter.label')} className="flex flex-wrap gap-2">
         {['ALL', ...CATEGORIES].map((c) => (

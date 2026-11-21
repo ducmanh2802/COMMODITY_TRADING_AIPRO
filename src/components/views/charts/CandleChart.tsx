@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { chartPalette, useThemeKey, withAlpha } from '../../../shared/theme/chartColors';
+import { LINE_WIDTH, lwBase, resolveColor } from '../../../shared/theme/chartTheme';
 import {
   CandlestickSeries,
-  ColorType,
-  CrosshairMode,
   HistogramSeries,
   LineSeries,
   createChart,
@@ -100,20 +99,7 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
     const DOWN = pal.down;
 
     const chart = createChart(el, {
-      autoSize: true,
-      layout: {
-        background: { type: ColorType.Solid, color: pal.surface },
-        textColor: withAlpha(pal.text, 0.75),
-        fontSize: 11,
-        panes: { separatorColor: pal.border, separatorHoverColor: withAlpha(pal.accent, 0.3) },
-      },
-      grid: {
-        vertLines: { color: withAlpha(pal.border, 0.45) },
-        horzLines: { color: withAlpha(pal.border, 0.45) },
-      },
-      crosshair: { mode: CrosshairMode.Normal },
-      rightPriceScale: { borderColor: pal.border },
-      timeScale: { borderColor: pal.border, timeVisible: intraday, secondsVisible: false },
+      ...lwBase({ timeVisible: intraday }),
       localization: intraday
         ? {
             timeFormatter: (t: Time) =>
@@ -169,8 +155,8 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
 
     for (const o of overlays) {
       const s = chart.addSeries(LineSeries, {
-        color: o.color,
-        lineWidth: o.lineWidth ?? 1,
+        color: resolveColor(o.color),
+        lineWidth: o.lineWidth ?? LINE_WIDTH,
         title: o.label,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -187,19 +173,19 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
           1
         );
         s.setData(
-          lineData(h, timeframe).map((p) => ({ ...p, color: p.value >= 0 ? h.positiveColor : h.negativeColor }))
+          lineData(h, timeframe).map((p) => ({ ...p, color: withAlpha(resolveColor(p.value >= 0 ? h.positiveColor : h.negativeColor), 0.55) }))
         );
       }
       lowerPane.lines.forEach((ln, idx) => {
         const s = chart.addSeries(
           LineSeries,
-          { color: ln.color, lineWidth: ln.lineWidth ?? 1, title: ln.label, priceLineVisible: false },
+          { color: resolveColor(ln.color), lineWidth: ln.lineWidth ?? LINE_WIDTH, title: ln.label, priceLineVisible: false },
           1
         );
         s.setData(lineData(ln, timeframe));
         if (idx === 0) {
           for (const lvl of lowerPane.levels) {
-            s.createPriceLine({ price: lvl, color: 'rgba(229, 231, 235, 0.35)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '' });
+            s.createPriceLine({ price: lvl, color: withAlpha(pal.text, 0.35), lineWidth: 1, lineStyle: 0, axisLabelVisible: true, title: '' });
           }
         }
       });
@@ -214,7 +200,9 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
 
     const last = candleData.length > 0 ? byTime.get(String(candleData[candleData.length - 1].time)) ?? null : null;
     setLegend(last);
-    chart.subscribeCrosshairMove((param) => {
+    let disposed = false;
+    const onCrosshairMove = (param: Parameters<Parameters<IChartApi['subscribeCrosshairMove']>[0]>[0]) => {
+      if (disposed) return;
       if (param.time === undefined) {
         setLegend(last);
         return;
@@ -225,9 +213,12 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
           ? `${t.year}-${String(t.month).padStart(2, '0')}-${String(t.day).padStart(2, '0')}`
           : String(t);
       setLegend(byTime.get(key) ?? last);
-    });
+    };
+    chart.subscribeCrosshairMove(onCrosshairMove);
 
     return () => {
+      disposed = true;
+      chart.unsubscribeCrosshairMove(onCrosshairMove);
       chartRef.current = null;
       setApi(null);
       chart.remove();

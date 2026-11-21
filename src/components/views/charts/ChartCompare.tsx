@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ColorType, CrosshairMode, LineSeries, createChart, type IChartApi, type ISeriesApi, type Time } from 'lightweight-charts';
+import { CrosshairMode, LineSeries, createChart, type IChartApi, type ISeriesApi, type Time } from 'lightweight-charts';
 import { X } from 'lucide-react';
 import { fetchCandles, fetchDatasets, type DatasetRecord } from '../../../api/dataApi';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { useT } from '../../../i18n';
+import { LINE_WIDTH, lwBase, seriesColor, seriesVar } from '../../../shared/theme/chartTheme';
 import type { MarketCandle } from '../../../shared/types/market';
 import { CandleChart } from './CandleChart';
 import {
@@ -66,14 +67,6 @@ const btnOn = 'px-3 py-1.5 text-xs rounded-md border border-[var(--accent)] bg-[
 const selectCls =
   'bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)]';
 
-function cssVar(name: string, fallback: string): string {
-  try {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 function useThemeKey(): string {
   const [k, setK] = useState(() => document.documentElement.getAttribute('data-theme') ?? 'dark');
   useEffect(() => {
@@ -122,23 +115,16 @@ function CompareChart({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const border = cssVar('--border', '#2A3631');
     const chart: IChartApi = createChart(el, {
-      autoSize: true,
-      layout: {
-        background: { type: ColorType.Solid, color: cssVar('--surface', '#141B18') },
-        textColor: cssVar('--text', '#E6ECE8'),
-      },
-      grid: { vertLines: { color: border }, horzLines: { color: border } },
-      rightPriceScale: { borderColor: border },
-      timeScale: { borderColor: border },
-      crosshair: { mode: CrosshairMode.Magnet },
+      ...lwBase(),
+      crosshair: { ...lwBase().crosshair, mode: CrosshairMode.Magnet },
     });
     const apis = new Map<string, ISeriesApi<'Line'>>();
     series.forEach((s, i) => {
       const line = chart.addSeries(LineSeries, {
         color: colors[i] ?? '#888888',
-        lineWidth: 2,
+        lineWidth: LINE_WIDTH,
+        priceLineVisible: false,
         priceFormat: { type: 'custom', formatter: (p: number) => `${p.toFixed(2)}%`, minMove: 0.01 },
       });
       const data: { time: Time; value: number }[] = [];
@@ -198,11 +184,23 @@ function PerformanceCompare({ index, label }: { index: Map<string, D1Ref>; label
     return normalizeSeries(input, win);
   }, [valid, cache, win]);
 
-  const slotOf = (id: string) => Math.max(0, valid.indexOf(id)) + 1;
+  // Colour follows the entity: a slot is claimed once and kept while the entity stays selected (removing one never repaints the rest).
+  const slotMap = useRef(new Map<string, number>());
+  for (const id of [...slotMap.current.keys()]) if (!valid.includes(id)) slotMap.current.delete(id);
+  for (const id of valid) {
+    if (!slotMap.current.has(id)) {
+      const used = new Set(slotMap.current.values());
+      let k = 0;
+      while (used.has(k)) k++;
+      slotMap.current.set(id, k);
+    }
+  }
+  const slotOf = (id: string) => (slotMap.current.get(id) ?? 0) + 1;
+  const slotKey = valid.map((id) => `${id}:${slotOf(id)}`).join('|');
   const colors = useMemo(
-    () => normalized.series.map((s) => cssVar(`--series-${Math.max(0, valid.indexOf(s.id)) + 1}`, '#4DA3FF')),
+    () => normalized.series.map((s) => seriesColor(slotOf(s.id) - 1)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [normalized, valid, theme]
+    [normalized, slotKey, theme]
   );
   const failed = valid.filter((id) => cache[id] === 'error');
   const q = query.trim().toLowerCase();
@@ -295,11 +293,11 @@ function PerformanceCompare({ index, label }: { index: Map<string, D1Ref>; label
             const v = hover ? (hover.values[id] ?? null) : (s?.finalPct ?? null);
             return (
               <li key={id} className="flex items-center gap-2 bg-[var(--surface)] border border-[var(--border)] rounded-md px-3 py-2 text-xs">
-                <span className="w-3 h-3 rounded-sm shrink-0" style={{ background: `var(--series-${slotOf(id)})` }} aria-hidden="true" />
+                <span className="w-3 h-0.5 rounded-full shrink-0" style={{ background: seriesVar(slotOf(id) - 1) }} aria-hidden="true" />
                 <span className="text-[var(--text-strong)] truncate flex-1">{label(id)}</span>
                 <span
                   className="font-mono tabular-nums"
-                  style={{ color: v === null ? 'var(--faint)' : v >= 0 ? 'var(--positive)' : 'var(--negative)' }}
+                  style={{ color: v === null ? 'var(--faint)' : 'var(--text-strong)' }}
                   title={hover ? t('cmp.asOf', { date: hover.date }) : t('cmp.final')}
                 >
                   {v === null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`}
