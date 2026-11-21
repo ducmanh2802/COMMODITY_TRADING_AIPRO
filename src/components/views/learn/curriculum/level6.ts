@@ -4,8 +4,8 @@ const ILLUS = 'Ví dụ minh hoạ, không phải dữ liệu hiện tại.';
 
 export const LEVEL6: Level = {
   id: 'l6',
-  number: 6,
-  title: 'Cấp 6 — Quy trình phân tích một mã trong ứng dụng',
+  number: 7,
+  title: 'Cấp 7 — Quy trình phân tích một mã trong ứng dụng',
   goal: 'Học cách đọc từng chỉ số ứng dụng hiển thị và quy trình 7 bước để nghiên cứu một mã. Đây là khung nghiên cứu để bạn tự quyết định, không phải khuyến nghị mua/bán.',
   lessons: [
     {

@@ -56,7 +56,22 @@ export interface Level {
   lessons: Lesson[];
 }
 
-export const q = (question: string, options: string[], answer: number, why: string): QuizQuestion => ({ q: question, options, answer, why });
+/**
+ * Quiz helper. Authors list the correct option anywhere (usually first); the options are then shuffled
+ * deterministically (seeded by the question text) so the right answer is not always in the same place,
+ * yet stays stable between renders and sessions.
+ */
+export const q = (question: string, options: string[], answer: number, why: string): QuizQuestion => {
+  let h = 2166136261;
+  for (let i = 0; i < question.length; i++) h = Math.imul(h ^ question.charCodeAt(i), 16777619) >>> 0;
+  const order = options.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0;
+    const j = h % (i + 1);
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return { q: question, options: order.map((i) => options[i]), answer: order.indexOf(answer), why };
+};
 
 export const SRC = {
   cmeEdu: { label: 'CME Group – Education', url: 'https://www.cmegroup.com/education.html' },

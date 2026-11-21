@@ -2,8 +2,8 @@ import { q, SRC, type Level } from './types';
 
 export const LEVEL5: Level = {
   id: 'l5',
-  number: 5,
-  title: 'Cấp 5 — Quản trị rủi ro và tâm lý',
+  number: 6,
+  title: 'Cấp 6 — Quản trị rủi ro và tâm lý',
   goal: 'Biết đo rủi ro bằng tiền, cắt lỗ như một công cụ quản trị, ghi nhật ký, tránh sai lầm của người mới và nhận diện lừa đảo.',
   lessons: [
     {

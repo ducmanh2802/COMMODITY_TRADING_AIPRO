@@ -2,8 +2,8 @@ import { q, SRC, type Level } from './types';
 
 export const LEVEL7: Level = {
   id: 'l7',
-  number: 7,
-  title: 'Cấp 7 — Lướt sóng cho người mới',
+  number: 8,
+  title: 'Cấp 8 — Lướt sóng cho người mới',
   goal: 'Hiểu lướt sóng (giữ vài ngày đến vài tuần) một cách trung thực: rủi ro trước, khung 7 quy tắc, kiểm thử bằng backtest và lộ trình tập trên tài khoản giả lập. Giáo dục, không phải tư vấn đầu tư.',
   lessons: [
     {
@@ -59,7 +59,7 @@ export const LEVEL7: Level = {
       title: 'Lộ trình: tập trên tài khoản giả lập trước',
       objective: 'Có kế hoạch từng bước trước khi dùng tiền thật.',
       body: [
-        'Lộ trình gợi ý: học Cấp 1 đến 5; thực hành quy trình Cấp 6; backtest khung với phí thực tế; giả lập (paper trade) vài tháng và ghi nhật ký; chỉ khi kỷ luật ổn mới cân nhắc tiền thật với số vốn nhỏ bạn có thể chịu mất.',
+        'Lộ trình gợi ý: học Cấp 1 đến 7 (gồm Cấp 5 Đọc biểu đồ); thực hành quy trình Cấp 7; backtest khung với phí thực tế; giả lập (paper trade) vài tháng và ghi nhật ký; chỉ khi kỷ luật ổn mới cân nhắc tiền thật với số vốn nhỏ bạn có thể chịu mất.',
         'Giả lập không bao gồm áp lực tâm lý khi mất tiền thật, nên kết quả thật có thể khác.',
         'Chỉ giao dịch qua thành viên được MXV cấp phép; kiểm tra tên trên mxv.com.vn. Cảnh giác "sàn" hứa lợi nhuận cố định, nhóm kín gợi ý lệnh, yêu cầu chuyển tiền vào tài khoản cá nhân.',
         'Nội dung này là giáo dục, không phải tư vấn đầu tư. Bạn tự chịu trách nhiệm về quyết định của mình.',

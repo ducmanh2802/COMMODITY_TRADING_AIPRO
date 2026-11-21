@@ -32,7 +32,7 @@ export const LEVEL2: Level = {
       body: [
         'Nhà đầu tư không giao dịch trực tiếp trên MXV mà qua thành viên kinh doanh của MXV (công ty môi giới). Theo một nguồn báo chí, tại 01/09/2026 MXV có 33 thành viên; con số này có thể đã thay đổi.',
         'Cách kiểm tra: tìm tên công ty trong danh sách thành viên trên website MXV, không chỉ tin vào quảng cáo của công ty đó.',
-        'Công ty không có tên trong danh sách thành viên và hứa hẹn lợi nhuận là dấu hiệu cảnh báo (xem Cấp 5 về lừa đảo).',
+        'Công ty không có tên trong danh sách thành viên và hứa hẹn lợi nhuận là dấu hiệu cảnh báo (xem Cấp 6 về lừa đảo).',
       ],
       remember: ['Chỉ giao dịch qua thành viên có tên trên website MXV.', 'Không chuyển tiền vào tài khoản cá nhân.'],
       uncertain: ['Số lượng và danh sách thành viên hiện tại: cần kiểm tra lại với MXV (mxv.com.vn).'],

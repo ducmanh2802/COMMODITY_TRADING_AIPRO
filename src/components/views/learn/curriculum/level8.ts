@@ -2,8 +2,8 @@ import { q, SRC, type Level } from './types';
 
 export const LEVEL8: Level = {
   id: 'l8',
-  number: 8,
-  title: 'Cấp 8 — Đọc biểu đồ: Lý thuyết Dow, Price Action, Khối lượng',
+  number: 5,
+  title: 'Cấp 5 — Đọc biểu đồ: Lý thuyết Dow, Price Action, Khối lượng',
   goal: 'Hiểu ba nền tảng đọc biểu đồ cổ điển: Lý thuyết Dow (xu hướng là gì), Price Action (đọc hành vi giá qua đỉnh/đáy, hỗ trợ/kháng cự, nến) và Khối lượng + Hợp đồng mở (xác nhận sức mạnh). Đây là công cụ quan sát để học, không phải tín hiệu mua bán.',
   lessons: [
     {
