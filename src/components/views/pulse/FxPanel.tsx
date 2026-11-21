@@ -154,7 +154,7 @@ export function FxPanel() {
       <p className="text-xs text-[var(--faint)]">{t('fx.generatedAt', { v: fmtDate(data.retrievedAt) })}</p>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {data.rates.map((r) => <FxCard key={r.pair} rate={r} lang={l} />)}
+        {(data.rates ?? []).map((r) => <FxCard key={r.pair} rate={r} lang={l} />)}
       </div>
 
       <details className="text-xs text-[var(--muted)]">

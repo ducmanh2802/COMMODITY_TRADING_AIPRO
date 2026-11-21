@@ -28,5 +28,5 @@ export function registerFxRoutes(app: Express, deps: FxRouteDeps = {}): void {
       }
     };
 
-  app.get('/api/fx/rates', handle((s) => s.getAllRates()));
+  app.get('/api/fx/rates', handle(async (s) => ({ retrievedAt: new Date().toISOString(), rates: await s.getAllRates() })));
 }
