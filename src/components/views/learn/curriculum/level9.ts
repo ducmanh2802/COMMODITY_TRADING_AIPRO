@@ -1,0 +1,238 @@
+import { q, SRC, type Level } from './types';
+
+export const LEVEL9: Level = {
+  id: 'l9',
+  number: 9,
+  title: 'Cấp 9 — Làm chủ kỹ năng trading',
+  goal: 'Đi từ "biết đọc biểu đồ" đến "giao dịch như một nghề": kỳ vọng toán học, quản lý vốn, setup cụ thể, đa khung thời gian, tâm lý, kế hoạch giao dịch và tự đánh giá bằng nhật ký. Mọi số liệu trong ví dụ là giả định để học, không phải dữ liệu hiện tại hay lời khuyên đầu tư.',
+  lessons: [
+    {
+      id: 'l9-living',
+      title: 'Trading để sống: tính vốn và kỳ vọng thực tế',
+      objective: 'Biết tính số vốn cần có, mức lãi hợp lý và vì sao vốn nhỏ + mục tiêu lớn = cháy tài khoản.',
+      body: [
+        'Công thức gốc: Vốn cần có = Chi tiêu mỗi tháng ÷ Lãi trung bình mỗi tháng. Lãi 1–2%/tháng đều đặn (12–27%/năm) đã thuộc nhóm rất giỏi; các quỹ chuyên nghiệp đạt 10–20%/năm đã được coi là tốt.',
+        'Ví dụ: cần 15 triệu/tháng. Lãi 1,5%/tháng → cần 1 tỷ. Nếu chỉ có 50 triệu, bạn phải lãi 30%/tháng. Để đạt mức đó buộc phải dùng đòn bẩy cực cao và vào lệnh liên tục — một chuỗi 5 lệnh thua liên tiếp (rất bình thường) có thể xoá sạch tài khoản.',
+        'Lãi không đều: một năm tốt có thể gồm 7 tháng lãi, 5 tháng lỗ. Nếu bạn phải rút tiền đều mỗi tháng, những tháng lỗ sẽ ép bạn "gỡ" bằng cách tăng rủi ro — vòng xoáy phổ biến nhất dẫn đến cháy tài khoản.',
+        'Vì vậy lộ trình hợp lý: giữ thu nhập chính → học và giao dịch giả lập 3–6 tháng → giao dịch tiền thật nhỏ 6–12 tháng → chỉ tăng vốn khi có bằng chứng từ nhật ký (≥100 lệnh, kỳ vọng dương, drawdown chịu được). Có quỹ dự phòng 6–12 tháng chi tiêu trước khi nghĩ đến trading toàn thời gian.',
+        'Lãi kép mới là sức mạnh thật: 50 triệu, lãi 2%/tháng, không rút, sau 3 năm ≈ 102 triệu; sau 5 năm ≈ 164 triệu. Chậm nhưng thật — và đòi hỏi bạn sống sót qua các giai đoạn lỗ.',
+      ],
+      textExample:
+        'Ví dụ so sánh (giả định): Anh A có 100 triệu, đặt mục tiêu 1 triệu/ngày (≈ 20–25%/tháng), mỗi lệnh rủi ro 10% vốn. Sau 5 lệnh thua liên tiếp, tài khoản còn ≈ 59 triệu và phải lãi 69% mới về lại vốn. Anh B có 100 triệu, mục tiêu 2%/tháng, rủi ro 1%/lệnh. Sau 5 lệnh thua còn ≈ 95 triệu, chỉ cần lãi 5,3% để hồi vốn. Cả hai đều gặp chuỗi thua — chỉ anh B còn ở lại thị trường.',
+      remember: [
+        'Vốn cần = chi tiêu tháng ÷ lãi tháng thực tế (1–2%).',
+        'Mục tiêu lãi quá cao buộc phải rủi ro quá cao.',
+        'Giữ thu nhập chính và quỹ dự phòng trong 1–2 năm đầu.',
+      ],
+      quiz: [
+        q('Cần 20 triệu/tháng, lãi đều 2%/tháng thì cần vốn khoảng?', ['1 tỷ', '100 triệu', '200 triệu', '20 tỷ'], 0, '20 triệu ÷ 2% = 1 tỷ.'),
+        q('Rủi ro 10%/lệnh, thua 5 lệnh liên tiếp còn khoảng bao nhiêu % vốn?', ['59%', '50%', '90%', '95%'], 0, '0,9^5 ≈ 0,59.'),
+        q('Vì sao rút tiền đều mỗi tháng nguy hiểm khi vốn nhỏ?', ['Tháng lỗ ép bạn tăng rủi ro để gỡ', 'Do thuế', 'Sàn cấm rút', 'Không có lý do'], 0, 'Vòng xoáy gỡ lỗ.'),
+        q('Mức lãi đều đặn được coi là rất giỏi?', ['1–2%/tháng', '20%/tháng', '5%/ngày', '100%/năm là bình thường'], 0, 'Quỹ chuyên nghiệp 10–20%/năm đã tốt.'),
+      ],
+      links: [{ module: 'risk', label: 'Rủi ro' }, { module: 'portfolio', label: 'Danh mục' }],
+      sources: [SRC.cmeEdu],
+    },
+    {
+      id: 'l9-expectancy',
+      title: 'Kỳ vọng toán học (Expectancy) và R-multiple',
+      objective: 'Hiểu vì sao tỷ lệ thắng không quan trọng bằng kỳ vọng, và cách tính kỳ vọng từ nhật ký.',
+      body: [
+        '1R = số tiền bạn chấp nhận mất nếu lệnh chạm stop. Mọi kết quả đo bằng R: lãi gấp 2 lần rủi ro = +2R, chạm stop = -1R. Đo bằng R giúp so sánh các lệnh khác nhau về mã, khối lượng, vốn.',
+        'Công thức: Kỳ vọng (E) = (Tỷ lệ thắng × Lãi trung bình tính bằng R) − (Tỷ lệ thua × Lỗ trung bình tính bằng R).',
+        'Ví dụ 1: thắng 40%, lãi trung bình 2,5R, thua 60%, lỗ trung bình 1R → E = 0,4×2,5 − 0,6×1 = +0,4R mỗi lệnh. Nghĩa là trung bình mỗi lệnh kiếm 0,4 lần số tiền rủi ro. Rủi ro 1 triệu/lệnh, 100 lệnh → kỳ vọng ≈ +40 triệu (trước phí).',
+        'Ví dụ 2: thắng 70% nhưng lãi trung bình 0,5R, lỗ trung bình 1,5R → E = 0,7×0,5 − 0,3×1,5 = −0,1R. Thắng nhiều nhưng vẫn thua tiền — đây là bẫy của người "chốt lời sớm, gồng lỗ".',
+        'Chuỗi thua là tất yếu: với tỷ lệ thắng 40%, xác suất gặp ít nhất một chuỗi 6 lệnh thua liên tiếp trong 100 lệnh là rất cao. Hệ thống tốt vẫn có những tuần tệ. Đừng bỏ hệ thống sau 5 lệnh thua — hãy đánh giá sau tối thiểu 30–50 lệnh.',
+        'Phí và trượt giá trừ trực tiếp vào kỳ vọng. Nếu phí + trượt giá ≈ 0,1R mỗi lệnh, hệ thống E = +0,15R chỉ còn +0,05R. Đây là lý do lướt quá ngắn (nhiều lệnh, stop hẹp) thường thua: chi phí chiếm tỷ trọng lớn so với R.',
+      ],
+      textExample:
+        'Bài tập từ nhật ký (giả định): 20 lệnh gần nhất: 8 thắng với kết quả +2R, +3R, +1,5R, +2R, +0,5R, +4R, +2R, +1R (tổng +16R, trung bình 2R); 12 thua đều −1R (tổng −12R). Tỷ lệ thắng 40%. E = 0,4×2 − 0,6×1 = +0,2R. Tổng = +4R sau 20 lệnh. Mẫu còn nhỏ, chưa đủ kết luận, nhưng là hướng đúng.',
+      remember: [
+        'Kỳ vọng = %thắng × lãi TB − %thua × lỗ TB (đơn vị R).',
+        'Tỷ lệ thắng cao không có nghĩa là có lãi.',
+        'Đánh giá hệ thống sau ≥30–50 lệnh, không phải sau vài lệnh.',
+      ],
+      quiz: [
+        q('Thắng 50%, lãi TB 2R, lỗ TB 1R thì kỳ vọng?', ['+0,5R', '+1R', '0R', '−0,5R'], 0, '0,5×2 − 0,5×1 = 0,5.'),
+        q('Thắng 80%, lãi TB 0,3R, lỗ TB 2R thì?', ['Kỳ vọng âm (−0,16R)', 'Có lãi lớn', 'Hòa vốn', 'Không tính được'], 0, '0,24 − 0,4 = −0,16.'),
+        q('1R là gì?', ['Số tiền mất nếu chạm stop', 'Lãi mục tiêu', 'Ký quỹ', '1% vốn luôn luôn'], 0, 'Đơn vị rủi ro của lệnh.'),
+        q('Vì sao lướt quá ngắn hay thua?', ['Phí và trượt giá chiếm phần lớn so với R', 'Sàn không cho', 'Do tỷ giá', 'Luôn thắng nên chán'], 0, 'Chi phí bào mòn kỳ vọng.'),
+      ],
+      links: [{ module: 'journal', label: 'Sổ ghi chú' }, { module: 'backtest', label: 'Kiểm thử chiến lược' }],
+      sources: [SRC.cmeEdu],
+    },
+    {
+      id: 'l9-money',
+      title: 'Quản lý vốn: khối lượng, drawdown và giới hạn ngày',
+      objective: 'Tính khối lượng chính xác theo rủi ro, hiểu toán học của drawdown và đặt "cầu dao" bảo vệ tài khoản.',
+      body: [
+        'Công thức khối lượng: Số hợp đồng = (Vốn × % rủi ro) ÷ (Khoảng cách stop × Giá trị mỗi đơn vị giá của 1 hợp đồng). Luôn làm tròn XUỐNG.',
+        'Ví dụ ngô CBOT (giả định): vốn 30.000 USD, rủi ro 1% = 300 USD. Vào 450 cent, stop 438 cent → khoảng cách 12 cent. Mỗi cent của 1 hợp đồng ngô (5.000 giạ) = 50 USD → rủi ro mỗi hợp đồng = 12 × 50 = 600 USD. Số hợp đồng = 300 ÷ 600 = 0,5 → làm tròn xuống 0: lệnh này QUÁ LỚN so với vốn. Giải pháp: dùng hợp đồng mini (nếu có), nới vốn, hoặc bỏ qua lệnh. Bỏ qua là một quyết định tốt.',
+        'Toán học drawdown (không đối xứng): lỗ 10% cần lãi 11% để hồi; lỗ 20% cần 25%; lỗ 30% cần 43%; lỗ 50% cần 100%; lỗ 70% cần 233%. Giữ drawdown nhỏ quan trọng hơn kiếm lãi lớn.',
+        'Ba "cầu dao" nên có: (1) Giới hạn ngày: lỗ 2–3% vốn trong ngày thì dừng giao dịch đến hôm sau. (2) Giới hạn tuần/tháng: lỗ 6% tuần hoặc 10% tháng thì giảm một nửa khối lượng và xem lại nhật ký. (3) Giới hạn vị thế: tổng rủi ro mọi lệnh đang mở không quá 4–5% vốn, và không mở nhiều lệnh cùng chiều trên các mã tương quan cao (ngô + lúa mì + đậu tương cùng mua = gần như một lệnh lớn).',
+        'Ký quỹ không phải rủi ro: ký quỹ là tiền đặt cọc sàn giữ; rủi ro là khoảng cách tới stop. Một lệnh ký quỹ thấp vẫn có thể rủi ro lớn nếu stop xa hoặc giá nhảy qua stop (gap) khi có báo cáo.',
+      ],
+      example: {
+        caption: 'Ví dụ minh hoạ, không phải dữ liệu hiện tại: vốn 30.000 USD, rủi ro 1%, stop 12 cent, phí 0',
+        calc: { kind: 'sizing', instrumentId: 'CBOT:ZC', equity: 30000, riskPct: 1, stop: 12, costs: 0 },
+      },
+      remember: [
+        'Khối lượng tính từ stop và % rủi ro, làm tròn xuống.',
+        'Lỗ 50% cần lãi 100% để hồi vốn — bảo vệ vốn trước.',
+        'Đặt giới hạn lỗ ngày/tuần và giới hạn tổng rủi ro mở.',
+      ],
+      quiz: [
+        q('Lỗ 20% cần lãi bao nhiêu để hồi vốn?', ['25%', '20%', '40%', '15%'], 0, '1 ÷ 0,8 − 1 = 25%.'),
+        q('Tính ra 0,7 hợp đồng thì nên?', ['Làm tròn xuống (0) và bỏ qua/ dùng mini', 'Làm tròn lên 1', 'Vào 2 hợp đồng', 'Bỏ stop'], 0, 'Không vượt rủi ro đã định.'),
+        q('Mua cùng lúc ngô, lúa mì, đậu tương có rủi ro gì?', ['Tương quan cao, như một lệnh lớn', 'Đa dạng hóa hoàn hảo', 'Không rủi ro', 'Giảm phí'], 0, 'Các mã ngũ cốc thường đi cùng nhau.'),
+        q('Ký quỹ có phải là số tiền rủi ro của lệnh?', ['Không, rủi ro là khoảng cách tới stop (và gap)', 'Có, luôn bằng nhau', 'Chỉ với vàng', 'Chỉ khi lỗ'], 0, 'Hai khái niệm khác nhau.'),
+      ],
+      links: [{ module: 'risk', label: 'Rủi ro' }, { module: 'explorer', label: 'Thông số hợp đồng' }],
+      calculator: 'position-sizing',
+      instrumentIds: ['CBOT:ZC'],
+      sources: [SRC.cmeAg, SRC.cmeEdu],
+    },
+    {
+      id: 'l9-setups',
+      title: '3 setup cụ thể: Pullback, Breakout–Retest, Range',
+      objective: 'Có 3 mẫu giao dịch rõ ràng với điều kiện vào, stop, mục tiêu và điều kiện huỷ.',
+      body: [
+        'Setup = một tình huống lặp lại có quy tắc rõ ràng. Người chuyên nghiệp thường chỉ giao dịch 1–3 setup và làm thật thuần thục, thay vì đuổi theo mọi chuyển động.',
+        'Setup 1 – Pullback thuận xu hướng. Điều kiện: khung ngày có HH/HL, giá trên MA50 và MA50 dốc lên. Chờ giá kéo về vùng hỗ trợ (đáy cũ hoặc gần MA20/MA50) với khối lượng giảm. Vào: khi có nến từ chối/nhấn chìm tăng tại vùng. Stop: dưới đáy nhịp điều chỉnh (hoặc 1,5×ATR). Mục tiêu: đỉnh cũ (tối thiểu 2R), phần còn lại dời stop theo đáy mới. Huỷ: giá đóng cửa dưới đáy HL gần nhất.',
+        'Setup 2 – Breakout rồi Retest. Điều kiện: giá đi ngang/tích lũy dưới một kháng cự rõ ràng (chạm ≥2–3 lần). Chờ phiên đóng cửa vượt kháng cự với khối lượng > trung bình 20 phiên. KHÔNG mua đuổi — chờ giá quay lại kiểm tra (retest) vùng kháng cự cũ. Vào: khi retest giữ được và xuất hiện nến tăng. Stop: dưới vùng kháng cự cũ. Mục tiêu: chiều cao vùng tích lũy cộng vào điểm phá vỡ. Huỷ: giá đóng cửa trở lại trong vùng tích lũy (phá vỡ giả).',
+        'Setup 3 – Giao dịch trong vùng đi ngang (Range). Điều kiện: giá dao động giữa sàn và trần rõ ràng, MA đi ngang, không có báo cáo lớn sắp tới. Vào mua gần sàn khi có nến từ chối, bán gần trần (nếu được phép bán khống). Stop: ngoài vùng một khoảng (0,5–1×ATR). Mục tiêu: giữa vùng hoặc biên đối diện. Huỷ: giá đóng cửa ra ngoài vùng — lúc đó chuyển sang tư duy breakout.',
+        'Chọn setup theo trạng thái thị trường: có xu hướng rõ → Setup 1; tích lũy chặt dưới kháng cự → Setup 2; đi ngang biên rộng → Setup 3. Dùng sai setup cho sai trạng thái là nguyên nhân thua phổ biến.',
+        'Hãy kiểm thử từng setup trên lịch sử (công cụ Kiểm thử chiến lược + xem lại biểu đồ bằng tay), ghi lại ít nhất 30 ví dụ mỗi setup trước khi dùng tiền thật.',
+      ],
+      textExample:
+        'Ví dụ Setup 2 (giả định) — cà phê Arabica: giá tích lũy 3 tuần trong vùng 230–245 cent, chạm 245 ba lần. Phiên thứ Tư đóng cửa 249 với khối lượng gấp 1,6 lần trung bình. Không mua ngay. Hai phiên sau giá về 246, bóng dưới chạm 244 rồi đóng cửa 248 (retest giữ). Vào 248, stop 242 (dưới vùng cũ, rủi ro 6 cent), mục tiêu = 245 + (245 − 230) = 260 → lợi nhuận kỳ vọng 12 cent = 2R. Nếu giá đóng cửa dưới 242, đó là phá vỡ giả → thoát, mất 1R.',
+      remember: [
+        'Mỗi setup phải có: điều kiện, điểm vào, stop, mục tiêu, điều kiện huỷ.',
+        'Chọn setup theo trạng thái thị trường (xu hướng / tích lũy / đi ngang).',
+        'Thuần thục 1–3 setup tốt hơn biết 20 setup.',
+      ],
+      quiz: [
+        q('Setup Breakout–Retest vào lệnh khi nào?', ['Khi giá quay lại kiểm tra vùng phá vỡ và giữ được', 'Ngay khi vượt kháng cự trong phiên', 'Trước khi phá vỡ', 'Khi giá giảm mạnh'], 0, 'Tránh mua đuổi.'),
+        q('Thị trường đi ngang biên rộng, MA phẳng thì setup phù hợp?', ['Range', 'Pullback thuận xu hướng', 'Breakout luôn luôn', 'Không giao dịch được gì'], 0, 'Mua sàn, bán trần.'),
+        q('Trong ví dụ cà phê, mục tiêu tính thế nào?', ['Chiều cao vùng tích lũy cộng vào điểm phá vỡ', 'Gấp đôi giá', 'Bằng ký quỹ', 'Đoán'], 0, '245 + 15 = 260.'),
+        q('Điều kiện huỷ của Setup Pullback?', ['Giá đóng cửa dưới đáy HL gần nhất', 'Có một nến đỏ', 'Hết ngày', 'Lãi 1R'], 0, 'Cấu trúc tăng bị phá.'),
+      ],
+      links: [{ module: 'charts', label: 'Biểu đồ' }, { module: 'backtest', label: 'Kiểm thử chiến lược' }, { module: 'scanner', label: 'Scanner' }],
+      sources: [SRC.cmeEdu],
+    },
+    {
+      id: 'l9-mtf',
+      title: 'Phân tích đa khung thời gian',
+      objective: 'Dùng khung lớn để chọn hướng, khung vừa để tìm setup, khung nhỏ để tinh chỉnh điểm vào.',
+      body: [
+        'Quy tắc "1 khung lớn – 1 khung giao dịch – 1 khung vào lệnh", tỉ lệ khoảng 4–6 lần. Với lướt sóng: Tuần (hướng) → Ngày (setup) → 4 giờ (điểm vào). Với giao dịch trong ngày: Ngày → 1 giờ → 15 phút.',
+        'Khung lớn quyết định hướng: nếu khung tuần đang giảm (LH/LL), một tín hiệu mua trên khung ngày chỉ là nhịp hồi — tỷ lệ thành công thấp hơn. Ưu tiên giao dịch cùng chiều khung lớn.',
+        'Khung giao dịch tìm setup: xác định vùng hỗ trợ/kháng cự, cấu trúc và setup (Pullback/Breakout/Range) trên khung ngày.',
+        'Khung nhỏ để vào lệnh chính xác hơn: khi giá về vùng hỗ trợ khung ngày, chuyển xuống 4 giờ chờ cấu trúc nhỏ đảo chiều (tạo đáy cao hơn, phá đỉnh nhỏ gần nhất). Điều này cho phép stop hẹp hơn → khối lượng lớn hơn với cùng rủi ro, hoặc rủi ro nhỏ hơn với cùng khối lượng.',
+        'Bẫy thường gặp: nhìn quá nhiều khung đến mức luôn tìm được lý do cho mọi quyết định (thiên kiến xác nhận). Chỉ dùng 3 khung đã chọn, viết ra kết luận của từng khung trước khi vào lệnh.',
+      ],
+      textExample:
+        'Ví dụ (giả định) — vàng: Khung tuần: đỉnh và đáy cao dần → hướng MUA. Khung ngày: giá điều chỉnh từ 2.400 về vùng hỗ trợ 2.330–2.340 (đỉnh cũ đã bị phá). Khung 4 giờ: tại vùng này giá tạo đáy 2.332, hồi lên 2.348, giảm lại 2.338 (đáy cao hơn), rồi vượt 2.348. Vào 2.350, stop 2.330 (dưới đáy 4 giờ, rủi ro 20 USD/oz), mục tiêu 2.400 (đỉnh cũ, ≈ 2,5R). Nếu chỉ dùng khung ngày, stop hợp lý có thể phải đặt ở 2.310 (rủi ro 40) → R:R chỉ ≈ 1,25.',
+      remember: [
+        'Khung lớn = hướng, khung vừa = setup, khung nhỏ = điểm vào.',
+        'Ưu tiên giao dịch cùng chiều khung lớn.',
+        'Chỉ dùng 3 khung, viết kết luận từng khung trước khi vào lệnh.',
+      ],
+      quiz: [
+        q('Với lướt sóng, bộ khung hợp lý?', ['Tuần – Ngày – 4 giờ', '1 phút – 5 phút – 15 phút', 'Chỉ khung tháng', 'Năm – Tuần – Ngày – Giờ – Phút'], 0, 'Tỉ lệ khoảng 4–6 lần.'),
+        q('Khung tuần giảm, khung ngày có tín hiệu mua thì?', ['Chỉ là nhịp hồi, rủi ro cao hơn', 'Mua mạnh', 'Chắc chắn đảo chiều', 'Bỏ qua khung tuần'], 0, 'Ngược chiều khung lớn.'),
+        q('Lợi ích chính của khung nhỏ khi vào lệnh?', ['Stop hẹp hơn, R:R tốt hơn', 'Nhiều lệnh hơn', 'Không cần stop', 'Giảm phí sàn'], 0, 'Tinh chỉnh điểm vào.'),
+      ],
+      links: [{ module: 'charts', label: 'Biểu đồ' }, { module: 'technical', label: 'Phân tích kỹ thuật' }],
+      sources: [SRC.cmeEdu],
+    },
+    {
+      id: 'l9-psychology',
+      title: 'Tâm lý giao dịch: 6 cái bẫy và cách thoát',
+      objective: 'Nhận ra những sai lầm cảm xúc phổ biến và có quy tắc cụ thể để chặn chúng.',
+      body: [
+        '(1) FOMO – sợ bỏ lỡ: thấy giá chạy mạnh rồi mua đuổi ở đỉnh. Quy tắc chặn: chỉ vào lệnh nếu đúng setup đã viết sẵn; giá đã chạy quá 1×ATR khỏi điểm vào dự kiến thì bỏ qua. "Lỡ tàu" không mất tiền, đuổi tàu mới mất.',
+        '(2) Gồng lỗ – dời stop xa hơn vì "chắc nó sẽ quay lại". Quy tắc: stop chỉ được dời theo hướng có lợi, không bao giờ nới rộng. Đặt stop trên sàn ngay khi vào lệnh.',
+        '(3) Chốt lời quá sớm – sợ mất lãi nên thoát ở +0,5R, trong khi lỗ thì chịu đủ −1R. Hậu quả: kỳ vọng âm dù thắng nhiều. Quy tắc: chốt một phần ở mục tiêu đã định (ví dụ 2R), phần còn lại dời stop về hoà vốn rồi theo đáy/đỉnh mới.',
+        '(4) Trả thù thị trường (revenge trading): vừa lỗ xong vào ngay lệnh to hơn để gỡ. Quy tắc: sau 2 lệnh thua liên tiếp trong ngày, hoặc chạm giới hạn lỗ ngày → tắt máy.',
+        '(5) Tự tin thái quá sau chuỗi thắng: tăng khối lượng tùy tiện. Quy tắc: khối lượng chỉ thay đổi theo công thức % vốn, không theo cảm xúc.',
+        '(6) Thiên kiến xác nhận: chỉ đọc tin ủng hộ vị thế của mình. Quy tắc: trước khi vào lệnh, viết ra 2 lý do kịch bản có thể SAI và mức giá chứng minh điều đó.',
+        'Công cụ mạnh nhất chống lại cảm xúc là quy trình viết sẵn và nhật ký. Ghi cả cảm xúc khi vào/ra lệnh (bình tĩnh / sợ / tham / vội) — sau 30 lệnh bạn sẽ thấy lệnh thua lớn nhất thường đi cùng cảm xúc nào.',
+      ],
+      textExample:
+        'Ví dụ (giả định): Sáng thứ Hai bạn thua lệnh dầu −1R. 30 phút sau thấy dầu bật lên mạnh, bạn mua đuổi gấp đôi khối lượng "để gỡ" (FOMO + revenge), không đặt stop. Báo cáo EIA ra xấu, giá rơi; bạn dời stop xa thêm (gồng lỗ). Kết quả: −4R trong một buổi sáng — bằng công sức của 2 tuần giao dịch tốt. Nếu tuân thủ quy tắc "2 lệnh thua thì nghỉ" và "luôn đặt stop", tối đa chỉ mất −2R.',
+      remember: [
+        'Stop chỉ dời theo hướng có lợi, không bao giờ nới ra.',
+        'Lỡ tàu không mất tiền; đuổi tàu mới mất.',
+        'Hai lệnh thua liên tiếp hoặc chạm giới hạn ngày → dừng.',
+      ],
+      quiz: [
+        q('Revenge trading là gì?', ['Vào lệnh to hơn ngay sau khi lỗ để gỡ', 'Giao dịch theo tin tức', 'Bán khống', 'Giữ lệnh qua đêm'], 0, 'Cảm xúc thay quy trình.'),
+        q('Được phép dời stop thế nào?', ['Chỉ theo hướng có lợi', 'Xa hơn khi giá đi ngược', 'Bỏ stop khi lo', 'Tùy cảm giác'], 0, 'Không bao giờ nới rủi ro.'),
+        q('Giá đã chạy quá 1×ATR khỏi điểm vào dự kiến thì?', ['Bỏ qua lệnh', 'Mua đuổi gấp đôi', 'Vào không stop', 'Bán ngược'], 0, 'Chặn FOMO.'),
+        q('Vì sao ghi cảm xúc vào nhật ký?', ['Tìm mối liên hệ giữa cảm xúc và lệnh thua lớn', 'Cho vui', 'Bắt buộc của sàn', 'Để khoe'], 0, 'Dữ liệu để sửa hành vi.'),
+      ],
+      links: [{ module: 'journal', label: 'Sổ ghi chú' }, { module: 'risk', label: 'Rủi ro' }],
+      sources: [SRC.cmeEdu],
+    },
+    {
+      id: 'l9-plan',
+      title: 'Kế hoạch giao dịch (Trading Plan) và thói quen hằng ngày',
+      objective: 'Viết được một kế hoạch giao dịch hoàn chỉnh và một quy trình trước/trong/sau phiên.',
+      body: [
+        'Kế hoạch giao dịch là "hợp đồng với chính mình", viết ra giấy trước khi giao dịch. Tối thiểu gồm: (1) Thị trường và mã giao dịch (ví dụ 3–5 mã quen thuộc). (2) Khung thời gian. (3) Setup được phép (1–3 setup ở bài trước). (4) Quy tắc khối lượng (% rủi ro mỗi lệnh). (5) Giới hạn lỗ ngày/tuần/tháng. (6) Quy tắc với báo cáo lớn (WASDE, EIA, COT, Fed). (7) Quy tắc thoát lệnh và chốt lời. (8) Lịch đánh giá lại (hằng tuần, hằng tháng).',
+        'Trước phiên (15–30 phút): xem lịch kinh tế/báo cáo hôm nay (WASDE, EIA, dữ liệu Mỹ); kiểm tra "Hôm nay nên chú ý gì" và Tình hình tài chính thế giới trong app; cập nhật vùng hỗ trợ/kháng cự trên các mã theo dõi; viết ra 1–3 kịch bản "nếu… thì…".',
+        'Trong phiên: chỉ hành động khi kịch bản xảy ra; đặt stop ngay khi vào lệnh; không đổi kế hoạch giữa chừng vì tin đồn; tuân thủ giới hạn lỗ ngày.',
+        'Sau phiên (10–15 phút): ghi nhật ký mọi lệnh (lý do vào, ảnh chụp biểu đồ, kết quả R, cảm xúc, có đúng kế hoạch không); chấm điểm kỷ luật trong ngày (0–10), không phải chấm theo lãi/lỗ.',
+        'Cuối tuần: đọc lại toàn bộ nhật ký tuần, tìm một lỗi lặp lại nhiều nhất và một điều làm tốt nhất; điều chỉnh kế hoạch nếu cần — nhưng chỉ thay đổi một điều mỗi lần để biết thay đổi nào có tác dụng.',
+      ],
+      checklist: [
+        { text: 'Đã viết danh sách mã và khung thời gian giao dịch' },
+        { text: 'Đã viết 1–3 setup với điều kiện vào/stop/mục tiêu/huỷ' },
+        { text: 'Đã đặt % rủi ro mỗi lệnh và giới hạn lỗ ngày/tuần', module: 'risk', moduleLabel: 'Rủi ro' },
+        { text: 'Đã kiểm tra lịch báo cáo trong tuần', module: 'brief', moduleLabel: 'Hôm nay' },
+        { text: 'Đã tạo mẫu nhật ký và ghi lệnh đầu tiên', module: 'journal', moduleLabel: 'Sổ ghi chú' },
+      ],
+      textExample:
+        'Mẫu kế hoạch ngắn (ví dụ): "Tôi giao dịch ngô, đậu tương, dầu WTI, vàng. Khung Tuần–Ngày–4 giờ. Chỉ dùng Setup Pullback và Breakout–Retest. Rủi ro 1% vốn/lệnh, tối đa 3 lệnh mở, tổng rủi ro ≤ 3%. Lỗ 2% trong ngày thì nghỉ; lỗ 6% trong tuần thì giảm một nửa khối lượng. Không mở lệnh mới trong 24 giờ trước WASDE với ngô/đậu tương, trước EIA với dầu. Chốt 50% ở 2R, phần còn lại dời stop về hoà vốn. Đánh giá mỗi Chủ nhật."',
+      remember: [
+        'Viết kế hoạch trước, giao dịch sau.',
+        'Chấm điểm theo kỷ luật, không theo lãi/lỗ từng ngày.',
+        'Mỗi lần chỉ thay đổi một quy tắc.',
+      ],
+      quiz: [
+        q('Điều gì KHÔNG nên có trong kế hoạch giao dịch?', ['"Vào lệnh khi cảm thấy chắc"', 'Giới hạn lỗ ngày', 'Danh sách setup', 'Quy tắc với báo cáo lớn'], 0, 'Cảm giác không phải quy tắc.'),
+        q('Sau phiên nên chấm điểm theo tiêu chí nào?', ['Mức độ tuân thủ kế hoạch', 'Lãi nhiều hay ít', 'Số lệnh', 'Thời gian ngồi máy'], 0, 'Kỷ luật tạo ra kết quả dài hạn.'),
+        q('Vì sao chỉ thay đổi một quy tắc mỗi lần?', ['Để biết thay đổi nào có tác dụng', 'Do luật', 'Cho đỡ mệt', 'Không có lý do'], 0, 'Giống thí nghiệm khoa học.'),
+      ],
+      links: [{ module: 'brief', label: 'Hôm nay' }, { module: 'journal', label: 'Sổ ghi chú' }, { module: 'news', label: 'Tin tức' }],
+      sources: [SRC.wasde, SRC.eia, SRC.cftc],
+    },
+    {
+      id: 'l9-review',
+      title: 'Tự đánh giá: đọc nhật ký như một nhà quản lý quỹ',
+      objective: 'Biết các chỉ số cần tính từ nhật ký và cách quyết định khi nào sẵn sàng tăng vốn.',
+      body: [
+        'Các chỉ số cần tính sau mỗi 20–30 lệnh: số lệnh; tỷ lệ thắng; lãi trung bình (R) và lỗ trung bình (R); kỳ vọng (E); profit factor (tổng lãi ÷ tổng lỗ); max drawdown; chuỗi thua dài nhất; tỷ lệ lệnh đúng kế hoạch.',
+        'Phân tích theo nhóm: tách kết quả theo setup, theo mã, theo ngày trong tuần, theo trạng thái cảm xúc. Rất thường gặp: một setup có lãi, setup khác lỗ; hoặc lệnh "ngoài kế hoạch" chiếm phần lớn khoản lỗ. Cắt bỏ phần thua là cách tăng lợi nhuận nhanh nhất.',
+        'Tiêu chí sẵn sàng chuyển từ giả lập sang tiền thật (gợi ý): ≥50 lệnh giả lập; kỳ vọng > +0,2R sau phí; profit factor > 1,3; max drawdown < 15%; ≥90% lệnh đúng kế hoạch. Tiêu chí tăng vốn tiền thật: duy trì các con số trên thêm ≥100 lệnh. Chỉ tăng từng bậc (ví dụ +25% vốn), và giảm lại ngay nếu drawdown vượt ngưỡng.',
+        'Phân biệt may mắn và kỹ năng: mẫu dưới 30 lệnh có thể chỉ là may mắn. Một vài lệnh rất lớn chiếm phần lớn lợi nhuận cũng là dấu hiệu cần thận trọng — thử bỏ 2 lệnh lớn nhất ra xem hệ thống còn lãi không.',
+      ],
+      textExample:
+        'Ví dụ đánh giá (giả định) 40 lệnh giả lập: 17 thắng (42,5%), lãi TB 2,1R, lỗ TB 1,05R (vì vài lệnh trượt giá). E = 0,425×2,1 − 0,575×1,05 ≈ +0,29R. Profit factor = (17×2,1) ÷ (23×1,05) ≈ 1,48. Max drawdown 9%. Tách theo setup: Pullback 25 lệnh E = +0,45R; Breakout 15 lệnh E = +0,02R. 6 lệnh "ngoài kế hoạch" tổng −7R. Kết luận: giữ Pullback, xem lại Breakout, loại bỏ lệnh ngoài kế hoạch; cần thêm ≥10 lệnh nữa mới đủ tiêu chí 50 lệnh.',
+      remember: [
+        'Đo bằng R, tách theo setup/mã/cảm xúc.',
+        'Loại bỏ phần thua (lệnh ngoài kế hoạch) trước khi tìm thêm lãi.',
+        'Chỉ tăng vốn từng bậc khi có ≥100 lệnh bằng chứng.',
+      ],
+      quiz: [
+        q('Profit factor 1,5 nghĩa là?', ['Tổng lãi gấp 1,5 lần tổng lỗ', 'Lãi 1,5%', 'Thắng 1,5 lệnh', 'Đòn bẩy 1,5'], 0, 'Tổng lãi ÷ tổng lỗ.'),
+        q('Bỏ 2 lệnh lớn nhất mà hệ thống thành lỗ thì?', ['Kết quả phụ thuộc may mắn, cần thận trọng', 'Hệ thống rất tốt', 'Tăng vốn ngay', 'Không ý nghĩa'], 0, 'Kiểm tra độ bền.'),
+        q('Cách tăng lợi nhuận nhanh nhất thường là?', ['Cắt bỏ lệnh ngoài kế hoạch/setup thua', 'Tăng đòn bẩy', 'Giao dịch nhiều mã hơn', 'Bỏ stop'], 0, 'Giảm lỗ trước.'),
+        q('Mẫu bao nhiêu lệnh trở xuống dễ là may mắn?', ['Dưới 30 lệnh', 'Dưới 1.000 lệnh', '5 lệnh là đủ', 'Không bao giờ là may mắn'], 0, 'Mẫu nhỏ không ổn định.'),
+      ],
+      links: [{ module: 'journal', label: 'Sổ ghi chú' }, { module: 'backtest', label: 'Kiểm thử chiến lược' }, { module: 'portfolio', label: 'Danh mục' }],
+      sources: [SRC.cmeEdu],
+    },
+  ],
+};
