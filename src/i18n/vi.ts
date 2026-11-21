@@ -18,6 +18,10 @@ import * as drivers from './dict/drivers';
 import * as hedge from './dict/hedge';
 import * as onboarding from './dict/onboarding';
 import * as radar from './dict/radar';
+import * as world from './dict/world';
+import * as ordercalc from './dict/ordercalc';
+import * as benchmark from './dict/benchmark';
+import * as instrument from './dict/instrument';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
@@ -41,6 +45,10 @@ export const vi = {
   ...hedge.vi,
   ...onboarding.vi,
   ...radar.vi,
+  ...world.vi,
+  ...ordercalc.vi,
+  ...instrument.vi,
+  ...benchmark.vi,
 };
 
 export type TKey = keyof typeof vi;

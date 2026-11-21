@@ -18,6 +18,10 @@ import * as drivers from './dict/drivers';
 import * as hedge from './dict/hedge';
 import * as onboarding from './dict/onboarding';
 import * as radar from './dict/radar';
+import * as world from './dict/world';
+import * as ordercalc from './dict/ordercalc';
+import * as benchmark from './dict/benchmark';
+import * as instrument from './dict/instrument';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
@@ -42,4 +46,8 @@ export const en: Record<TKey, string> = {
   ...hedge.en,
   ...onboarding.en,
   ...radar.en,
+  ...world.en,
+  ...ordercalc.en,
+  ...instrument.en,
+  ...benchmark.en,
 };

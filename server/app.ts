@@ -21,6 +21,7 @@ import { ScorecardService } from './services/scorecard/scorecardService.ts';
 import { YahooFinanceAdapter, isYahooEnabled } from './providers/yahooAdapter.ts';
 import { registerMxvEstimateRoutes } from './routes/mxvEstimate.ts';
 import { registerMacroRoutes, type MacroServiceLike } from './routes/macro.ts';
+import { registerBenchmarkRoutes, type BenchmarkServiceLike } from './routes/benchmarks.ts';
 import { registerFxRoutes } from './routes/fx.ts';
 import type { ICandleRepository } from './storage/candleRepository.ts';
 import { getDefaultCandleRepository } from './storage/sqliteCandleRepository.ts';
@@ -120,6 +121,8 @@ export interface CreateApiAppOptions {
   logWarn?: (message: string) => void;
   /** T21 macro service override (tests inject one backed by recorded fixtures; no network). */
   macro?: MacroServiceLike;
+  /** T76 benchmark series service override (tests inject a fetch stub; no network). */
+  benchmarks?: BenchmarkServiceLike;
   /** T60 supply/demand source reader for the cycle dossier (tests inject fixtures/null; default: real MacroService). */
   supplyMacro?: SupplyMacroLike | null;
   /** T36 scheduler status provider (real server only; absent → GET /api/scheduler/status reports disabled). */
@@ -652,6 +655,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   });
   registerMxvEstimateRoutes(app, { instruments: instrumentRepository, providers: providerRegistry });
   registerMacroRoutes(app, { service: options.macro });
+  registerBenchmarkRoutes(app, { service: options.benchmarks });
   registerFxRoutes(app);
   app.locals.providerRegistry = providerRegistry;
   app.get('/api/scheduler/status', (_req: Request, res: Response) => {

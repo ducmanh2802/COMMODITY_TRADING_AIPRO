@@ -13,7 +13,7 @@ export interface QuizQuestion {
   why: string;
 }
 
-export type CalculatorId = 'tick-pnl' | 'margin-leverage' | 'position-sizing' | 'roll-cost' | 'margin-call' | 'curve-quiz' | 'fx-convert';
+export type CalculatorId = 'tick-pnl' | 'margin-leverage' | 'position-sizing' | 'roll-cost' | 'margin-call' | 'curve-quiz' | 'fx-convert' | 'order';
 
 /** A worked example whose numbers are computed at render time with learnMath from the verified instrument spec. */
 export type ExampleCalc =

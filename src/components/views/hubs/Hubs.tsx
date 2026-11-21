@@ -12,8 +12,10 @@ import { LazyPaperTradingView, LazyResearchNotebookView } from '../LazyOwnerView
 import { TodayPanel } from '../today/TodayPanel';
 import { RadarView } from '../radar/RadarView';
 import { MarketPulsePanel } from '../pulse/MarketPulsePanel';
+import { WorldMarketsPanel } from '../world/WorldMarketsPanel';
 import { DriversPanel } from '../drivers/DriversPanel';
 import { HedgeWizard } from '../hedge/HedgeWizard';
+import { InstrumentOverview } from '../instrument/InstrumentOverview';
 
 interface HubProps {
   tab?: string;
@@ -57,6 +59,7 @@ export function MarketHub({ tab, sub }: HubProps) {
           note: t('n2.mk.pulseNote'),
           render: () => <MarketPulsePanel />,
         },
+        { id: 'world', label: t('wd.tab'), note: t('wd.tabNote'), render: () => <WorldMarketsPanel /> },
         { id: 'radar', label: t('n2.mk.radar'), note: t('n2.mk.radarNote'), render: () => <RadarView /> },
         { id: 'prices', label: t('n2.mk.prices'), note: t('n2.mk.pricesNote'), render: () => <PricesTab initial={sub ?? 'cards'} /> },
         { id: 'news', label: t('n2.mk.news'), note: t('n2.mk.newsNote'), render: () => <LegacyModule id="news" /> },
@@ -154,7 +157,8 @@ export function InstrumentPage({ tab }: HubProps) {
       <DualViewTabs
         initialTabId={tab ?? 'overview'}
         tabs={[
-          { id: 'overview', label: t('n2.in.overview'), note: '', render: () => <LegacyModule id="brief" /> },
+          { id: 'overview', label: t('n2.in.overview'), note: '', render: () => <InstrumentOverview /> },
+          { id: 'brief', label: t('brief.title'), note: '', render: () => <LegacyModule id="brief" /> },
           { id: 'charts', label: t('n2.in.charts'), note: '', render: () => <LegacyModule id="charts" /> },
           { id: 'cycle', label: t('n2.in.cycle'), note: t('n2.in.cycleNote'), render: () => <InstrumentCycleTab /> },
           { id: 'drivers', label: t('drv.tab'), note: t('drv.tabNote'), render: () => <DriversPanel /> },

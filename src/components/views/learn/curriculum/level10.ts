@@ -112,7 +112,7 @@ export const LEVEL10: Level = {
         q('Giá trượt qua điểm cắt lỗ 1 tick làm gì?', ['Lỗ hơi lớn hơn dự kiến', 'Không lỗ', 'Lãi', 'Hủy lệnh'], 0, 'Trượt giá là chi phí thực tế.'),
       ],
       links: [{ module: 'charts', label: 'Biểu đồ' }, { module: 'cot', label: 'COT' }, { module: 'paper-trade', label: 'Tập giao dịch thử' }],
-      calculator: 'position-sizing',
+      calculator: 'order',
       instrumentIds: ['CBOT:ZC'],
       sources: [SRC.cmeAg, SRC.wasde, SRC.cftc],
     },
