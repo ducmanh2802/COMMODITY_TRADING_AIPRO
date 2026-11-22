@@ -7,7 +7,7 @@ import type { AppModuleId } from '../../shared/types/risk';
 
 export const ONBOARDING_KEY = 'ctap.onboardingDone';
 const TOTAL = 5;
-const TARGETS: Record<number, AppModuleId> = { 2: 'market-hub', 3: 'learn', 4: 'mine-hub' };
+const TARGETS: Record<number, AppModuleId> = { 2: 'today-hub', 3: 'learn', 4: 'mine-hub' };
 
 function isDone(): boolean {
   try {

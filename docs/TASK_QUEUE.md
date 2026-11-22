@@ -43,7 +43,7 @@ Trạng thái: `[ ]` chờ · `[~]` đang làm · `[x]` xong.
 
 | # | Task | Model | Skill |
 |---|---|---|---|
-| [ ] A | Thị trường 10 tab → 3 hub; trang mã 8 → 5 tab; giữ `resolveModule` cho deep-link | opus→sonnet | writing-plans, executing-plans |
+| [x] A | Thị trường 10 tab → 3 hub; trang mã 8 → 5 tab; giữ `resolveModule` cho deep-link | opus→sonnet | writing-plans, executing-plans |
 | [ ] B | Tách `FundamentalNewsView` thành NewsFeed / MacroPanel / CalendarPanel | sonnet | — |
 | [ ] C | Trang "Tóm tắt" gộp Overview + Brief + Cycle | opus→sonnet | — |
 | [ ] G | Một thiết kế chip trạng thái dữ liệu (bảng màu xanh-mơ) | haiku | — |
@@ -61,6 +61,7 @@ Trạng thái: `[ ]` chờ · `[~]` đang làm · `[x]` xong.
 
 - [ ] T96b. Biểu đồ + InstrumentOverview dùng `fetchContractCandles()` khi có `contractMonth`; ẩn ROLL_MISMATCH khi có chuỗi theo hợp đồng (sonnet)
 - [ ] M1. Mobile 390px: thẻ nút `rounded-xl` ở Hôm nay dư 8px bên phải (bị cắt, không gây cuộn ngang) (haiku)
+- [ ] M2. Nút lồng trong nút: `CommodityWorldCard` (button) chứa `CyclePhaseBadge` (button) ở tab Giá (haiku)
 
 - [ ] E. Endpoint `/api/home` + cache client, tải trễ panel dưới màn hình (vercel-react-best-practices)
 - [ ] F. Lazy-load Firestore và i18n theo ngôn ngữ; kiểm tra kích thước `index-*.js`

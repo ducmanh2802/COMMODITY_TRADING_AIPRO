@@ -25,27 +25,62 @@ interface HubProps {
   sub?: string;
 }
 
-/** Prices: toggle between card view (commodity world) and table view (market watch). */
+const PRICE_MODES = ['cards', 'table', 'watch'] as const;
+const PRICE_MODE_LABEL = { cards: 'n2.mk.viewCards', table: 'n2.mk.viewTable', watch: 'n2.mk.viewWatch' } as const;
+
+/** Prices: cards (commodity world) | table (market watch) | the user's watchlist. */
 function PricesTab({ initial }: { initial: string }) {
   const t = useT();
   const [mode, setMode] = useState(initial);
   return (
     <div className="space-y-4">
-      <div className="inline-flex rounded-md border border-white/10 overflow-hidden" role="group">
-        {(['cards', 'table'] as const).map((m) => (
+      <div className="inline-flex rounded-md border border-[var(--border)] overflow-hidden" role="group">
+        {PRICE_MODES.map((m) => (
           <button
             key={m}
             type="button"
             aria-pressed={mode === m}
             onClick={() => setMode(m)}
-            className={`px-3 py-1.5 text-xs ${mode === m ? 'bg-[var(--accent)]/20 text-[var(--text-strong)]' : 'text-[var(--text)]/70 hover:text-[var(--text-strong)]'}`}
+            className={`px-3 min-h-9 text-xs ${mode === m ? 'bg-[var(--accent-soft)] text-[var(--text-strong)]' : 'text-[var(--muted)] hover:text-[var(--text-strong)]'}`}
           >
-            {t(m === 'cards' ? 'n2.mk.viewCards' : 'n2.mk.viewTable')}
+            {t(PRICE_MODE_LABEL[m])}
           </button>
         ))}
       </div>
-      <LegacyModule id={mode === 'cards' ? 'commodity-world' : 'markets'} />
+      {mode === 'watch' ? <WatchlistPanel /> : <LegacyModule id={mode === 'cards' ? 'commodity-world' : 'markets'} />}
     </div>
+  );
+}
+
+/** Section heading used when a tab stacks two former screens. */
+function StackHeading({ children }: { children: string }) {
+  return <h2 className="text-base font-semibold text-[var(--text-strong)]">{children}</h2>;
+}
+
+export function TodayHub({ tab }: HubProps) {
+  const t = useT();
+  return (
+    <DualViewTabs
+      key={`today-${tab ?? ''}`}
+      initialTabId={tab ?? 'overview'}
+      tabs={[
+        { id: 'overview', label: t('n2.td.overview'), note: '', render: () => <TodayPanel /> },
+        {
+          id: 'highlights',
+          label: t('n2.td.highlights'),
+          note: '',
+          render: () => (
+            <div className="space-y-8">
+              <RadarView />
+              <section className="space-y-3">
+                <StackHeading>{t('n2.an.cycle')}</StackHeading>
+                <LegacyModule id="cycle-hunter" />
+              </section>
+            </div>
+          ),
+        },
+      ]}
+    />
   );
 }
 
@@ -53,23 +88,37 @@ export function MarketHub({ tab, sub }: HubProps) {
   const t = useT();
   return (
     <DualViewTabs
-      initialTabId={tab ?? 'today'}
+      key={`market-${tab ?? ''}-${sub ?? ''}`}
+      initialTabId={tab ?? 'prices'}
       tabs={[
-        { id: 'today', label: t('n2.mk.today'), note: t('n2.mk.todayNote'), render: () => <TodayPanel /> },
+        { id: 'prices', label: t('n2.mk.prices'), note: '', render: () => <PricesTab initial={sub ?? 'cards'} /> },
+        { id: 'world', label: t('wd.tab'), note: '', render: () => <WorldMarketsPanel /> },
+        { id: 'domestic', label: t('dm.tab'), note: '', render: () => <DomesticPricesPanel /> },
+        { id: 'weather', label: t('wx.tab'), note: '', render: () => <WeatherPanel /> },
+      ]}
+    />
+  );
+}
+
+export function NewsHub({ tab }: HubProps) {
+  const t = useT();
+  return (
+    <DualViewTabs
+      key={`news-${tab ?? ''}`}
+      initialTabId={tab ?? 'news'}
+      tabs={[
+        { id: 'news', label: t('n2.nw.news'), note: '', render: () => <LegacyModule id="news" /> },
         {
-          id: 'pulse',
-          label: t('n2.mk.pulse'),
-          note: t('n2.mk.pulseNote'),
-          render: () => <MarketPulsePanel />,
+          id: 'macro',
+          label: t('n2.nw.macro'),
+          note: '',
+          render: () => (
+            <div className="space-y-8">
+              <MarketPulsePanel />
+              <LegacyModule id="fundamental" />
+            </div>
+          ),
         },
-        { id: 'world', label: t('wd.tab'), note: t('wd.tabNote'), render: () => <WorldMarketsPanel /> },
-        { id: 'weather', label: t('wx.tab'), note: t('wx.tabNote'), render: () => <WeatherPanel /> },
-        { id: 'radar', label: t('n2.mk.radar'), note: t('n2.mk.radarNote'), render: () => <RadarView /> },
-        { id: 'watchlist', label: t('wl.panel.title'), note: t('wl.panel.subtitle'), render: () => <WatchlistPanel /> },
-        { id: 'domestic', label: t('dm.tab'), note: t('dm.tabNote'), render: () => <DomesticPricesPanel /> },
-        { id: 'prices', label: t('n2.mk.prices'), note: t('n2.mk.pricesNote'), render: () => <PricesTab initial={sub ?? 'cards'} /> },
-        { id: 'news', label: t('n2.mk.news'), note: t('n2.mk.newsNote'), render: () => <LegacyModule id="news" /> },
-        { id: 'macro', label: t('n2.mk.macro'), note: t('n2.mk.macroNote'), render: () => <LegacyModule id="fundamental" /> },
       ]}
     />
   );
@@ -80,16 +129,47 @@ export function AnalysisHub({ tab }: HubProps) {
   const { openInstrumentIn } = useTerminal();
   return (
     <DualViewTabs
+      key={`analysis-${tab ?? ''}`}
       initialTabId={tab ?? 'scorecard'}
       tabs={[
         {
           id: 'scorecard',
           label: t('n2.an.scorecard'),
-          note: t('n2.an.scorecardNote'),
+          note: '',
           render: () => <LegacyModule id="scorecard" onOpenInstrument={(s) => openInstrumentIn(s, 'instrument')} />,
         },
-        { id: 'cycle', label: t('n2.an.cycle'), note: t('n2.an.cycleNote'), render: () => <LegacyModule id="cycle-hunter" /> },
-        { id: 'report', label: t('n2.an.report'), note: t('n2.an.reportNote'), render: () => <LegacyModule id="research-report" /> },
+        { id: 'report', label: t('n2.an.report'), note: '', render: () => <LegacyModule id="research-report" /> },
+      ]}
+    />
+  );
+}
+
+export function SettingsHub({ tab }: HubProps) {
+  const t = useT();
+  return (
+    <DualViewTabs
+      key={`settings-${tab ?? ''}`}
+      initialTabId={tab ?? 'prefs'}
+      tabs={[
+        { id: 'prefs', label: t('n2.set.prefs'), note: '', render: () => <LegacyModule id="settings" /> },
+        { id: 'data', label: t('n2.item.data-health'), note: '', render: () => <LegacyModule id="data-health" /> },
+        { id: 'import', label: t('n2.item.data-import'), note: '', render: () => <LegacyModule id="data-import" /> },
+      ]}
+    />
+  );
+}
+
+/** Signal-style tools grouped under Advanced (research only, not recommendations). */
+export function ScanHub({ tab }: HubProps) {
+  const t = useT();
+  return (
+    <DualViewTabs
+      key={`scan-${tab ?? ''}`}
+      initialTabId={tab ?? 'scanner'}
+      tabs={[
+        { id: 'scanner', label: t('n2.item.scanner'), note: '', render: () => <LegacyModule id="scanner" /> },
+        { id: 'signals', label: t('n2.item.signals'), note: '', render: () => <LegacyModule id="signals" /> },
+        { id: 'technical', label: t('n2.item.technical'), note: '', render: () => <LegacyModule id="technical" /> },
       ]}
     />
   );
@@ -161,16 +241,45 @@ export function InstrumentPage({ tab }: HubProps) {
         </select>
       </div>
       <DualViewTabs
-        initialTabId={tab ?? 'overview'}
+        key={`instrument-${tab ?? ''}`}
+        initialTabId={tab ?? 'summary'}
         tabs={[
-          { id: 'overview', label: t('n2.in.overview'), note: '', render: () => <InstrumentOverview /> },
-          { id: 'brief', label: t('brief.title'), note: '', render: () => <LegacyModule id="brief" /> },
+          {
+            id: 'summary',
+            label: t('n2.in.summary'),
+            note: '',
+            render: () => (
+              <div className="space-y-6">
+                <InstrumentOverview />
+                <details className="group">
+                  <summary className="cursor-pointer min-h-9 py-2 text-sm font-semibold text-[var(--text-strong)]">
+                    {t('n2.in.more')}
+                  </summary>
+                  <div className="mt-3 space-y-6">
+                    <InstrumentCycleTab />
+                    <LegacyModule id="brief" />
+                  </div>
+                </details>
+              </div>
+            ),
+          },
           { id: 'charts', label: t('n2.in.charts'), note: '', render: () => <LegacyModule id="charts" /> },
-          { id: 'cycle', label: t('n2.in.cycle'), note: t('n2.in.cycleNote'), render: () => <InstrumentCycleTab /> },
-          { id: 'drivers', label: t('drv.tab'), note: t('drv.tabNote'), render: () => <DriversPanel /> },
+          { id: 'drivers', label: t('drv.tab'), note: '', render: () => <DriversPanel /> },
           { id: 'cot', label: t('n2.in.cot'), note: '', render: () => <LegacyModule id="cot" /> },
-          { id: 'profile', label: t('n2.in.profile'), note: '', render: () => <LegacyModule id="commodity-profile" /> },
-          { id: 'ai', label: t('n2.in.ai'), note: '', render: () => <LegacyModule id="ai-analyst" /> },
+          {
+            id: 'profile',
+            label: t('n2.in.profileAi'),
+            note: '',
+            render: () => (
+              <div className="space-y-8">
+                <LegacyModule id="commodity-profile" />
+                <section className="space-y-3">
+                  <StackHeading>{t('n2.in.ai')}</StackHeading>
+                  <LegacyModule id="ai-analyst" />
+                </section>
+              </div>
+            ),
+          },
         ]}
       />
     </div>
@@ -186,7 +295,20 @@ export function MineHub({ tab }: HubProps) {
       tabs={[
         { id: 'notebook', label: t('n2.me.notebook'), note: t('nb.tab.notebookNote'), render: () => <LazyResearchNotebookView /> },
         { id: 'journal', label: t('n2.me.journal'), note: t('nb.tab.journalNote'), render: () => <LegacyModule id="journal" /> },
-        { id: 'risk', label: t('n2.me.risk'), note: '', render: () => <LegacyModule id="risk" /> },
+        {
+          id: 'risk',
+          label: t('n2.me.risk'),
+          note: '',
+          render: () => (
+            <div className="space-y-8">
+              <LegacyModule id="risk" />
+              <section className="space-y-3">
+                <StackHeading>{t('n2.item.portfolio')}</StackHeading>
+                <LegacyModule id="portfolio" />
+              </section>
+            </div>
+          ),
+        },
         { id: 'hedge', label: t('hd.tab'), note: '', render: () => <HedgeWizard /> },
         { id: 'paper', label: t('n2.me.paper'), note: t('pt.disclaimer'), render: () => <LazyPaperTradingView /> },
       ]}

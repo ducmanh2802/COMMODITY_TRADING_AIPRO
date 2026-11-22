@@ -109,7 +109,11 @@ export type AppModuleId =
   | 'market-hub'
   | 'analysis-hub'
   | 'instrument'
-  | 'mine-hub';
+  | 'mine-hub'
+  | 'today-hub'
+  | 'news-hub'
+  | 'settings-hub'
+  | 'scan-hub';
 
 export interface PhaseModuleDescriptor {
   id: AppModuleId;

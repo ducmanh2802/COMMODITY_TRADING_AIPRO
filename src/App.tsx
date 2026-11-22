@@ -3,7 +3,16 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
 import { LegacyModule } from './components/views/LegacyModule';
-import { AnalysisHub, InstrumentPage, MarketHub, MineHub } from './components/views/hubs/Hubs';
+import {
+  AnalysisHub,
+  InstrumentPage,
+  MarketHub,
+  MineHub,
+  NewsHub,
+  ScanHub,
+  SettingsHub,
+  TodayHub,
+} from './components/views/hubs/Hubs';
 import { resolveModule } from './components/layout/navMap';
 import { AuthProvider } from './contexts/AuthContext';
 import { TerminalProvider, useTerminal } from './contexts/TerminalContext';
@@ -26,8 +35,16 @@ function TerminalWorkspace() {
     const r = resolveModule(activeModule);
     if (r) {
       switch (r.hub) {
+        case 'today-hub':
+          return <TodayHub key={activeModule} tab={r.tab} />;
         case 'market-hub':
           return <MarketHub key={activeModule} tab={r.tab} sub={r.sub} />;
+        case 'news-hub':
+          return <NewsHub key={activeModule} tab={r.tab} />;
+        case 'settings-hub':
+          return <SettingsHub key={activeModule} tab={r.tab} />;
+        case 'scan-hub':
+          return <ScanHub key={activeModule} tab={r.tab} />;
         case 'analysis-hub':
           return <AnalysisHub key={activeModule} tab={r.tab} />;
         case 'instrument':

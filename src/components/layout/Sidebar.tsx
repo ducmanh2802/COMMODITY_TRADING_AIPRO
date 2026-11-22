@@ -1,9 +1,21 @@
 import { useState } from 'react';
-import { Globe, GraduationCap, LayoutDashboard, NotebookPen, PanelLeftClose, PanelLeftOpen, Target, TrendingUp, X } from 'lucide-react';
+import {
+  CandlestickChart,
+  GraduationCap,
+  LayoutDashboard,
+  Newspaper,
+  NotebookPen,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings,
+  Target,
+  TrendingUp,
+  X,
+} from 'lucide-react';
 import type { AppModuleId } from '../../shared/types/risk';
 import { useTerminal } from '../../contexts/TerminalContext';
 import { useT, type TKey } from '../../i18n';
-import { ADVANCED_ITEMS, SETTINGS_ITEMS, sectionOf, type SectionId } from './navMap';
+import { ADVANCED_ITEMS, sectionOf, type SectionId } from './navMap';
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -17,26 +29,22 @@ interface NavItem {
   Icon: typeof LayoutDashboard;
 }
 
-/** Four main sections; each opens a hub whose tabs hold the original views (see navMap.ts). */
+/** Six main sections; each opens a hub whose tabs hold the original views (see navMap.ts). */
 const MAIN_ITEMS: NavItem[] = [
-  { id: 'market-hub', section: 'markets', labelKey: 'n2.sec.markets', Icon: Globe },
+  { id: 'today-hub', section: 'today', labelKey: 'n2.sec.today', Icon: LayoutDashboard },
+  { id: 'market-hub', section: 'markets', labelKey: 'n2.sec.markets', Icon: CandlestickChart },
+  { id: 'news-hub', section: 'news', labelKey: 'n2.sec.news', Icon: Newspaper },
   { id: 'analysis-hub', section: 'analysis', labelKey: 'n2.sec.analysis', Icon: Target },
   { id: 'learn', section: 'academy', labelKey: 'n2.sec.academy', Icon: GraduationCap },
   { id: 'mine-hub', section: 'mine', labelKey: 'n2.sec.mine', Icon: NotebookPen },
 ];
 
 const SMALL_KEY: Partial<Record<AppModuleId, TKey>> = {
-  settings: 'n2.item.settings',
-  'data-health': 'n2.item.data-health',
-  'data-import': 'n2.item.data-import',
-  backtest: 'n2.item.backtest',
   'term-structure': 'n2.item.term-structure',
-  scanner: 'n2.item.scanner',
-  signals: 'n2.item.signals',
-  portfolio: 'n2.item.portfolio',
-  technical: 'n2.item.technical',
   explorer: 'n2.item.explorer',
   analysis: 'n2.item.analysis',
+  'scan-hub': 'n2.item.scan-hub',
+  backtest: 'n2.item.backtest',
 };
 
 const COLLAPSE_KEY = 'ctap.sidebar.collapsed';
@@ -167,15 +175,12 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
             })}
           </ul>
 
-          <div className={`space-y-2 pt-3 border-t border-[var(--border)] ${rail ? 'lg:hidden' : ''}`}>
-            <h2 className="px-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--faint)]">{t('n2.sec.settings')}</h2>
-            <ul className="space-y-0.5">
-              {SETTINGS_ITEMS.map((id) => smallButton(id))}
-            </ul>
+          <div className={`pt-3 border-t border-[var(--border)] ${rail ? 'lg:hidden' : ''}`}>
             <details open={currentSection === 'advanced'} className="group">
-              <summary className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--faint)] cursor-pointer hover:text-[var(--text-strong)] list-none">
+              <summary className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--faint)] cursor-pointer hover:text-[var(--text-strong)]">
                 {t('n2.sec.advanced')}
               </summary>
+              <p className="px-3 pb-1 text-[11px] text-[var(--faint)]">{t('n2.adv.hint')}</p>
               <ul className="space-y-0.5 mt-1">
                 {ADVANCED_ITEMS.map((id) => smallButton(id))}
               </ul>
@@ -185,6 +190,18 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
 
         <div className="px-3 py-3 border-t border-[var(--border)] flex items-center gap-2">
           <p className={`flex-1 text-xs text-[var(--faint)] truncate ${rail ? 'lg:hidden' : ''}`}>{t('nav.slogan')}</p>
+          <button
+            type="button"
+            onClick={() => handleSelect('settings-hub')}
+            aria-label={t('n2.sec.settings')}
+            title={t('n2.sec.settings')}
+            aria-current={currentSection === 'settings' ? 'page' : undefined}
+            className={`grid place-items-center w-9 h-9 rounded-md hover:bg-[var(--surface-2)] ${
+              currentSection === 'settings' ? 'text-[var(--accent-text)] bg-[var(--accent-soft)]' : 'text-[var(--muted)] hover:text-[var(--text-strong)]'
+            }`}
+          >
+            <Settings className="w-4 h-4" aria-hidden="true" />
+          </button>
           <button
             type="button"
             onClick={toggleCollapsed}
