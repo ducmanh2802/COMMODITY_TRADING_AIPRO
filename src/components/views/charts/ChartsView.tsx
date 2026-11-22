@@ -110,12 +110,11 @@ function NumInput({
 }
 
 export function ChartsView() {
-  const { instruments, setActiveModule } = useTerminal();
+  const { instruments, setActiveModule, selectedSymbol, setSelectedSymbol } = useTerminal();
   const t = useT();
   const [datasets, setDatasets] = useState<DatasetRecord[]>([]);
   const [datasetsError, setDatasetsError] = useState<string | null>(null);
   const [datasetsLoading, setDatasetsLoading] = useState(true);
-  const [instrumentId, setInstrumentId] = useState('');
   const [contractCode, setContractCode] = useState('');
   const [timeframe, setTimeframe] = useState('');
   const [data, setData] = useState<CandlesResponse | null>(null);
@@ -142,6 +141,8 @@ export function ChartsView() {
   }, [reloadKey]);
 
   const instrumentOptions = useMemo(() => uniq(datasets.map((d) => d.instrumentId)).sort(), [datasets]);
+  // Single source of truth: global selected symbol; fall back to first dataset instrument if it has no data.
+  const instrumentId = instrumentOptions.includes(selectedSymbol) ? selectedSymbol : (instrumentOptions[0] ?? '');
   const contractOptions = useMemo(
     () => uniq(datasets.filter((d) => d.instrumentId === instrumentId).map((d) => d.contractCode)).sort(),
     [datasets, instrumentId]
@@ -155,9 +156,6 @@ export function ChartsView() {
   );
 
   // Keep selections valid as option lists change (auto-select the first available).
-  useEffect(() => {
-    if (!instrumentOptions.includes(instrumentId)) setInstrumentId(instrumentOptions[0] ?? '');
-  }, [instrumentOptions, instrumentId]);
   useEffect(() => {
     if (!contractOptions.includes(contractCode)) setContractCode(contractOptions[0] ?? '');
   }, [contractOptions, contractCode]);
@@ -325,7 +323,7 @@ export function ChartsView() {
           <select
             id="ch-instrument"
             value={instrumentId}
-            onChange={(e) => setInstrumentId(e.target.value)}
+            onChange={(e) => setSelectedSymbol(e.target.value)}
             disabled={instrumentOptions.length === 0}
             className={`${selectCls} min-w-[220px]`}
           >

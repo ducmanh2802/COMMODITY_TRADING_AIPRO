@@ -181,7 +181,8 @@ export function MineHub({ tab }: HubProps) {
   const t = useT();
   return (
     <DualViewTabs
-      key="mine"
+      key={`mine-${tab ?? ''}`}
+      initialTabId={tab ?? 'notebook'}
       tabs={[
         { id: 'notebook', label: t('n2.me.notebook'), note: t('nb.tab.notebookNote'), render: () => <LazyResearchNotebookView /> },
         { id: 'journal', label: t('n2.me.journal'), note: t('nb.tab.journalNote'), render: () => <LegacyModule id="journal" /> },

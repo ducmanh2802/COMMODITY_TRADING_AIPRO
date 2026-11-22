@@ -153,13 +153,16 @@ export function BriefView() {
             </p>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {brief.sections.map((s) => (
-              <BriefSectionCard key={s.id} section={s} />
-            ))}
-          </div>
-
-          <p className="text-xs text-[var(--faint)]">{brief.disclaimer[lang]}</p>
+          <details className="mt-2">
+            <summary className="cursor-pointer min-h-9 py-2 text-sm font-semibold text-[var(--text-strong)]">
+              {t('drv.more')}
+            </summary>
+            <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {brief.sections.map((s) => (
+                <BriefSectionCard key={s.id} section={s} />
+              ))}
+            </div>
+          </details>
         </>
       )}
 

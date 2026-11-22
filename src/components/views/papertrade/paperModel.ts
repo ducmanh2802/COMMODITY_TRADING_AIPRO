@@ -74,10 +74,10 @@ export interface PaperState {
 }
 
 /**
- * Whether `plan` is written to Firestore. Keep false until firestore.rules allows the optional `plan` field on
- * paperPositions / paperTrades (rules not changed by this feature). Local (signed-out) storage always keeps it.
+ * Whether `plan` is written to Firestore. firestore.rules (isValidPaperPlan) allows the optional `plan` field on
+ * paperPositions / paperOrders. Local (signed-out) storage always keeps it.
  */
-export const PERSIST_PLAN_TO_FIRESTORE = false;
+export const PERSIST_PLAN_TO_FIRESTORE = true;
 
 export const EMPTY_STATE: PaperState = { sessions: [], positions: [], trades: [] };
 

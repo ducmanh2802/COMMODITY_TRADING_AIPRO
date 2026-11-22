@@ -48,6 +48,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
   const { syncProviderFeeds, syncing, timeframe } = useTerminal();
   const [records, setRecords] = useState<FundamentalMacroRecord[]>([]);
   const [news, setNews] = useState<NewsRecord[]>([]);
+  const [showAllNews, setShowAllNews] = useState(false);
   const [status, setStatus] = useState<DataQualityStatus>('UNAVAILABLE');
   const [loading, setLoading] = useState(true);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
@@ -400,7 +401,7 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
             </div>
           ) : (
             <div className="divide-y divide-[var(--border)]/70">
-              {news.map((n) => (
+              {(showAllNews ? news : news.slice(0, 10)).map((n) => (
                 <div key={n.id} className="p-4 space-y-1 text-xs">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold text-[var(--text-strong)]">{n.headline}</span>
@@ -414,6 +415,17 @@ export function FundamentalNewsView({ mode }: FundamentalNewsViewProps) {
               ))}
             </div>
           )}
+        {news.length > 10 && !showAllNews && (
+          <div className="px-4 py-3">
+            <button
+              type="button"
+              onClick={() => setShowAllNews(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] hover:bg-[var(--accent)] hover:text-white"
+            >
+              {t('drv.more')}
+            </button>
+          </div>
+        )}
         </section>
       </div>
     </div>

@@ -31,12 +31,12 @@ Trạng thái: `[ ]` chờ · `[~]` đang làm · `[x]` xong.
 
 | # | Task | Model | Skill |
 |---|---|---|---|
-| [ ] S1 | Một selector mã duy nhất: Biểu đồ theo `useTerminal().selectedSymbol` (lỗi KC→ZC) | sonnet | test-driven-development |
-| [ ] S2 | `MineHub` truyền `initialTabId` để deep-link hoạt động | sonnet | — |
+| [x] S1 | Một selector mã duy nhất: Biểu đồ theo `useTerminal().selectedSymbol` (lỗi KC→ZC) | sonnet | test-driven-development |
+| [x] S2 | `MineHub` truyền `initialTabId` để deep-link hoạt động | sonnet | — |
 | [ ] S3 | Component `<SourceChip>` thay các dòng nguồn dài | sonnet | vercel-composition-patterns |
-| [ ] S4 | "Xem thêm" cho BriefView; tin tức giới hạn 10 + nút xem thêm | sonnet | — |
+| [x] S4 | "Xem thêm" cho BriefView; tin tức giới hạn 10 + nút xem thêm | sonnet | — |
 | [ ] S5 | TopBar mobile icon-only, hết tràn 13px; bảng thành thẻ trên mobile | sonnet | ui-ux-pro-max |
-| [ ] T97 | Trường `plan` trong `firestore.rules` + test emulator, bật `PERSIST_PLAN_TO_FIRESTORE` | sonnet | test-driven-development |
+| [x] T97 | Trường `plan` trong `firestore.rules` + test emulator, bật `PERSIST_PLAN_TO_FIRESTORE` | sonnet | test-driven-development |
 | [ ] T96 | Chuỗi giá D1 theo từng hợp đồng tháng | sonnet | — |
 
 ## Đợt 3 — Đổi IA (Opus lập kế hoạch, Sonnet làm)
