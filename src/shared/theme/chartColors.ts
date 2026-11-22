@@ -30,14 +30,14 @@ export function withAlpha(color: string, alpha: number): string {
 /** Palette for canvas charts, resolved from the active theme. */
 export function chartPalette() {
   return {
-    up: cssVar('--positive', '#6CB4E4'),
-    down: cssVar('--negative', '#E8A27C'),
-    warning: cssVar('--warning', '#D9BE6C'),
-    accent: cssVar('--accent', '#6F93C9'),
-    accentText: cssVar('--accent-text', '#A8C2E8'),
-    surface: cssVar('--surface', '#171B23'),
-    text: cssVar('--text', '#E4E7EC'),
-    border: cssVar('--border', '#2E3542'),
+    up: cssVar('--positive', '#38BDF8'),
+    down: cssVar('--negative', '#F5A524'),
+    warning: cssVar('--warning', '#FACC15'),
+    accent: cssVar('--accent', '#6E7BFF'),
+    accentText: cssVar('--accent-text', '#AEB6FF'),
+    surface: cssVar('--surface', '#131A26'),
+    text: cssVar('--text', '#E6EAF2'),
+    border: cssVar('--border', '#243045'),
     series: [1, 2, 3, 4, 5, 6].map((i) => cssVar(`--series-${i}`, '#7FB2E5')),
   };
 }

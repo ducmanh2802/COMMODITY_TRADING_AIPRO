@@ -15,7 +15,7 @@ export const BAR_RADIUS = 4;
 /** Categorical slots available; past this the tail folds into "Khác" (gray). */
 export const MAX_SERIES = 6;
 
-const FALLBACK_SERIES = ['#4F91E2', '#BE7E51', '#7F5BB6', '#0D9298', '#8A6E1F', '#C86E93'];
+const FALLBACK_SERIES = ['#38BDF8', '#F5A524', '#A78BFA', '#2DD4BF', '#F472B6', '#8B95FF'];
 
 /** Categorical colour for slot i (0-based). Never cycles: slots past MAX_SERIES return the "other" gray. */
 export function seriesColor(i: number): string {
@@ -61,11 +61,11 @@ export function lwBase(opts: { timeVisible?: boolean; secondsVisible?: boolean }
   const grid = cssVar('--chart-grid', 'rgba(228,231,236,0.07)');
   const axis = cssVar('--chart-axis', 'rgba(228,231,236,0.16)');
   const cross = cssVar('--chart-crosshair', 'rgba(228,231,236,0.45)');
-  const label = cssVar('--surface-3', '#262C38');
+  const label = cssVar('--surface-3', '#222C3F');
   return {
     autoSize: true,
     layout: {
-      background: { type: ColorType.Solid, color: cssVar('--surface', '#171B23') },
+      background: { type: ColorType.Solid, color: cssVar('--surface', '#131A26') },
       textColor: cssVar('--muted', 'rgba(228,231,236,0.68)'),
       fontSize: 11,
       attributionLogo: false,

@@ -4,56 +4,56 @@
   --font-sans: "Be Vietnam Pro", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  --color-terminal-bg: #11141A;
-  --color-terminal-panel: #171B23;
-  --color-terminal-panel-alt: #1E232D;
-  --color-terminal-border: #2E3542;
-  --color-terminal-primary: #6F93C9;
-  --color-terminal-bullish: #6CB4E4;
-  --color-terminal-bearish: #E8A27C;
-  --color-terminal-warning: #D9BE6C;
-  --color-terminal-text: #E4E7EC;
+  --color-terminal-bg: #0B0F17;
+  --color-terminal-panel: #131A26;
+  --color-terminal-panel-alt: #1A2232;
+  --color-terminal-border: #243045;
+  --color-terminal-primary: #6E7BFF;
+  --color-terminal-bullish: #38BDF8;
+  --color-terminal-bearish: #F5A524;
+  --color-terminal-warning: #FACC15;
+  --color-terminal-text: #E6EAF2;
 }
 
 /* Design tokens. Dark is the default; light via <html data-theme="light">. Use var(--token) or src/components/ui.
    Calm palette: NO green/red. Up/positive = blue, down/negative = apricot (colour-blind friendly). */
 :root {
   color-scheme: dark;
-  --bg: #11141A;
-  --surface: #171B23;
-  --surface-2: #1E232D;
-  --surface-3: #262C38;
-  --border: #2E3542;
-  --text: #E4E7EC;
-  --text-strong: #F5F7FA;
-  --muted: rgba(228, 231, 236, 0.68);
-  --faint: rgba(228, 231, 236, 0.46);
-  --accent: #6F93C9;
-  --accent-soft: rgba(111, 147, 201, 0.16);
-  --accent-text: #A8C2E8;
-  --positive: #6CB4E4;
-  --negative: #E8A27C;
-  --warning: #D9BE6C;
-  /* Categorical (identity) - fixed order, never cycled, 6 slots. Validated with dataviz validate_palette.js (dark #171B23). */
-  --series-1: #4F91E2;
-  --series-2: #BE7E51;
-  --series-3: #7F5BB6;
-  --series-4: #0D9298;
-  --series-5: #8A6E1F;
-  --series-6: #C86E93;
+  --bg: #0B0F17;
+  --surface: #131A26;
+  --surface-2: #1A2232;
+  --surface-3: #222C3F;
+  --border: #243045;
+  --text: #E6EAF2;
+  --text-strong: #F7F9FC;
+  --muted: rgba(230, 234, 242, 0.68);
+  --faint: rgba(230, 234, 242, 0.46);
+  --accent: #6E7BFF;
+  --accent-soft: rgba(110, 123, 255, 0.16);
+  --accent-text: #AEB6FF;
+  --positive: #38BDF8;
+  --negative: #F5A524;
+  --warning: #FACC15;
+  /* Categorical (identity) - fixed order, never cycled, 6 slots. Validated with dataviz validate_palette.js (dark #131A26). */
+  --series-1: #38BDF8;
+  --series-2: #F5A524;
+  --series-3: #A78BFA;
+  --series-4: #2DD4BF;
+  --series-5: #F472B6;
+  --series-6: #8B95FF;
   --series-other: #6B7280;
   /* Sequential (magnitude): one hue, low -> high; dark mode flips the anchor (low = dim). */
-  --seq-1: #336295;
-  --seq-2: #4177AE;
-  --seq-3: #5B8FC8;
-  --seq-4: #7BA9DB;
-  --seq-5: #9CC4EE;
+  --seq-1: #2B3480;
+  --seq-2: #3D47B0;
+  --seq-3: #5562E0;
+  --seq-4: #7C87FF;
+  --seq-5: #AEB6FF;
   /* Diverging (polarity): --positive <-> neutral gray <-> --negative. */
-  --div-mid: #3A4150;
+  --div-mid: #2A3346;
   /* Chart furniture */
-  --chart-grid: rgba(228, 231, 236, 0.07);
-  --chart-axis: rgba(228, 231, 236, 0.16);
-  --chart-crosshair: rgba(228, 231, 236, 0.45);
+  --chart-grid: rgba(230, 234, 242, 0.07);
+  --chart-axis: rgba(230, 234, 242, 0.16);
+  --chart-crosshair: rgba(230, 234, 242, 0.45);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -63,42 +63,42 @@
 }
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #F5F6F8;
+  --bg: #F6F7FB;
   --surface: #FFFFFF;
-  --surface-2: #EEF1F5;
-  --surface-3: #E4E8EE;
-  --border: #DDE2E9;
-  --text: #1E2430;
-  --text-strong: #121721;
-  --muted: rgba(30, 36, 48, 0.7);
-  --faint: rgba(30, 36, 48, 0.52);
-  --accent: #3F679E;
-  --accent-soft: rgba(63, 103, 158, 0.12);
-  --accent-text: #34598C;
-  --positive: #2D72A8;
-  --negative: #A9561F;
-  --warning: #8C6A12;
-  --series-1: #4081D2;
-  --series-2: #E1791B;
-  --series-3: #7652AC;
-  --series-4: #0D9298;
-  --series-5: #816512;
-  --series-6: #9D486C;
+  --surface-2: #EEF1F8;
+  --surface-3: #E3E8F2;
+  --border: #D9DFEA;
+  --text: #161B26;
+  --text-strong: #0E121B;
+  --muted: rgba(22, 27, 38, 0.7);
+  --faint: rgba(22, 27, 38, 0.52);
+  --accent: #4F5BD5;
+  --accent-soft: rgba(79, 91, 213, 0.12);
+  --accent-text: #3B47B8;
+  --positive: #0369A1;
+  --negative: #B45309;
+  --warning: #A16207;
+  --series-1: #0284C7;
+  --series-2: #D97706;
+  --series-3: #7C3AED;
+  --series-4: #0D9488;
+  --series-5: #DB2777;
+  --series-6: #4F5BD5;
   --series-other: #8A93A3;
-  --seq-1: #93BADF;
-  --seq-2: #6FA0D2;
-  --seq-3: #4C85BF;
-  --seq-4: #2F69A5;
-  --seq-5: #164F89;
-  --div-mid: #D5DAE2;
-  --chart-grid: rgba(30, 36, 48, 0.07);
-  --chart-axis: rgba(30, 36, 48, 0.18);
-  --chart-crosshair: rgba(30, 36, 48, 0.45);
+  --seq-1: #C7CCFF;
+  --seq-2: #9EA6FF;
+  --seq-3: #6E7BFF;
+  --seq-4: #4F5BD5;
+  --seq-5: #333DA8;
+  --div-mid: #D5DBE6;
+  --chart-grid: rgba(22, 27, 38, 0.07);
+  --chart-axis: rgba(22, 27, 38, 0.18);
+  --chart-crosshair: rgba(22, 27, 38, 0.45);
   --shadow-card: 0 1px 2px rgba(20, 28, 40, 0.06), 0 4px 14px -6px rgba(20, 28, 40, 0.12);
 }
 /* Light theme: soften translucent-white helpers that assumed a dark background. */
 :root[data-theme="light"] .bg-white/5,
-:root[data-theme="light"] .bg-white/10 { background-color: rgba(30, 36, 48, 0.05); }
+:root[data-theme="light"] .bg-white/10 { background-color: rgba(22, 27, 38, 0.05); }
 :root[data-theme="light"] .border-white/10,
 :root[data-theme="light"] .border-white/5 { border-color: var(--border); }
 
