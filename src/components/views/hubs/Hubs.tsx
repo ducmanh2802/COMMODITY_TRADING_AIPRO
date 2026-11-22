@@ -18,6 +18,9 @@ import { WeatherPanel } from '../weather/WeatherPanel';
 import { DriversPanel } from '../drivers/DriversPanel';
 import { HedgeWizard } from '../hedge/HedgeWizard';
 import { InstrumentOverview } from '../instrument/InstrumentOverview';
+import { NewsFeed } from '../news/NewsFeed';
+import { MacroPanel } from '../news/MacroPanel';
+import { CalendarPanel } from '../news/CalendarPanel';
 import { DomesticPricesPanel } from '../domestic/DomesticPricesPanel';
 
 interface HubProps {
@@ -107,7 +110,7 @@ export function NewsHub({ tab }: HubProps) {
       key={`news-${tab ?? ''}`}
       initialTabId={tab ?? 'news'}
       tabs={[
-        { id: 'news', label: t('n2.nw.news'), note: '', render: () => <LegacyModule id="news" /> },
+        { id: 'news', label: t('n2.nw.news'), note: '', render: () => <NewsFeed /> },
         {
           id: 'macro',
           label: t('n2.nw.macro'),
@@ -115,10 +118,11 @@ export function NewsHub({ tab }: HubProps) {
           render: () => (
             <div className="space-y-8">
               <MarketPulsePanel />
-              <LegacyModule id="fundamental" />
+              <MacroPanel />
             </div>
           ),
         },
+        { id: 'calendar', label: t('n2.nw.calendar'), note: '', render: () => <CalendarPanel /> },
       ]}
     />
   );
@@ -249,18 +253,7 @@ export function InstrumentPage({ tab }: HubProps) {
             label: t('n2.in.summary'),
             note: '',
             render: () => (
-              <div className="space-y-6">
-                <InstrumentOverview />
-                <details className="group">
-                  <summary className="cursor-pointer min-h-9 py-2 text-sm font-semibold text-[var(--text-strong)]">
-                    {t('n2.in.more')}
-                  </summary>
-                  <div className="mt-3 space-y-6">
-                    <InstrumentCycleTab />
-                    <LegacyModule id="brief" />
-                  </div>
-                </details>
-              </div>
+              <InstrumentOverview cycleSlot={<InstrumentCycleTab />} />
             ),
           },
           { id: 'charts', label: t('n2.in.charts'), note: '', render: () => <LegacyModule id="charts" /> },

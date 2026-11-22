@@ -409,10 +409,10 @@ export function ChartsView() {
               {data.provenance.map((p) => (
                 <p key={p.datasetId} className="font-mono text-[11px] text-[var(--text)]/70 flex items-center gap-2 flex-wrap">
                   <SourceChip sources={[p.sourceLabel]} className="whitespace-nowrap" />
-                  <span className="text-[var(--warning)]" title={p.sourceQuality === 'UNOFFICIAL' ? t('quality.UNOFFICIAL.desc') : undefined}>
-                    {p.sourceQuality}
-                    {p.sourceQuality === 'UNOFFICIAL' ? ` (${t('quality.UNOFFICIAL')})` : ''}
-                  </span>{' '}
+                  <DataStatusBadge status="HISTORICAL" sourceQuality={p.sourceQuality} />{' '}
+                  {p.sourceQuality && p.sourceQuality !== 'UNOFFICIAL' && (
+                    <span className="text-[var(--muted)]">{p.sourceQuality}</span>
+                  )}{' '}
                   · {t('chart.sourceTz')} {p.timezone} ·{' '}
                   {formatStoredTimestamp(p.firstTimestamp, data.timeframe)} → {formatStoredTimestamp(p.lastTimestamp, data.timeframe)} · sha256{' '}
                   {p.checksum.slice(0, 12)}… · {t('chart.importedOn')} {fmtDate(p.importedAt.slice(0, 10))}

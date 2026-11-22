@@ -16,6 +16,7 @@ import { Card } from '../../ui/Card';
 import { Skeleton } from '../../ui/Skeleton';
 import { CandleChart } from '../charts/CandleChart';
 import { LegacyModule } from '../LegacyModule';
+import { LazyBriefView } from '../LazyOwnerViews';
 import { RelatedNews } from './RelatedNews';
 import {
   cotLight,
@@ -147,7 +148,7 @@ function ContextCard({ light, t }: { light: ContextLight; t: (k: TKey, p?: Recor
  * Per-instrument detail "Tổng quan" (T77): header + price, "why up/down", key stats, chart, contract spec,
  * and collapsible expert details. Everything is built from data the app already serves; nothing is invented.
  */
-export function InstrumentOverview() {
+export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}) {
   const { t, lang } = useI18n();
   const { selectedSymbol, setActiveModule } = useTerminal();
   const [dossier, setDossier] = useState<CommodityProfileDossier | null>(null);
@@ -395,10 +396,15 @@ export function InstrumentOverview() {
       {/* Bảng 4 yếu tố: context clarity lights (not buy/sell) */}
       <section aria-label={t('ins.ctx.title')} className="space-y-2" data-testid="context-lights">
         <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('ins.ctx.title')}</h2>
-        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <ul className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${cycleSlot ? 'lg:grid-cols-3 xl:grid-cols-5' : 'lg:grid-cols-4'}`}>
           {lights.map((l) => (
             <ContextCard key={l.id} light={l} t={t} />
           ))}
+          {cycleSlot && (
+            <li className="min-w-0" data-testid="ctx-light-cycle">
+              {cycleSlot}
+            </li>
+          )}
         </ul>
         <p className="text-[11px] text-[var(--faint)]">{t('ins.ctx.note')}</p>
       </section>
@@ -410,7 +416,7 @@ export function InstrumentOverview() {
             {t('ins.why.title')}
           </h2>
           <p className="text-sm leading-relaxed text-[var(--text)]">{whySentence ?? t('ins.why.none')}</p>
-          <p className="text-xs text-[var(--muted)]">{t('ins.why.cycle', { v: summary.cyclePhaseLabelVi })}</p>
+          {!cycleSlot && <p className="text-xs text-[var(--muted)]">{t('ins.why.cycle', { v: summary.cyclePhaseLabelVi })}</p>}
           <p className="text-[11px] text-[var(--faint)]">{t('ins.why.more')}</p>
         </Card>
 
@@ -552,6 +558,10 @@ export function InstrumentOverview() {
 
         <MoreSection id="profile" title={t('ins.more.profile')} hint={t('ins.more.profileHint')}>
           <LegacyModule id="commodity-profile" />
+        </MoreSection>
+
+        <MoreSection id="brief" title={t('brief.title')} hint={t('brief.subtitle')}>
+          <LazyBriefView embedded />
         </MoreSection>
 
         <MoreSection id="raw" title={t('ins.more.raw')} hint={t('ins.more.rawHint')}>

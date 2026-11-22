@@ -214,10 +214,17 @@ function CommodityWorldCard({
   const mxvCode = instrument.mxvMapping?.mxvSymbol;
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
-      className="group relative text-left shadow-[var(--shadow-card)] hover:-translate-y-0.5 bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)]/70 rounded-[var(--radius-md)] overflow-hidden transition-all duration-200 focus-visible:outline-2 focus-visible:outline-[var(--accent)] flex flex-col"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className="group relative text-left cursor-pointer shadow-[var(--shadow-card)] hover:-translate-y-0.5 bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)]/70 rounded-[var(--radius-md)] overflow-hidden transition-all duration-200 focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] flex flex-col"
     >
       {/* Photographic 16:9 Canvas with measured contrast scrim */}
       <div className="relative aspect-video w-full overflow-hidden">
@@ -275,7 +282,12 @@ function CommodityWorldCard({
       {/* Crisp Cycle & Bottom Detection Telemetry Footer */}
       <div className="p-4 space-y-3 flex-1 flex flex-col justify-between bg-[var(--surface)]">
         <div className="flex items-center justify-between gap-2">
-          <CyclePhaseBadge phase={cyclePhase} compact />
+          <span
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <CyclePhaseBadge phase={cyclePhase} compact />
+          </span>
           <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent)] group-hover:translate-x-0.5 transition-transform whitespace-nowrap shrink-0">
             <span>Hồ sơ chu kỳ</span>
             <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -311,6 +323,6 @@ function CommodityWorldCard({
           </div>
         </div>
       </div>
-    </button>
+    </div>
   );
 }

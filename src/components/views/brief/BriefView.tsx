@@ -22,7 +22,10 @@ function decimalsForTick(tick: number | null | undefined): number {
  * "Phân tích chi tiết": plain-language brief of one commodity (GET /api/analysis/brief/:id).
  * Complements the owner's "Hồ sơ hàng hoá" (multi-year cycle dossier) with the current state.
  */
-export function BriefView() {
+/** Sections the instrument summary does not already show (price/trend/risk/cot/contract/term live there). */
+const EMBEDDED_SECTIONS = new Set(['momentum', 'seasonality', 'missing']);
+
+export function BriefView({ embedded = false }: { embedded?: boolean } = {}) {
   const { selectedSymbol, setSelectedSymbol, instruments, setActiveModule } = useTerminal();
   const { t, lang } = useI18n();
   const [brief, setBrief] = useState<AnalysisBrief | null>(null);
@@ -54,6 +57,31 @@ export function BriefView() {
   const inst = instruments.find((i) => i.exchangeSymbol === selectedSymbol);
   const decimals = decimalsForTick(inst?.specification.minimumTickSize);
   const isCurrent = brief && brief.exchangeSymbol === selectedSymbol;
+
+  if (embedded) {
+    return (
+      <div className="space-y-3 min-w-0">
+        {loading && !isCurrent && <Skeleton className="h-8" />}
+        {error && (
+          <Card tone="warning" className="flex flex-wrap items-center justify-between gap-2">
+            <span>{t('brief.error', { msg: error })}</span>
+            <button type="button" onClick={() => void load(selectedSymbol)} className="text-xs underline">
+              {t('brief.retry')}
+            </button>
+          </Card>
+        )}
+        {isCurrent && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {brief.sections
+              .filter((s) => EMBEDDED_SECTIONS.has(s.id))
+              .map((s) => (
+                <BriefSectionCard key={s.id} section={s} />
+              ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 max-w-6xl">
