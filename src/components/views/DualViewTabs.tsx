@@ -16,7 +16,7 @@ export function DualViewTabs({ tabs, initialTabId }: { tabs: DualViewTab[]; init
   const current = tabs.find((t) => t.id === active) ?? tabs[0];
   return (
     <div className="space-y-4">
-      <div role="tablist" className="flex flex-wrap gap-2 border-b border-white/10 pb-2">
+      <div role="tablist" className="flex flex-nowrap overflow-x-auto sm:flex-wrap gap-2 border-b border-white/10 pb-2">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -25,7 +25,7 @@ export function DualViewTabs({ tabs, initialTabId }: { tabs: DualViewTab[]; init
             aria-selected={tab.id === current?.id}
             onClick={() => setActive(tab.id)}
             title={tab.note}
-            className={`px-3 py-2 min-h-9 text-xs rounded-md border ${
+            className={`px-3 py-2 min-h-9 text-xs rounded-md border shrink-0 whitespace-nowrap ${
               tab.id === current?.id
                 ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--text-strong)]'
                 : 'border-white/10 text-[var(--text)]/70 hover:text-[var(--text-strong)]'

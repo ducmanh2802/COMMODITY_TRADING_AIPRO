@@ -5,6 +5,7 @@ import { DATE_FORMATS, TIMEFRAMES } from '../data/csvOhlcvParser.ts';
 import { importCsv, type ImportStatus } from '../data/importService.ts';
 import { isValidTimeZone } from '../data/timeZones.ts';
 import { requireAdminToken } from '../middleware/adminAuth.ts';
+import { getContractD1 } from '../services/yahooContractHistory.ts';
 import { storedRowToMarketCandle } from '../providers/csvHistorical.ts';
 import {
   CONTINUOUS_ADJUSTMENTS,
@@ -19,6 +20,8 @@ export interface DataRoutesDeps {
   candles: ICandleRepository;
   /** Guard for the mutating routes (import, delete). Default: `requireAdminToken` (env ADMIN_API_TOKEN). */
   requireAdmin?: RequestHandler;
+  /** Test seam for the T96 per-contract D1 route. */
+  contractFetch?: typeof fetch;
 }
 
 const InstrumentIdSchema = z.string().trim().min(1).max(32).regex(/^[A-Za-z0-9:_-]+$/);
@@ -190,6 +193,27 @@ export function registerDataRoutes(app: Express, deps: DataRoutesDeps): void {
         return;
       }
       res.json({ deleted: true, datasetId: parsed.data.id, candlesDeleted: result.candlesDeleted });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // T96: D1 of one specific contract month (the quote's own), UNOFFICIAL Yahoo. UNAVAILABLE => client keeps the
+  // continuous series + ROLL_MISMATCH warning.
+  app.get('/api/market/contract-candles', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const parsed = z.object({ instrumentId: InstrumentIdSchema, contractMonth: z.string().regex(/^\d{4}-\d{2}$/) }).safeParse(req.query);
+      if (!parsed.success) {
+        validationError(res, 'Invalid contract-candles query parameters.', parsed.error.issues);
+        return;
+      }
+      const instrument = await deps.findInstrument(parsed.data.instrumentId);
+      if (!instrument) {
+        res.status(404).json({ error: 'INSTRUMENT_NOT_FOUND', message: `Instrument ${parsed.data.instrumentId} is not registered.` });
+        return;
+      }
+      const r = await getContractD1(instrument, parsed.data.contractMonth, { fetchFn: deps.contractFetch });
+      res.json({ ...r, instrumentId: instrument.id, timeframe: 'D1', retrievedAt: new Date().toISOString() });
     } catch (err) {
       next(err);
     }

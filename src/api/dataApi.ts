@@ -280,6 +280,27 @@ export async function fetchCandles(
   return body as CandlesResponse;
 }
 
+/** T96: D1 candles of one specific contract month. status UNAVAILABLE => fall back to continuous + roll warning. */
+export type ContractCandlesResponse =
+  | { status: 'OK'; contractMonth: string; yahooSymbol: string; candles: CandlesResponse['candles']; source: string }
+  | { status: 'UNAVAILABLE'; contractMonth: string | null; reason: string };
+
+export async function fetchContractCandles(
+  q: { instrumentId: string; contractMonth: string },
+  signal?: AbortSignal
+): Promise<ContractCandlesResponse> {
+  const params = new URLSearchParams({ instrumentId: q.instrumentId, contractMonth: q.contractMonth });
+  try {
+    const res = await fetch(`/api/market/contract-candles?${params.toString()}`, { signal });
+    const body = await readJson(res);
+    if (!res.ok) return { status: 'UNAVAILABLE', contractMonth: q.contractMonth, reason: messageOf(body, `HTTP ${res.status}`) };
+    return body as ContractCandlesResponse;
+  } catch (err) {
+    if (signal?.aborted) throw err;
+    return { status: 'UNAVAILABLE', contractMonth: q.contractMonth, reason: 'network error' };
+  }
+}
+
 /** True for daily/weekly bars, which are stored at 00:00Z of the session date. */
 export function isSessionDateTimeframe(tf: string): boolean {
   return tf === 'D1' || tf === 'W1';

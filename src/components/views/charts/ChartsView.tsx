@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+
+/** "ICE:KC" -> "KC"; plain roots pass through. */
+const symbolRoot = (id: string) => id.slice(id.lastIndexOf(':') + 1);
 import { AlertTriangle, CheckCircle2, Info, NotebookPen, RefreshCw } from 'lucide-react';
 import { chartToPendingContext, setPendingNoteContext } from '../journal/researchNotes';
 import {
@@ -22,6 +25,7 @@ import {
 } from '../../../shared/analytics';
 import type { MarketCandle } from '../../../shared/types/market';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
+import { SourceChip } from '../../common/SourceChip';
 import { fmtDate, fmtInt, useT } from '../../../i18n';
 import { BenchmarkReferencePanel } from './BenchmarkReferencePanel';
 import { ChartCompareSection } from './ChartCompare';
@@ -142,7 +146,11 @@ export function ChartsView() {
 
   const instrumentOptions = useMemo(() => uniq(datasets.map((d) => d.instrumentId)).sort(), [datasets]);
   // Single source of truth: global selected symbol; fall back to first dataset instrument if it has no data.
-  const instrumentId = instrumentOptions.includes(selectedSymbol) ? selectedSymbol : (instrumentOptions[0] ?? '');
+  // Dataset ids are "EXCHANGE:ROOT" (ICE:KC) while the global symbol is the root (KC): match on the root.
+  const instrumentId =
+    instrumentOptions.find((o) => o === selectedSymbol || symbolRoot(o) === symbolRoot(selectedSymbol)) ??
+    instrumentOptions[0] ??
+    '';
   const contractOptions = useMemo(
     () => uniq(datasets.filter((d) => d.instrumentId === instrumentId).map((d) => d.contractCode)).sort(),
     [datasets, instrumentId]
@@ -323,7 +331,7 @@ export function ChartsView() {
           <select
             id="ch-instrument"
             value={instrumentId}
-            onChange={(e) => setSelectedSymbol(e.target.value)}
+            onChange={(e) => setSelectedSymbol(symbolRoot(e.target.value))}
             disabled={instrumentOptions.length === 0}
             className={`${selectCls} min-w-[220px]`}
           >
@@ -399,8 +407,8 @@ export function ChartsView() {
                 {incompleteDropped > 0 && ` · ${t('chart.incompleteHidden', { n: incompleteDropped })}`}
               </p>
               {data.provenance.map((p) => (
-                <p key={p.datasetId} className="font-mono text-[11px] text-[var(--text)]/70">
-                  {t('common.source')} “{p.sourceLabel}” ·{' '}
+                <p key={p.datasetId} className="font-mono text-[11px] text-[var(--text)]/70 flex items-center gap-2 flex-wrap">
+                  <SourceChip sources={[p.sourceLabel]} className="whitespace-nowrap" />
                   <span className="text-[var(--warning)]" title={p.sourceQuality === 'UNOFFICIAL' ? t('quality.UNOFFICIAL.desc') : undefined}>
                     {p.sourceQuality}
                     {p.sourceQuality === 'UNOFFICIAL' ? ` (${t('quality.UNOFFICIAL')})` : ''}

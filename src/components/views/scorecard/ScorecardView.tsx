@@ -149,7 +149,59 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
       {data && rows.length === 0 && <EmptyState title={t('sc.empty')} />}
 
       {data && rows.length > 0 && (
-        <Card padded={false} className="overflow-x-auto">
+        <>
+        <ul className="md:hidden space-y-2" aria-label={t('sc.title')}>
+          {rows.map((c) => {
+            const name = lang === 'vi' && c.vietnameseName ? c.vietnameseName : c.productName;
+            const cot = dimOf(c, 'cot');
+            const none = <span className="text-xs text-[var(--faint)]">{t('sc.noValue')}</span>;
+            const pairs: Array<[string, React.ReactNode]> = [
+              [t('sc.col.trend'), <DimBadge dim={dimOf(c, 'trend')} />],
+              [t('sc.col.momentum'), <DimBadge dim={dimOf(c, 'momentum')} />],
+              [t('sc.col.volatility'), <DimBadge dim={dimOf(c, 'volatility')} />],
+              [t('sc.col.cot'), cot?.status === 'OK' ? <DimBadge dim={cot} /> : none],
+              [t('sc.col.clarity'), c.overall.trendClarity.level ? <Badge tone={LEVEL_TONE[c.overall.trendClarity.level]}>{c.overall.trendClarity.label[lang]} · {c.overall.trendClarity.score}</Badge> : none],
+              [t('sc.col.risk'), c.overall.volatilityRisk.level ? <Badge tone={LEVEL_TONE[c.overall.volatilityRisk.level]}>{c.overall.volatilityRisk.label[lang]} · {c.overall.volatilityRisk.score}</Badge> : none],
+              [t('sc.col.quality'), <Badge tone={LEVEL_TONE[c.dataQuality.level]} title={c.dataQuality.historySource ?? undefined}>{t(`sc.quality.${c.dataQuality.level}` as TKey)}</Badge>],
+            ];
+            return (
+              <li key={c.instrumentId}>
+                <Card
+                  className="cursor-pointer space-y-2"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => pick(c.instrumentId, c.exchangeSymbol)}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      pick(c.instrumentId, c.exchangeSymbol);
+                    }
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-medium text-[var(--text-strong)] truncate">{name}</div>
+                      <div className="text-[11px] font-mono text-[var(--faint)] truncate">{c.exchangeSymbol} · {c.instrumentId.split(':')[0]}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="tabular-nums text-[var(--text-strong)]">{fmtPrice(c.price.value)}</div>
+                      <DataStatusBadge status={c.price.status as DataQualityStatus} sourceQuality={c.price.sourceQuality ?? undefined} compact />
+                    </div>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                    {pairs.map(([label, val]) => (
+                      <div key={label} className="flex items-center justify-between gap-2 min-w-0">
+                        <dt className="text-[var(--muted)] shrink-0">{label}</dt>
+                        <dd className="min-w-0">{val}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </Card>
+              </li>
+            );
+          })}
+        </ul>
+        <Card padded={false} className="overflow-x-auto hidden md:block">
           <table className="w-full text-sm min-w-[900px]">
             <thead>
               <tr className="text-left text-xs text-[var(--muted)] border-b border-[var(--border)]">
@@ -206,6 +258,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
             </tbody>
           </table>
         </Card>
+        </>
       )}
 
       {data && (

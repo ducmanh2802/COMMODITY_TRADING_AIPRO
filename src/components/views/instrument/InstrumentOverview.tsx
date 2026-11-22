@@ -10,6 +10,7 @@ import type { MarketCandle } from '../../../shared/types/market';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
 import { CyclePhaseBadge } from '../../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
+import { SourceChip } from '../../common/SourceChip';
 import { WatchButton } from '../../watchlist/WatchButton';
 import { Card } from '../../ui/Card';
 import { Skeleton } from '../../ui/Skeleton';
@@ -564,9 +565,10 @@ export function InstrumentOverview() {
                     n: sorted.length,
                     from: fmtDate(sorted[0].timestamp.slice(0, 10)),
                     to: fmtDate(stats.last.timestamp.slice(0, 10)),
-                    src: stats.last.source,
+                    src: '',
                   })
                 : t('ins.raw.none')}
+              <SourceChip sources={stats ? [stats.last.source] : []} className="inline-flex ml-1" />
             </li>
             {summary.missingInputs.length > 0 && <li>{t('ins.raw.missing', { v: summary.missingInputs.join(', ') })}</li>}
           </ul>

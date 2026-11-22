@@ -4,6 +4,7 @@ import type { BriefFact, BriefSection, BriefSectionStatus, BriefFactQuality } fr
 import { fmtDate, fmtDateTime, hasKey, useI18n, type TKey } from '../../../i18n';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
+import { SourceChip } from '../../common/SourceChip';
 
 const STATUS_STYLE: Record<BriefSectionStatus, 'positive' | 'warning' | 'neutral'> = {
   OK: 'positive',
@@ -52,14 +53,7 @@ function FactRow({ fact }: { fact: BriefFact }) {
         <Badge tone={QUALITY_STYLE[fact.quality]}>{t(`brief.quality.${fact.quality}` as TKey)}</Badge>
         {fresh ? ` · ${fresh}` : ''}
         {fact.asOf ? ` · ${t('brief.asOf')}: ${fmtAsOf(fact.asOf)}` : ''}
-        {` · ${t('brief.source')}: `}
-        {/^https?:\/\//.test(fact.source) ? (
-          <a href={fact.source} target="_blank" rel="noreferrer" className="underline decoration-dotted hover:text-[var(--text)]/80">
-            {fact.source.replace(/^https?:\/\//, '')}
-          </a>
-        ) : (
-          fact.source
-        )}
+        <SourceChip sources={fact.source ? [fact.source] : []} className="inline-flex" />
       </div>
     </li>
   );

@@ -33,11 +33,11 @@ Trạng thái: `[ ]` chờ · `[~]` đang làm · `[x]` xong.
 |---|---|---|---|
 | [x] S1 | Một selector mã duy nhất: Biểu đồ theo `useTerminal().selectedSymbol` (lỗi KC→ZC) | sonnet | test-driven-development |
 | [x] S2 | `MineHub` truyền `initialTabId` để deep-link hoạt động | sonnet | — |
-| [ ] S3 | Component `<SourceChip>` thay các dòng nguồn dài | sonnet | vercel-composition-patterns |
+| [x] S3 | Component `<SourceChip>` thay các dòng nguồn dài | sonnet | vercel-composition-patterns |
 | [x] S4 | "Xem thêm" cho BriefView; tin tức giới hạn 10 + nút xem thêm | sonnet | — |
-| [ ] S5 | TopBar mobile icon-only, hết tràn 13px; bảng thành thẻ trên mobile | sonnet | ui-ux-pro-max |
+| [x] S5 | TopBar mobile icon-only, hết tràn 13px; bảng thành thẻ trên mobile | sonnet | ui-ux-pro-max |
 | [x] T97 | Trường `plan` trong `firestore.rules` + test emulator, bật `PERSIST_PLAN_TO_FIRESTORE` | sonnet | test-driven-development |
-| [ ] T96 | Chuỗi giá D1 theo từng hợp đồng tháng | sonnet | — |
+| [x] T96 | Chuỗi giá D1 theo từng hợp đồng tháng | sonnet | — |
 
 ## Đợt 3 — Đổi IA (Opus lập kế hoạch, Sonnet làm)
 
@@ -58,6 +58,9 @@ Trạng thái: `[ ]` chờ · `[~]` đang làm · `[x]` xong.
 | [ ] P4 | `npx impeccable detect src/` sạch lỗi P0/P1 | haiku | — |
 
 ## Dự trữ (tự kéo vào khi hàng chờ còn ≤ 3)
+
+- [ ] T96b. Biểu đồ + InstrumentOverview dùng `fetchContractCandles()` khi có `contractMonth`; ẩn ROLL_MISMATCH khi có chuỗi theo hợp đồng (sonnet)
+- [ ] M1. Mobile 390px: thẻ nút `rounded-xl` ở Hôm nay dư 8px bên phải (bị cắt, không gây cuộn ngang) (haiku)
 
 - [ ] E. Endpoint `/api/home` + cache client, tải trễ panel dưới màn hình (vercel-react-best-practices)
 - [ ] F. Lazy-load Firestore và i18n theo ngôn ngữ; kiểm tra kích thước `index-*.js`

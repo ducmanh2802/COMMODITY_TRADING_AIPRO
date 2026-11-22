@@ -26,6 +26,8 @@ import {
 export interface ChartApiPair {
   chart: IChartApi;
   series: ISeriesApi<'Candlestick'>;
+  /** False once the owning CandleChart has called chart.remove(); teardown must skip chart calls then. */
+  alive: boolean;
 }
 
 interface Props {
@@ -161,6 +163,9 @@ export function ChartAnnotations({ api, candles, times, timeframe, children }: P
     }
     if (markers.length === 0) setInfo(null);
     return () => {
+      // React runs the parent's cleanup (chart.remove()) first; detach() on a removed chart
+      // schedules a repaint that throws "Object is disposed" asynchronously, outside this try.
+      if (!api.alive) return;
       try {
         plugin?.detach();
       } catch {
@@ -182,6 +187,7 @@ export function ChartAnnotations({ api, candles, times, timeframe, children }: P
     };
     api.chart.subscribeClick(handler);
     return () => {
+      if (!api.alive) return;
       try {
         api.chart.unsubscribeClick(handler);
       } catch {

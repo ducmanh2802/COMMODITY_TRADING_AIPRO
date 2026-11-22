@@ -132,7 +132,8 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
       wickDownColor: DOWN,
     });
     candleSeries.setData(candleData);
-    setApi({ chart, series: candleSeries });
+    const apiPair: ChartApiPair = { chart, series: candleSeries, alive: true };
+    setApi(apiPair);
 
     if (showVolume) {
       const vol = chart.addSeries(HistogramSeries, {
@@ -218,6 +219,7 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
 
     return () => {
       disposed = true;
+      apiPair.alive = false;
       chart.unsubscribeCrosshairMove(onCrosshairMove);
       chartRef.current = null;
       setApi(null);

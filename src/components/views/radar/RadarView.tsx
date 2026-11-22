@@ -10,6 +10,7 @@ import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
 import { LineChart } from '../../ui/viz/LineChart';
 import { useT } from '../../../i18n';
+import { SourceChip } from '../../common/SourceChip';
 
 const fmt = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
 
@@ -72,9 +73,10 @@ function ItemCard({ item, rank, muted, onOpen }: { item: RadarItem; rank: number
             <li key={r}>{r}</li>
           ))}
         </ul>
-        <p className="text-[11px] text-[var(--text)]/50">
-          Phiên {item.asOf} · nguồn {item.source ?? 'không rõ'}
-          {item.quality ? ` (${item.quality})` : ''}
+        <p className="text-[11px] text-[var(--text)]/50 flex items-center gap-2">
+          <span>Phiên {item.asOf}</span>
+          <SourceChip sources={item.source ? [item.source] : []} />
+          {item.quality ? <span className="text-[var(--muted)]">({item.quality})</span> : null}
         </p>
       </div>
     </Card>
@@ -100,7 +102,10 @@ function SetupCard({ s, onOpen }: { s: RadarSetup; onOpen: () => void }) {
             <li key={c}>{c}</li>
           ))}
         </ul>
-        <p className="text-[11px] text-[var(--text)]/50">Phiên {s.asOf} · nguồn {s.source ?? 'không rõ'}</p>
+        <p className="text-[11px] text-[var(--text)]/50 flex items-center gap-2">
+          <span>Phiên {s.asOf}</span>
+          <SourceChip sources={s.source ? [s.source] : []} />
+        </p>
       </div>
     </Card>
   );

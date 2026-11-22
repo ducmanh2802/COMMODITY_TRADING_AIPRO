@@ -46,9 +46,9 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
   const overallDataStatus = health?.capabilities.marketDataOverallStatus ?? 'UNAVAILABLE';
 
   return (
-    <header className="sticky top-0 z-30 bg-[var(--surface)]/90 backdrop-blur border-b border-[var(--border)] px-3 sm:px-5 py-2 flex flex-wrap items-center justify-between gap-3 shrink-0">
+    <header className="sticky top-0 z-30 bg-[var(--surface)]/90 backdrop-blur border-b border-[var(--border)] px-3 sm:px-5 py-2 flex flex-wrap items-center justify-between gap-2 sm:gap-3 shrink-0 max-w-full">
       {/* Left zone: Mobile menu trigger + Market selection + Instrument search */}
-      <div className="flex items-center gap-2.5 flex-1 min-w-fit">
+      <div className="flex items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
         <button
           type="button"
           onClick={onOpenMobileMenu}
@@ -58,13 +58,13 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           <Menu className="w-4 h-4" aria-hidden="true" />
         </button>
 
-        <div className="flex items-center gap-1 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] p-0.5 shrink-0">
+        <div className="flex items-center gap-1 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] p-0.5 min-w-0">
           {(['ALL', 'MXV', 'INTERNATIONAL'] as MarketScope[]).map((scope) => (
             <button
               key={scope}
               type="button"
               onClick={() => setMarketScope(scope)}
-              className={`h-8 px-3 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+              className={`h-8 px-2 sm:px-3 text-xs font-medium rounded-lg transition-colors whitespace-nowrap truncate min-w-0 ${
                 marketScope === scope
                   ? 'bg-[var(--accent)] text-white shadow-sm'
                   : 'text-[var(--text)]/70 hover:text-[var(--text-strong)]'
@@ -100,7 +100,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
       </div>
 
       {/* Right zone: Timeframe + Data status + Local ICT clock + Refresh + User Profile */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 max-w-full">
         <div className="hidden 2xl:flex items-center gap-1.5">
           <label htmlFor="topbar-timeframe" className="sr-only">
             {t('topbar.timeframe')}
@@ -150,7 +150,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
             <button
               type="button"
               onClick={() => setActiveModule('settings')}
-              className="flex items-center gap-2 h-9 px-3 bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-xs text-[var(--text)] hover:border-[var(--accent)] transition-colors whitespace-nowrap"
+              className="flex items-center gap-2 h-9 px-2.5 sm:px-3 bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-xs text-[var(--text)] hover:border-[var(--accent)] transition-colors whitespace-nowrap"
             >
               <UserIcon className="w-3.5 h-3.5 text-[var(--accent)]" aria-hidden="true" />
               <span className="hidden sm:inline max-w-[120px] truncate">
@@ -171,10 +171,12 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           <button
             type="button"
             onClick={() => void signInWithGoogle()}
-            className="inline-flex items-center gap-1.5 h-9 px-4 bg-[var(--accent)] hover:brightness-110 text-white text-xs font-semibold rounded-[10px] transition-colors whitespace-nowrap shrink-0"
+            aria-label={t('topbar.signIn')}
+            title={t('topbar.signIn')}
+            className="inline-flex items-center justify-center gap-1.5 h-9 w-9 sm:w-auto sm:px-4 bg-[var(--accent)] hover:brightness-110 text-white text-xs font-semibold rounded-[10px] transition-colors whitespace-nowrap shrink-0"
           >
             <LogIn className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{t('topbar.signIn')}</span>
+            <span className="hidden sm:inline">{t('topbar.signIn')}</span>
           </button>
         )}
       </div>
