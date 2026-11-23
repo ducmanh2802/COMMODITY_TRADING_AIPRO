@@ -204,3 +204,13 @@ Ghi chú phạm vi: app **chỉ mô phỏng giao dịch** cho mục đích học
 - T98: Lỗi console "Object is disposed" từ lightweight-charts (autoSize resize sau chart.remove()) khi đổi khung thời gian; không ảnh hưởng hiển thị.
 - T99: Nguồn tự động cho giá trong nước (cà phê, tiêu, cao su) — hiện chỉ nhập tay có nguồn; tìm nguồn có cấu trúc/được phép.
 - T100: Bản đồ thời tiết có đường bờ biển (TopoJSON nhẹ) thay vì lưới kinh vĩ.
+
+### Wave 13 — Nâng cấp theo danh sách ưu tiên (2026-11-23)
+Đợt 1 (đang làm): T96b nến theo đúng hợp đồng tháng; xác minh 8 điểm UNVERIFIED (instruments.ts, calendarSpecs.ts) từ nguồn sàn chính thức; OBV + Strategy Lab (tham số tuỳ chỉnh, walk-forward, Monte Carlo, roll theo lịch sàn thật); T70 bài kiểm tra cuối cấp + chứng nhận PDF; dọn mã cũ + audit responsive/a11y/LCP màn nâng cao; điểm đánh giá nghiên cứu cho Báo cáo thị trường.
+Đợt 2 (kế tiếp):
+| ID | Task | Ghi chú |
+|---|---|---|
+| T101 | Web Push (VAPID, service worker có sẵn) + email (SMTP qua env, opt-in) cho cảnh báo vùng giá/Radar | Bổ sung kênh ngoài Telegram |
+| T63 | Cuộc đua Giao dịch thử theo mùa: khớp giá phía server, điểm kỷ luật, bảng xếp hạng ẩn danh, rules Firestore + test emulator | Cần T85 (đã có test:rules) |
+| T53 | Lưu trữ bền vững khi deploy: sao lưu/khôi phục SQLite sang Cloud Storage theo lịch (opt-in), hướng dẫn gắn volume Cloud Run | Tránh mất dữ liệu khi container khởi động lại |
+Chặn bởi nguồn trả phí / chưa có nguồn hợp lệ: giá futures cho RC, CT, BRN, TIO, FEF, JRU (cần MXV_API_URL / ICE_API_KEY / CME_DATAMINE_API_KEY hoặc nhập CSV); T99 nguồn tự động giá nội địa (chưa tìm thấy nguồn có cấu trúc được phép — giữ nhập tay có nguồn).
