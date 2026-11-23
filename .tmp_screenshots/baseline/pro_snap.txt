@@ -1,0 +1,208 @@
+### Page
+- Page URL: http://localhost:3000/
+- Page Title: COMMODITY TRADING AI PRO — Multi-Market Commodity Analysis Platform
+### Snapshot
+```yaml
+- generic [ref=e108]:
+  - complementary "Điều hướng" [ref=e109]:
+    - generic [ref=e110]: COMMODITY AI PRO
+    - navigation "Điều hướng" [ref=e117]:
+      - list [ref=e118]:
+        - listitem [ref=e119]:
+          - button "Thị trường" [ref=e120]
+        - listitem [ref=e126]:
+          - button "Phân tích" [ref=e127]
+        - listitem [ref=e133]:
+          - button "Học viện" [ref=e134]
+        - listitem [ref=e139]:
+          - button "Của tôi" [ref=e140]
+      - generic [ref=e145]:
+        - heading "Cài đặt & dữ liệu" [level=2] [ref=e146]
+        - list [ref=e147]:
+          - listitem [ref=e148]:
+            - button "Cài đặt" [ref=e149]
+          - listitem [ref=e150]:
+            - button "Sức khoẻ dữ liệu" [ref=e151]
+          - listitem [ref=e152]:
+            - button "Nhập dữ liệu" [ref=e153]
+        - group [ref=e154]:
+          - generic "Công cụ nâng cao" [ref=e155] [cursor=pointer]
+    - generic [ref=e156]:
+      - paragraph [ref=e157]: Understand the Cycle. Catch the Opportunity.
+      - button "Thu gọn thanh bên" [ref=e158]
+  - generic [ref=e162]:
+    - banner [ref=e163]:
+      - generic [ref=e164]:
+        - generic [ref=e165]:
+          - button "Tất cả thị trường" [ref=e166]
+          - button "MXV Việt Nam" [ref=e167]
+          - button "Quốc tế" [ref=e168]
+        - generic [ref=e169]:
+          - generic [ref=e170]: Tìm mã hợp đồng
+          - searchbox "Tìm mã hợp đồng" [ref=e171]
+      - generic [ref=e172]:
+        - generic [ref=e173]:
+          - generic [ref=e174]: Khung thời gian
+          - combobox "Khung thời gian" [ref=e175]:
+            - option "M1"
+            - option "M5"
+            - option "M15"
+            - option "M30"
+            - option "H1"
+            - option "H4"
+            - option "D1" [selected]
+            - option "W1"
+        - generic [ref=e176]:
+          - 'generic "Đây là giá đóng cửa của phiên gần nhất (dữ liệu lịch sử), không phải giá đang chạy. (Mã kỹ thuật: HISTORICAL)" [ref=e177]': Giá đóng cửa gần nhất
+          - generic [aria-hidden] [ref=e181]: "|"
+          - generic [ref=e182]: 11:20:11 ICT
+        - button "Radar thị trường sôi động" [ref=e184]
+        - group "Chế độ giao diện" [ref=e188]:
+          - button "Dễ dùng" [ref=e189]
+          - button "Chuyên sâu" [pressed] [ref=e190]
+        - group "Ngôn ngữ" [ref=e191]:
+          - generic [ref=e192]:
+            - button "VI" [pressed] [ref=e193]
+            - button "EN" [ref=e194]
+        - button "Làm mới trạng thái máy chủ" [ref=e195]
+        - button "Đăng nhập" [ref=e201]
+    - main [ref=e206]:
+      - generic [ref=e207]:
+        - tablist [ref=e208]:
+          - tab "Hôm nay nên chú ý gì" [selected] [ref=e209]
+          - tab "Tình hình tài chính thế giới" [ref=e210]
+          - tab "Radar sôi động" [ref=e211]
+          - tab "Giá" [ref=e212]
+          - tab "Tin tức" [ref=e213]
+          - tab "Vĩ mô & lịch báo cáo" [ref=e214]
+        - paragraph [ref=e215]: Tóm tắt nhanh những điểm đáng xem hôm nay.
+        - generic [ref=e216]:
+          - generic [ref=e218]:
+            - heading "Hôm nay nên chú ý gì" [level=2] [ref=e219]
+            - paragraph [ref=e220]: Chỉ là gợi ý để bạn xem thêm, không phải khuyến nghị mua hay bán.
+          - generic [ref=e221]:
+            - generic [ref=e222]:
+              - generic [ref=e228]:
+                - generic [ref=e229]: Mã tăng
+                - generic [ref=e230]: "0"
+                - generic [ref=e231]: trên 0 mã có giá
+              - generic [ref=e237]:
+                - generic [ref=e238]: Mã giảm
+                - generic [ref=e239]: "0"
+                - generic [ref=e240]: 0 mã đi ngang
+              - generic [ref=e245]:
+                - generic [ref=e246]: Biến động mạnh nhất
+                - generic [ref=e247]: —
+              - generic [ref=e254]:
+                - generic [ref=e255]: Báo cáo kế tiếp
+                - generic [ref=e256]: Còn 2 ngày
+                - generic [ref=e257]: 23/11 · 08:30 – 16:30 ICT
+            - region "Báo cáo sắp ra trong 7 ngày" [ref=e259]:
+              - generic [ref=e260]:
+                - heading "Báo cáo sắp ra trong 7 ngày" [level=3] [ref=e261]
+                - paragraph [ref=e262]: Giờ Việt Nam. Giá thường biến động mạnh quanh giờ công bố.
+              - list [ref=e263]:
+                - listitem [ref=e264]:
+                  - button "23 Th11 Tỷ giá Trung tâm USD/VND (NHNN) & Thanh toán Ký quỹ MXV 08:30 – 16:30 ICT · Còn 2 ngày" [ref=e265]:
+                    - generic [ref=e266]:
+                      - generic [ref=e267]: "23"
+                      - generic [ref=e268]: Th11
+                    - generic [ref=e269]:
+                      - generic [ref=e270]: Tỷ giá Trung tâm USD/VND (NHNN) & Thanh toán Ký quỹ MXV
+                      - generic [ref=e271]: 08:30 – 16:30 ICT · Còn 2 ngày
+                - listitem [ref=e274]:
+                  - button "25 Th11 Báo cáo Tồn kho Dầu thô Mỹ hàng tuần (EIA Petroleum Status) 22:30 ICT · Còn 4 ngày" [ref=e275]:
+                    - generic [ref=e276]:
+                      - generic [ref=e277]: "25"
+                      - generic [ref=e278]: Th11
+                    - generic [ref=e279]:
+                      - generic [ref=e280]: Báo cáo Tồn kho Dầu thô Mỹ hàng tuần (EIA Petroleum Status)
+                      - generic [ref=e281]: 22:30 ICT · Còn 4 ngày
+                - listitem [ref=e284]:
+                  - button "26 Th11 Báo cáo Doanh số Xuất khẩu Nông sản Mỹ (USDA Export Sales) 20:30 ICT · Còn 5 ngày" [ref=e285]:
+                    - generic [ref=e286]:
+                      - generic [ref=e287]: "26"
+                      - generic [ref=e288]: Th11
+                    - generic [ref=e289]:
+                      - generic [ref=e290]: Báo cáo Doanh số Xuất khẩu Nông sản Mỹ (USDA Export Sales)
+                      - generic [ref=e291]: 20:30 ICT · Còn 5 ngày
+                - listitem [ref=e294]:
+                  - button "26 Th11 Báo cáo Tồn kho Khí tự nhiên Mỹ (EIA Natural Gas Storage) 22:30 ICT · Còn 5 ngày" [ref=e295]:
+                    - generic [ref=e296]:
+                      - generic [ref=e297]: "26"
+                      - generic [ref=e298]: Th11
+                    - generic [ref=e299]:
+                      - generic [ref=e300]: Báo cáo Tồn kho Khí tự nhiên Mỹ (EIA Natural Gas Storage)
+                      - generic [ref=e301]: 22:30 ICT · Còn 5 ngày
+            - region "Xu hướng rõ và biến động cao" [ref=e304]:
+              - generic [ref=e305]:
+                - heading "Xu hướng rõ và biến động cao" [level=3] [ref=e306]
+                - paragraph [ref=e307]: Độ rõ xu hướng 0–100 (không phải điểm mua/bán). Bấm để xem chi tiết.
+              - generic [ref=e308]:
+                - button "Dầu đậu tương Giảm mạnh Độ rõ xu hướng 100/100" [ref=e309]:
+                  - generic [ref=e310]:
+                    - generic [ref=e311]: Dầu đậu tương
+                    - generic [ref=e312]: Giảm mạnh
+                  - generic [ref=e316]:
+                    - generic [ref=e317]: Độ rõ xu hướng
+                    - generic [ref=e318]: 100/100
+                - button "Gạo thô CBOT Tăng mạnh Độ rõ xu hướng 100/100" [ref=e321]:
+                  - generic [ref=e322]:
+                    - generic [ref=e323]: Gạo thô CBOT
+                    - generic [ref=e324]: Tăng mạnh
+                  - generic [ref=e328]:
+                    - generic [ref=e329]: Độ rõ xu hướng
+                    - generic [ref=e330]: 100/100
+                - button "Vàng COMEX (Tham chiếu quốc tế) Giảm mạnh Độ rõ xu hướng 100/100 Biến động cao hơn bình thường" [ref=e333]:
+                  - generic [ref=e334]:
+                    - generic [ref=e335]: Vàng COMEX (Tham chiếu quốc tế)
+                    - generic [ref=e336]: Giảm mạnh
+                  - generic [ref=e340]:
+                    - generic [ref=e341]: Độ rõ xu hướng
+                    - generic [ref=e342]: 100/100
+                  - generic [ref=e345]: Biến động cao hơn bình thường
+                - button "Bạc Giảm mạnh Độ rõ xu hướng 100/100" [ref=e348]:
+                  - generic [ref=e349]:
+                    - generic [ref=e350]: Bạc
+                    - generic [ref=e351]: Giảm mạnh
+                  - generic [ref=e355]:
+                    - generic [ref=e356]: Độ rõ xu hướng
+                    - generic [ref=e357]: 100/100
+                - button "Bạch kim Giảm mạnh Độ rõ xu hướng 100/100" [ref=e360]:
+                  - generic [ref=e361]:
+                    - generic [ref=e362]: Bạch kim
+                    - generic [ref=e363]: Giảm mạnh
+                  - generic [ref=e367]:
+                    - generic [ref=e368]: Độ rõ xu hướng
+                    - generic [ref=e369]: 100/100
+                - button "Khí tự nhiên (Henry Hub) Tăng mạnh Độ rõ xu hướng 100/100 Biến động cao hơn bình thường" [ref=e372]:
+                  - generic [ref=e373]:
+                    - generic [ref=e374]: Khí tự nhiên (Henry Hub)
+                    - generic [ref=e375]: Tăng mạnh
+                  - generic [ref=e379]:
+                    - generic [ref=e380]: Độ rõ xu hướng
+                    - generic [ref=e381]: 100/100
+                  - generic [ref=e384]: Biến động cao hơn bình thường
+            - region "Giai đoạn chu kỳ đáng xem" [ref=e387]:
+              - generic [ref=e388]:
+                - heading "Giai đoạn chu kỳ đáng xem" [level=3] [ref=e389]
+                - paragraph [ref=e390]: "Xanh: giai đoạn 2 hồi phục sớm · Vàng: giai đoạn 4 phân phối."
+              - generic [ref=e391]:
+                - button "Ngô GĐ 2 · hồi phục sớm" [ref=e392]:
+                  - generic [ref=e394]: Ngô
+                  - generic [ref=e395]: GĐ 2 · hồi phục sớm
+                - button "Khô đậu tương GĐ 2 · hồi phục sớm" [ref=e396]:
+                  - generic [ref=e398]: Khô đậu tương
+                  - generic [ref=e399]: GĐ 2 · hồi phục sớm
+                - button "Bạch kim GĐ 4 · phân phối" [ref=e400]:
+                  - generic [ref=e402]: Bạch kim
+                  - generic [ref=e403]: GĐ 4 · phân phối
+                - button "Bạc GĐ 4 · phân phối" [ref=e404]:
+                  - generic [ref=e406]: Bạc
+                  - generic [ref=e407]: GĐ 4 · phân phối
+                - button "Vàng COMEX (Tham chiếu quốc tế) GĐ 4 · phân phối" [ref=e408]:
+                  - generic [ref=e410]: Vàng COMEX (Tham chiếu quốc tế)
+                  - generic [ref=e411]: GĐ 4 · phân phối
+            - group [ref=e412]:
+              - generic "15 mã đang thiếu giá hoặc dùng giá cũ (bấm để xem)" [ref=e413] [cursor=pointer]
+```
