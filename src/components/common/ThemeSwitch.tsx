@@ -14,7 +14,7 @@ export function ThemeSwitch({ large = false }: { large?: boolean }) {
     <div
       role="group"
       aria-label={t('theme.label')}
-      className={`inline-flex items-center gap-0.5 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] p-0.5 ${large ? 'h-12' : 'h-9'}`}
+      className={`inline-flex items-center gap-0.5 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] p-0.5 ${large ? 'h-12' : 'h-10'}`}
     >
       {opts.map(({ id, icon: Icon, label }) => (
         <button
@@ -22,8 +22,9 @@ export function ThemeSwitch({ large = false }: { large?: boolean }) {
           type="button"
           aria-pressed={theme === id}
           title={label}
+          aria-label={label}
           onClick={() => setTheme(id)}
-          className={`h-full inline-flex items-center gap-1.5 px-2.5 ${large ? 'text-base px-4' : 'text-xs'} font-semibold rounded-lg whitespace-nowrap transition-colors ${
+          className={`h-full inline-flex items-center gap-1.5 min-w-10 justify-center px-3 ${large ? 'text-base px-4' : 'text-xs'} font-semibold rounded-lg whitespace-nowrap transition-colors ${
             theme === id ? 'bg-[var(--accent)] text-white' : 'text-[var(--muted)] hover:text-[var(--text-strong)]'
           }`}
         >

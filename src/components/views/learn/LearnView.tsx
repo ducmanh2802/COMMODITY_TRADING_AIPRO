@@ -4,6 +4,7 @@ import { Card } from '../../ui/Card';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { SourceLinks } from './Calculators';
 import { CURRICULUM } from './curriculum';
+import { ExamCard, ExamRunner, type ExamTarget } from './exam/ExamView';
 import { GLOSSARY } from './glossary';
 import { filterSlang, SLANG, SLANG_TAGS, type SlangTag } from './glossarySlang';
 import { MONEY_WAYS, RISK_WARNINGS } from './learnContent';
@@ -12,7 +13,7 @@ import { LessonPage } from './LessonPage';
 import { loadProgress, saveProgress, type LearnProgress } from './progress';
 import { ReviewCard } from './ReviewSession';
 
-type Page = { kind: 'home' } | { kind: 'lesson'; id: string } | { kind: 'glossary' } | { kind: 'extras' };
+type Page = { kind: 'home' } | { kind: 'lesson'; id: string } | { kind: 'glossary' } | { kind: 'extras' } | { kind: 'exam'; target: ExamTarget };
 
 function firstLetter(term: string): string {
   return term.trim().charAt(0).toLocaleUpperCase('vi').normalize('NFD').charAt(0);
@@ -227,6 +228,7 @@ export default function LearnView() {
 
   if (page.kind === 'glossary') return <Glossary onBack={() => go({ kind: 'home' })} />;
   if (page.kind === 'extras') return <Extras onBack={() => go({ kind: 'home' })} />;
+  if (page.kind === 'exam') return <ExamRunner target={page.target} onExit={() => go({ kind: 'home' })} />;
   if (page.kind === 'lesson') {
     const idx = allLessons.findIndex((l) => l.id === page.id);
     const lesson = allLessons[idx];
@@ -247,6 +249,18 @@ export default function LearnView() {
           onToggleCheck={(key) => update((p) => ({ ...p, checklist: { ...p.checklist, [key]: !p.checklist[key] } }))}
           onBack={() => go({ kind: 'home' })}
           onNext={allLessons[idx + 1] ? () => go({ kind: 'lesson', id: allLessons[idx + 1].id }) : undefined}
+          footer={(() => {
+            const lvl = CURRICULUM.find((l) => l.lessons[l.lessons.length - 1]?.id === lesson.id);
+            if (!lvl) return undefined;
+            return (
+              <ExamCard
+                target={{ kind: 'level', levelId: lvl.id }}
+                doneLessons={lvl.lessons.filter((l) => progress.lessons[l.id]?.done).length}
+                totalLessons={lvl.lessons.length}
+                onStart={() => go({ kind: 'exam', target: { kind: 'level', levelId: lvl.id } })}
+              />
+            );
+          })()}
         />
       );
     }
@@ -329,9 +343,21 @@ export default function LearnView() {
                 );
               })}
             </div>
+            <ExamCard
+              target={{ kind: 'level', levelId: level.id }}
+              doneLessons={done}
+              totalLessons={level.lessons.length}
+              onStart={() => go({ kind: 'exam', target: { kind: 'level', levelId: level.id } })}
+            />
           </section>
         );
       })}
+      <ExamCard
+        target={{ kind: 'final' }}
+        doneLessons={doneCount}
+        totalLessons={allLessons.length}
+        onStart={() => go({ kind: 'exam', target: { kind: 'final' } })}
+      />
     </div>
   );
 }

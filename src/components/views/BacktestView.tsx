@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { History } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { StrategyDefinition, StrategyId } from '../../shared/types/analysis';
@@ -6,6 +6,11 @@ import type { Timeframe } from '../../shared/types/instrument';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { fmtFixed, fmtNum, hasKey, tr, useT, type TKey } from '../../i18n';
 import { EquityChart } from '../ui/viz/EquityChart';
+import { MonteCarloSection, StrategyParamsPanel, WalkForwardSection } from './backtest/LabPanels';
+import { defaultsOf, type ParamDef } from './backtest/labGrid';
+
+type StrategyWithParams = StrategyDefinition & { params?: ParamDef[] };
+type RollMode = 'NONE' | 'CALENDAR' | 'INTERVAL';
 
 interface BacktestResponse {
   valid: boolean;
@@ -26,6 +31,16 @@ interface BacktestResponse {
     sharpeRatio: number | null;
     tradeCount: number;
     finalEquity: number;
+    rollCount?: number;
+  };
+  rollInfo?: {
+    requested: RollMode;
+    mode: RollMode;
+    intervalBars: number | null;
+    rollBusinessDaysBefore: number | null;
+    anchor: 'FND' | 'LTD' | 'MIXED' | null;
+    rollDates: string[];
+    note: string | null;
   };
   assumptions: {
     lookAheadPrevention: string;
@@ -74,13 +89,17 @@ export function BacktestView() {
     useTerminal();
   const t = useT();
 
-  const [strategies, setStrategies] = useState<StrategyDefinition[]>([]);
+  const [strategies, setStrategies] = useState<StrategyWithParams[]>([]);
   const [strategyId, setStrategyId] = useState<StrategyId>('TREND_FOLLOWING');
   const [initialEquity, setInitialEquity] = useState('10000');
   const [contractsPerTrade, setContractsPerTrade] = useState('1');
   const [commission, setCommission] = useState('2.5');
   const [slippageTicks, setSlippageTicks] = useState('1');
-  const [rolloverBars, setRolloverBars] = useState('');
+  const [rollMode, setRollMode] = useState<RollMode>('NONE');
+  const [rollDays, setRollDays] = useState('5');
+  const [rollBars, setRollBars] = useState('20');
+  const [rollCost, setRollCost] = useState('0');
+  const [paramValues, setParamValues] = useState<Record<string, string>>({});
 
   const [result, setResult] = useState<BacktestResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -93,23 +112,58 @@ export function BacktestView() {
       .catch(() => {});
   }, []);
 
+  const schema = useMemo<ParamDef[]>(() => strategies.find((x) => x.id === strategyId)?.params ?? [], [strategies, strategyId]);
+
+  // Reset the parameter inputs to the strategy's defaults whenever the strategy (or schema) changes.
+  useEffect(() => {
+    setParamValues(Object.fromEntries(schema.map((d) => [d.key, String(d.default)])));
+  }, [schema]);
+
+  const paramsValid = schema.every((d) => {
+    const raw = paramValues[d.key];
+    const n = Number(raw);
+    return raw === undefined || (raw.trim() !== '' && Number.isFinite(n) && n >= d.min && n <= d.max);
+  });
+  const numericParams = useMemo(
+    () => ({
+      ...defaultsOf(schema),
+      ...Object.fromEntries(
+        Object.entries(paramValues)
+          .filter(([, v]) => v.trim() !== '' && Number.isFinite(Number(v)))
+          .map(([k, v]) => [k, Number(v)])
+      ),
+    }),
+    [schema, paramValues]
+  );
+
+  /** Shared request body for run / walk-forward / Monte Carlo. Returns null while inputs are invalid. */
+  const buildPayload = (): Record<string, unknown> | null => {
+    if (!paramsValid) return null;
+    const intervalOk = Number(rollBars) >= 5;
+    const payload: Record<string, unknown> = {
+      symbol: selectedSymbol,
+      strategyId,
+      timeframe,
+      initialEquity: Number(initialEquity),
+      contractsPerTrade: Math.trunc(Number(contractsPerTrade)),
+      commissionPerContract: Number(commission) || 0,
+      slippageTicks: Number(slippageTicks) || 0,
+      rolloverMode: rollMode === 'INTERVAL' && !intervalOk ? 'NONE' : rollMode,
+    };
+    if (schema.length > 0) payload.params = numericParams;
+    if (rollMode !== 'NONE') payload.rolloverCostPerContract = Number(rollCost) || 0;
+    if (rollMode === 'CALENDAR') payload.rollBusinessDaysBefore = Math.min(30, Math.max(0, Math.trunc(Number(rollDays) || 0)));
+    if (rollMode === 'INTERVAL' && intervalOk) payload.rolloverIntervalBars = Math.trunc(Number(rollBars));
+    return payload;
+  };
+
   const handleRun = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const payload: Record<string, unknown> = {
-        symbol: selectedSymbol,
-        strategyId,
-        timeframe,
-        initialEquity: Number(initialEquity),
-        contractsPerTrade: Math.trunc(Number(contractsPerTrade)),
-        commissionPerContract: Number(commission) || 0,
-        slippageTicks: Number(slippageTicks) || 0,
-      };
-      if (rolloverBars.trim() && Number(rolloverBars) >= 5) {
-        payload.rolloverIntervalBars = Math.trunc(Number(rolloverBars));
-      }
+      const payload = buildPayload();
+      if (!payload) throw new Error(t('bt.failed'));
 
       const res = await fetch('/api/backtest/run', {
         method: 'POST',
@@ -245,30 +299,67 @@ export function BacktestView() {
           <label htmlFor="bt-slip" className="block text-xs text-[var(--text)]/65 mb-1">
             {t('bt.slipRoll')}
           </label>
-          <div className="flex gap-2">
-            <input
-              id="bt-slip"
-              type="number"
-              min="0"
-              value={slippageTicks}
-              onChange={(e) => setSlippageTicks(e.target.value)}
-              className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
-            />
-            <input
-              aria-label={t('bt.rollAria')}
-              type="number"
-              min="5"
-              placeholder={t('bt.rollPh')}
-              value={rolloverBars}
-              onChange={(e) => setRolloverBars(e.target.value)}
-              className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
-            />
-          </div>
+          <input
+            id="bt-slip"
+            type="number"
+            min="0"
+            value={slippageTicks}
+            onChange={(e) => setSlippageTicks(e.target.value)}
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
+          />
         </div>
+
+        <div>
+          <label htmlFor="bt-rollmode" className="block text-xs text-[var(--text)]/65 mb-1">
+            {t('lab.roll.mode')}
+          </label>
+          <select
+            id="bt-rollmode"
+            value={rollMode}
+            onChange={(e) => setRollMode(e.target.value as RollMode)}
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
+          >
+            <option value="NONE">{t('lab.roll.none')}</option>
+            <option value="CALENDAR">{t('lab.roll.calendar')}</option>
+            <option value="INTERVAL">{t('lab.roll.interval')}</option>
+          </select>
+        </div>
+
+        {rollMode === 'CALENDAR' && (
+          <div>
+            <label htmlFor="bt-rolldays" className="block text-xs text-[var(--text)]/65 mb-1">
+              {t('lab.roll.days')}
+            </label>
+            <input id="bt-rolldays" type="number" min="0" max="30" value={rollDays} onChange={(e) => setRollDays(e.target.value)} className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]" />
+          </div>
+        )}
+        {rollMode === 'INTERVAL' && (
+          <div>
+            <label htmlFor="bt-rollbars" className="block text-xs text-[var(--text)]/65 mb-1">
+              {t('lab.roll.bars')}
+            </label>
+            <input id="bt-rollbars" type="number" min="5" value={rollBars} onChange={(e) => setRollBars(e.target.value)} className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]" />
+          </div>
+        )}
+        {rollMode !== 'NONE' && (
+          <div>
+            <label htmlFor="bt-rollcost" className="block text-xs text-[var(--text)]/65 mb-1">
+              {t('lab.roll.cost')}
+            </label>
+            <input id="bt-rollcost" type="number" min="0" step="0.5" value={rollCost} onChange={(e) => setRollCost(e.target.value)} className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]" />
+          </div>
+        )}
+
+        <StrategyParamsPanel
+          schema={schema}
+          values={paramValues}
+          onChange={(k, v) => setParamValues((p) => ({ ...p, [k]: v }))}
+          onReset={() => setParamValues(Object.fromEntries(schema.map((d) => [d.key, String(d.default)])))}
+        />
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !paramsValid}
           className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
         >
           <History className="w-3.5 h-3.5" aria-hidden="true" />
@@ -345,6 +436,27 @@ export function BacktestView() {
               </span>
             </div>
             <EquityCurveSvg points={result.equityCurve} />
+            {result.rollInfo && result.rollInfo.mode !== 'NONE' && (
+              <div className="text-[11px] leading-relaxed text-[var(--text)]/70 space-y-1">
+                {result.rollInfo.mode === 'CALENDAR' && (
+                  <p>
+                    {t('lab.roll.calendarNote', {
+                      n: result.rollInfo.rollBusinessDaysBefore ?? 0,
+                      anchor: t(`lab.roll.anchor.${result.rollInfo.anchor ?? 'MIXED'}` as TKey),
+                      count: result.rollInfo.rollDates.length,
+                    })}
+                  </p>
+                )}
+                {result.rollInfo.requested === 'CALENDAR' && result.rollInfo.mode === 'INTERVAL' && (
+                  <p role="status" className="text-[var(--warning)]">
+                    {t('lab.roll.fallback', { n: result.rollInfo.intervalBars ?? 0 })}
+                  </p>
+                )}
+                <p>
+                  {t('lab.roll.count', { n: result.metrics.rollCount ?? 0 })}. {t('lab.roll.costNote')}
+                </p>
+              </div>
+            )}
             <p className="text-[11px] text-[var(--text)]/60 leading-relaxed">
               {result.assumptions.disclaimer}{' '}
               {t('bt.assumptions', { look: result.assumptions.lookAheadPrevention, fill: result.assumptions.intrabarFillOrder })}
@@ -396,6 +508,21 @@ export function BacktestView() {
           </section>
         </div>
       )}
+
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-[var(--text-strong)] tracking-tight">{t('lab.title')}</h2>
+          <p className="text-sm text-[var(--text)]/65 mt-1">{t('lab.subtitle')}</p>
+        </div>
+        <WalkForwardSection
+          buildPayload={buildPayload}
+          schema={schema}
+          values={numericParams}
+          initialEquity={Number(initialEquity) || 0}
+          disabled={!paramsValid}
+        />
+        <MonteCarloSection buildPayload={buildPayload} initialEquity={Number(initialEquity) || 0} disabled={!paramsValid} />
+      </div>
     </div>
   );
 }

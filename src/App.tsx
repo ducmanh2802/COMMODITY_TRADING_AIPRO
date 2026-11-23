@@ -13,10 +13,10 @@ import {
   SettingsHub,
   TodayHub,
 } from './components/views/hubs/Hubs';
-import { resolveModule } from './components/layout/navMap';
+import { resolveModule, sectionOf } from './components/layout/navMap';
 import { AuthProvider } from './contexts/AuthContext';
 import { TerminalProvider, useTerminal } from './contexts/TerminalContext';
-import { I18nProvider, useT } from './i18n';
+import { I18nProvider, useT, type TKey } from './i18n';
 import { UiModeProvider } from './contexts/UiModeContext';
 import { OnboardingTour } from './components/common/OnboardingTour';
 
@@ -58,12 +58,18 @@ function TerminalWorkspace() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[60] focus:rounded-md focus:bg-[var(--accent)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+      >
+        {t('nav.skip')}
+      </a>
       <Sidebar mobileOpen={mobileMenuOpen} onCloseMobile={() => setMobileMenuOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
 
-        <main ref={mainRef} className="flex-1 p-4 sm:p-6 overflow-y-auto">
+        <main id="main-content" tabIndex={-1} aria-label={t(`n2.sec.${sectionOf(activeModule)}` as TKey)} ref={mainRef} className="focus:outline-none flex-1 p-4 sm:p-6 overflow-y-auto">
           {renderActiveView()}
         </main>
 

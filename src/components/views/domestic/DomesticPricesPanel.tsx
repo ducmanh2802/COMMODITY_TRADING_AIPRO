@@ -276,7 +276,7 @@ function EntryForm({ onSaved }: { onSaved: () => void }) {
       <details className="text-sm">
         <summary className="cursor-pointer text-[var(--muted)]">{t('dm.csv.title')}</summary>
         <p className="mt-2 text-xs text-[var(--muted)]">{t('dm.csv.hint')}</p>
-        <textarea className={`${inputCls} mt-2 font-mono`} rows={4} value={csv} onChange={(e) => setCsv(e.target.value)} />
+        <textarea aria-label={t('dm.csv.title')} className={`${inputCls} mt-2 font-mono`} rows={4} value={csv} onChange={(e) => setCsv(e.target.value)} />
         <button
           type="button"
           onClick={() => post({ csv })}

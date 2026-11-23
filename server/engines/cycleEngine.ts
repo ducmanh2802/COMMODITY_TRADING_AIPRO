@@ -12,6 +12,7 @@ import {
   calculateEMA,
   calculateMACD,
   calculateRSI,
+  summarizeObv,
 } from './technicalEngine.ts';
 
 export const CYCLE_PHASE_LABELS_VI: Record<CyclePhase, string> = {
@@ -299,6 +300,7 @@ export function analyzeTimeframeCycle(
     percentile10Y,
     bbWidthRatio,
     volumeRatio,
+    obv: summarizeObv(candles),
     summary,
   };
 }

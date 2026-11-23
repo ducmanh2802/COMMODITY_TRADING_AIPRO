@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ObvReadout } from './ObvLine';
 import { AlertTriangle, ChevronDown, CircleAlert, CircleCheck, CircleSlash, ExternalLink, HelpCircle } from 'lucide-react';
 import { LineSeries, createChart, type UTCTimestamp } from 'lightweight-charts';
 import { useTerminal } from '../../../contexts/TerminalContext';
@@ -18,6 +19,8 @@ import { WatchButton } from '../../watchlist/WatchButton';
 import { Card } from '../../ui/Card';
 import { Skeleton } from '../../ui/Skeleton';
 import { CandleChart } from '../charts/CandleChart';
+import { ContractSeriesBar, useContractSeries } from '../charts/useContractSeries';
+import { dayChangePct, shouldWarnRollMismatch } from '../../../shared/utils/contractChart';
 import { LegacyModule } from '../LegacyModule';
 import { LazyBriefView } from '../LazyOwnerViews';
 import { RelatedNews } from './RelatedNews';
@@ -275,7 +278,16 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
     return () => ctrl.abort();
   }, [selectedSymbol, nonce]);
 
-  const sorted = useMemo(() => sortCandles(candles), [candles]);
+  // T96b: chart follows the quote's own contract month (D1) unless the user picks the continuous series.
+  const quoteContractMonth = dossier?.summary.quote.contractMonth ?? null;
+  const contractSeries = useContractSeries({
+    instrumentId: dossier?.summary.instrument.id ?? null,
+    quoteContractMonth,
+    timeframe: 'D1',
+    continuous: candles,
+    reloadKey: nonce,
+  });
+  const sorted = useMemo(() => sortCandles(contractSeries.resolved.candles), [contractSeries.resolved.candles]);
   const visible = useMemo(() => {
     if (sorted.length === 0 || range === 'ALL') return sorted;
     const cutoff = Date.parse(sorted[sorted.length - 1].timestamp) - RANGE_DAYS[range] * DAY_MS;
@@ -305,7 +317,7 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
     const atrLast = a.status === 'OK' ? a.values[a.values.length - 1] : null;
     return {
       last,
-      changePct: prev && prev.close !== 0 ? ((last.close - prev.close) / prev.close) * 100 : null,
+      changePct: prev ? dayChangePct([prev, last]) : null,
       lo,
       hi,
       atrLast: typeof atrLast === 'number' ? atrLast : null,
@@ -355,11 +367,14 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
   const rawCurrency = (hasQuote ? quote.currency : spec.tradingCurrency) || '';
   const unitText = rawUnit.includes('/') || !rawCurrency ? rawUnit : `${rawCurrency}/${rawUnit}`;
   // A continuous quote can roll to the next month before the daily history does — flag big gaps instead of hiding them.
-  const mismatchPct =
-    hasQuote && quote.price !== null && stats && stats.last.close !== 0
-      ? ((quote.price - stats.last.close) / stats.last.close) * 100
-      : null;
-  const showMismatch = !isBenchmark && mismatchPct !== null && Math.abs(mismatchPct) >= 1.5;
+  // Gone when the chart is the quote's own contract series (T96b); kept while they may differ.
+  const rollCheck = shouldWarnRollMismatch({
+    series: contractSeries.resolved,
+    quotePrice: hasQuote ? quote.price : null,
+    lastClose: stats ? stats.last.close : null,
+  });
+  const mismatchPct = rollCheck.pct;
+  const showMismatch = !isBenchmark && rollCheck.warn;
   const changePct = !isBenchmark && stats ? stats.changePct : null;
 
   const daily = timeframes.DAILY;
@@ -573,6 +588,14 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
             ))}
           </div>
         </div>
+        {!isBenchmark && (
+          <ContractSeriesBar
+            contractMonth={quoteContractMonth}
+            resolved={contractSeries.resolved}
+            pref={contractSeries.pref}
+            setPref={contractSeries.setPref}
+          />
+        )}
         <div className="rounded-xl overflow-hidden border border-[var(--border)] min-w-0" data-testid="instrument-chart">
           {visible.length > 0 ? (
             <CandleChart candles={visible} timeframe="D1" overlays={[]} lowerPane={null} showVolume={false} />
@@ -688,6 +711,11 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
                       <span>RSI14: {tf.rsi14 ?? '—'}</span>
                       <span>ATR%: {tf.atrPct !== null ? `${tf.atrPct}%` : '—'}</span>
                       <span>MACD: {tf.macdHist ?? '—'}</span>
+                    </div>
+                  )}
+                  {tf.available && tf.obv !== undefined && (
+                    <div className="pt-2 border-t border-[var(--border)]">
+                      <ObvReadout obv={tf.obv} />
                     </div>
                   )}
                 </div>

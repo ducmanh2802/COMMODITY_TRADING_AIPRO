@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { BellOff, Copy, RefreshCw } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { reportText } from '../../../shared/radar/notify';
-import type { RadarItem, RadarSetup } from '../../../shared/types/radar';
+import type { RadarItem, RadarRating, RadarSetup } from '../../../shared/types/radar';
 import { refreshRadar, toggleMute, useRadar } from '../../radar/radarStore';
 import { Card } from '../../ui/Card';
 import { EmptyState } from '../../ui/EmptyState';
@@ -11,6 +11,54 @@ import { Skeleton } from '../../ui/Skeleton';
 import { LineChart } from '../../ui/viz/LineChart';
 import { useT } from '../../../i18n';
 import { SourceChip } from '../../common/SourceChip';
+
+type SortMode = 'rating' | 'activity';
+const SORT_KEY = 'radar.sort';
+const readSort = (): SortMode => {
+  try {
+    return window.localStorage.getItem(SORT_KEY) === 'activity' ? 'activity' : 'rating';
+  } catch {
+    return 'rating';
+  }
+};
+const ratingOf = (x: { rating?: RadarRating }): number => x.rating?.rating ?? -1;
+/** Rating desc then activity score desc (default), or activity desc then rating desc. */
+export function sortItems(items: RadarItem[], mode: SortMode): RadarItem[] {
+  return [...items].sort((a, b) => (mode === 'rating' ? ratingOf(b) - ratingOf(a) || b.score - a.score : b.score - a.score || ratingOf(b) - ratingOf(a)) || a.symbol.localeCompare(b.symbol));
+}
+const GRADE_COLOR: Record<RadarRating['grade'], string> = { A: 'var(--accent)', B: 'var(--positive)', C: 'var(--warning)', D: 'var(--muted)' };
+
+function RatingBlock({ rating }: { rating: RadarRating | undefined }) {
+  const t = useT();
+  if (!rating) return <p className="text-xs text-[var(--text)]/50">{t('rd.rating.none')}</p>;
+  const color = GRADE_COLOR[rating.grade];
+  return (
+    <div className="space-y-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold tabular-nums border"
+          style={{ color, borderColor: color }}
+          aria-label={t('rd.rating.badge').replace('{grade}', rating.grade).replace('{rating}', String(rating.rating))}
+        >
+          {rating.grade} · {rating.rating}
+        </span>
+        <span className="px-2 py-0.5 rounded-full text-[11px] bg-[var(--surface-3)] text-[var(--text-strong)]">{t(`rd.rating.dir.${rating.direction}` as 'rd.rating.dir.TĂNG')}</span>
+        <span className="text-[11px] text-[var(--text)]/60">{t('rd.rating.conf').replace('{conf}', rating.confidence)}</span>
+      </div>
+      <details className="text-xs">
+        <summary className="cursor-pointer text-[var(--accent-text)]">{t('rd.rating.why')}</summary>
+        <ul className="mt-1 space-y-0.5 text-[var(--text)]">
+          {rating.components.map((c) => (
+            <li key={c.label} className={c.available ? '' : 'opacity-60'}>
+              <span className="font-medium tabular-nums">{c.available ? `${c.points}/${c.max}` : `—/${c.max}`}</span> {c.label}
+              {c.available ? '' : ` (${t('rd.rating.na')})`}: <span className="text-[var(--text)]/70">{c.note}</span>
+            </li>
+          ))}
+        </ul>
+      </details>
+    </div>
+  );
+}
 
 const fmt = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
 
@@ -50,6 +98,7 @@ function ItemCard({ item, rank, muted, onOpen }: { item: RadarItem; rank: number
             {muted ? t('rd.muted') : t('rd.mute')}
           </button>
         </div>
+        <RatingBlock rating={item.rating} />
         <ScoreBar score={item.score} />
         <div className="text-xs text-[var(--text)]/70 tabular-nums">
           Giá {fmt(item.lastClose)}
@@ -91,6 +140,7 @@ function SetupCard({ s, onOpen }: { s: RadarSetup; onOpen: () => void }) {
           <span className="text-base font-semibold text-[var(--text-strong)] hover:underline">{s.name}</span>
           <span className="text-xs text-[var(--text)]/60"> {s.symbol}</span>
         </button>
+        <RatingBlock rating={s.rating} />
         <p className="text-sm text-[var(--text-strong)]">{s.description}</p>
         <ul className="list-disc pl-4 text-xs text-[var(--text)] space-y-0.5">
           {s.conditions.map((c) => (
@@ -117,6 +167,15 @@ export function RadarView() {
   const radar = useRadar();
   const { openInstrumentIn } = useTerminal();
   const [copied, setCopied] = useState<string | null>(null);
+  const [sort, setSortState] = useState<SortMode>(readSort);
+  const setSort = (m: SortMode) => {
+    setSortState(m);
+    try {
+      window.localStorage.setItem(SORT_KEY, m);
+    } catch {
+      /* storage unavailable */
+    }
+  };
   useEffect(() => {
     if (!radar.data) void refreshRadar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -137,7 +196,9 @@ export function RadarView() {
   if (!data) {
     return radar.error ? <EmptyState title={t('rd.error')} description={radar.error} /> : <Skeleton className="h-64 w-full" />;
   }
-  const top = data.items.slice(0, 5);
+  const sorted = sortItems(data.items, sort);
+  const top = sorted.slice(0, 5);
+  const setups = [...data.setups].sort((a, b) => (sort === 'rating' ? ratingOf(b) - ratingOf(a) : 0) || a.symbol.localeCompare(b.symbol));
   return (
     <div className="space-y-5">
       <SectionHeader
@@ -152,6 +213,24 @@ export function RadarView() {
           <RefreshCw className={`w-3.5 h-3.5 ${radar.loading ? 'animate-spin' : ''}`} aria-hidden="true" /> {t('rd.refreshBtn')}
         </button>
         {copied && <span className="text-xs text-[var(--text)]/70">{copied}</span>}
+      </div>
+
+      <p className="text-xs text-[var(--text)]/70">{t('rd.rating.note')}</p>
+      <div role="group" aria-label={t('rd.sort.label')} className="flex items-center gap-2 text-xs">
+        <span className="text-[var(--text)]/70">{t('rd.sort.label')}</span>
+        <div className="inline-flex rounded-md border border-white/10 overflow-hidden">
+          {(['rating', 'activity'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setSort(m)}
+              aria-pressed={sort === m}
+              className={`px-3 py-1.5 ${sort === m ? 'bg-[var(--accent-soft)] text-[var(--accent-text)] font-semibold' : 'text-[var(--text-strong)] hover:bg-white/5'}`}
+            >
+              {t(m === 'rating' ? 'rd.sort.rating' : 'rd.sort.activity')}
+            </button>
+          ))}
+        </div>
       </div>
 
       <section className="space-y-3">
@@ -174,7 +253,7 @@ export function RadarView() {
           <p className="text-sm text-[var(--text)]/70">{t('rd.noSetups')}</p>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
-            {data.setups.map((s) => (
+            {setups.map((s) => (
               <SetupCard key={s.id} s={s} onOpen={() => openInstrumentIn(s.symbol, 'instrument')} />
             ))}
           </div>

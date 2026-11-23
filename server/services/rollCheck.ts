@@ -10,6 +10,7 @@ import type { InstrumentDefinition } from '../../src/shared/types/instrument.ts'
 import type { MarketQuote } from '../../src/shared/types/market.ts';
 import { CONTINUOUS_CONTRACT_CODE, type ICandleRepository } from '../storage/candleRepository.ts';
 import { YAHOO_HISTORY_CONTRACT_CODE } from './yahooHistory.ts';
+import { getContractD1, type ContractD1Result } from './yahooContractHistory.ts';
 
 export const ROLL_MISMATCH_PCT = 1.5;
 export const ROLL_MISMATCH_FLAG = 'ROLL_MISMATCH';
@@ -47,10 +48,48 @@ export async function lastDailyClose(repo: ICandleRepository | null, inst: Instr
   return null;
 }
 
-export async function withRollCheck(repo: ICandleRepository | null, inst: InstrumentDefinition, quote: MarketQuote): Promise<MarketQuote> {
+/** Last close of the quote's own contract series (T96b); null when that series is unavailable. */
+export function contractLastClose(contract: ContractD1Result): LastDailyClose | null {
+  if (contract.status !== 'OK') return null;
+  const row = contract.candles[contract.candles.length - 1];
+  return row ? { close: row.close, timestamp: row.timestamp, contractMonth: contract.contractMonth } : null;
+}
+
+export type ContractD1Getter = (inst: InstrumentDefinition, contractMonth: string) => Promise<ContractD1Result>;
+
+const CACHE_OK_MS = 10 * 60_000;
+const CACHE_FAIL_MS = 2 * 60_000;
+const contractCache = new Map<string, { at: number; result: ContractD1Result }>();
+
+const cachedContractD1: ContractD1Getter = async (inst, contractMonth) => {
+  const key = `${inst.id}|${contractMonth}`;
+  const hit = contractCache.get(key);
+  if (hit && Date.now() - hit.at < (hit.result.status === 'OK' ? CACHE_OK_MS : CACHE_FAIL_MS)) return hit.result;
+  const result = await getContractD1(inst, contractMonth);
+  contractCache.set(key, { at: Date.now(), result });
+  return result;
+};
+
+/**
+ * Quote vs last daily close of the continuous series; when that flags a mismatch and the quote's own contract
+ * series is available, compare against THAT series instead (same contract => no flag, chart can show that contract).
+ */
+export async function withRollCheck(
+  repo: ICandleRepository | null,
+  inst: InstrumentDefinition,
+  quote: MarketQuote,
+  getContract: ContractD1Getter = cachedContractD1
+): Promise<MarketQuote> {
   if (quote.price === null) return quote;
   try {
-    return applyRollCheck(quote, await lastDailyClose(repo, inst));
+    const checked = applyRollCheck(quote, await lastDailyClose(repo, inst));
+    if (checked.consistencyFlag !== ROLL_MISMATCH_FLAG || !quote.contractMonth) return checked;
+    try {
+      const contractLast = contractLastClose(await getContract(inst, quote.contractMonth));
+      return contractLast ? applyRollCheck(quote, contractLast) : checked;
+    } catch {
+      return checked;
+    }
   } catch {
     return quote;
   }

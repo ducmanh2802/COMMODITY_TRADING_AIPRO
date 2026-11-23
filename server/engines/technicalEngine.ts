@@ -1,5 +1,6 @@
 import type { Timeframe } from '../../src/shared/types/instrument.ts';
 import type { DataQualityStatus, MarketCandle } from '../../src/shared/types/market.ts';
+import type { ObvSummary } from '../../src/shared/types/cycle.ts';
 import { validateCandleSeries } from '../../src/shared/utils/validation.ts';
 
 export interface PivotSwing {
@@ -53,6 +54,8 @@ export interface TechnicalSnapshot {
     minusDI: number | null;
   };
   vwap: number | null;
+  /** On-Balance Volume summary; null when volume is missing or history is too short. */
+  obv: ObvSummary | null;
   pivots: {
     pivot: number;
     r1: number;
@@ -348,6 +351,67 @@ export function calculateVWAP(candles: MarketCandle[]): Array<number | null> {
   return result;
 }
 
+/**
+ * On-Balance Volume: running total that adds the bar volume when close rises, subtracts it when
+ * close falls and leaves it unchanged on an unchanged close. obv[0] = 0. Missing volume counts as 0.
+ */
+export function calculateOBV(candles: MarketCandle[]): number[] {
+  const out: number[] = new Array(candles.length).fill(0);
+  for (let i = 1; i < candles.length; i++) {
+    const v = candles[i].volume;
+    const vol = v !== null && v > 0 ? v : 0;
+    const diff = candles[i].close - candles[i - 1].close;
+    out[i] = out[i - 1] + (diff > 0 ? vol : diff < 0 ? -vol : 0);
+  }
+  return out;
+}
+
+/**
+ * Divergence of the LAST bar versus the previous `lookback` bars (the last bar is excluded from the
+ * reference window, so nothing is look-ahead).
+ * - BEARISH: close makes a new high of the window but OBV stays below its window high.
+ * - BULLISH: close makes a new low of the window but OBV stays above its window low.
+ */
+export function detectObvDivergence(
+  closes: number[],
+  obv: number[],
+  lookback = 20
+): 'BULLISH' | 'BEARISH' | 'NONE' {
+  const last = closes.length - 1;
+  if (lookback < 2 || last < lookback || obv.length !== closes.length) return 'NONE';
+  let maxC = -Infinity;
+  let minC = Infinity;
+  let maxO = -Infinity;
+  let minO = Infinity;
+  for (let i = last - lookback; i < last; i++) {
+    if (closes[i] > maxC) maxC = closes[i];
+    if (closes[i] < minC) minC = closes[i];
+    if (obv[i] > maxO) maxO = obv[i];
+    if (obv[i] < minO) minO = obv[i];
+  }
+  if (closes[last] > maxC && obv[last] < maxO) return 'BEARISH';
+  if (closes[last] < minC && obv[last] > minO) return 'BULLISH';
+  return 'NONE';
+}
+
+export function summarizeObv(candles: MarketCandle[], lookback = 20, emaPeriod = 20): ObvSummary | null {
+  if (candles.length < Math.max(lookback, emaPeriod) + 2) return null;
+  if (!candles.some((c) => c.volume !== null && c.volume > 0)) return null;
+  const closes = candles.map((c) => c.close);
+  const obv = calculateOBV(candles);
+  const ema = calculateEMA(obv, emaPeriod);
+  const last = candles.length - 1;
+  const e = ema[last];
+  return {
+    value: obv[last],
+    ema: e,
+    signal: e === null ? null : obv[last] > e ? 'ABOVE_EMA' : obv[last] < e ? 'BELOW_EMA' : 'FLAT',
+    divergence: detectObvDivergence(closes, obv, lookback),
+    lookback,
+    emaPeriod,
+  };
+}
+
 export function calculatePivotPoints(prevHigh: number, prevLow: number, prevClose: number) {
   const pivot = (prevHigh + prevLow + prevClose) / 3;
   const r1 = 2 * pivot - prevLow;
@@ -501,6 +565,7 @@ export function analyzeTechnicalSnapshot(
       atrPct: null,
       adx14: { adx: null, plusDI: null, minusDI: null },
       vwap: null,
+      obv: null,
       pivots: null,
       fibonacci: null,
       marketStructure: {
@@ -546,6 +611,7 @@ export function analyzeTechnicalSnapshot(
       atrPct: null,
       adx14: { adx: null, plusDI: null, minusDI: null },
       vwap: null,
+      obv: null,
       pivots: null,
       fibonacci: null,
       marketStructure: {
@@ -690,6 +756,7 @@ export function analyzeTechnicalSnapshot(
     atrPct,
     adx14: { adx: adxVal, plusDI, minusDI },
     vwap: vwapArr[lastIdx],
+    obv: summarizeObv(completeCandles),
     pivots: calculatePivotPoints(prevBar.high, prevBar.low, prevBar.close),
     fibonacci,
     marketStructure: {

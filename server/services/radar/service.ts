@@ -9,6 +9,7 @@ import type { MarketCandle } from '../../../src/shared/types/market.ts';
 import type { RadarEvent, RadarItem, RadarResponse, RadarSetup } from '../../../src/shared/types/radar.ts';
 import { addDays, weekdayDates } from '../drivers/math.ts';
 import type { DriversDeps } from '../drivers/service.ts';
+import { rateInstrument } from './rating.ts';
 import { detectSetup, scoreInstrument, setupDescription, setupRisks, toBars } from './scoring.ts';
 
 export const RADAR_TTL_MS = 5 * 60_000;
@@ -128,12 +129,24 @@ export async function buildRadar(deps: RadarDeps, state: RadarState = createRada
       });
       if (phaseNow) state.phases.set(inst.id, phaseNow);
       const name = inst.commodityProfile?.vietnameseName ?? inst.productName;
+      const core = detectSetup(bars);
+      const evMatch = eventSoon ? /((d{4}-d{2}-d{2}))$/.exec(eventSoon) : null;
+      const rating = rateInstrument({
+        bars,
+        setup: core,
+        cotIndex: cs && typeof cs.cotIndex === 'number' ? cs.cotIndex : null,
+        eventDays: evMatch ? daysBetween(today, evMatch[1]) : eventSoon ? 1 : null,
+        quality: h.quality,
+        source: h.source,
+        ageDays: daysBetween(asOf, today),
+      });
       items.push({
         id: inst.id,
         symbol: inst.exchangeSymbol,
         name,
         category: CATEGORY_VI[inst.category] ?? inst.category,
         score: res.score,
+        rating,
         signals: res.signals,
         reasons: res.signals.filter((s) => s.active && s.reason).sort((a, b) => b.points - a.points).map((s) => s.reason as string),
         breakouts: res.breakouts,
@@ -145,7 +158,6 @@ export async function buildRadar(deps: RadarDeps, state: RadarState = createRada
         spark: bars.close.slice(-SPARK_BARS),
         caveats: res.caveats,
       });
-      const core = detectSetup(bars);
       if (core) {
         const money = atrMoney(inst, res.atr);
         setups.push({
@@ -153,6 +165,7 @@ export async function buildRadar(deps: RadarDeps, state: RadarState = createRada
           symbol: inst.exchangeSymbol,
           name,
           direction: core.direction,
+          rating,
           description: setupDescription(core),
           conditions: core.conditions,
           risks: setupRisks({ atrMoney: money?.value ?? null, currency: money?.currency ?? null, eventSoon }),
@@ -167,7 +180,7 @@ export async function buildRadar(deps: RadarDeps, state: RadarState = createRada
   await Promise.all(Array.from({ length: Math.min(6, insts.length) }, worker));
 
   items.sort((a, b) => b.score - a.score || a.symbol.localeCompare(b.symbol));
-  setups.sort((a, b) => a.symbol.localeCompare(b.symbol));
+  setups.sort((a, b) => (b.rating?.rating ?? -1) - (a.rating?.rating ?? -1) || a.symbol.localeCompare(b.symbol));
   if (noHistory > 0) caveats.push(`${noHistory} mã chưa có đủ lịch sử giá ngày (cần tối thiểu 22 phiên) nên không được chấm điểm.`);
   if (stale > 0) caveats.push(`${stale} mã có phiên giá cuối cũ hơn ${STALE_BAR_DAYS} ngày nên bị loại khỏi bảng xếp hạng.`);
   const noVol = items.filter((i) => i.signals.find((s) => s.id === 'volume')?.value === null).length;

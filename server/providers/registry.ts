@@ -344,7 +344,7 @@ export class ProviderRegistry {
       return {
         ...liveQuote,
         exchange: instrument.exchange,
-        contractMonth: instrument.contractMonth,
+        contractMonth: instrument.contractMonth ?? liveQuote.contractMonth ?? null, // T96b: keep provider-reported month
       };
     }
 
@@ -403,7 +403,7 @@ export class ProviderRegistry {
       // Friendly text is mapped client-side from this code; statusReason keeps the technical detail.
       reasonCode: quote.status === 'UNAVAILABLE' ? 'NO_FREE_SOURCE' : quote.reasonCode,
       exchange: instrument.exchange,
-      contractMonth: instrument.contractMonth,
+      contractMonth: instrument.contractMonth ?? quote.contractMonth ?? null,
       currency: instrument.specification.tradingCurrency,
       unit: instrument.specification.quotationUnit,
     };

@@ -701,20 +701,20 @@ export const OWNER_ADDED_INSTRUMENTS: InstrumentDefinition[] = [
     "contractYear": null,
     "isMvxListed": true,
     "specification": {
-      "contractSize": null,
-      "contractSizeUnit": "kg (kiểm tra hệ số nhân JPY/kg sang USD/VND theo thông báo MXV)",
-      "minimumTickSize": null,
-      "tickValue": null,
+      "contractSize": 5000,
+      "contractSizeUnit": "kg (5 tons/lot per MXV)",
+      "minimumTickSize": 0.1,
+      "tickValue": 500,
       "tradingCurrency": "JPY",
       "quotationUnit": "JPY/kg",
       "expirationDate": null,
       "firstNoticeDate": null,
       "tradingHoursTimezone": "Asia/Ho_Chi_Minh",
-      "tradingHoursSummary": "Phiên sáng & chiều OSE: 07:00–13:15 ICT & phiên đêm 14:30–03:30 ICT",
+      "tradingHoursSummary": "MXV page (timezone not stated on page, assumed Vietnam time): Mon-Fri session 1 07:00-13:45, session 2 15:00-17:00",
       "marginRequirement": null,
       "marginCurrency": null,
       "settlementMethod": "PHYSICAL",
-      "dataSource": "PENDING_MXV_CIRCULAR_JPY_CONVERSION",
+      "dataSource": "https://en.mxv.com.vn/product/softs-and-other-raw-material/rss3-rubber.html (retrieved 2026-11-23; size/tick/currency/hours/series/LTD confirmed; MXV code on that page is TRU, not JRU; tickValue = 5000 kg x 0.1 JPY/kg = 500 JPY, in JPY not USD)",
       "verificationStatus": "UNVERIFIED"
     },
     "mxvMapping": {
@@ -722,7 +722,7 @@ export const OWNER_ADDED_INSTRUMENTS: InstrumentDefinition[] = [
       "internationalSymbol": "JRU",
       "internationalExchange": "MXV",
       "mappingStatus": "UNVERIFIED",
-      "notes": "Cao su RSS3 liên thông OSE (Nhật Bản) qua MXV niêm yết bằng JPY/kg. Risk Engine yêu cầu xác minh quy tắc quy đổi lô & tỷ giá JPY/VND trước khi tính khối lượng tự động."
+      "notes": "MXV official page lists OSE RSS3 Rubber under commodity code TRU (e.g. TRUZ26), not JRU; symbol JRU unconfirmed (checked 2026-11-23). Cao su RSS3 liên thông OSE (Nhật Bản) qua MXV niêm yết bằng JPY/kg. Risk Engine yêu cầu xác minh quy tắc quy đổi lô & tỷ giá JPY/VND trước khi tính khối lượng tự động."
     },
     "commodityProfile": {
       "vietnameseName": "Cao su RSS3",
@@ -740,7 +740,7 @@ export const OWNER_ADDED_INSTRUMENTS: InstrumentDefinition[] = [
         "X",
         "Z"
       ],
-      "contractCycleSummary": "Hợp đồng 6 tháng liên tiếp (giao dịch tích cực kỳ hạn 5–6)",
+      "contractCycleSummary": "12 tháng gần nhất (theo trang MXV OSE RSS3 Rubber, 2026-11-23)",
       "deliveryGrade": "Ribbed Smoked Sheet No. 3 (RSS3) tiêu chuẩn quốc tế",
       "vietnamTradingSessionsIct": "Phiên Á 07:00–13:15 ICT · Phiên đêm 14:30–03:30 ICT",
       "vietnamMarketRelevance": "Việt Nam thuộc top 3 nước xuất khẩu cao su thiên nhiên lớn nhất thế giới (Bình Phước, Tây Ninh, Bình Dương, Gia Lai). Công cụ phòng hộ giá trực tiếp cho doanh nghiệp chế biến và xuất khẩu cao su Việt Nam.",

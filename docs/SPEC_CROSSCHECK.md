@@ -80,3 +80,24 @@ Quote currency của tất cả các dòng Lean đều là USD, khớp `tradingC
 4. **ZR / RC / TIO**: không có trong Lean nên vẫn phải dựa vào nguồn chính thức. ZR: tạm giữ 6 tháng theo rulebook. TIO: phạm vi niêm yết chưa biết.
 5. **BRN**: giữ 156 tháng (ICE trực tiếp). Lean ghi 96 nhiều khả năng đã cũ.
 6. Ghi chú chung: các thông số CME/CBOT/COMEX/NYMEX đang `VERIFIED` hiện dựa trên đoạn trích tìm kiếm cộng với trang MXV, và nay được Lean xác nhận độc lập. Vẫn nên đọc trang CME trực tiếp trước khi dùng cho quản trị rủi ro thật.
+
+## 5. Re-check các mục UNVERIFIED (2026-11-23, chỉ nguồn chính thức)
+
+Giới hạn môi trường: `cmegroup.com` (trang spec, rulebook PDF) bị reset TLS (curl exit 35 / WebFetch ECONNRESET); `sgx.com` chỉ trả vỏ trang render phía client (không có nội dung spec); `ice.com` chỉ redirect. Chỉ `en.mxv.com.vn` đọc được. Kết quả tìm kiếm (snippet) KHÔNG tính là đã đọc trang chính thức nên không đổi trạng thái.
+
+| Instrument | Field | Cũ | Mới | Nguồn | Ngày | Trạng thái |
+|---|---|---|---|---|---|---|
+| MXV:JRU | contractSize | null | 5000 kg (5 tons/lot) | https://en.mxv.com.vn/product/softs-and-other-raw-material/rss3-rubber.html | 2026-11-23 | UNVERIFIED |
+| MXV:JRU | minimumTickSize / tickValue | null / null | 0.1 JPY/kg / 500 JPY (= 5000 x 0.1, tính toán) | như trên | 2026-11-23 | UNVERIFIED |
+| MXV:JRU | currency / quotation | JPY, JPY/kg | JPY, JPY/kg (xác nhận) | như trên | 2026-11-23 | - |
+| MXV:JRU | trading hours | 07:00-13:15 & 14:30-03:30 ICT | Mon-Fri 07:00-13:45 và 15:00-17:00 (trang không ghi múi giờ) | như trên | 2026-11-23 | UNVERIFIED |
+| MXV:JRU | contract series | 6 tháng liên tiếp | 12 tháng gần nhất | như trên | 2026-11-23 | - |
+| MXV:JRU | last trading day | null | ngày làm việc thứ 4 trước ngày làm việc cuối của tháng hợp đồng; FND "As MXV required" | như trên | 2026-11-23 | chưa đưa vào calendarSpecs |
+| MXV:JRU | symbol | JRU | **Trang MXV ghi mã OSE RSS3 Rubber là `TRU` (TRUZ26...), không có `JRU`** | như trên | 2026-11-23 | mapping UNVERIFIED, cần chủ sở hữu xác nhận |
+| COMEX:HG | listed months (24 vs 37) | UNVERIFIED | không đọc được trang CME | - | 2026-11-23 | UNVERIFIED (giữ) |
+| CME:TIO | listing horizon | UNVERIFIED | không đọc được | - | 2026-11-23 | UNVERIFIED (giữ) |
+| SGX:FEF | size/hours/months/LTD/settlement | UNVERIFIED | sgx.com render client-side, không đọc được | - | 2026-11-23 | UNVERIFIED (giữ) |
+| NYMEX:CL | listing horizon (5 vs 10 năm) | UNVERIFIED | không đọc được | - | 2026-11-23 | UNVERIFIED (giữ) |
+| NYMEX:NG | listing horizon | UNVERIFIED | không đọc được | - | 2026-11-23 | UNVERIFIED (giữ) |
+
+JRU và tiền tệ: giữ fail-closed. `paperMath.validateSpec` trả `UNVERIFIED` (rồi `NOT_USD` nếu có xác minh) và `riskEngine` từ chối khi thiếu tỷ giá đã xác minh. Không thêm đường quy đổi JPY: app chưa có giá futures JRU (chỉ có benchmark IMF theo USD cents/lb, không phải JPY/kg), nên không có giá nào để quy đổi; thêm đường quy đổi chỉ tạo cảm giác sai về độ tin cậy. Việc cần làm: xác nhận mã (TRU vs JRU) và múi giờ giờ giao dịch với MXV, có nguồn giá JPY/kg, rồi mới nối FX.

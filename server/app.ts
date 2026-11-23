@@ -46,7 +46,9 @@ import {
   requestIdMiddleware,
   securityHeadersMiddleware,
 } from './middleware/requestContext.ts';
-import { runHistoricalBacktest } from './engines/backtestEngine.ts';
+import { runHistoricalBacktest, type BacktestConfig } from './engines/backtestEngine.ts';
+import { runMonteCarlo, runWalkForward, MC_MAX_RUNS } from './engines/labEngine.ts';
+import { getParamSchema, validateStrategyParams } from './engines/strategyParams.ts';
 import { analyzePortfolioExposure, analyzeTradeJournal } from './engines/portfolioEngine.ts';
 import { calculateDeterministicRisk } from './engines/riskEngine.ts';
 import { runTradeScanner } from './engines/scannerEngine.ts';
@@ -199,6 +201,22 @@ const BacktestRequestSchema = z.object({
   slippageTicks: z.number().min(0).max(20).default(1),
   rolloverIntervalBars: z.number().int().min(5).max(500).optional(),
   rolloverCostPerContract: z.number().min(0).max(500).optional(),
+  rolloverMode: z.enum(['NONE', 'INTERVAL', 'CALENDAR']).optional(),
+  rollBusinessDaysBefore: z.number().int().min(0).max(30).optional(),
+  params: z.record(z.string().max(32), z.number()).optional(),
+});
+
+const WalkForwardRequestSchema = BacktestRequestSchema.extend({
+  folds: z.number().int().min(2).max(10).default(4),
+  mode: z.enum(['ROLLING', 'ANCHORED']).default('ROLLING'),
+  isOosRatio: z.number().min(1).max(8).default(3),
+  grid: z.record(z.string().max(32), z.array(z.number()).min(1).max(7)).optional(),
+});
+
+const MonteCarloRequestSchema = BacktestRequestSchema.extend({
+  runs: z.number().int().min(100).max(MC_MAX_RUNS).default(1000),
+  seed: z.number().int().min(0).max(2_147_483_647).optional(),
+  drawdownThresholdPct: z.number().min(1).max(100).default(20),
 });
 
 // Research-summary mode (T20/D3): no risk settings — the AI never sizes or recommends trades.
@@ -1004,7 +1022,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
 
   // Phase 4: Deterministic Strategy Engine
   app.get('/api/strategies', (_req: Request, res: Response) => {
-    res.json({ strategies: STRATEGY_CATALOG });
+    res.json({ strategies: STRATEGY_CATALOG.map((s) => ({ ...s, params: getParamSchema(s.id) })) });
   });
 
   app.get('/api/signals/:symbol', async (req: Request, res: Response, next: NextFunction) => {
@@ -1151,46 +1169,115 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     }
   });
 
-  // Phase 8: Historical Backtesting Engine
+  // Phase 8: Historical Backtesting Engine (+ Strategy Lab: walk-forward, Monte Carlo)
+  // Lab computations are CPU-bound: cap concurrency so they cannot starve the request thread.
+  let labInFlight = 0;
+  const LAB_MAX_CONCURRENT = 2;
+
+  const prepareLabRequest = async (
+    body: unknown,
+    schema: typeof BacktestRequestSchema,
+    res: Response
+  ) => {
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Invalid backtest configuration.', details: parsed.error.issues });
+      return null;
+    }
+    const pv = validateStrategyParams(parsed.data.strategyId, parsed.data.params);
+    if (!pv.ok) {
+      res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Invalid strategy parameters.', details: pv.errors });
+      return null;
+    }
+    const instrument = await instrumentRepository.findBySymbol(parsed.data.symbol);
+    if (!instrument) {
+      res.status(404).json({ error: 'INSTRUMENT_NOT_FOUND', message: 'Instrument not found.' });
+      return null;
+    }
+    const candleRes = await loadCandlesForRoute(instrument, parsed.data.timeframe);
+    const config: BacktestConfig = {
+      instrument,
+      strategyId: parsed.data.strategyId,
+      timeframe: parsed.data.timeframe,
+      initialEquity: parsed.data.initialEquity,
+      contractsPerTrade: parsed.data.contractsPerTrade,
+      commissionPerContract: parsed.data.commissionPerContract,
+      slippageTicks: parsed.data.slippageTicks,
+      rolloverIntervalBars: parsed.data.rolloverIntervalBars,
+      rolloverCostPerContract: parsed.data.rolloverCostPerContract,
+      rolloverMode: parsed.data.rolloverMode,
+      rollBusinessDaysBefore: parsed.data.rollBusinessDaysBefore,
+      params: pv.params,
+      dataProvenance: {
+        origin: candleRes.origin,
+        source: candleRes.meta?.source ?? null,
+        warnings: [...(candleRes.meta?.warnings ?? []), ...(candleRes.reason ? [candleRes.reason] : [])],
+      },
+    };
+    return { data: parsed.data, config, candles: candleRes.candles };
+  };
+
   app.post('/api/backtest/run', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const parsed = BacktestRequestSchema.safeParse(req.body);
-      if (!parsed.success) {
-        res.status(400).json({
-          error: 'VALIDATION_ERROR',
-          message: 'Invalid backtest configuration.',
-          details: parsed.error.issues,
-        });
-        return;
-      }
-
-      const instrument = await instrumentRepository.findBySymbol(parsed.data.symbol);
-      if (!instrument) {
-        res.status(404).json({ error: 'INSTRUMENT_NOT_FOUND', message: 'Instrument not found.' });
-        return;
-      }
-
-      const candleRes = await loadCandlesForRoute(instrument, parsed.data.timeframe);
-      const result = runHistoricalBacktest(candleRes.candles, {
-        instrument,
-        strategyId: parsed.data.strategyId,
-        timeframe: parsed.data.timeframe,
-        initialEquity: parsed.data.initialEquity,
-        contractsPerTrade: parsed.data.contractsPerTrade,
-        commissionPerContract: parsed.data.commissionPerContract,
-        slippageTicks: parsed.data.slippageTicks,
-        rolloverIntervalBars: parsed.data.rolloverIntervalBars,
-        rolloverCostPerContract: parsed.data.rolloverCostPerContract,
-        dataProvenance: {
-          origin: candleRes.origin,
-          source: candleRes.meta?.source ?? null,
-          warnings: [...(candleRes.meta?.warnings ?? []), ...(candleRes.reason ? [candleRes.reason] : [])],
-        },
-      });
-
-      res.json(result);
+      const prep = await prepareLabRequest(req.body, BacktestRequestSchema, res);
+      if (!prep) return;
+      res.json(runHistoricalBacktest(prep.candles, prep.config));
     } catch (err) {
       next(err);
+    }
+  });
+
+  app.post('/api/backtest/walk-forward', async (req: Request, res: Response, next: NextFunction) => {
+    if (labInFlight >= LAB_MAX_CONCURRENT) {
+      res.status(429).json({ error: 'LAB_BUSY', message: 'Strategy Lab is busy; try again in a moment.' });
+      return;
+    }
+    labInFlight += 1;
+    try {
+      const prep = await prepareLabRequest(req.body, WalkForwardRequestSchema, res);
+      if (!prep) return;
+      const d = prep.data as z.infer<typeof WalkForwardRequestSchema>;
+      res.json(
+        await runWalkForward(prep.candles, prep.config, {
+          folds: d.folds,
+          mode: d.mode,
+          isOosRatio: d.isOosRatio,
+          grid: d.grid,
+        })
+      );
+    } catch (err) {
+      next(err);
+    } finally {
+      labInFlight -= 1;
+    }
+  });
+
+  app.post('/api/backtest/monte-carlo', async (req: Request, res: Response, next: NextFunction) => {
+    if (labInFlight >= LAB_MAX_CONCURRENT) {
+      res.status(429).json({ error: 'LAB_BUSY', message: 'Strategy Lab is busy; try again in a moment.' });
+      return;
+    }
+    labInFlight += 1;
+    try {
+      const prep = await prepareLabRequest(req.body, MonteCarloRequestSchema, res);
+      if (!prep) return;
+      const d = prep.data as z.infer<typeof MonteCarloRequestSchema>;
+      const bt = runHistoricalBacktest(prep.candles, prep.config);
+      if (!bt.valid) {
+        res.json({ valid: false, error: bt.error });
+        return;
+      }
+      res.json(
+        runMonteCarlo(
+          bt.trades.map((t) => t.netPnl),
+          d.initialEquity,
+          { runs: d.runs, seed: d.seed, drawdownThresholdPct: d.drawdownThresholdPct }
+        )
+      );
+    } catch (err) {
+      next(err);
+    } finally {
+      labInFlight -= 1;
     }
   });
 

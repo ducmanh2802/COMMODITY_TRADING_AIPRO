@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   CandlestickChart,
   GraduationCap,
@@ -47,6 +47,18 @@ const SMALL_KEY: Partial<Record<AppModuleId, TKey>> = {
   backtest: 'n2.item.backtest',
 };
 
+function useIsDesktop(): boolean {
+  const query = '(min-width: 1024px)';
+  const [match, setMatch] = useState(() => (typeof window === 'undefined' ? true : window.matchMedia(query).matches));
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const on = () => setMatch(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  return match;
+}
+
 const COLLAPSE_KEY = 'ctap.sidebar.collapsed';
 
 function readCollapsed(): boolean {
@@ -61,6 +73,18 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   const { activeModule, setActiveModule } = useTerminal();
   const t = useT();
   const [collapsed, setCollapsed] = useState(readCollapsed);
+  const isDesktop = useIsDesktop();
+  // Off-canvas drawer: hidden from keyboard and screen readers until opened.
+  const drawerHidden = !isDesktop && !mobileOpen;
+
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseMobile();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileOpen, onCloseMobile]);
 
   const toggleCollapsed = () => {
     setCollapsed((c) => {
@@ -90,7 +114,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
           type="button"
           onClick={() => handleSelect(id)}
           aria-current={isActive ? 'page' : undefined}
-          className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors ${
+          className={`w-full text-left px-3 py-2 min-h-10 rounded-md text-xs transition-colors ${
             isActive ? 'bg-[var(--accent-soft)] text-[var(--text-strong)]' : 'text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
           }`}
         >
@@ -114,7 +138,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
       )}
 
       <aside
-        aria-label={t('nav.ariaLabel')}
+        inert={drawerHidden}
         className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-[var(--surface)] border-r border-[var(--border)] flex flex-col transition-all duration-200 lg:static lg:translate-x-0 lg:max-w-none ${
           rail ? 'lg:w-[72px]' : 'lg:w-64'
         } ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}
@@ -122,7 +146,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
         <div className="h-14 px-4 border-b border-[var(--border)] flex items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
             <span
-              className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[var(--accent)] to-[#8B5CF6] grid place-items-center text-[var(--text-strong)] shrink-0"
+              className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[var(--accent)] to-[var(--series-3)] grid place-items-center text-[var(--text-strong)] shrink-0"
               aria-hidden="true"
             >
               <TrendingUp className="w-4 h-4" />
@@ -137,7 +161,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
             type="button"
             onClick={onCloseMobile}
             aria-label={t('nav.closeMenu')}
-            className="lg:hidden p-2 text-[var(--muted)] hover:text-[var(--text-strong)] rounded-md"
+            className="lg:hidden grid place-items-center w-10 h-10 text-[var(--muted)] hover:text-[var(--text-strong)] rounded-md"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -156,7 +180,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                     onClick={() => handleSelect(item.id)}
                     aria-current={isActive ? 'page' : undefined}
                     title={rail ? label : undefined}
-                    className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm transition-colors whitespace-nowrap ${
+                    className={`relative w-full min-h-11 flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm transition-colors whitespace-nowrap ${
                       rail ? 'lg:justify-center lg:px-0' : ''
                     } ${
                       isActive
@@ -177,7 +201,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
 
           <div className={`pt-3 border-t border-[var(--border)] ${rail ? 'lg:hidden' : ''}`}>
             <details open={currentSection === 'advanced'} className="group">
-              <summary className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--faint)] cursor-pointer hover:text-[var(--text-strong)]">
+              <summary className="px-3 py-2 min-h-10 flex items-center text-[11px] font-semibold uppercase tracking-wider text-[var(--faint)] cursor-pointer hover:text-[var(--text-strong)]">
                 {t('n2.sec.advanced')}
               </summary>
               <p className="px-3 pb-1 text-[11px] text-[var(--faint)]">{t('n2.adv.hint')}</p>
@@ -196,7 +220,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
             aria-label={t('n2.sec.settings')}
             title={t('n2.sec.settings')}
             aria-current={currentSection === 'settings' ? 'page' : undefined}
-            className={`grid place-items-center w-9 h-9 rounded-md hover:bg-[var(--surface-2)] ${
+            className={`grid place-items-center w-10 h-10 rounded-md hover:bg-[var(--surface-2)] ${
               currentSection === 'settings' ? 'text-[var(--accent-text)] bg-[var(--accent-soft)]' : 'text-[var(--muted)] hover:text-[var(--text-strong)]'
             }`}
           >
@@ -207,7 +231,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
             onClick={toggleCollapsed}
             aria-label={rail ? t('nav.expand') : t('nav.collapse')}
             title={rail ? t('nav.expand') : t('nav.collapse')}
-            className="hidden lg:grid place-items-center w-8 h-8 mx-auto rounded-md text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]"
+            className="hidden lg:grid place-items-center w-10 h-10 mx-auto rounded-md text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]"
           >
             {rail ? (
               <PanelLeftOpen className="w-4 h-4" aria-hidden="true" />

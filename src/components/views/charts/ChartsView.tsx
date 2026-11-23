@@ -28,9 +28,11 @@ import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { SessionHistoryTable } from '../../common/SessionHistoryTable';
 import { SourceChip } from '../../common/SourceChip';
 import { fmtDate, fmtInt, useT } from '../../../i18n';
+import { formatContractMonthVi } from '../../../shared/utils/contractChart';
 import { BenchmarkReferencePanel } from './BenchmarkReferencePanel';
 import { ChartCompareSection } from './ChartCompare';
 import { CandleChart, type LineSpec, type LowerPaneSpec } from './CandleChart';
+import { ContractSeriesBar, useContractSeries } from './useContractSeries';
 
 type LowerIndicator = 'NONE' | 'RSI' | 'MACD' | 'ATR';
 
@@ -115,7 +117,7 @@ function NumInput({
 }
 
 export function ChartsView() {
-  const { instruments, setActiveModule, selectedSymbol, setSelectedSymbol } = useTerminal();
+  const { instruments, setActiveModule, selectedSymbol, setSelectedSymbol, quotesBySymbol } = useTerminal();
   const t = useT();
   const [datasets, setDatasets] = useState<DatasetRecord[]>([]);
   const [datasetsError, setDatasetsError] = useState<string | null>(null);
@@ -195,10 +197,21 @@ export function ChartsView() {
     return () => ctrl.abort();
   }, [instrumentId, contractCode, timeframe, reloadKey]);
 
-  const candles: MarketCandle[] = useMemo(
+  const continuousCandles: MarketCandle[] = useMemo(
     () => (data?.status === 'HISTORICAL' ? data.candles.filter((c) => c.isComplete !== false) : []),
     [data]
   );
+  // T96b: for the continuous/vendor series follow the quote's own contract month (D1); imported specific contracts stay as is.
+  const quoteContractMonth =
+    contractCode === 'CONTINUOUS' || contractCode.startsWith('VENDOR_') ? (quotesBySymbol[symbolRoot(instrumentId)]?.contractMonth ?? null) : null;
+  const contractSeries = useContractSeries({
+    instrumentId: instrumentId || null,
+    quoteContractMonth,
+    timeframe: data?.timeframe ?? timeframe,
+    continuous: continuousCandles,
+    reloadKey,
+  });
+  const candles = contractSeries.resolved.candles;
   const incompleteDropped = data?.status === 'HISTORICAL' ? data.candles.length - candles.length : 0;
 
   const computed = useMemo(() => {
@@ -394,7 +407,12 @@ export function ChartsView() {
       {candlesError && <p className="text-xs text-[var(--negative)]">{candlesError}</p>}
 
       {/* Provenance banner */}
-      {data?.status === 'HISTORICAL' && (
+      {contractSeries.resolved.source === 'CONTRACT' && (
+        <p className="text-xs text-[var(--text)]/75" data-testid="contract-series-source">
+          {t('ins.ctr.source', { m: formatContractMonthVi(contractSeries.resolved.contractMonth) ?? '' })}
+        </p>
+      )}
+      {data?.status === 'HISTORICAL' && contractSeries.resolved.source !== 'CONTRACT' && (
         <div className="bg-[var(--accent)]/10 border border-[var(--accent)]/35 rounded-lg px-4 py-3 text-xs text-[var(--text)]/85 space-y-1.5">
           <div className="flex items-start gap-2">
             <Info className="w-4 h-4 text-[var(--accent)] shrink-0 mt-px" aria-hidden="true" />
@@ -434,6 +452,13 @@ export function ChartsView() {
           </div>
         </div>
       )}
+
+      <ContractSeriesBar
+        contractMonth={quoteContractMonth}
+        resolved={contractSeries.resolved}
+        pref={contractSeries.pref}
+        setPref={contractSeries.setPref}
+      />
 
       {/* Indicator controls */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -538,7 +563,7 @@ export function ChartsView() {
           candles={candles}
           timeframe={data?.timeframe ?? timeframe}
           priceUnit={data?.priceUnit}
-          sourceNote={data?.provenance[0]?.sourceLabel}
+          sourceNote={contractSeries.resolved.source === 'CONTRACT' ? undefined : data?.provenance[0]?.sourceLabel}
         />
       )}
 

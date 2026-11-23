@@ -22,6 +22,18 @@ export type SetupDirection = 'LONG_ACCUMULATE' | 'LONG_BREAKOUT' | 'WAIT_CONFIRM
 
 export type SupplyDemandBias = 'TIGHTENING' | 'BALANCED' | 'LOOSENING' | 'SURPLUS_PRESSURE' | 'DATA_UNAVAILABLE';
 
+/** On-Balance Volume reading (computed on closed bars only). */
+export interface ObvSummary {
+  value: number;
+  /** EMA of OBV over `emaPeriod` bars; null while warming up. */
+  ema: number | null;
+  signal: 'ABOVE_EMA' | 'BELOW_EMA' | 'FLAT' | null;
+  /** Last bar vs the previous `lookback` bars: price new extreme not confirmed by OBV. */
+  divergence: 'BULLISH' | 'BEARISH' | 'NONE';
+  lookback: number;
+  emaPeriod: number;
+}
+
 export interface MultiTimeframeCycleState {
   timeframe: CycleTimeframeKey;
   available: boolean;
@@ -38,6 +50,8 @@ export interface MultiTimeframeCycleState {
   percentile10Y: number | null;
   bbWidthRatio: number | null;
   volumeRatio: number | null;
+  /** Optional so older payloads/fixtures stay valid. */
+  obv?: ObvSummary | null;
   summary: string;
 }
 

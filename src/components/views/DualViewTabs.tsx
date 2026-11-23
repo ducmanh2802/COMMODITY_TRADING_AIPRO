@@ -25,7 +25,7 @@ export function DualViewTabs({ tabs, initialTabId }: { tabs: DualViewTab[]; init
             aria-selected={tab.id === current?.id}
             onClick={() => setActive(tab.id)}
             title={tab.note}
-            className={`px-3 py-2 min-h-9 text-xs rounded-md border shrink-0 whitespace-nowrap ${
+            className={`px-3 py-2 min-h-10 text-xs rounded-md border shrink-0 whitespace-nowrap ${
               tab.id === current?.id
                 ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--text-strong)]'
                 : 'border-white/10 text-[var(--text)]/70 hover:text-[var(--text-strong)]'

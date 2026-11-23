@@ -798,6 +798,7 @@ export const CONTRACT_CALENDAR_RULES: Record<string, ContractCalendarRule> = {
     lastTradingDayRule: 'Third last business day of the contract month.',
     sourceUrl: 'https://www.cmegroup.com/education/articles-and-reports/hedging-with-comex-copper-futures',
     verificationStatus: 'UNVERIFIED',
+    // 2026-11-23 re-check: cmegroup.com/ice/sgx pages not readable from this environment (CME TLS reset, SGX client-rendered); no official read, stays UNVERIFIED.
     notes:
       'CME education article says 24 consecutive months; MXV CPE page says 37 consecutive months. Number of consecutive months conflicts - confirm on CME contract-spec page. LTD rule matches MXV CPE page.',
   },
@@ -831,6 +832,7 @@ export const CONTRACT_CALENDAR_RULES: Record<string, ContractCalendarRule> = {
       'Last business day of the contract month; if a Singapore public holiday, the preceding business day.',
     sourceUrl: 'https://www.cmegroup.com/trading/metals/files/iron-ore-future-and-options.pdf',
     verificationStatus: 'UNVERIFIED',
+    // 2026-11-23 re-check: cmegroup.com/ice/sgx pages not readable from this environment (CME TLS reset, SGX client-rendered); no official read, stays UNVERIFIED.
     notes: 'Cash settled against the monthly average of the index. Listing horizon not confirmed.',
   },
   'SGX:FEF': {
@@ -838,6 +840,7 @@ export const CONTRACT_CALENDAR_RULES: Record<string, ContractCalendarRule> = {
     lastTradingDayRule: 'Last business day of the contract month.',
     sourceUrl: 'https://en.mxv.com.vn/product/metals/iron-ore.html',
     verificationStatus: 'UNVERIFIED',
+    // 2026-11-23 re-check: cmegroup.com/ice/sgx pages not readable from this environment (CME TLS reset, SGX client-rendered); no official read, stays UNVERIFIED.
     notes:
       'Rule as published on the MXV FEF page; sgx.com contract specifications could not be read. Business days = Singapore (SG_PUBLIC holiday calendar).',
   },
@@ -847,6 +850,7 @@ export const CONTRACT_CALENDAR_RULES: Record<string, ContractCalendarRule> = {
       'Trading terminates 3 business days before the 25th calendar day of the month prior to the contract month. If the 25th calendar day is not a business day, trading terminates 3 business days prior to the business day preceding the 25th calendar day.',
     sourceUrl: 'https://www.cmegroup.com/markets/energy/crude-oil/light-sweet-crude.contractSpecs.html',
     verificationStatus: 'UNVERIFIED',
+    // 2026-11-23 re-check: cmegroup.com/ice/sgx pages not readable from this environment (CME TLS reset, SGX client-rendered); no official read, stays UNVERIFIED.
     notes:
       'LTD text is NYMEX rule 200102.F as published on the CME WTI contract-spec page (earlier entry cited the WTI fact card and only referenced 200102.F). Some CME text also mentions additional Jun/Dec months further out; confirm listing horizon. T24: downgraded - listing came only from a fact-card search snippet and QuantConnect Lean FuturesExpiryFunctions says "current year and the next 10 calendar years and 2 additional contract months". LTD rule agrees with Lean.',
   },
@@ -863,6 +867,7 @@ export const CONTRACT_CALENDAR_RULES: Record<string, ContractCalendarRule> = {
       'Third business day prior to the first calendar day of the delivery month; if the listed expiration day becomes a holiday, the business day immediately prior.',
     sourceUrl: 'https://www.cmegroup.com/notices/ser/2017/02/SER-7852.pdf',
     verificationStatus: 'UNVERIFIED',
+    // 2026-11-23 re-check: cmegroup.com/ice/sgx pages not readable from this environment (CME TLS reset, SGX client-rendered); no official read, stays UNVERIFIED.
     notes: 'LTD rule from a 2017 CME Special Executive Report reproducing Chapter 220; listing horizon not confirmed.',
   },
 };

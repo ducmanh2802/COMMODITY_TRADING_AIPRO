@@ -54,21 +54,21 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           type="button"
           onClick={onOpenMobileMenu}
           aria-label={t('nav.openMenu')}
-          className="lg:hidden w-9 h-9 grid place-items-center bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-[var(--text)] hover:text-[var(--text-strong)]"
+          className="lg:hidden w-10 h-10 grid place-items-center bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-[var(--text)] hover:text-[var(--text-strong)]"
         >
           <Menu className="w-4 h-4" aria-hidden="true" />
         </button>
 
-        <div className="flex items-center gap-1 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] p-0.5 min-w-0">
+        <div className="flex items-center gap-1 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] p-0.5 shrink-0">
           {(['ALL', 'MXV', 'INTERNATIONAL'] as MarketScope[]).map((scope) => (
             <button
               key={scope}
               type="button"
               onClick={() => setMarketScope(scope)}
-              className={`h-8 px-2 sm:px-3 text-xs font-medium rounded-lg transition-colors whitespace-nowrap truncate min-w-0 ${
+              className={`h-10 px-2.5 sm:px-3 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                 marketScope === scope
                   ? 'bg-[var(--accent)] text-white shadow-sm'
-                  : 'text-[var(--text)]/70 hover:text-[var(--text-strong)]'
+                  : 'text-[var(--muted)] hover:text-[var(--text-strong)]'
               }`}
             >
               {t(`topbar.scope.${scope}`)}
@@ -95,7 +95,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
               }
             }}
             placeholder={t('topbar.searchPlaceholder')}
-            className="w-full h-9 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] pl-9 pr-3 text-sm text-[var(--text)] placeholder:text-[var(--text)]/40 focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/25"
+            className="w-full h-10 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] pl-9 pr-3 text-sm text-[var(--text)] placeholder:text-[var(--faint)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/25"
           />
         </div>
       </div>
@@ -110,7 +110,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
             id="topbar-timeframe"
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value as Timeframe)}
-            className="h-9 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] px-2.5 text-xs tabular-nums text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/25"
+            className="h-10 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] px-2.5 text-xs tabular-nums text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/25"
           >
             {TIMEFRAMES.map((tf) => (
               <option key={tf} value={tf}>
@@ -120,7 +120,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           </select>
         </div>
 
-        <div className="hidden 2xl:flex items-center gap-3 h-9 px-3 bg-[var(--bg)] border border-[var(--border)] rounded-[10px]">
+        <div className="hidden 2xl:flex items-center gap-3 h-10 px-3 bg-[var(--bg)] border border-[var(--border)] rounded-[10px]">
           <button
             type="button"
             onClick={() => setActiveModule('data-health')}
@@ -150,7 +150,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           aria-label={t('topbar.refresh')}
           title={t('topbar.refresh')}
           disabled={loading}
-          className="w-9 h-9 grid place-items-center bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border)] rounded-[10px] text-[var(--text)] disabled:opacity-50 transition-colors"
+          className="w-10 h-10 grid place-items-center bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border)] rounded-[10px] text-[var(--text)] disabled:opacity-50 transition-colors"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
         </button>
@@ -160,7 +160,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
             <button
               type="button"
               onClick={() => setActiveModule('settings')}
-              className="flex items-center gap-2 h-9 px-2.5 sm:px-3 bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-xs text-[var(--text)] hover:border-[var(--accent)] transition-colors whitespace-nowrap"
+              className="flex items-center gap-2 h-10 px-2.5 sm:px-3 bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-xs text-[var(--text)] hover:border-[var(--accent)] transition-colors whitespace-nowrap"
             >
               <UserIcon className="w-3.5 h-3.5 text-[var(--accent)]" aria-hidden="true" />
               <span className="hidden sm:inline max-w-[120px] truncate">
@@ -172,7 +172,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
               onClick={() => void logout()}
               aria-label={t('topbar.signOut')}
               title={t('topbar.signOut')}
-              className="w-9 h-9 grid place-items-center bg-[var(--surface-2)] hover:bg-[var(--negative)]/15 border border-[var(--border)] hover:border-[var(--negative)]/40 rounded-[10px] text-[var(--text)]/80 hover:text-[var(--negative)] transition-colors"
+              className="w-10 h-10 grid place-items-center bg-[var(--surface-2)] hover:bg-[var(--negative)]/15 border border-[var(--border)] hover:border-[var(--negative)]/40 rounded-[10px] text-[var(--text)]/80 hover:text-[var(--negative)] transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
@@ -183,7 +183,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
             onClick={() => void signInWithGoogle()}
             aria-label={t('topbar.signIn')}
             title={t('topbar.signIn')}
-            className="inline-flex items-center justify-center gap-1.5 h-9 w-9 sm:w-auto sm:px-4 bg-[var(--accent)] hover:brightness-110 text-white text-xs font-semibold rounded-[10px] transition-colors whitespace-nowrap shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 h-10 w-10 sm:w-auto sm:px-4 bg-[var(--accent)] hover:brightness-110 text-white text-xs font-semibold rounded-[10px] transition-colors whitespace-nowrap shrink-0"
           >
             <LogIn className="w-3.5 h-3.5" aria-hidden="true" />
             <span className="hidden sm:inline">{t('topbar.signIn')}</span>

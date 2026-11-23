@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import type { InstrumentDefinition } from '../../../shared/types/instrument';
 import { Badge } from '../../ui/Badge';
@@ -198,6 +198,7 @@ export function LessonPage({
   onToggleCheck,
   onBack,
   onNext,
+  footer,
 }: {
   lesson: Lesson;
   progress?: LessonProgress;
@@ -207,6 +208,8 @@ export function LessonPage({
   onToggleCheck: (key: string) => void;
   onBack: () => void;
   onNext?: () => void;
+  /** Optional block rendered after the lesson actions (e.g. end-of-level exam card). */
+  footer?: ReactNode;
 }) {
   const { instruments, loading, setActiveModule } = useTerminal();
   return (
@@ -308,6 +311,7 @@ export function LessonPage({
           </button>
         )}
       </div>
+      {footer}
       <p className="text-[11px] text-[var(--muted)]">Tài liệu giáo dục, không phải tư vấn đầu tư.</p>
     </div>
   );

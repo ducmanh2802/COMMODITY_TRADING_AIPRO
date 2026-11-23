@@ -2,6 +2,7 @@ import type { StrategyDefinition, StrategyId } from '../../src/shared/types/anal
 import type { Timeframe } from '../../src/shared/types/instrument.ts';
 import type { DataQualityStatus, MarketCandle } from '../../src/shared/types/market.ts';
 import type { TechnicalSnapshot } from './technicalEngine.ts';
+import { defaultParams, type StrategyParams } from './strategyParams.ts';
 
 export interface DeterministicSignal {
   strategyId: StrategyId;
@@ -135,14 +136,15 @@ function buildTradeLevels(
   entry: number,
   atr: number,
   direction: 'LONG' | 'SHORT',
-  slMultiplier: number
+  slMultiplier: number,
+  tp1R = 1.5
 ): { entryZone: [number, number]; stopLoss: number; takeProfits: number[]; riskReward: number } {
   const slDist = atr * slMultiplier;
   const zoneHalf = atr * 0.15;
   if (direction === 'LONG') {
     const sl = entry - slDist;
-    const tp1 = entry + slDist * 1.5;
-    const tp2 = entry + slDist * 2.5;
+    const tp1 = entry + slDist * tp1R;
+    const tp2 = entry + slDist * (tp1R + 1);
     return {
       entryZone: [entry - zoneHalf, entry + zoneHalf],
       stopLoss: sl,
@@ -151,8 +153,8 @@ function buildTradeLevels(
     };
   }
   const sl = entry + slDist;
-  const tp1 = entry - slDist * 1.5;
-  const tp2 = entry - slDist * 2.5;
+  const tp1 = entry - slDist * tp1R;
+  const tp2 = entry - slDist * (tp1R + 1);
   return {
     entryZone: [entry - zoneHalf, entry + zoneHalf],
     stopLoss: sl,
@@ -164,17 +166,28 @@ function buildTradeLevels(
 export function evaluateStrategy(
   strategyId: StrategyId,
   snapshot: TechnicalSnapshot,
-  candles: MarketCandle[]
+  candles: MarketCandle[],
+  paramOverrides?: StrategyParams
 ): DeterministicSignal {
+  const P: StrategyParams = { ...defaultParams(strategyId), ...(paramOverrides ?? {}) };
   const meta = STRATEGY_CATALOG.find((s) => s.id === strategyId)!;
-  const completeCandles = candles.filter((c) => c.isComplete);
+  // Only the last two complete bars are read below; scan from the end instead of filtering the whole
+  // history (the backtest calls this once per bar per parameter combination).
+  const tailBars: MarketCandle[] = [];
+  for (let k = candles.length - 1; k >= 0 && tailBars.length < 2; k--) {
+    if (candles[k].isComplete) tailBars.unshift(candles[k]);
+  }
+  const completeCount =
+    typeof snapshot.completeCandleCount === 'number'
+      ? snapshot.completeCandleCount
+      : candles.filter((c) => c.isComplete).length;
 
   if (
     snapshot.status === 'UNAVAILABLE' ||
     snapshot.status === 'INVALID' ||
     snapshot.lastClose === null ||
     snapshot.atr14 === null ||
-    completeCandles.length < meta.minCandlesRequired
+    completeCount < meta.minCandlesRequired
   ) {
     return {
       strategyId,
@@ -197,27 +210,27 @@ export function evaluateStrategy(
 
   const price = snapshot.lastClose;
   const atr = snapshot.atr14;
-  const lastBar = completeCandles[completeCandles.length - 1];
-  const prevBar = completeCandles[completeCandles.length - 2];
+  const lastBar = tailBars[tailBars.length - 1];
+  const prevBar = tailBars[tailBars.length - 2];
 
   let direction: 'LONG' | 'SHORT' | 'NONE' = 'NONE';
   let score = 0;
   const breakdown: string[] = [];
-  let slMult = 1.5;
+  const slMult = P.slAtrMult ?? 1.5;
 
   switch (strategyId) {
     case 'TREND_FOLLOWING': {
       const { ema20, ema50 } = snapshot.ema;
       const adx = snapshot.adx14.adx;
       if (ema20 === null || ema50 === null || adx === null) break;
-      if (price > ema20 && ema20 > ema50 && adx >= 22) {
+      if (price > ema20 && ema20 > ema50 && adx >= P.adxMin) {
         direction = 'LONG';
         score = 65 + (adx >= 30 ? 15 : 8) + (snapshot.marketStructure.structurePattern === 'HH_HL' ? 15 : 0);
-        breakdown.push('EMA20 > EMA50 bullish alignment', `ADX ${adx.toFixed(1)} >= 22`);
-      } else if (price < ema20 && ema20 < ema50 && adx >= 22) {
+        breakdown.push('EMA20 > EMA50 bullish alignment', `ADX ${adx.toFixed(1)} >= ${P.adxMin}`);
+      } else if (price < ema20 && ema20 < ema50 && adx >= P.adxMin) {
         direction = 'SHORT';
         score = 65 + (adx >= 30 ? 15 : 8) + (snapshot.marketStructure.structurePattern === 'LH_LL' ? 15 : 0);
-        breakdown.push('EMA20 < EMA50 bearish alignment', `ADX ${adx.toFixed(1)} >= 22`);
+        breakdown.push('EMA20 < EMA50 bearish alignment', `ADX ${adx.toFixed(1)} >= ${P.adxMin}`);
       }
       break;
     }
@@ -226,15 +239,14 @@ export function evaluateStrategy(
       const { ema20, ema50 } = snapshot.ema;
       const rsi = snapshot.rsi14;
       if (ema20 === null || ema50 === null || rsi === null) break;
-      slMult = 1.25;
-      if (ema20 > ema50 && Math.abs(price - ema20) <= atr * 0.75 && price > ema50 && rsi >= 42 && rsi <= 62) {
+      if (ema20 > ema50 && Math.abs(price - ema20) <= atr * P.pullbackAtr && price > ema50 && rsi >= 42 && rsi <= 62) {
         direction = 'LONG';
         score = 72 + (lastBar.close > lastBar.open ? 12 : 0);
-        breakdown.push('Bullish EMA20 > EMA50', 'Price pulled back within 0.75 ATR of EMA20');
-      } else if (ema20 < ema50 && Math.abs(price - ema20) <= atr * 0.75 && price < ema50 && rsi >= 38 && rsi <= 58) {
+        breakdown.push('Bullish EMA20 > EMA50', `Price pulled back within ${P.pullbackAtr} ATR of EMA20`);
+      } else if (ema20 < ema50 && Math.abs(price - ema20) <= atr * P.pullbackAtr && price < ema50 && rsi >= 38 && rsi <= 58) {
         direction = 'SHORT';
         score = 72 + (lastBar.close < lastBar.open ? 12 : 0);
-        breakdown.push('Bearish EMA20 < EMA50', 'Price pulled back within 0.75 ATR of EMA20');
+        breakdown.push('Bearish EMA20 < EMA50', `Price pulled back within ${P.pullbackAtr} ATR of EMA20`);
       }
       break;
     }
@@ -242,7 +254,6 @@ export function evaluateStrategy(
     case 'BREAKOUT': {
       const res = snapshot.marketStructure.resistanceZones;
       const sup = snapshot.marketStructure.supportZones;
-      slMult = 1.2;
       if (res.length > 0 && price > Math.max(...res)) {
         direction = 'LONG';
         score = 74 + (snapshot.adx14.adx && snapshot.adx14.adx >= 20 ? 12 : 0);
@@ -260,15 +271,14 @@ export function evaluateStrategy(
       const adx = snapshot.adx14.adx;
       const rsi = snapshot.rsi14;
       if (upper === null || lower === null || adx === null || rsi === null) break;
-      slMult = 1.2;
-      if (adx < 24 && price <= lower * 1.003 && rsi <= 40) {
+      if (adx < P.adxMax && price <= lower * 1.003 && rsi <= P.rsiLow) {
         direction = 'LONG';
         score = 70;
-        breakdown.push(`Range ADX ${adx.toFixed(1)} < 24`, 'Lower Bollinger Band test with low RSI');
-      } else if (adx < 24 && price >= upper * 0.997 && rsi >= 60) {
+        breakdown.push(`Range ADX ${adx.toFixed(1)} < ${P.adxMax}`, 'Lower Bollinger Band test with low RSI');
+      } else if (adx < P.adxMax && price >= upper * 0.997 && rsi >= 100 - P.rsiLow) {
         direction = 'SHORT';
         score = 70;
-        breakdown.push(`Range ADX ${adx.toFixed(1)} < 24`, 'Upper Bollinger Band test with elevated RSI');
+        breakdown.push(`Range ADX ${adx.toFixed(1)} < ${P.adxMax}`, 'Upper Bollinger Band test with elevated RSI');
       }
       break;
     }
@@ -276,10 +286,9 @@ export function evaluateStrategy(
     case 'SR_REVERSAL': {
       const sup = snapshot.marketStructure.supportZones;
       const res = snapshot.marketStructure.resistanceZones;
-      slMult = 1.2;
       if (sup.length > 0) {
         const nearestSup = sup[sup.length - 1];
-        if (Math.abs(lastBar.low - nearestSup) <= atr * 0.5 && lastBar.close > nearestSup && lastBar.close > lastBar.open) {
+        if (Math.abs(lastBar.low - nearestSup) <= atr * P.proximityAtr && lastBar.close > nearestSup && lastBar.close > lastBar.open) {
           direction = 'LONG';
           score = 73;
           breakdown.push(`Bullish rejection at confirmed support ${nearestSup.toFixed(2)}`);
@@ -287,7 +296,7 @@ export function evaluateStrategy(
       }
       if (direction === 'NONE' && res.length > 0) {
         const nearestRes = res[res.length - 1];
-        if (Math.abs(lastBar.high - nearestRes) <= atr * 0.5 && lastBar.close < nearestRes && lastBar.close < lastBar.open) {
+        if (Math.abs(lastBar.high - nearestRes) <= atr * P.proximityAtr && lastBar.close < nearestRes && lastBar.close < lastBar.open) {
           direction = 'SHORT';
           score = 73;
           breakdown.push(`Bearish rejection at confirmed resistance ${nearestRes.toFixed(2)}`);
@@ -299,12 +308,11 @@ export function evaluateStrategy(
     case 'RSI_REVERSAL': {
       const rsi = snapshot.rsi14;
       if (rsi === null) break;
-      slMult = 1.3;
-      if (rsi <= 32 && lastBar.close > lastBar.open) {
+      if (rsi <= P.rsiOversold && lastBar.close > lastBar.open) {
         direction = 'LONG';
         score = 68 + (rsi <= 25 ? 10 : 0);
         breakdown.push(`RSI14 oversold (${rsi.toFixed(1)}) with bullish reversal close`);
-      } else if (rsi >= 68 && lastBar.close < lastBar.open) {
+      } else if (rsi >= 100 - P.rsiOversold && lastBar.close < lastBar.open) {
         direction = 'SHORT';
         score = 68 + (rsi >= 75 ? 10 : 0);
         breakdown.push(`RSI14 overbought (${rsi.toFixed(1)}) with bearish reversal close`);
@@ -336,14 +344,14 @@ export function evaluateStrategy(
         Math.abs(lastBar.high - prevBar.close),
         Math.abs(lastBar.low - prevBar.close)
       );
-      if (barRange >= atr * 1.25 && lastBar.close > upper) {
+      if (barRange >= atr * P.rangeAtrMult && lastBar.close > upper) {
         direction = 'LONG';
         score = 76;
-        breakdown.push('Volatility expansion (>= 1.25x ATR) closing above Upper Bollinger Band');
-      } else if (barRange >= atr * 1.25 && lastBar.close < lower) {
+        breakdown.push(`Volatility expansion (>= ${P.rangeAtrMult}x ATR) closing above Upper Bollinger Band`);
+      } else if (barRange >= atr * P.rangeAtrMult && lastBar.close < lower) {
         direction = 'SHORT';
         score = 76;
-        breakdown.push('Volatility expansion (>= 1.25x ATR) closing below Lower Bollinger Band');
+        breakdown.push(`Volatility expansion (>= ${P.rangeAtrMult}x ATR) closing below Lower Bollinger Band`);
       }
       break;
     }
@@ -367,7 +375,7 @@ export function evaluateStrategy(
     };
   }
 
-  const levels = buildTradeLevels(price, atr, direction, slMult);
+  const levels = buildTradeLevels(price, atr, direction, slMult, P.tp1R ?? 1.5);
   return {
     strategyId,
     strategyName: meta.name,

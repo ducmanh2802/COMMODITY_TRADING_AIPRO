@@ -7,20 +7,24 @@
  * - Exits: stop-loss is checked before take-profit inside a bar (conservative). A gap through the
  *   level fills at the bar open. END_OF_DATA closes at the last close. Every fill pays slippage.
  * - Costs: commission per contract per side (entry and exit), slippage in ticks per fill.
- * - Rolls (optional `rolloverIntervalBars`): every N bars an open position is ROLLED, not closed:
- *   it stays open on the continuous series and pays rolloverCostPerContract + 2 x commission + 2 x
- *   slippage (two legs) per contract. The roll schedule is a fixed bar interval, not the exchange
- *   calendar - an approximation disclosed in `disclosure`.
+ * - Rolls: an open position is ROLLED, not closed: it stays open on the continuous series and pays
+ *   rolloverCostPerContract + 2 x commission + 2 x slippage (two legs) per contract, identically in
+ *   both modes. CALENDAR mode rolls on the first bar on/after (FND or LTD) minus N business days
+ *   (server/engines/rollSchedule.ts, src/shared/contracts); INTERVAL mode rolls every N bars and is
+ *   also the visible fallback when an instrument has no calendar rule.
  * - Equity is marked to market at every bar close; drawdown and Sharpe use that curve.
  */
 import type { StrategyId } from '../../src/shared/types/analysis.ts';
 import type { InstrumentDefinition, Timeframe } from '../../src/shared/types/instrument.ts';
 import type { MarketCandle } from '../../src/shared/types/market.ts';
 import { validateCandleSeries } from '../../src/shared/utils/validation.ts';
-import { analyzeTechnicalSnapshot } from './technicalEngine.ts';
+import { utcDateOfTimestamp } from '../../src/shared/contracts/dates.ts';
+import { analyzeTechnicalSnapshot, type TechnicalSnapshot } from './technicalEngine.ts';
 import { evaluateStrategy, STRATEGY_CATALOG } from './strategyEngine.ts';
+import { validateStrategyParams, type StrategyParams } from './strategyParams.ts';
+import { computeRollSchedule } from './rollSchedule.ts';
 
-export const BACKTEST_ENGINE_VERSION = '2.0.0';
+export const BACKTEST_ENGINE_VERSION = '2.1.0';
 
 export interface BacktestDataProvenance {
   origin: 'SQLITE' | 'MEMORY' | 'NONE' | 'TEST';
@@ -36,8 +40,15 @@ export interface BacktestConfig {
   contractsPerTrade: number;
   commissionPerContract: number;
   slippageTicks: number;
+  /** Fixed roll interval in bars (INTERVAL mode, and the fallback of CALENDAR mode). */
   rolloverIntervalBars?: number;
   rolloverCostPerContract?: number;
+  /** NONE | INTERVAL | CALENDAR. Default: INTERVAL when rolloverIntervalBars is set, else NONE. */
+  rolloverMode?: 'NONE' | 'INTERVAL' | 'CALENDAR';
+  /** CALENDAR mode: roll this many business days before first notice / last trading day (default 5). */
+  rollBusinessDaysBefore?: number;
+  /** Strategy parameters (validated against the strategy's schema; missing keys use defaults). */
+  params?: StrategyParams;
   /** Where the candles came from (echoed in `disclosure`). */
   dataProvenance?: BacktestDataProvenance;
 }
@@ -80,6 +91,18 @@ export interface BacktestResult {
   instrumentId: string;
   strategyId: StrategyId;
   timeframe: Timeframe;
+  /** Effective strategy parameters (defaults merged). */
+  params?: StrategyParams;
+  rollInfo?: {
+    requested: 'NONE' | 'INTERVAL' | 'CALENDAR';
+    mode: 'NONE' | 'INTERVAL' | 'CALENDAR';
+    intervalBars: number | null;
+    rollBusinessDaysBefore: number | null;
+    anchor: 'FND' | 'LTD' | 'MIXED' | null;
+    rollDates: string[];
+    /** Visible note, e.g. fallback to a fixed interval when no exchange calendar exists. */
+    note: string | null;
+  };
   metrics: {
     netProfit: number;
     grossProfit: number;
@@ -162,8 +185,10 @@ interface OpenPosition {
   direction: 'LONG' | 'SHORT';
   signalTimestamp: string;
   entryTimestamp: string;
+  entryDate: string | null;
   entryPrice: number;
   barsSinceRoll: number;
+  lastRollDate: string | null;
   stopLoss: number;
   takeProfit: number;
   initialRiskPerUnit: number;
@@ -172,36 +197,163 @@ interface OpenPosition {
   commission: number;
 }
 
-export function runHistoricalBacktest(rawCandles: MarketCandle[], config: BacktestConfig): BacktestResult {
+export interface RollPlan {
+  /** What the caller asked for. */
+  requested: 'NONE' | 'INTERVAL' | 'CALENDAR';
+  /** What is actually applied (CALENDAR falls back to INTERVAL when the instrument has no calendar rule). */
+  mode: 'NONE' | 'INTERVAL' | 'CALENDAR';
+  intervalBars: number | null;
+  dates: string[];
+  rollBusinessDaysBefore: number | null;
+  anchor: 'FND' | 'LTD' | 'MIXED' | null;
+  /** Visible note when the requested mode could not be honoured. */
+  note: string | null;
+}
+
+export const DEFAULT_ROLL_BUSINESS_DAYS = 5;
+export const FALLBACK_ROLL_INTERVAL_BARS = 20;
+
+export interface BacktestContext {
+  config: BacktestConfig;
+  candles: MarketCandle[];
+  warmup: number;
+  validationWarnings: string[];
+  tickSize: number;
+  tickValue: number;
+  params: StrategyParams;
+  rollPlan: RollPlan;
+  barDates: Array<string | null>;
+  snapshotAt: (i: number) => TechnicalSnapshot;
+}
+
+export interface SimulationOutput {
+  trades: BacktestTrade[];
+  equityCurve: BacktestEquityPoint[];
+  finalEquity: number;
+  maxDrawdown: number;
+  maxDrawdownPct: number;
+  totalCommission: number;
+  totalRollCosts: number;
+  totalSlippageCost: number;
+  totalRolls: number;
+  barsInMarket: number;
+}
+
+function resolveRollPlan(config: BacktestConfig, candles: MarketCandle[], barDates: Array<string | null>): RollPlan {
+  const requested: RollPlan['requested'] =
+    config.rolloverMode ?? (config.rolloverIntervalBars && config.rolloverIntervalBars > 0 ? 'INTERVAL' : 'NONE');
+  const interval = config.rolloverIntervalBars && config.rolloverIntervalBars > 0 ? config.rolloverIntervalBars : null;
+  if (requested === 'NONE') {
+    return { requested, mode: 'NONE', intervalBars: null, dates: [], rollBusinessDaysBefore: null, anchor: null, note: null };
+  }
+  if (requested === 'INTERVAL') {
+    return {
+      requested,
+      mode: interval ? 'INTERVAL' : 'NONE',
+      intervalBars: interval,
+      dates: [],
+      rollBusinessDaysBefore: null,
+      anchor: null,
+      note: interval ? null : 'INTERVAL roll requested without rolloverIntervalBars; no roll modeled.',
+    };
+  }
+  const n = config.rollBusinessDaysBefore ?? DEFAULT_ROLL_BUSINESS_DAYS;
+  const first = barDates.find((d): d is string => d !== null);
+  const last = [...barDates].reverse().find((d): d is string => d !== null);
+  const schedule =
+    first && last ? computeRollSchedule(config.instrument.id, first, last, n) : null;
+  if (schedule && schedule.source === 'CALENDAR') {
+    return {
+      requested,
+      mode: 'CALENDAR',
+      intervalBars: null,
+      dates: schedule.dates,
+      rollBusinessDaysBefore: schedule.rollBusinessDaysBefore,
+      anchor: schedule.anchor,
+      note:
+        schedule.calendarStatus === 'UNVERIFIED'
+          ? 'Exchange calendar rule is UNVERIFIED; roll dates are indicative.'
+          : null,
+    };
+  }
+  const fallback = interval ?? FALLBACK_ROLL_INTERVAL_BARS;
+  const reason = schedule ? schedule.reason : 'No dated bars.';
+  return {
+    requested,
+    mode: 'INTERVAL',
+    intervalBars: fallback,
+    dates: [],
+    rollBusinessDaysBefore: null,
+    anchor: null,
+    note: `No usable exchange calendar for ${config.instrument.id} (${reason}) - fell back to a fixed roll every ${fallback} bars.`,
+  };
+}
+
+/** Validate the data once and build the shared, lazily-cached context used by every simulation. */
+export function prepareBacktest(rawCandles: MarketCandle[], config: BacktestConfig): BacktestContext | { error: string } {
   const spec = config.instrument.specification;
   if (spec.verificationStatus !== 'VERIFIED' || spec.minimumTickSize === null || spec.tickValue === null) {
-    return emptyBacktestFailure(config, `Contract specifications for ${config.instrument.id} are not verified.`);
+    return { error: `Contract specifications for ${config.instrument.id} are not verified.` };
   }
+  const paramCheck = validateStrategyParams(config.strategyId, config.params);
+  if (!paramCheck.ok) return { error: `Invalid strategy parameters: ${paramCheck.errors.join(' ')}` };
 
   const validation = validateCandleSeries(rawCandles);
   const candles = validation.validCandles.filter((c) => c.isComplete);
   const strategyMeta = STRATEGY_CATALOG.find((s) => s.id === config.strategyId);
   const warmup = strategyMeta ? strategyMeta.minCandlesRequired : 55;
-
   if (!validation.valid || candles.length < warmup + 5) {
-    return emptyBacktestFailure(
-      config,
-      `Insufficient validated complete candles (${candles.length} available, need >= ${warmup + 5}).`
-    );
+    return { error: `Insufficient validated complete candles (${candles.length} available, need >= ${warmup + 5}).` };
   }
+  const barDates = candles.map((c) => utcDateOfTimestamp(c.timestamp));
+  const cache = new Map<number, TechnicalSnapshot>();
+  return {
+    config,
+    candles,
+    warmup,
+    validationWarnings: validation.warnings ?? [],
+    tickSize: spec.minimumTickSize,
+    tickValue: spec.tickValue,
+    params: paramCheck.params,
+    rollPlan: resolveRollPlan(config, candles, barDates),
+    barDates,
+    snapshotAt: (i: number) => {
+      let snap = cache.get(i);
+      if (!snap) {
+        snap = analyzeTechnicalSnapshot(candles.slice(0, i + 1), config.instrument.exchangeSymbol, config.instrument.exchange, config.timeframe);
+        cache.set(i, snap);
+      }
+      return snap;
+    },
+  };
+}
 
-  const tickSize = spec.minimumTickSize;
-  const tickValue = spec.tickValue;
+/**
+ * Simulate bars [startIndex, endIndex] (inclusive). Signals on bar i use candles [0..i] only, so a
+ * window that starts late still has honest history but can never see bars after `endIndex`
+ * (the engine never reads past the bar it is processing and the last bar of the window opens nothing).
+ */
+export function simulateRange(
+  ctx: BacktestContext,
+  params: StrategyParams,
+  startIndex: number,
+  endIndex: number
+): SimulationOutput {
+  const { config, candles, barDates, rollPlan } = ctx;
+  const tickSize = ctx.tickSize;
+  const tickValue = ctx.tickValue;
   const qty = config.contractsPerTrade;
   const slippagePrice = Math.max(0, config.slippageTicks) * tickSize;
   const slippageCostPerFill = Math.max(0, config.slippageTicks) * tickValue * qty;
   const commissionPerSide = Math.max(0, config.commissionPerContract) * qty;
-  const rollInterval = config.rolloverIntervalBars && config.rolloverIntervalBars > 0 ? config.rolloverIntervalBars : null;
+  // The same cost applies to every roll regardless of how the roll date was chosen.
   const rollCostPerRoll =
-    (Math.max(0, config.rolloverCostPerContract ?? 0) * qty) + 2 * commissionPerSide + 2 * slippageCostPerFill;
-  const pointValue = tickValue / tickSize; // currency per 1.0 price move per contract
+    Math.max(0, config.rolloverCostPerContract ?? 0) * qty + 2 * commissionPerSide + 2 * slippageCostPerFill;
+  const pointValue = tickValue / tickSize;
+  const rollInterval = rollPlan.mode === 'INTERVAL' ? rollPlan.intervalBars : null;
+  const rollDates = rollPlan.mode === 'CALENDAR' ? rollPlan.dates : null;
 
-  let realized = config.initialEquity; // cash equity: realized P&L minus all costs paid so far
+  let realized = config.initialEquity;
   let peak = config.initialEquity;
   let maxDrawdown = 0;
   let maxDrawdownPct = 0;
@@ -222,7 +374,10 @@ export function runHistoricalBacktest(rawCandles: MarketCandle[], config: Backte
     return realized + diff * pointValue * qty;
   };
 
-  for (let i = warmup; i < candles.length; i++) {
+  const from = Math.max(ctx.warmup, startIndex);
+  const lastIndex = Math.min(candles.length - 1, endIndex);
+
+  for (let i = from; i <= lastIndex; i++) {
     const bar = candles[i];
 
     // 1. Fill the pending signal (from bar i-1's close) at this bar's open.
@@ -232,8 +387,10 @@ export function runHistoricalBacktest(rawCandles: MarketCandle[], config: Backte
         direction: pending.direction,
         signalTimestamp: pending.signalTimestamp,
         entryTimestamp: bar.timestamp,
+        entryDate: barDates[i],
         entryPrice: fill,
         barsSinceRoll: 0,
+        lastRollDate: barDates[i],
         stopLoss: pending.direction === 'LONG' ? fill - pending.slDistance : fill + pending.slDistance,
         takeProfit: pending.direction === 'LONG' ? fill + pending.tpDistance : fill - pending.tpDistance,
         initialRiskPerUnit: pending.slDistance,
@@ -250,7 +407,6 @@ export function runHistoricalBacktest(rawCandles: MarketCandle[], config: Backte
     let closedThisBar = false;
     if (openPos) {
       barsInMarket += 1;
-      // 2. Exits: stop-loss before take-profit (conservative); gaps fill at the open.
       let exitPrice: number | null = null;
       let exitReason: BacktestTrade['exitReason'] | null = null;
       if (openPos.direction === 'LONG') {
@@ -268,7 +424,7 @@ export function runHistoricalBacktest(rawCandles: MarketCandle[], config: Backte
         exitPrice = Math.min(bar.open, openPos.takeProfit) + slippagePrice;
         exitReason = 'TAKE_PROFIT';
       }
-      if (!exitReason && i === candles.length - 1) {
+      if (!exitReason && i === lastIndex) {
         exitPrice = openPos.direction === 'LONG' ? bar.close - slippagePrice : bar.close + slippagePrice;
         exitReason = 'END_OF_DATA';
       }
@@ -301,11 +457,30 @@ export function runHistoricalBacktest(rawCandles: MarketCandle[], config: Backte
         });
         openPos = null;
         closedThisBar = true;
-      } else if (rollInterval !== null) {
-        // 3. Roll in place at the bar close when the interval elapses (position stays open).
-        openPos.barsSinceRoll += 1;
-        if (openPos.barsSinceRoll >= rollInterval) {
-          openPos.barsSinceRoll = 0;
+      } else {
+        // 3. Roll in place at the bar close (position stays open on the continuous series).
+        let rollNow = false;
+        if (rollInterval !== null) {
+          openPos.barsSinceRoll += 1;
+          if (openPos.barsSinceRoll >= rollInterval) {
+            openPos.barsSinceRoll = 0;
+            rollNow = true;
+          }
+        } else if (rollDates !== null) {
+          const today = barDates[i];
+          if (today !== null) {
+            let due: string | null = null;
+            for (const r of rollDates) {
+              if (r > today) break;
+              if (openPos.lastRollDate === null || r > openPos.lastRollDate) due = r;
+            }
+            if (due !== null) {
+              openPos.lastRollDate = due;
+              rollNow = true;
+            }
+          }
+        }
+        if (rollNow) {
           openPos.rollCount += 1;
           openPos.rollCosts += rollCostPerRoll;
           realized -= rollCostPerRoll;
@@ -315,11 +490,10 @@ export function runHistoricalBacktest(rawCandles: MarketCandle[], config: Backte
       }
     }
 
-    // 4. Signal on this CLOSED bar using bars [0..i] only; filled next bar (none on the last bar).
-    if (!openPos && !closedThisBar && i < candles.length - 1) {
-      const slice = candles.slice(0, i + 1);
-      const snapshot = analyzeTechnicalSnapshot(slice, config.instrument.exchangeSymbol, config.instrument.exchange, config.timeframe);
-      const evalRes = evaluateStrategy(config.strategyId, snapshot, slice);
+    // 4. Signal on this CLOSED bar using bars [0..i] only; filled next bar (none on the window's last bar).
+    if (!openPos && !closedThisBar && i < lastIndex) {
+      const snapshot = ctx.snapshotAt(i);
+      const evalRes = evaluateStrategy(config.strategyId, snapshot, candles.slice(Math.max(0, i - 1), i + 1), params);
       if (
         evalRes.confirmationStatus === 'CONFIRMED' &&
         (evalRes.direction === 'LONG' || evalRes.direction === 'SHORT') &&
@@ -346,43 +520,87 @@ export function runHistoricalBacktest(rawCandles: MarketCandle[], config: Backte
     equityCurve.push({ timestamp: bar.timestamp, equity, drawdownPct: ddPct });
   }
 
-  const finalEquity = realized; // every position is closed by END_OF_DATA
+  return {
+    trades,
+    equityCurve,
+    finalEquity: realized,
+    maxDrawdown,
+    maxDrawdownPct,
+    totalCommission,
+    totalRollCosts,
+    totalSlippageCost,
+    totalRolls,
+    barsInMarket,
+  };
+}
+
+export function metricsFromSimulation(
+  sim: SimulationOutput,
+  initialEquity: number,
+  periodsPerYear: number
+): BacktestResult['metrics'] {
+  const { trades } = sim;
   const grossProfit = trades.filter((t) => t.netPnl > 0).reduce((a, t) => a + t.netPnl, 0);
   const grossLoss = Math.abs(trades.filter((t) => t.netPnl < 0).reduce((a, t) => a + t.netPnl, 0));
-  const netProfit = finalEquity - config.initialEquity;
+  const netProfit = sim.finalEquity - initialEquity;
   const wins = trades.filter((t) => t.netPnl > 0).length;
-  const periodsPerYear = PERIODS_PER_YEAR[config.timeframe] ?? 252;
+  return {
+    netProfit,
+    grossProfit,
+    grossLoss,
+    winRatePct: trades.length > 0 ? (wins / trades.length) * 100 : 0,
+    profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? null : 0,
+    maxDrawdown: sim.maxDrawdown,
+    maxDrawdownPct: sim.maxDrawdownPct,
+    averageR: trades.length > 0 ? trades.reduce((a, t) => a + t.rMultiple, 0) / trades.length : 0,
+    expectancy: trades.length > 0 ? netProfit / trades.length : 0,
+    sharpeRatio: sharpeFromEquity(sim.equityCurve.map((p) => p.equity), periodsPerYear),
+    tradeCount: trades.length,
+    finalEquity: sim.finalEquity,
+    totalCommission: sim.totalCommission,
+    totalRollCosts: sim.totalRollCosts,
+    totalSlippageCost: sim.totalSlippageCost,
+    rollCount: sim.totalRolls,
+    exposurePct: sim.equityCurve.length > 0 ? (sim.barsInMarket / sim.equityCurve.length) * 100 : 0,
+  };
+}
 
+export function runHistoricalBacktest(rawCandles: MarketCandle[], config: BacktestConfig): BacktestResult {
+  const ctx = prepareBacktest(rawCandles, config);
+  if ('error' in ctx) return emptyBacktestFailure(config, ctx.error);
+  return runBacktestWithContext(ctx);
+}
+
+export function runBacktestWithContext(ctx: BacktestContext): BacktestResult {
+  const { config } = ctx;
+  const sim = simulateRange(ctx, ctx.params, ctx.warmup, ctx.candles.length - 1);
+  const periodsPerYear = PERIODS_PER_YEAR[config.timeframe] ?? 252;
   return {
     valid: true,
     engine: { id: 'server/engines/backtestEngine.ts', version: BACKTEST_ENGINE_VERSION },
     instrumentId: config.instrument.id,
     strategyId: config.strategyId,
     timeframe: config.timeframe,
-    metrics: {
-      netProfit,
-      grossProfit,
-      grossLoss,
-      winRatePct: trades.length > 0 ? (wins / trades.length) * 100 : 0,
-      profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? null : 0,
-      maxDrawdown,
-      maxDrawdownPct,
-      averageR: trades.length > 0 ? trades.reduce((a, t) => a + t.rMultiple, 0) / trades.length : 0,
-      expectancy: trades.length > 0 ? netProfit / trades.length : 0,
-      sharpeRatio: sharpeFromEquity(equityCurve.map((p) => p.equity), periodsPerYear),
-      tradeCount: trades.length,
-      finalEquity,
-      totalCommission,
-      totalRollCosts,
-      totalSlippageCost,
-      rollCount: totalRolls,
-      exposurePct: equityCurve.length > 0 ? (barsInMarket / equityCurve.length) * 100 : 0,
-    },
+    params: ctx.params,
+    rollInfo: rollInfoOf(ctx.rollPlan),
+    metrics: metricsFromSimulation(sim, config.initialEquity, periodsPerYear),
     metricDefinitions: METRIC_DEFINITIONS,
-    assumptions: assumptionsFor(config, tickSize, tickValue),
-    disclosure: disclosureFor(config, candles, warmup, periodsPerYear, validation.warnings ?? []),
-    equityCurve,
-    trades,
+    assumptions: assumptionsFor(config, ctx.tickSize, ctx.tickValue),
+    disclosure: disclosureFor(config, ctx.candles, ctx.warmup, periodsPerYear, ctx.validationWarnings, ctx.rollPlan),
+    equityCurve: sim.equityCurve,
+    trades: sim.trades,
+  };
+}
+
+function rollInfoOf(plan: RollPlan): BacktestResult['rollInfo'] {
+  return {
+    requested: plan.requested,
+    mode: plan.mode,
+    intervalBars: plan.intervalBars,
+    rollBusinessDaysBefore: plan.rollBusinessDaysBefore,
+    anchor: plan.anchor,
+    rollDates: plan.dates,
+    note: plan.note,
   };
 }
 
@@ -418,7 +636,8 @@ function disclosureFor(
   candles: MarketCandle[],
   warmup: number,
   periodsPerYear: number,
-  validationWarnings: string[]
+  validationWarnings: string[],
+  plan?: RollPlan
 ): BacktestResult['disclosure'] {
   const prov = config.dataProvenance ?? { origin: 'NONE' as const, source: null, warnings: [] };
   return {
@@ -430,9 +649,7 @@ function disclosureFor(
     warmupBars: warmup,
     fillModel: 'Next-bar-open entries; stop-loss before take-profit inside a bar; gap fills at the open; END_OF_DATA at last close.',
     costModel: `Commission ${config.commissionPerContract} per contract per side; slippage ${config.slippageTicks} tick(s) per fill.`,
-    rollModel: config.rolloverIntervalBars
-      ? `Roll in place every ${config.rolloverIntervalBars} bars: ${config.rolloverCostPerContract ?? 0} per contract + 2 x commission + 2 x slippage (two legs). Fixed interval, not the exchange expiry calendar.`
-      : 'No roll costs modeled (rolloverIntervalBars not set).',
+    rollModel: rollModelText(config, plan),
     annualizationPeriodsPerYear: periodsPerYear,
     limitations: [
       'Single instrument, fixed contract count; no margin calls, financing or position limits.',
@@ -443,6 +660,20 @@ function disclosureFor(
     dataWarnings: [...prov.warnings, ...validationWarnings],
     notInvestmentAdvice: DISCLAIMER,
   };
+}
+
+function rollModelText(config: BacktestConfig, plan?: RollPlan): string {
+  const cost = `${config.rolloverCostPerContract ?? 0} per contract + 2 x commission + 2 x slippage (two legs)`;
+  if (plan?.mode === 'CALENDAR') {
+    return `Roll in place ${plan.rollBusinessDaysBefore} business day(s) before the ${plan.anchor === 'LTD' ? 'last trading day' : 'first notice day'} of each delivery month (${plan.dates.length} roll date(s) in range, exchange calendar): ${cost}.${plan.note ? ` ${plan.note}` : ''}`;
+  }
+  if (plan?.mode === 'INTERVAL' && plan.intervalBars) {
+    return `Roll in place every ${plan.intervalBars} bars: ${cost}. Fixed interval, not the exchange expiry calendar.${plan.note ? ` ${plan.note}` : ''}`;
+  }
+  if (!plan && config.rolloverIntervalBars) {
+    return `Roll in place every ${config.rolloverIntervalBars} bars: ${cost}. Fixed interval, not the exchange expiry calendar.`;
+  }
+  return 'No roll costs modeled (rolloverMode / rolloverIntervalBars not set).';
 }
 
 function emptyBacktestFailure(config: BacktestConfig, error: string): BacktestResult {

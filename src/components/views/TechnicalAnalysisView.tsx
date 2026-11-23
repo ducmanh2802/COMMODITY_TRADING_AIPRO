@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { ObvReadout } from './instrument/ObvLine';
+import type { ObvSummary } from '../../shared/types/cycle';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { DataQualityStatus, MarketCandle } from '../../shared/types/market';
 import { formatTimestampInZone } from '../../shared/utils/time';
@@ -42,6 +44,7 @@ interface TechnicalSnapshotPayload {
   atrPct: number | null;
   adx14: { adx: number | null; plusDI: number | null; minusDI: number | null };
   vwap: number | null;
+  obv?: ObvSummary | null;
   pivots: {
     pivot: number;
     r1: number;
@@ -254,6 +257,13 @@ export function TechnicalAnalysisView() {
               </div>
             </section>
           </div>
+
+          <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-[var(--text-strong)] border-b border-[var(--border)] pb-2">
+              {t('obv.title')}
+            </h2>
+            <ObvReadout obv={snapshot.obv} />
+          </section>
 
           {/* Pivots, Fibonacci, S/R & Invalidation */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

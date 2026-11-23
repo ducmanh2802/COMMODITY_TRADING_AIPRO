@@ -37,8 +37,10 @@ import * as pwa from './dict/pwa';
 import * as replay from './dict/replay';
 import * as learngoal from './dict/learngoal';
 import * as review from './dict/review';
+import * as exam from './dict/exam';
 import * as backup from './dict/backup';
 import * as sessions from './dict/sessions';
+import * as lab from './dict/lab';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
@@ -81,8 +83,10 @@ export const vi = {
   ...replay.vi,
   ...learngoal.vi,
   ...review.vi,
+  ...exam.vi,
   ...backup.vi,
   ...sessions.vi,
+  ...lab.vi,
 };
 
 export type TKey = keyof typeof vi;

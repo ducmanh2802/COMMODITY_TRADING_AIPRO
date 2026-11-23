@@ -26,9 +26,9 @@
   --border: #3A3454;
   --text: #E4E1F0;
   --text-strong: #FFFFFF;
-  --muted: rgba(228, 225, 240, 0.70);
-  --faint: rgba(228, 225, 240, 0.48);
-  --accent: #8B5CF6;
+  --muted: rgba(228, 225, 240, 0.76);
+  --faint: rgba(228, 225, 240, 0.60);
+  --accent: #7F52F2;
   --accent-soft: rgba(139, 92, 246, 0.18);
   --accent-text: #C4B5FD;
   --positive: #60A5FA;
@@ -70,14 +70,14 @@
   --border: #E4DFF2;
   --text: #241F36;
   --text-strong: #120E20;
-  --muted: rgba(36, 31, 54, 0.70);
-  --faint: rgba(36, 31, 54, 0.52);
+  --muted: rgba(36, 31, 54, 0.76);
+  --faint: rgba(36, 31, 54, 0.68);
   --accent: #7C3AED;
   --accent-soft: rgba(124, 58, 237, 0.12);
   --accent-text: #6D28D9;
   --positive: #1D4ED8;
-  --negative: #C2410C;
-  --warning: #A16207;
+  --negative: #B03908;
+  --warning: #865208;
   --series-1: #0284C7;
   --series-2: #D97706;
   --series-3: #7C3AED;
@@ -143,4 +143,57 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
+}
+
+/* Small text floor: on phones/tablets the 10-11px utility sizes render at 12px (WCAG-friendly minimum). */
+@media (max-width: 1023px) {
+  .text-\[10px\],
+  .text-\[11px\] {
+    font-size: 12px;
+  }
+}
+
+/* Respect the OS "reduce motion" setting for every animation/transition. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Touch targets: on phones/tablets every form control and padded button in the page body is at least 40px tall. */
+@media (max-width: 1023px) {
+  main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),
+  main select,
+  main textarea,
+  main button[class*="px-"],
+  main button[class~="p-1"],
+  main button[class~="p-1.5"],
+  main button[class~="p-2"],
+  main button.underline,
+  main button[class*="hover:underline"],
+  main summary {
+    min-height: 40px;
+  }
+  main button[class*="px-"] {
+    min-width: 40px;
+  }
+  main button[class~="p-1"],
+  main button[class~="p-1.5"],
+  main button[class~="p-2"] {
+    min-width: 40px;
+  }
+  main button.underline,
+  main button[class*="hover:underline"],
+  main summary {
+    display: inline-flex;
+    align-items: center;
+  }
+  main summary {
+    display: flex;
+  }
 }

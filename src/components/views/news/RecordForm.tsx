@@ -127,6 +127,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
               id="fund-source"
               type="text"
               placeholder={t('news.form.sourcePlaceholder')}
+              aria-label={t('news.form.sourcePlaceholder')}
               value={source}
               onChange={(e) => setSource(e.target.value)}
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs text-[var(--text-strong)]"
@@ -152,6 +153,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
               id="fund-dataset"
               type="text"
               placeholder={t('news.form.datasetPlaceholder')}
+              aria-label={t('news.form.datasetPlaceholder')}
               value={dataset}
               onChange={(e) => setDataset(e.target.value)}
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
@@ -180,6 +182,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
             <input
               type="text"
               placeholder={t('news.form.actual')}
+              aria-label={t('news.form.actual')}
               value={actualVal}
               onChange={(e) => setActualVal(e.target.value)}
               className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
@@ -187,6 +190,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
             <input
               type="text"
               placeholder={t('news.form.previous')}
+              aria-label={t('news.form.previous')}
               value={previousVal}
               onChange={(e) => setPreviousVal(e.target.value)}
               className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
@@ -194,6 +198,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
             <input
               type="text"
               placeholder={t('news.form.forecast')}
+              aria-label={t('news.form.forecast')}
               value={forecastVal}
               onChange={(e) => setForecastVal(e.target.value)}
               className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
@@ -201,6 +206,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
             <input
               type="text"
               placeholder={t('news.form.unit')}
+              aria-label={t('news.form.unit')}
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
               className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
@@ -231,6 +237,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
             <input
               type="text"
               placeholder={t('news.form.headline')}
+              aria-label={t('news.form.headline')}
               value={headline}
               onChange={(e) => setHeadline(e.target.value)}
               className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs text-[var(--text-strong)]"
@@ -238,6 +245,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
             <input
               type="text"
               placeholder={t('news.form.summary')}
+              aria-label={t('news.form.summary')}
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs text-[var(--text-strong)]"

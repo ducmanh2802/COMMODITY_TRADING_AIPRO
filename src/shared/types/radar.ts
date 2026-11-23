@@ -15,6 +15,24 @@ export interface RadarSignal {
   reason: string | null;
 }
 
+export interface RadarRatingComponent {
+  label: string;
+  points: number;
+  max: number;
+  note: string;
+  /** false when the input was missing; excluded from the rating denominator. */
+  available: boolean;
+}
+/** "Điểm đánh giá" 0..100: a research score (never a buy/sell instruction) with the reasons behind it. */
+export interface RadarRating {
+  rating: number;
+  grade: 'A' | 'B' | 'C' | 'D';
+  /** Which side the trend/setup favours (shorts are valid on futures). */
+  direction: 'TĂNG' | 'GIẢM' | 'CHƯA RÕ';
+  components: RadarRatingComponent[];
+  confidence: 'CAO' | 'TRUNG BÌNH' | 'THẤP';
+}
+
 export interface RadarItem {
   id: string;
   symbol: string;
@@ -22,6 +40,8 @@ export interface RadarItem {
   category: string;
   /** "Độ sôi động" 0..100. */
   score: number;
+  /** Research rating (optional for backward compatibility). */
+  rating?: RadarRating;
   signals: RadarSignal[];
   reasons: string[];
   breakouts: RadarBreakoutKind[];
@@ -40,6 +60,7 @@ export interface RadarSetup {
   symbol: string;
   name: string;
   direction: 'UP' | 'DOWN';
+  rating?: RadarRating;
   description: string;
   conditions: string[];
   risks: string[];
