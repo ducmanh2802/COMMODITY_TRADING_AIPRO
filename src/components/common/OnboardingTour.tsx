@@ -11,6 +11,9 @@ const TARGETS: Record<number, AppModuleId> = { 2: 'today-hub', 3: 'learn', 4: 'm
 
 function isDone(): boolean {
   try {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('autostart') === '1') {
+      return true;
+    }
     return window.localStorage.getItem(ONBOARDING_KEY) === '1';
   } catch {
     return false;

@@ -3,6 +3,7 @@ import { LineSeries, createChart, type UTCTimestamp } from 'lightweight-charts';
 import { ExternalLink, Info } from 'lucide-react';
 import { fmtDate, fmtFixed, useT } from '../../../i18n';
 import { LINE_WIDTH, lwBase, seriesColor } from '../../../shared/theme/chartTheme';
+import { SessionHistoryTable } from '../../common/SessionHistoryTable';
 
 /** T76: reference (benchmark) line chart for instruments with no futures history. Never a contract price. */
 interface BenchmarkItem {
@@ -180,6 +181,13 @@ export function BenchmarkReferencePanel() {
             {series.unit !== series.nativeUnit && <>{t('bm.nativeUnit', { unit: series.nativeUnit })} {series.conversionNote} </>}
             {t('bm.unitNote')}
           </p>
+          <SessionHistoryTable
+            mode="benchmark"
+            points={series.points}
+            frequency={series.frequency}
+            unit={series.unit}
+            sourceLabel={series.source}
+          />
         </>
       ) : (
         !error && (

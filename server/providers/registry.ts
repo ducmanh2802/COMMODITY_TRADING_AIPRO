@@ -472,18 +472,25 @@ export class ProviderRegistry {
    * T33: persist Yahoo UNOFFICIAL daily history (10y backfill, then incremental) into the candle
    * repository as VENDOR_YAHOO. No-op unless YAHOO_ENABLED=true and a repository is configured.
    */
-  async syncYahooHistory(instruments: InstrumentDefinition[], now?: () => number) {
+  async syncYahooHistory(
+    instruments: InstrumentDefinition[],
+    now?: () => number,
+    options?: { timeframes?: Array<'D1' | 'H1'> }
+  ) {
     if (!this.candleRepository || !this.persistCandles) {
       return { enabled: false, results: [], note: 'No candle repository configured; Yahoo history not persisted.' };
     }
-    return syncYahooHistory({
-      adapter: this.yahoo,
-      repository: this.candleRepository,
-      persist: this.persistCandles,
-      providerName: this.yahoo.providerName,
-      instruments,
-      now,
-    });
+    return syncYahooHistory(
+      {
+        adapter: this.yahoo,
+        repository: this.candleRepository,
+        persist: this.persistCandles,
+        providerName: this.yahoo.providerName,
+        instruments,
+        now,
+      },
+      options
+    );
   }
 
   /** Yahoo UNOFFICIAL intraday history (M15 + H1) with retention. No-op unless YAHOO_ENABLED=true. */

@@ -15,6 +15,7 @@ import { formatTimestampInZone } from '../../shared/utils/time';
 import { CsvImportPanel } from '../common/CsvImportPanel';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { InstrumentToolbar } from '../common/InstrumentToolbar';
+import { SessionHistoryTable } from '../common/SessionHistoryTable';
 import { fmtFixed, fmtNum, useT } from '../../i18n';
 
 interface CandleApiResponse {
@@ -310,6 +311,15 @@ export function ChartsView() {
           <div ref={chartContainerRef} className="w-full h-[440px]" data-testid="lightweight-chart-canvas" />
         )}
       </section>
+
+      {candles.length > 0 && (
+        <SessionHistoryTable
+          mode="candles"
+          candles={candles}
+          timeframe={timeframe}
+          sourceNote={candles[candles.length - 1]?.source}
+        />
+      )}
     </div>
   );
 }

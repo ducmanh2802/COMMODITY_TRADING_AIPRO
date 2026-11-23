@@ -140,6 +140,34 @@ export function computeReleaseLagDays(observationDate: string, publicationTimest
   return Math.max(0, Math.round((pubMs - obsMs) / 86_400_000));
 }
 
+export type FundamentalStoreChangeKind = 'RECORD' | 'NEWS' | 'CLEAR';
+
+export interface FundamentalStoreChangeEvent {
+  kind: FundamentalStoreChangeKind;
+  timestamp: string;
+  record?: FundamentalMacroRecord;
+  news?: SourcedNewsItem;
+}
+
+export type FundamentalStoreListener = (event: FundamentalStoreChangeEvent) => void;
+
+export interface FundamentalNewsFilter {
+  /** Strict no-look-ahead guard: excludes any item published strictly after `asOf` ISO timestamp. */
+  asOf?: string;
+  symbol?: string;
+  category?: MacroDatasetType;
+}
+
+function normalizeRelatedSymbols(symbols?: string[]): string[] {
+  if (!symbols || symbols.length === 0) return [];
+  const seen = new Set<string>();
+  for (const raw of symbols) {
+    const clean = raw.trim().toUpperCase();
+    if (clean) seen.add(clean);
+  }
+  return [...seen];
+}
+
 /**
  * Stores strictly sourced fundamental and macro records.
  * Starts empty so zero unsourced or fabricated fundamental facts are ever displayed.
@@ -147,6 +175,24 @@ export function computeReleaseLagDays(observationDate: string, publicationTimest
 export class FundamentalStore {
   private readonly records: FundamentalMacroRecord[] = [];
   private readonly news: SourcedNewsItem[] = [];
+  private readonly listeners = new Set<FundamentalStoreListener>();
+
+  subscribe(listener: FundamentalStoreListener): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private emit(event: FundamentalStoreChangeEvent): void {
+    for (const listener of this.listeners) {
+      try {
+        listener(event);
+      } catch {
+        // Isolate listener failures so store writes stay reliable.
+      }
+    }
+  }
 
   /**
    * Lists sourced records sorted newest-published first.
@@ -210,7 +256,7 @@ export class FundamentalStore {
       dataPeriod: cleanPeriod,
       observationDate,
       category,
-      relatedSymbols: record.relatedSymbols?.map((s) => s.trim().toUpperCase()),
+      relatedSymbols: record.relatedSymbols ? normalizeRelatedSymbols(record.relatedSymbols) : undefined,
       unit: cleanUnit,
       freshnessStatus,
       releaseLagDays,
@@ -221,16 +267,22 @@ export class FundamentalStore {
     } else {
       this.records.push(created);
     }
+    this.emit({ kind: 'RECORD', timestamp: new Date().toISOString(), record: created });
     return created;
   }
 
-  listNews(filter: { asOf?: string } = {}): SourcedNewsItem[] {
+  listNews(filter: FundamentalNewsFilter = {}): SourcedNewsItem[] {
     const asOfMs = filter.asOf ? Date.parse(filter.asOf) : null;
+    const targetSym = filter.symbol?.trim().toUpperCase();
     return this.news
       .filter((n) => {
         if (asOfMs !== null && Number.isFinite(asOfMs)) {
           const pubMs = Date.parse(n.publicationTimestamp);
           if (!Number.isFinite(pubMs) || pubMs > asOfMs) return false;
+        }
+        if (filter.category && n.category !== filter.category) return false;
+        if (targetSym && n.relatedSymbols.length > 0) {
+          if (!n.relatedSymbols.map((s) => s.toUpperCase()).includes(targetSym)) return false;
         }
         return true;
       })
@@ -243,15 +295,21 @@ export class FundamentalStore {
       id: `news_${Date.now()}_${this.news.length + 1}`,
       headline: sanitizeExternalText(item.headline),
       source: sanitizeExternalText(item.source),
+      relatedSymbols: normalizeRelatedSymbols(item.relatedSymbols),
       summary: sanitizeExternalText(item.summary),
     };
     this.news.push(created);
+    this.emit({ kind: 'NEWS', timestamp: new Date().toISOString(), news: created });
     return created;
   }
 
   clearAll(): void {
+    const hadItems = this.records.length > 0 || this.news.length > 0;
     this.records.length = 0;
     this.news.length = 0;
+    if (hadItems) {
+      this.emit({ kind: 'CLEAR', timestamp: new Date().toISOString() });
+    }
   }
 }
 

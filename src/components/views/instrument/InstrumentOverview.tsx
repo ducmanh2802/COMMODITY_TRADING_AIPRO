@@ -1,15 +1,18 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { AlertTriangle, ChevronDown, CircleAlert, CircleCheck, CircleSlash, HelpCircle } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { AlertTriangle, ChevronDown, CircleAlert, CircleCheck, CircleSlash, ExternalLink, HelpCircle } from 'lucide-react';
+import { LineSeries, createChart, type UTCTimestamp } from 'lightweight-charts';
 import { useTerminal } from '../../../contexts/TerminalContext';
-import { fmtDate, fmtDateTime, fmtFixed, fmtNum, useI18n, type TKey } from '../../../i18n';
+import { fmtDate, fmtDateTime, fmtFixed, fmtInt, fmtNum, useI18n, type TKey } from '../../../i18n';
 import { atr } from '../../../shared/analytics';
 import { getCommodityVisual } from '../../../shared/data/commodityVisuals';
+import { LINE_WIDTH, lwBase, seriesColor } from '../../../shared/theme/chartTheme';
 import type { CommodityProfileDossier, CycleTimeframeKey } from '../../../shared/types/cycle';
 import type { DriversResponse } from '../../../shared/types/drivers';
 import type { MarketCandle } from '../../../shared/types/market';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
 import { CyclePhaseBadge } from '../../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
+import { SessionHistoryTable } from '../../common/SessionHistoryTable';
 import { SourceChip } from '../../common/SourceChip';
 import { WatchButton } from '../../watchlist/WatchButton';
 import { Card } from '../../ui/Card';
@@ -38,6 +41,75 @@ const RANGE_LABEL: Record<RangeKey, 'ins.chart.r1m' | 'ins.chart.r6m' | 'ins.cha
   ALL: 'ins.chart.rall',
 };
 const DAY_MS = 86_400_000;
+
+interface OverviewBenchmarkSeries {
+  instrumentId: string;
+  label: string;
+  frequency: 'daily' | 'monthly';
+  unit: string;
+  nativeUnit: string;
+  conversionNote: string | null;
+  source: string;
+  sourceUrl: string;
+  points: { date: string; value: number }[];
+  lastUpdated: string | null;
+  reason: string | null;
+}
+
+function BenchmarkOverviewChart({
+  points,
+  unit,
+  decimals,
+  ariaLabel,
+}: {
+  points: ReadonlyArray<{ date: string; value: number }>;
+  unit: string;
+  decimals: number;
+  ariaLabel: string;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [themeKey, setThemeKey] = useState(0);
+
+  useEffect(() => {
+    const mo = new MutationObserver(() => setThemeKey((k) => k + 1));
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => mo.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || points.length === 0) return;
+    const chart = createChart(el, {
+      ...lwBase(),
+      autoSize: false,
+      height: 320,
+      width: el.clientWidth,
+      localization: { priceFormatter: (v: number) => fmtFixed(v, decimals) },
+    });
+    const s = chart.addSeries(LineSeries, {
+      color: seriesColor(0),
+      lineWidth: LINE_WIDTH,
+      title: unit,
+      priceLineVisible: false,
+    });
+    s.setData(points.map((p) => ({ time: (Date.parse(`${p.date}T00:00:00Z`) / 1000) as UTCTimestamp, value: p.value })));
+    chart.timeScale().fitContent();
+    let disposed = false;
+    const ro = new ResizeObserver(() => {
+      if (disposed) return;
+      const w = el.clientWidth;
+      if (w > 0) chart.applyOptions({ width: w });
+    });
+    ro.observe(el);
+    return () => {
+      disposed = true;
+      ro.disconnect();
+      chart.remove();
+    };
+  }, [points, unit, decimals, themeKey]);
+
+  return <div ref={ref} role="img" aria-label={ariaLabel} className="w-full h-[320px]" data-testid="instrument-benchmark-chart" />;
+}
 
 function sortCandles(candles: MarketCandle[]): MarketCandle[] {
   const byDay = new Map<string, MarketCandle>();
@@ -154,6 +226,7 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
   const { selectedSymbol, setActiveModule } = useTerminal();
   const [dossier, setDossier] = useState<CommodityProfileDossier | null>(null);
   const [candles, setCandles] = useState<MarketCandle[]>([]);
+  const [benchmark, setBenchmark] = useState<OverviewBenchmarkSeries | null>(null);
   const [drivers, setDrivers] = useState<DriversResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,6 +239,7 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
     setLoading(true);
     setError(null);
     setDrivers(null);
+    setBenchmark(null);
     const sym = encodeURIComponent(selectedSymbol);
     fetchJsonWithRetry<CommodityProfileDossier>(`/api/cycle/profile/${sym}`, { signal: ctrl.signal })
       .then((d) => {
@@ -181,7 +255,19 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
         if (!ctrl.signal.aborted) setLoading(false);
       });
     fetchJsonWithRetry<{ candles?: MarketCandle[] }>(`/api/market/candles/${sym}?timeframe=D1`, { signal: ctrl.signal })
-      .then((d) => !ctrl.signal.aborted && setCandles(Array.isArray(d?.candles) ? d.candles : []))
+      .then((d) => {
+        if (ctrl.signal.aborted) return;
+        const list = Array.isArray(d?.candles) ? d.candles : [];
+        setCandles(list);
+        if (list.length === 0) {
+          fetch(`/api/benchmarks/${sym}`, { signal: ctrl.signal })
+            .then((r) => (r.ok ? (r.json() as Promise<OverviewBenchmarkSeries>) : null))
+            .then((bm) => {
+              if (!ctrl.signal.aborted && bm) setBenchmark(bm);
+            })
+            .catch(() => undefined);
+        }
+      })
       .catch(() => !ctrl.signal.aborted && setCandles([]));
     fetchJsonWithRetry<DriversResponse>(`/api/drivers/${sym}`, { signal: ctrl.signal })
       .then((d) => !ctrl.signal.aborted && setDrivers(d))
@@ -195,6 +281,17 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
     const cutoff = Date.parse(sorted[sorted.length - 1].timestamp) - RANGE_DAYS[range] * DAY_MS;
     return sorted.filter((c) => Date.parse(c.timestamp) >= cutoff);
   }, [sorted, range]);
+  const visibleBenchmark = useMemo(() => {
+    if (!benchmark || benchmark.points.length === 0) return [];
+    if (range === 'ALL') return benchmark.points;
+    const lastMs = Date.parse(`${benchmark.points[benchmark.points.length - 1].date}T00:00:00Z`);
+    const cutoff = lastMs - RANGE_DAYS[range] * DAY_MS;
+    const filtered = benchmark.points.filter((p) => Date.parse(`${p.date}T00:00:00Z`) >= cutoff);
+    if (benchmark.frequency === 'monthly' && filtered.length < 12) {
+      return benchmark.points.slice(-Math.min(24, benchmark.points.length));
+    }
+    return filtered;
+  }, [benchmark, range]);
 
   const stats = useMemo(() => {
     if (sorted.length === 0) return null;
@@ -479,6 +576,29 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
         <div className="rounded-xl overflow-hidden border border-[var(--border)] min-w-0" data-testid="instrument-chart">
           {visible.length > 0 ? (
             <CandleChart candles={visible} timeframe="D1" overlays={[]} lowerPane={null} showVolume={false} />
+          ) : visibleBenchmark.length > 0 && benchmark ? (
+            <div className="p-3 space-y-2.5 bg-[var(--surface)]">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[var(--warning)]/40 bg-[var(--warning)]/10 font-medium text-[var(--warning)]">
+                  {t('ins.chart.benchmarkBadge')}
+                </span>
+                <a
+                  href={benchmark.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="inline-flex items-center gap-1 text-[var(--accent-text)] hover:underline"
+                >
+                  {t('ins.chart.sourceLink')}
+                  <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                </a>
+              </div>
+              <BenchmarkOverviewChart
+                points={visibleBenchmark}
+                unit={benchmark.unit}
+                decimals={decimals}
+                ariaLabel={benchmark.label}
+              />
+            </div>
           ) : (
             <div
               data-testid="instrument-chart-empty"
@@ -496,8 +616,38 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
             </div>
           )}
         </div>
-        <p className="text-xs text-[var(--muted)]">{t('ins.chart.note')}</p>
+        <p className="text-xs text-[var(--muted)]">
+          {visible.length > 0
+            ? t('ins.chart.note')
+            : benchmark && benchmark.points.length > 0
+              ? t('ins.chart.benchmarkNote', {
+                  code: instrument.exchangeSymbol,
+                  source: benchmark.source,
+                  n: fmtInt(benchmark.points.length),
+                  unit: benchmark.unit,
+                })
+              : t('ins.chart.note')}
+        </p>
       </section>
+
+      {sorted.length > 0 ? (
+        <SessionHistoryTable
+          mode="candles"
+          candles={sorted}
+          timeframe="D1"
+          priceUnit={unitText}
+          decimals={decimals}
+        />
+      ) : benchmark && benchmark.points.length > 0 ? (
+        <SessionHistoryTable
+          mode="benchmark"
+          points={benchmark.points}
+          frequency={benchmark.frequency}
+          unit={benchmark.unit}
+          sourceLabel={benchmark.source}
+          decimals={decimals}
+        />
+      ) : null}
 
       {/* Contract spec mini-table */}
       {specRows.length > 0 && (

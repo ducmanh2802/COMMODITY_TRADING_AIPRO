@@ -6,6 +6,8 @@ import {
   classifyYahooFreshness,
   lastSparkClose,
   parseYahooDailyCandles,
+  parseYahooIntradayCandles,
+  parseYahooWeeklyCandles,
   YAHOO_CONTRACT_LABEL,
   YAHOO_SYMBOL_MAP,
   YAHOO_USER_AGENT,
@@ -584,4 +586,119 @@ test('batch: wrong exchange in chart metadata refuses the quote', async () => {
     assert.equal(q.status, 'INVALID');
     assert.equal(q.price, null);
   });
+});
+
+test('multi-timeframe: parseYahooIntradayCandles drops unclosed trailing bars; H4 & W1 resample > 20 sessions without look-ahead', async () => {
+  const zc = INITIAL_INSTRUMENTS.find((i) => i.exchangeSymbol === 'ZC')!;
+  const startSec = Math.floor(Date.parse('2026-10-01T00:00:00Z') / 1000);
+  // 100 hourly bars (= 25+ H4 bars) + 1 currently forming trailing bar
+  const timestamps = Array.from({ length: 101 }, (_, i) => startSec + i * 3600);
+  const opens = timestamps.map((_, i) => 440 + i * 0.1);
+  const closes = opens.map((o) => o + 0.4);
+  const highs = closes.map((c) => c + 0.3);
+  const lows = opens.map((o) => o - 0.3);
+  const volumes = timestamps.map(() => 500);
+
+  const h1Body = {
+    chart: {
+      result: [
+        {
+          meta: {
+            symbol: 'ZC=F',
+            exchangeName: 'CBT',
+            currency: 'USX',
+            regularMarketPrice: 450.4,
+            regularMarketTime: startSec + 100 * 3600 + 1800,
+          },
+          timestamp: timestamps,
+          indicators: { quote: [{ open: opens, high: highs, low: lows, close: closes, volume: volumes }] },
+        },
+      ],
+    },
+  };
+  // Clock is 30m into bar #100 -> bar #100 is not yet closed, bars 0..99 are closed
+  const nowMs = (startSec + 100 * 3600 + 1800) * 1000;
+  const parsedH1 = parseYahooIntradayCandles(h1Body.chart.result[0], zc, YAHOO_SYMBOL_MAP.ZC, 'H1', 3600, nowMs);
+  assert.ok(parsedH1.ok);
+  assert.equal(parsedH1.candles.length, 100);
+  assert.equal(parsedH1.dropped, 1);
+
+  await withEnv({ YAHOO_ENABLED: 'true' }, async () => {
+    const h = harness((url) => {
+      if (url.includes('interval=1h')) return json(h1Body);
+      return json(fixture());
+    }, nowMs);
+    const adapter = new YahooFinanceAdapter(h.options);
+    const h1 = await adapter.getCandles('ZC', 'H1');
+    assert.equal(h1.status, 'HISTORICAL');
+    assert.equal(h1.candles.length, 100);
+
+    // H4 fetches 1h range=3mo and deterministically aggregates 100 H1 bars into 25 H4 bars (> 20)
+    const h4 = await adapter.getCandles('ZC', 'H4');
+    assert.equal(h4.status, 'HISTORICAL');
+    assert.ok(h4.candles.length > 20, `expected >20 H4 sessions, got ${h4.candles.length}`);
+    assert.equal(h4.candles[0].timeframe, 'H4');
+
+    // Sync D1 + H1 into SQLite -> loadEngineCandles serves D1, H1, resampled W1, and resampled H4 from SQLite
+    const repo = new InMemoryCandleRepository();
+    const d1Start = Date.parse('2026-01-05T00:00:00Z');
+    const d1Ts = Array.from({ length: 160 }, (_, i) => Math.floor((d1Start + i * 86_400_000) / 1000));
+    const d1Body = {
+      chart: {
+        result: [
+          {
+            meta: {
+              symbol: 'ZC=F',
+              exchangeName: 'CBT',
+              currency: 'USX',
+              gmtoffset: 0,
+              regularMarketPrice: 450.5,
+              regularMarketTime: Math.floor(nowMs / 1000),
+            },
+            timestamp: d1Ts,
+            indicators: {
+              quote: [
+                {
+                  open: d1Ts.map(() => 440),
+                  high: d1Ts.map(() => 445),
+                  low: d1Ts.map(() => 438),
+                  close: d1Ts.map(() => 442),
+                  volume: d1Ts.map(() => 1000),
+                },
+              ],
+            },
+          },
+        ],
+      },
+    };
+    const multiH = harness((url) => (url.includes('interval=1h') ? json(h1Body) : json(d1Body)), nowMs);
+    const registry = new ProviderRegistry({ candles: repo, yahoo: multiH.options });
+    const syncRes = await registry.syncYahooHistory([zc], () => nowMs, { timeframes: ['D1', 'H1'] });
+    assert.equal(syncRes.results.length, 2);
+    assert.ok(syncRes.results.every((r) => r.status === 'PERSISTED'));
+
+    const loadedW1 = await loadEngineCandles(repo, zc, 'W1');
+    assert.equal(loadedW1.origin, 'SQLITE');
+    assert.ok(loadedW1.candles.length > 20, `expected >20 W1 sessions from 160 D1 bars, got ${loadedW1.candles.length}`);
+
+    const loadedH4 = await loadEngineCandles(repo, zc, 'H4');
+    assert.equal(loadedH4.origin, 'SQLITE');
+    assert.ok(loadedH4.candles.length > 20, `expected >20 H4 sessions from 100 H1 bars, got ${loadedH4.candles.length}`);
+  });
+
+  // parseYahooWeeklyCandles drops an in-progress week bar
+  const weekSec = Math.floor(Date.parse('2026-11-16T00:00:00Z') / 1000);
+  const w1Parsed = parseYahooWeeklyCandles(
+    {
+      meta: { symbol: 'ZC=F', exchangeName: 'CBT', currency: 'USX', gmtoffset: 0 },
+      timestamp: [weekSec - 7 * 86_400, weekSec],
+      indicators: { quote: [{ open: [440, 442], high: [446, 448], low: [439, 441], close: [443, 445], volume: [100, 120] }] },
+    },
+    zc,
+    YAHOO_SYMBOL_MAP.ZC,
+    Date.parse('2026-11-18T12:00:00Z')
+  );
+  assert.ok(w1Parsed.ok);
+  assert.equal(w1Parsed.candles.length, 1);
+  assert.equal(w1Parsed.dropped, 1);
 });

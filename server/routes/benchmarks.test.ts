@@ -82,6 +82,11 @@ test('GET /api/benchmarks/:id serves series, 404 for unmapped, empty+reason on u
     assert.equal(fef.points.length, 2);
     assert.equal(calls.filter((c) => c.includes('PIORECRUSDM')).length, 1);
 
+    const rcShort = await (await fetch(`${base}/api/benchmarks/RC`)).json();
+    assert.equal(rcShort.instrumentId, 'ICE:RC');
+    assert.equal(rcShort.seriesId, 'PCOFFROBUSDM');
+    assert.equal(rcShort.points.length, 2);
+
     const none = await fetch(`${base}/api/benchmarks/CBOT:ZS`);
     assert.equal(none.status, 404);
 

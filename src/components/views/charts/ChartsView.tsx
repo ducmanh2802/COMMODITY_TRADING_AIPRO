@@ -25,6 +25,7 @@ import {
 } from '../../../shared/analytics';
 import type { MarketCandle } from '../../../shared/types/market';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
+import { SessionHistoryTable } from '../../common/SessionHistoryTable';
 import { SourceChip } from '../../common/SourceChip';
 import { fmtDate, fmtInt, useT } from '../../../i18n';
 import { BenchmarkReferencePanel } from './BenchmarkReferencePanel';
@@ -155,20 +156,25 @@ export function ChartsView() {
     () => uniq(datasets.filter((d) => d.instrumentId === instrumentId).map((d) => d.contractCode)).sort(),
     [datasets, instrumentId]
   );
-  const timeframeOptions = useMemo(
-    () =>
-      uniq(
-        datasets.filter((d) => d.instrumentId === instrumentId && d.contractCode === contractCode).map((d) => d.timeframe)
-      ),
-    [datasets, instrumentId, contractCode]
-  );
+  const timeframeOptions = useMemo(() => {
+    const order = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'];
+    return uniq(
+      datasets.filter((d) => d.instrumentId === instrumentId && d.contractCode === contractCode).map((d) => d.timeframe)
+    ).sort((a, b) => {
+      const ia = order.indexOf(a);
+      const ib = order.indexOf(b);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+  }, [datasets, instrumentId, contractCode]);
 
-  // Keep selections valid as option lists change (auto-select the first available).
+  // Keep selections valid as option lists change (prefer D1 when available, else first option).
   useEffect(() => {
     if (!contractOptions.includes(contractCode)) setContractCode(contractOptions[0] ?? '');
   }, [contractOptions, contractCode]);
   useEffect(() => {
-    if (!timeframeOptions.includes(timeframe)) setTimeframe(timeframeOptions[0] ?? '');
+    if (!timeframeOptions.includes(timeframe)) {
+      setTimeframe(timeframeOptions.includes('D1') ? 'D1' : (timeframeOptions[0] ?? ''));
+    }
   }, [timeframeOptions, timeframe]);
 
   useEffect(() => {
@@ -525,6 +531,16 @@ export function ChartsView() {
           </div>
         )}
       </div>
+
+      {candles.length > 0 && (
+        <SessionHistoryTable
+          mode="candles"
+          candles={candles}
+          timeframe={data?.timeframe ?? timeframe}
+          priceUnit={data?.priceUnit}
+          sourceNote={data?.provenance[0]?.sourceLabel}
+        />
+      )}
 
       <ChartCompareSection />
 

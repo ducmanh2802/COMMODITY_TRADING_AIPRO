@@ -489,7 +489,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     }
     const all = await instrumentRepository.list({});
     const targets = symbol ? all.filter((i) => i.exchangeSymbol.toUpperCase() === symbol.toUpperCase()) : all;
-    return reg.syncYahooHistory(targets);
+    return reg.syncYahooHistory(targets, undefined, { timeframes: ['D1', 'H1'] });
   };
   app.locals.runYahooHistory = runYahooHistory;
   app.post('/api/providers/yahoo/history', async (req: Request, res: Response, next: NextFunction) => {
@@ -734,6 +734,40 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     typeof (providerRegistry as Partial<ProviderRegistry>).getProviderById === 'function'
       ? (providerRegistry as ProviderRegistry).getProviderById('YAHOO_UNOFFICIAL')
       : null;
+
+  /** Loads SQLite/memory candles first; when empty and Yahoo is enabled & supports the instrument, fetches on demand. */
+  const loadCandlesForRoute = async (
+    instrument: import('../src/shared/types/instrument.ts').InstrumentDefinition,
+    tf: Timeframe
+  ): Promise<EngineCandleResult> => {
+    const stored = await loadEngineCandles(candleRepository, instrument, tf);
+    if (stored.candles.length > 0) return stored;
+    if (yahooProvider instanceof YahooFinanceAdapter && isYahooEnabled() && yahooProvider.supports(instrument)) {
+      const live = await yahooProvider.getCandles(instrument.exchangeSymbol, tf);
+      if (live.candles.length > 0) {
+        return {
+          candles: live.candles,
+          status: live.status,
+          origin: 'MEMORY',
+          reason: live.reason,
+          meta: {
+            symbol: instrument.exchangeSymbol,
+            exchange: instrument.exchange,
+            timeframe: tf,
+            barCount: live.candles.length,
+            earliestTimestamp: live.candles[0].timestamp,
+            latestTimestamp: live.candles[live.candles.length - 1].timestamp,
+            importedAt: new Date().toISOString(),
+            source: live.candles[0].source,
+            status: live.status,
+            warnings: live.reason ? [live.reason] : [],
+          },
+        };
+      }
+      if (live.reason) return { ...stored, reason: live.reason };
+    }
+    return stored;
+  };
   registerBriefRoutes(app, {
     findInstrument: (idOrSymbol) => instrumentRepository.findBySymbol(idOrSymbol),
     getQuote: (inst) => providerRegistry.getQuoteForInstrument(inst),
@@ -914,7 +948,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
         return;
       }
 
-      const candleRes = await loadEngineCandles(candleRepository, instrument, tfParsed.data);
+      const candleRes = await loadCandlesForRoute(instrument, tfParsed.data);
       const closes = candleRes.candles.map((c) => c.close);
       const ema20 = calculateEMA(closes, 20);
       const ema50 = calculateEMA(closes, 50);
@@ -955,7 +989,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
         return;
       }
 
-      const candleRes = await loadEngineCandles(candleRepository, instrument, tfParsed.data);
+      const candleRes = await loadCandlesForRoute(instrument, tfParsed.data);
       const snapshot = analyzeTechnicalSnapshot(
         candleRes.candles,
         instrument.exchangeSymbol,
@@ -988,7 +1022,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
         return;
       }
 
-      const candleRes = await loadEngineCandles(candleRepository, instrument, tfParsed.data);
+      const candleRes = await loadCandlesForRoute(instrument, tfParsed.data);
       const snapshot = analyzeTechnicalSnapshot(
         candleRes.candles,
         instrument.exchangeSymbol,
@@ -1028,7 +1062,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
       }
 
       const tf = parsed.data.timeframe as Timeframe;
-      const candleRes = await loadEngineCandles(candleRepository, instrument, tf);
+      const candleRes = await loadCandlesForRoute(instrument, tf);
       const snapshot = analyzeTechnicalSnapshot(
         candleRes.candles,
         instrument.exchangeSymbol,
@@ -1136,7 +1170,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
         return;
       }
 
-      const candleRes = await loadEngineCandles(candleRepository, instrument, parsed.data.timeframe);
+      const candleRes = await loadCandlesForRoute(instrument, parsed.data.timeframe);
       const result = runHistoricalBacktest(candleRes.candles, {
         instrument,
         strategyId: parsed.data.strategyId,
@@ -1199,6 +1233,30 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   });
 
   // Phase 10: Sourced Fundamental, Macro & Economic Calendar
+  const buildFundamentalPayload = (filter: {
+    asOf?: string;
+    category?: z.infer<typeof FundamentalCategoryEnum>;
+    symbol?: string;
+  }) => {
+    const records = fundamentalStore.listRecords({
+      asOf: filter.asOf,
+      category: filter.category,
+      symbol: filter.symbol,
+    });
+    const news = fundamentalStore.listNews({
+      asOf: filter.asOf,
+      symbol: filter.symbol,
+    });
+    const domains = buildFundamentalDomainsStatus({ records });
+    return {
+      status: records.length > 0 || news.length > 0 ? ('HISTORICAL' as const) : ('UNAVAILABLE' as const),
+      asOf: filter.asOf ?? null,
+      records,
+      news,
+      domains,
+    };
+  };
+
   app.get('/api/fundamental/records', (req: Request, res: Response) => {
     const asOfRaw = typeof req.query.asOf === 'string' && req.query.asOf.trim() ? req.query.asOf.trim() : undefined;
     if (asOfRaw && !Number.isFinite(Date.parse(asOfRaw))) {
@@ -1214,20 +1272,77 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     }
     const symbolRaw = typeof req.query.symbol === 'string' && req.query.symbol.trim() ? req.query.symbol.trim() : undefined;
 
-    const records = fundamentalStore.listRecords({
+    res.json(
+      buildFundamentalPayload({
+        asOf: asOfRaw,
+        category: catParsed?.success ? catParsed.data : undefined,
+        symbol: symbolRaw,
+      })
+    );
+  });
+
+  app.get('/api/fundamental/stream', (req: Request, res: Response) => {
+    const asOfRaw = typeof req.query.asOf === 'string' && req.query.asOf.trim() ? req.query.asOf.trim() : undefined;
+    if (asOfRaw && !Number.isFinite(Date.parse(asOfRaw))) {
+      res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Invalid asOf timestamp parameter.' });
+      return;
+    }
+    const catParsed = req.query.category
+      ? FundamentalCategoryEnum.safeParse(req.query.category)
+      : null;
+    if (catParsed && !catParsed.success) {
+      res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Invalid category parameter.' });
+      return;
+    }
+    const symbolRaw = typeof req.query.symbol === 'string' && req.query.symbol.trim() ? req.query.symbol.trim() : undefined;
+    const filter = {
       asOf: asOfRaw,
       category: catParsed?.success ? catParsed.data : undefined,
       symbol: symbolRaw,
+    };
+
+    res.status(200);
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders?.();
+
+    const writeEvent = (eventName: 'snapshot' | 'update', payload: unknown) => {
+      if (res.writableEnded) return;
+      res.write(`event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`);
+    };
+
+    writeEvent('snapshot', {
+      ...buildFundamentalPayload(filter),
+      serverTime: new Date().toISOString(),
     });
-    const news = fundamentalStore.listNews({ asOf: asOfRaw });
-    const domains = buildFundamentalDomainsStatus({ records });
-    res.json({
-      status: records.length > 0 || news.length > 0 ? 'HISTORICAL' : 'UNAVAILABLE',
-      asOf: asOfRaw ?? null,
-      records,
-      news,
-      domains,
+
+    const unsubscribe = fundamentalStore.subscribe((change) => {
+      writeEvent('update', {
+        ...buildFundamentalPayload(filter),
+        changeKind: change.kind,
+        serverTime: change.timestamp,
+      });
     });
+
+    const heartbeat = setInterval(() => {
+      if (!res.writableEnded) {
+        res.write(': heartbeat\n\n');
+      }
+    }, 25_000);
+    heartbeat.unref?.();
+
+    let closed = false;
+    const cleanup = () => {
+      if (closed) return;
+      closed = true;
+      unsubscribe();
+      clearInterval(heartbeat);
+    };
+
+    req.on('close', cleanup);
+    res.on('close', cleanup);
   });
 
   app.post('/api/fundamental/records', (req: Request, res: Response, next: NextFunction) => {

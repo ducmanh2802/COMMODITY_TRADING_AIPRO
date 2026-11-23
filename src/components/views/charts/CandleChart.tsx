@@ -98,8 +98,13 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
     const UP = pal.up;
     const DOWN = pal.down;
 
+    const height = lowerPane ? 560 : 460;
+    const width = Math.max(el.clientWidth || 0, 300);
     const chart = createChart(el, {
       ...lwBase({ timeVisible: intraday }),
+      autoSize: false,
+      width,
+      height,
       localization: intraday
         ? {
             timeFormatter: (t: Time) =>
@@ -217,9 +222,17 @@ export function CandleChart({ candles, timeframe, overlays, lowerPane, showVolum
     };
     chart.subscribeCrosshairMove(onCrosshairMove);
 
+    const ro = new ResizeObserver(() => {
+      if (disposed) return;
+      const w = el.clientWidth;
+      if (w > 0) chart.applyOptions({ width: w });
+    });
+    ro.observe(el);
+
     return () => {
       disposed = true;
       apiPair.alive = false;
+      ro.disconnect();
       chart.unsubscribeCrosshairMove(onCrosshairMove);
       chartRef.current = null;
       setApi(null);

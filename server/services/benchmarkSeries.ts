@@ -51,8 +51,20 @@ const PUBLISHER_NAME: Record<FredBenchmarkDef['publisher'], string> = {
   EIA: 'EIA (qua FRED)',
 };
 
+export function resolveBenchmarkInstrumentId(instrumentId: string): string | null {
+  const key = instrumentId.trim().toUpperCase();
+  if (!key) return null;
+  if (BENCHMARK_INSTRUMENTS[key]) return key;
+  if (key.includes(':')) return null;
+  for (const canonical of Object.keys(BENCHMARK_INSTRUMENTS)) {
+    if (canonical.split(':')[1] === key) return canonical;
+  }
+  return null;
+}
+
 export function benchmarkDefForInstrument(instrumentId: string): FredBenchmarkDef | null {
-  const seriesId = BENCHMARK_INSTRUMENTS[instrumentId.trim().toUpperCase()];
+  const canonical = resolveBenchmarkInstrumentId(instrumentId);
+  const seriesId = canonical ? BENCHMARK_INSTRUMENTS[canonical] : undefined;
   return seriesId ? (FRED_BENCHMARK_DEFS.find((d) => d.seriesId === seriesId) ?? null) : null;
 }
 
@@ -130,7 +142,8 @@ export class BenchmarkSeriesService {
 
   /** null = instrument has no benchmark mapping (404). */
   async get(instrumentId: string): Promise<BenchmarkSeries | null> {
-    const id = instrumentId.trim().toUpperCase();
+    const id = resolveBenchmarkInstrumentId(instrumentId);
+    if (!id) return null;
     const def = benchmarkDefForInstrument(id);
     if (!def) return null;
     const hit = this.cache.get(def.seriesId);

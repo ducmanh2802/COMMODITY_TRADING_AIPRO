@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useTerminal } from '../../contexts/TerminalContext';
-import type { DataQualityStatus } from '../../shared/types/market';
+import type { DataQualityStatus, MarketCandle } from '../../shared/types/market';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { InstrumentToolbar } from '../common/InstrumentToolbar';
+import { SessionHistoryTable } from '../common/SessionHistoryTable';
 import { fmtFixed, tr, useT } from '../../i18n';
 
 interface TechnicalSnapshotPayload {
@@ -78,11 +79,16 @@ function fmt(val: number | null | undefined, digits = 4): string {
 }
 
 export function TechnicalAnalysisView() {
-  const { selectedSymbol, timeframe, datasets, setActiveModule } = useTerminal();
+  const { instruments, selectedSymbol, timeframe, datasets, setActiveModule } = useTerminal();
   const t = useT();
   const [snapshot, setSnapshot] = useState<TechnicalSnapshotPayload | null>(null);
+  const [candles, setCandles] = useState<MarketCandle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const selectedInst = instruments.find(
+    (i) => i.exchangeSymbol.toUpperCase() === selectedSymbol.toUpperCase() || i.id === selectedSymbol
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -90,14 +96,27 @@ export function TechnicalAnalysisView() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(
-          `/api/technical/${encodeURIComponent(selectedSymbol)}?timeframe=${timeframe}`
-        );
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.message ?? t('ta.err.engine'));
-        if (!cancelled) setSnapshot(json.snapshot);
+        const sym = encodeURIComponent(selectedSymbol);
+        const [techRes, candlesRes] = await Promise.all([
+          fetch(`/api/technical/${sym}?timeframe=${timeframe}`),
+          fetch(`/api/market/candles/${sym}?timeframe=${timeframe}`).catch(() => null),
+        ]);
+        const json = await techRes.json();
+        if (!techRes.ok) throw new Error(json.message ?? t('ta.err.engine'));
+        let nextCandles: MarketCandle[] = [];
+        if (candlesRes && candlesRes.ok) {
+          const cJson = await candlesRes.json();
+          if (Array.isArray(cJson?.candles)) nextCandles = cJson.candles;
+        }
+        if (!cancelled) {
+          setSnapshot(json.snapshot);
+          setCandles(nextCandles);
+        }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : t('ta.err.load'));
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : t('ta.err.load'));
+          setCandles([]);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -308,6 +327,16 @@ export function TechnicalAnalysisView() {
               </div>
             </section>
           </div>
+
+          {candles.length > 0 && (
+            <SessionHistoryTable
+              mode="candles"
+              candles={candles}
+              timeframe={timeframe}
+              priceUnit={selectedInst?.specification.quotationUnit}
+              sourceNote={candles[candles.length - 1]?.source}
+            />
+          )}
         </>
       )}
     </div>

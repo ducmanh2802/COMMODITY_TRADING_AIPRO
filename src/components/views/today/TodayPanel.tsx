@@ -12,6 +12,7 @@ import { Card } from '../../ui/Card';
 import { EmptyState } from '../../ui/EmptyState';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
+import { FundamentalNewsFeed } from './FundamentalNewsFeed';
 
 const FLAT = 0.002; // |change| below 0.2% counts as "flat"
 
@@ -337,9 +338,10 @@ export function TodayPanel() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <SectionHeader title={t('n2.td.title')} />
       {body}
+      <FundamentalNewsFeed />
     </div>
   );
 }
