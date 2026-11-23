@@ -19,7 +19,7 @@
     <!-- Non-blocking font CSS (swap): text paints immediately with the system fallback. -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" /></noscript>
-  <script>try{var t=localStorage.getItem("ctap.theme");if(t==="light")document.documentElement.dataset.theme="light";}catch(e){}</script>
+  <script>try{var t=localStorage.getItem("ctap.theme");if(t==="light")document.documentElement.dataset.theme="light";}catch(e){}try{var z=localStorage.getItem("ctap.textSize");if(z==="lg"||z==="xl")document.documentElement.setAttribute("data-text-size",z);if(localStorage.getItem("ctap.contrast")==="high")document.documentElement.setAttribute("data-contrast","high");}catch(e){}</script>
   </head>
   <body class="antialiased">
     <div id="root"></div>

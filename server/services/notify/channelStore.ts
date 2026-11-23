@@ -18,9 +18,22 @@ export interface PushSubscriptionJson {
   endpoint: string;
   keys: { p256dh: string; auth: string };
 }
+/** Known browser push services. The server POSTs to the endpoint, so arbitrary hosts would be an SSRF vector. */
+const PUSH_HOST_SUFFIXES = ['.googleapis.com', '.push.services.mozilla.com', '.notify.windows.com', '.push.apple.com', '.push.microsoft.com'];
+export function isAllowedPushEndpoint(endpoint: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(endpoint);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== 'https:' || u.username || u.password || (u.port && u.port !== '443')) return false;
+  const h = u.hostname.toLowerCase();
+  return PUSH_HOST_SUFFIXES.some((suf) => h.endsWith(suf));
+}
 export function isValidPushSubscription(v: unknown): v is PushSubscriptionJson {
   const s = v as { endpoint?: unknown; keys?: { p256dh?: unknown; auth?: unknown } } | null;
-  if (!s || typeof s.endpoint !== 'string' || s.endpoint.length > 600 || !/^https:\/\//.test(s.endpoint)) return false;
+  if (!s || typeof s.endpoint !== 'string' || s.endpoint.length > 600 || !isAllowedPushEndpoint(s.endpoint)) return false;
   const k = s.keys;
   return !!k && typeof k.p256dh === 'string' && typeof k.auth === 'string' && k.p256dh.length > 0 && k.p256dh.length <= 200 && k.auth.length > 0 && k.auth.length <= 100;
 }

@@ -185,6 +185,13 @@ export interface BackupStatus {
   lastBackupName: string | null;
 }
 
+/** Set when startup restore failed: the local DB may be empty, so uploading it would clobber the good `latest`. */
+let restoreFailed = false;
+export function _setRestoreFailedForTest(v: boolean): void {
+  restoreFailed = v;
+}
+let inflight: Promise<BackupResult> | null = null;
+
 const state: BackupStatus = { enabled: false, lastBackupAt: null, lastBackupError: null, lastBackupName: null };
 
 export function getBackupStatus(): BackupStatus {
@@ -196,6 +203,15 @@ export function getBackupStatus(): BackupStatus {
 export async function runConfiguredBackup(env: Record<string, string | undefined> = process.env): Promise<BackupResult> {
   const cfg = readBackupConfig(env);
   if (!cfg) throw new Error('Backup disabled: GCS_BACKUP_BUCKET is not set.');
+  if (restoreFailed) throw new Error('Backup skipped: startup restore failed, refusing to overwrite the remote backup with a possibly empty DB.');
+  if (inflight) return inflight; // coalesce concurrent runs (route + job + shutdown)
+  inflight = doConfiguredBackup(cfg, env).finally(() => {
+    inflight = null;
+  });
+  return inflight;
+}
+
+async function doConfiguredBackup(cfg: BackupConfig, env: Record<string, string | undefined>): Promise<BackupResult> {
   try {
     const result = await runBackup({ storage: await createGcsStorage(cfg.bucket), dbFile: dbPath(env), keep: cfg.keep });
     state.lastBackupAt = new Date().toISOString();
@@ -215,8 +231,11 @@ export async function restoreOnStartup(env: Record<string, string | undefined> =
   const file = dbPath(env);
   if (!needsRestore(file)) return 'skipped-existing';
   try {
-    return await restoreIfMissing({ storage: await createGcsStorage(cfg.bucket), dbFile: file });
+    const out = await restoreIfMissing({ storage: await createGcsStorage(cfg.bucket), dbFile: file });
+    if (out === 'failed') restoreFailed = true;
+    return out;
   } catch (err) {
+    restoreFailed = true;
     logger.error('DB restore failed; starting with an empty DB.', { error: err instanceof Error ? err.message : 'unknown error' });
     return 'failed';
   }

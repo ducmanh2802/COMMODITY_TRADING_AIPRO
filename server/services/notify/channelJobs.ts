@@ -72,6 +72,10 @@ export async function runChannelZoneCheck(d: ChannelJobDeps): Promise<number> {
               to: email,
               subject: `Giá ${z.symbol} đã vào vùng bạn đặt`,
               text: zoneMessage(z.symbol, z.zone) + emailFooter(d.baseUrl, unsubToken),
+              headers: {
+                'List-Unsubscribe': `<${d.baseUrl}/api/notify/email/unsubscribe?token=${unsubToken}>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+              },
             });
             if (!ok) {
               d.log?.(`email: send failed for ${maskEmail(email)}`);

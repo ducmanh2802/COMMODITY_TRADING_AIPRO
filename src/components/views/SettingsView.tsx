@@ -6,6 +6,7 @@ import type { AccountCurrency, DisplayTimezone } from '../../shared/types/risk';
 import { useT } from '../../i18n';
 import { LanguageSwitch } from '../common/LanguageSwitch';
 import { ThemeSwitch } from '../common/ThemeSwitch';
+import { ReadabilitySwitch } from '../common/ReadabilitySwitch';
 import { useUiMode } from '../../contexts/UiModeContext';
 import { BackupCard } from './BackupCard';
 
@@ -128,6 +129,13 @@ export function SettingsView() {
           <ThemeSwitch large />
         </div>
         <p className="text-xs text-[var(--text)]/65 leading-relaxed">{t('theme.hint')}</p>
+      </section>
+
+      {/* Readability: text size + high contrast */}
+      <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-5 space-y-3">
+        <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('read.title')}</h2>
+        <ReadabilitySwitch large />
+        <p className="text-xs text-[var(--text)]/65 leading-relaxed">{t('read.hint')}</p>
       </section>
 
       {/* Interface language */}

@@ -3,6 +3,7 @@ import { MoreHorizontal } from 'lucide-react';
 import { useT } from '../../i18n';
 import { LanguageSwitch } from '../common/LanguageSwitch';
 import { ThemeSwitch } from '../common/ThemeSwitch';
+import { ReadabilitySwitch } from '../common/ReadabilitySwitch';
 
 /** Overflow menu (theme + language) used below the xl breakpoint where the TopBar would not fit. */
 export function TopBarMore() {
@@ -47,6 +48,7 @@ export function TopBarMore() {
         >
           <ThemeSwitch />
           <LanguageSwitch />
+          <ReadabilitySwitch />
         </div>
       )}
     </div>

@@ -10,7 +10,7 @@ import { runChannelZoneCheck } from './channelJobs.ts';
 import { getSmtp, getVapid, type Channels, type EmailSender, type PushResult, type PushSender } from './channels.ts';
 
 const zone: WatchZone = { kind: 'level', level: 100, direction: 'up' };
-const sub = (n: number): PushSubscriptionJson => ({ endpoint: `https://push.example/${n}`, keys: { p256dh: 'p', auth: 'a' } });
+const sub = (n: number): PushSubscriptionJson => ({ endpoint: `https://fcm.googleapis.com/fcm/send/${n}`, keys: { p256dh: 'p', auth: 'a' } });
 
 class FakePush implements PushSender {
   sent: Array<{ endpoint: string; body: string }> = [];
@@ -48,14 +48,14 @@ test('email validation and masking', () => {
 test('push store: upsert keeps zone state, remove', () => {
   const st = new ChannelStore(':memory:');
   assert.ok(st.upsertPush(sub(1), false, [{ symbol: 'ZC=F', zone }], 0));
-  st.setPushZoneState('https://push.example/1', 'ZC=F', true);
+  st.setPushZoneState('https://fcm.googleapis.com/fcm/send/1', 'ZC=F', true);
   st.upsertPush(sub(1), true, [{ symbol: 'ZC=F', zone }], 1); // same zone -> state kept
-  assert.equal(st.listPushZones('https://push.example/1')[0].inZone, true);
+  assert.equal(st.listPushZones('https://fcm.googleapis.com/fcm/send/1')[0].inZone, true);
   assert.equal(st.pushCount(), 1);
   assert.equal(st.listPush()[0].radar, true);
-  st.removePush('https://push.example/1');
+  st.removePush('https://fcm.googleapis.com/fcm/send/1');
   assert.equal(st.pushCount(), 0);
-  assert.equal(st.listPushZones('https://push.example/1').length, 0);
+  assert.equal(st.listPushZones('https://fcm.googleapis.com/fcm/send/1').length, 0);
 });
 
 test('push job: hysteresis (baseline silent, one alert per entry) and 410 cleanup', async () => {
@@ -183,13 +183,29 @@ test('routes: 503 when unconfigured; subscribe/confirm/unsubscribe when configur
     assert.equal(mail.sent[0].to, 'user@example.com');
     const token = /token=([0-9a-f]{48})/.exec(mail.sent[0].text)?.[1];
     assert.ok(token);
-    assert.equal((await fetch(`${base}/api/notify/email/confirm?token=${'0'.repeat(48)}`)).status, 400);
+    assert.equal((await fetch(`${base}/api/notify/email/confirm?token=nope`)).status, 400);
+    assert.equal((await fetch(`${base}/api/notify/email/confirm?token=${'0'.repeat(48)}`, { method: 'POST' })).status, 400);
     assert.equal((await fetch(`${base}/api/notify/email/confirm?token=${token}`)).status, 200);
+    assert.equal(st.listConfirmedEmails().length, 0); // GET alone (mail scanner) must not confirm
+    assert.equal((await fetch(`${base}/api/notify/email/confirm?token=${token}`, { method: 'POST' })).status, 200);
     assert.equal(st.listConfirmedEmails().length, 1);
     const unsub = st.unsubTokenFor('user@example.com');
     assert.equal((await fetch(`${base}/api/notify/email/unsubscribe?token=${unsub}`)).status, 200);
+    assert.equal(st.listConfirmedEmails().length, 1); // GET alone must not unsubscribe
+    const one = await fetch(`${base}/api/notify/email/unsubscribe?token=${unsub}`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'List-Unsubscribe=One-Click' });
+    assert.equal(one.status, 200);
     assert.equal(st.listConfirmedEmails().length, 0);
   } finally {
     srv.close();
+  }
+});
+
+test('push endpoints must be https on a known push-service host (SSRF guard)', async () => {
+  const { isValidPushSubscription } = await import('./channelStore.ts');
+  const mk = (endpoint: string) => ({ endpoint, keys: { p256dh: 'p', auth: 'a' } });
+  assert.equal(isValidPushSubscription(mk('https://fcm.googleapis.com/fcm/send/abc')), true);
+  assert.equal(isValidPushSubscription(mk('https://updates.push.services.mozilla.com/wpush/v2/abc')), true);
+  for (const bad of ['https://169.254.169.254/latest', 'https://localhost/x', 'https://evil.example/x', 'https://fcm.googleapis.com.evil.example/x', 'https://u:p@fcm.googleapis.com/x', 'https://fcm.googleapis.com:8443/x', 'http://fcm.googleapis.com/x']) {
+    assert.equal(isValidPushSubscription(mk(bad)), false, bad);
   }
 });

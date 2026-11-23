@@ -848,7 +848,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   // T63: monthly paper-trading contest (server-side fills on latest server quotes; SQLite; Firebase ID token for join/orders).
   {
     const contestInstruments = new Map<string, Awaited<ReturnType<typeof instrumentRepository.list>>[number]>();
-    void instrumentRepository.list({}).then((all) => all.forEach((i) => contestInstruments.set(i.id, i)));
+    void instrumentRepository.list({}).then((all) => all.forEach((i) => contestInstruments.set(i.id, i))).catch(() => undefined);
     registerContestRoutes(app, {
       deps: {
         getSpec: (id) => contestInstruments.get(id)?.specification ?? null,

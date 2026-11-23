@@ -43,7 +43,7 @@ export interface PushSender {
   send(sub: PushSubscriptionJson, payload: { title: string; body: string; url?: string }): Promise<PushResult>;
 }
 export interface EmailSender {
-  send(msg: { to: string; subject: string; text: string }): Promise<boolean>;
+  send(msg: { to: string; subject: string; text: string; headers?: Record<string, string> }): Promise<boolean>;
 }
 
 export function createPushSender(cfg: VapidConfig): PushSender {
@@ -52,6 +52,7 @@ export function createPushSender(cfg: VapidConfig): PushSender {
       try {
         await sendNotification(sub, JSON.stringify(payload), {
           TTL: 3600,
+          timeout: 10_000,
           vapidDetails: { subject: cfg.subject, publicKey: cfg.publicKey, privateKey: cfg.privateKey },
         });
         return 'ok';
@@ -73,7 +74,7 @@ export function createEmailSender(cfg: SmtpConfig): EmailSender {
   return {
     async send(m) {
       try {
-        await transport.sendMail({ from: cfg.from, to: m.to, subject: m.subject, text: m.text });
+        await transport.sendMail({ from: cfg.from, to: m.to, subject: m.subject, text: m.text, headers: m.headers });
         return true;
       } catch {
         return false;

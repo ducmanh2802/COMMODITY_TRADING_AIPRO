@@ -183,6 +183,10 @@ export class ContestStore {
       : this.db.prepare('SELECT * FROM contest_positions WHERE season = ? ORDER BY opened_at').all(season);
     return (rows as Row[]).map(mapPosition);
   }
+  /** Seasons that still have open positions (so old seasons are never orphaned). */
+  openSeasons(): string[] {
+    return (this.db.prepare("SELECT DISTINCT season FROM contest_positions WHERE status = 'OPEN'").all() as Array<{ season: string }>).map((r) => r.season);
+  }
   openPositions(season: string): PositionRow[] {
     return (this.db.prepare("SELECT * FROM contest_positions WHERE season = ? AND status = 'OPEN' ORDER BY opened_at").all(season) as Row[]).map(mapPosition);
   }

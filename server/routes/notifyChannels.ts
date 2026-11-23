@@ -2,10 +2,10 @@
  * T101 - Web Push + email routes under /api/notify (opt-in, 503 / configured:false when the server env is missing).
  * Email uses double opt-in; links use APP_BASE_URL (never the request Host header). Addresses are never logged in clear.
  */
-import type { Express, Request, Response } from 'express';
+import express, { type Express, type Request, type Response } from 'express';
 import { sanitizeZone, type WatchZone } from '../../src/shared/watchlist/watchlist.ts';
 import { createRateLimiter } from '../middleware/rateLimit.ts';
-import { ChannelStore, isValidEmail, isValidPushSubscription, maskEmail, normalizeEmail } from '../services/notify/channelStore.ts';
+import { ChannelStore, isToken, isValidEmail, isValidPushSubscription, maskEmail, normalizeEmail } from '../services/notify/channelStore.ts';
 import { createEmailSender, createPushSender, getSmtp, getVapid, type Channels, type Env } from '../services/notify/channels.ts';
 
 const MAX_ITEMS = 60;
@@ -100,19 +100,35 @@ export function registerChannelRoutes(app: Express, options: ChannelRouteOptions
     // Same answer whether or not a mail was sent: no way to probe which addresses are subscribed.
     if (begun && channels.store.reserveEmail(raw, now())) {
       const link = `${channels.baseUrl}/api/notify/email/confirm?token=${begun.confirmToken}`;
-      const ok = await channels.email.send({
+      // Not awaited: response time must not reveal whether a mail was sent (enumeration) nor block on SMTP.
+      void channels.email.send({
         to: raw,
         subject: 'Xác nhận nhận email từ Commodity Trading AI Pro',
         text:
           `Bạn (hoặc ai đó) đã đăng ký nhận email khi giá đóng cửa/giá trễ vào vùng giá đã đặt. Nhấn để xác nhận:\n${link}\n\n` +
           'Nếu không phải bạn, bỏ qua email này. Chỉ để theo dõi, không phải khuyến nghị.',
-      });
-      if (!ok) console.warn(`notify email: confirm mail failed for ${maskEmail(raw)}`);
+      }).then((ok) => {
+        if (!ok) console.warn(`notify email: confirm mail failed for ${maskEmail(raw)}`);
+      }, () => undefined);
     }
     res.json({ ok: true, message: 'pending_confirmation' });
   });
 
+  // GET only renders a button (mail scanners / link prefetchers issue GETs); the state change is a POST.
+  const form = (action: string, token: unknown, title: string, msg: string, btn: string): string => {
+    const t = isToken(token) ? token : '';
+    return page(title, `${msg}</p><form method="post" action="${action}?token=${t}"><button type="submit" style="padding:.6rem 1.2rem;font-size:1rem">${btn}</button></form><p>`);
+  };
+  const post = express.urlencoded({ extended: false, limit: '2kb' });
+
   app.get('/api/notify/email/confirm', lim(30), (req: Request, res: Response) => {
+    if (!channels?.email) return emailOff(res);
+    res.type('html');
+    if (!isToken(req.query.token)) return res.status(400).send(page('Liên kết không hợp lệ', 'Liên kết xác nhận không hợp lệ hoặc đã hết hạn.'));
+    res.send(form('/api/notify/email/confirm', req.query.token, 'Xác nhận email', 'Nhấn nút để xác nhận nhận email khi giá vào vùng đã đặt.', 'Xác nhận'));
+  });
+
+  app.post('/api/notify/email/confirm', lim(30), post, (req: Request, res: Response) => {
     if (!channels?.email) return emailOff(res);
     const email = channels.store.confirmEmail(req.query.token, now());
     res.type('html');
@@ -121,6 +137,14 @@ export function registerChannelRoutes(app: Express, options: ChannelRouteOptions
   });
 
   app.get('/api/notify/email/unsubscribe', lim(30), (req: Request, res: Response) => {
+    if (!channels?.email) return emailOff(res);
+    res.type('html');
+    if (!isToken(req.query.token)) return res.status(400).send(page('Liên kết không hợp lệ', 'Liên kết hủy không hợp lệ hoặc đã dùng.'));
+    res.send(form('/api/notify/email/unsubscribe', req.query.token, 'Hủy nhận email', 'Nhấn nút để hủy nhận email và xóa dữ liệu đồng bộ.', 'Hủy nhận email'));
+  });
+
+  // Also the RFC 8058 one-click target (List-Unsubscribe-Post: List-Unsubscribe=One-Click).
+  app.post('/api/notify/email/unsubscribe', lim(30), post, (req: Request, res: Response) => {
     if (!channels?.email) return emailOff(res);
     const ok = channels.store.unsubscribeEmail(req.query.token);
     res.type('html');

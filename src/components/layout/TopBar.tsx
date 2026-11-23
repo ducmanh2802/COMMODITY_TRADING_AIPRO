@@ -50,7 +50,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
   return (
     <header className="sticky top-0 z-30 bg-[var(--surface)]/90 backdrop-blur border-b border-[var(--border)] px-3 sm:px-5 py-2 flex flex-wrap lg:flex-nowrap items-center justify-between gap-2 sm:gap-3 shrink-0 max-w-full overflow-x-clip">
       {/* Left zone: Mobile menu trigger + Market selection + Instrument search */}
-      <div className="flex items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
+      <div className="contents sm:flex sm:items-center sm:gap-2.5 sm:flex-1 sm:min-w-0">
         <button
           type="button"
           onClick={onOpenMobileMenu}
@@ -60,13 +60,13 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           <Menu className="w-4 h-4" aria-hidden="true" />
         </button>
 
-        <div className="flex items-center gap-1 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] p-0.5 shrink-0">
+        <div className="flex items-center gap-1 bg-[var(--bg)] border border-[var(--border)] rounded-[10px] p-0.5 order-last w-full sm:order-none sm:w-auto shrink-0">
           {(['ALL', 'MXV', 'INTERNATIONAL'] as MarketScope[]).map((scope) => (
             <button
               key={scope}
               type="button"
               onClick={() => setMarketScope(scope)}
-              className={`h-10 px-2.5 sm:px-3 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+              className={`h-10 flex-auto min-w-0 truncate sm:flex-none px-1.5 sm:px-3 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
                 marketScope === scope
                   ? 'bg-[var(--accent)] text-white shadow-sm'
                   : 'text-[var(--muted)] hover:text-[var(--text-strong)]'

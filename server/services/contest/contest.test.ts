@@ -257,3 +257,31 @@ test('routes: auth required for join/orders/me, public leaderboard, full flow wi
     srv.closeAllConnections?.();
   }
 });
+
+test('concurrent orders do not lose balance updates (state read after async quote)', async () => {
+  const store = new ContestStore(':memory:');
+  const engine = new ContestEngine({
+    store,
+    getQuote: async () => {
+      await new Promise((r) => setTimeout(r, 5));
+      return { price: 450, status: 'DELAYED', delayMinutes: 15, source: 'TEST', timestamp: 't' } as ContestQuote;
+    },
+    getSpec: () => SPEC,
+    getFx: async () => 25_000,
+    now: () => T0,
+  });
+  engine.join('u1');
+  const res = await Promise.allSettled([engine.placeOrder('u1', order()), engine.placeOrder('u1', order())]);
+  assert.equal(res.filter((r) => r.status === 'fulfilled').length, 2);
+  assert.equal(store.getParticipant(engine.currentSeason(), 'u1')!.balanceVnd, 500_000_000 - 2 * 62_500);
+});
+
+test('stop check also covers open positions from seasons older than the previous one', async () => {
+  const { engine, state, store } = setup();
+  engine.join('u1');
+  const { position } = await engine.placeOrder('u1', order({ stop: 445 }));
+  state.now = Date.parse('2027-02-10T03:00:00Z'); // 3 seasons later
+  state.quote = { price: 440, status: 'DELAYED', delayMinutes: 15, source: 'TEST', timestamp: 't' } as ContestQuote;
+  assert.deepEqual(await engine.runStopCheck(), { checked: 1, closed: 1 });
+  assert.equal(store.getPosition(position.id)!.status, 'CLOSED');
+});

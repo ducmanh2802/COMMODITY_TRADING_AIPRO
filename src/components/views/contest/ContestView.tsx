@@ -172,7 +172,7 @@ export function ContestView() {
         <div className={`${cardCls} space-y-3`}>
           <p className="text-sm text-[var(--text)]/80">{t('ct.signin')}</p>
           <button type="button" onClick={() => void signInWithGoogle()} className={`${bigBtn} bg-[var(--accent)] text-white`}>
-            <LogIn className="w-4 h-4" aria-hidden /> Google
+            <LogIn className="w-4 h-4" aria-hidden /> {t('ct.signin.btn')}
           </button>
         </div>
       ) : !me ? (

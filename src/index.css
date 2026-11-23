@@ -197,3 +197,46 @@
     display: flex;
   }
 }
+
+/* Readability: text size. Root font-size scales every rem-based Tailwind size. */
+html[data-text-size="lg"] { font-size: 112.5%; }
+html[data-text-size="xl"] { font-size: 125%; }
+/* Fixed-px arbitrary sizes: re-express in rem so they scale with the root too. */
+html[data-text-size] .text-\[10px\] { font-size: 0.75rem; line-height: 1rem; }
+html[data-text-size] .text-\[11px\] { font-size: 0.75rem; line-height: 1rem; }
+html[data-text-size] .text-\[28px\] { font-size: 1.75rem; line-height: 2rem; }
+html[data-text-size] body { overflow-wrap: anywhere; }
+
+/* Readability: high contrast (violet identity kept; no green/red). Dark = default. */
+html[data-contrast="high"] {
+  --text: #FFFFFF;
+  --text-strong: #FFFFFF;
+  --muted: #E9E5F7;
+  --faint: #D4CEEA;
+  --border: #8A82B0;
+  --accent-text: #DDD3FF;
+  --positive: #8FC3FF;
+  --negative: #FFB070;
+  --warning: #FFD866;
+  --chart-axis: rgba(255, 255, 255, 0.45);
+  --chart-grid: rgba(255, 255, 255, 0.18);
+}
+html[data-contrast="high"][data-theme="light"] {
+  --text: #0B0816;
+  --text-strong: #000000;
+  --muted: #1F1A33;
+  --faint: #2E2847;
+  --border: #5B5380;
+  --accent: #5B21B6;
+  --accent-text: #4C1D95;
+  --positive: #1E3A8A;
+  --negative: #7C2D05;
+  --warning: #5C3704;
+  --chart-axis: rgba(11, 8, 22, 0.55);
+  --chart-grid: rgba(11, 8, 22, 0.2);
+}
+html[data-contrast="high"] :focus-visible {
+  outline: 3px solid var(--text-strong);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--accent);
+}

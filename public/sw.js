@@ -102,6 +102,11 @@ self.addEventListener('fetch', function(event) {
   }
 });
 
+// Same-origin path only: rejects absolute URLs, protocol-relative '//host' and '/\host'.
+function safePath(u) {
+  return typeof u === 'string' && /^\/(?![/\\])/.test(u) && u.length < 500 ? u : '/';
+}
+
 // T101: Web Push. Payload is {title, body, url}; wording is informational only, never advice.
 self.addEventListener('push', function(event) {
   let data = {};
@@ -116,14 +121,14 @@ self.addEventListener('push', function(event) {
     self.registration.showNotification(title, {
       body: body,
       icon: '/icons/icon-192.svg',
-      data: { url: typeof data.url === 'string' && data.url.startsWith('/') ? data.url : '/' },
+      data: { url: safePath(data.url) },
     })
   );
 });
 
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/';
+  const url = safePath(event.notification.data && event.notification.data.url);
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(list) {
       for (const c of list) {

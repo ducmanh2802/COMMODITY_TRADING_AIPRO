@@ -125,3 +125,13 @@ test('disabled without env: restore and shutdown backup are no-ops', async () =>
   assert.equal(await restoreOnStartup({}), 'disabled');
   await backupOnShutdown(50, {});
 });
+
+test('after a failed startup restore, configured backup refuses to overwrite remote latest', async () => {
+  const { runConfiguredBackup, _setRestoreFailedForTest } = await import('./sqliteBackup.ts');
+  _setRestoreFailedForTest(true);
+  try {
+    await assert.rejects(runConfiguredBackup({ GCS_BACKUP_BUCKET: 'b' }), /restore failed/);
+  } finally {
+    _setRestoreFailedForTest(false);
+  }
+});

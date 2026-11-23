@@ -158,7 +158,7 @@ export class ContestEngine {
 
   async placeOrder(uid: string, req: OrderRequest): Promise<{ order: OrderRow; position: PositionRow }> {
     const season = this.currentSeason();
-    const participant = this.requireParticipant(uid);
+    this.requireParticipant(uid);
     if (!Number.isInteger(req.contracts) || req.contracts < 1 || req.contracts > MAX_CONTRACTS) {
       throw new ContestError('BAD_QTY', 422, `Contracts must be an integer from 1 to ${MAX_CONTRACTS}.`);
     }
@@ -168,6 +168,16 @@ export class ContestEngine {
     if (req.target !== null && req.target !== undefined && (!Number.isFinite(req.target) || req.target <= 0)) {
       throw new ContestError('BAD_TP', 422, 'Invalid target price.');
     }
+    const spec = this.specFor(req.instrumentId);
+    const quote = await this.tradableQuote(req.instrumentId);
+    const fx = await this.deps.getFx().catch(() => null);
+    if (fx === null || !Number.isFinite(fx) || fx <= 0) throw new ContestError('FX_UNAVAILABLE', 422, 'USD/VND rate unavailable.');
+
+    // Everything below is synchronous (no await until the writes): balance, open positions and the daily
+    // count are read AFTER the async quote/FX calls, so a concurrent double submit or the stop job cannot
+    // act on a stale snapshot (limit bypass / lost balance update).
+    if (season !== this.currentSeason()) throw new ContestError('SEASON_CHANGED', 409, 'Season changed; retry.');
+    const participant = this.requireParticipant(uid);
     const nowMs = this.now();
     const dayStart = seasonRangeDayStart(nowMs);
     if (this.store.countOrdersSince(season, uid, dayStart) >= MAX_ORDERS_PER_DAY_HARD) {
@@ -175,11 +185,6 @@ export class ContestEngine {
     }
     const open = this.store.positions(season, uid).filter((p) => p.status === 'OPEN');
     if (open.length >= MAX_OPEN_POSITIONS) throw new ContestError('TOO_MANY_POSITIONS', 422, 'Too many open positions.');
-
-    const spec = this.specFor(req.instrumentId);
-    const quote = await this.tradableQuote(req.instrumentId);
-    const fx = await this.deps.getFx().catch(() => null);
-    if (fx === null || !Number.isFinite(fx) || fx <= 0) throw new ContestError('FX_UNAVAILABLE', 422, 'USD/VND rate unavailable.');
 
     const fill = fillPrice(spec, req.side, quote.price, this.settings.slippageTicks, true);
     const priced: PricedPosition[] = [];
@@ -268,13 +273,12 @@ export class ContestEngine {
   /** Scheduler job: refresh marks and close positions whose stop/target was hit on the latest quote. */
   async runStopCheck(): Promise<{ checked: number; closed: number }> {
     const cur = this.currentSeason();
-    const [y, m] = cur.split('-').map(Number);
-    const prev = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+    const seasons = [...new Set([...this.store.openSeasons(), cur])].sort();
     let checked = 0;
     let closed = 0;
     const touched = new Set<string>();
     const quotes = new Map<string, Awaited<ReturnType<ContestEngine['tradableQuote']>> | null>();
-    for (const season of [prev, cur]) {
+    for (const season of seasons) {
       for (const pos of this.store.openPositions(season)) {
         checked++;
         if (!quotes.has(pos.instrumentId)) quotes.set(pos.instrumentId, await this.tradableQuote(pos.instrumentId).catch(() => null));
