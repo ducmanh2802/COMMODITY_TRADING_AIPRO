@@ -35,6 +35,12 @@ const BASE_MS = 900;
 const num = (s: string): number => Number(s.trim().replace(',', '.'));
 const fmtR = (r: number): string => `${r > 0 ? '+' : ''}${fmtFixed(r, 2)}`;
 
+/** 2026-03-12 -> 12/03/2026 (leaves anything else untouched). */
+function fmtIsoDate(d: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : d;
+}
+
 function toBars(candles: MarketCandle[]): Bar[] {
   const seen = new Set<string>();
   const out: Bar[] = [];
@@ -225,7 +231,7 @@ export function ReplayView() {
   const stats = state ? computeStats(state.closed) : null;
   const sideName = (s: Side) => t(s === 'LONG' ? 'rp.long' : 'rp.short');
   const revealed = !!state?.finished;
-  const dateOf = (i: number) => state?.bars[i].t ?? '';
+  const dateOf = (i: number) => fmtIsoDate(state?.bars[i].t ?? '');
 
   return (
     <div className="space-y-4">
@@ -287,7 +293,22 @@ export function ReplayView() {
                 {blind && !revealed ? t('rp.hiddenDate') : `${dateOf(state.cursor)}`}
               </span>
             </div>
-            <span className="text-xs text-[var(--text)]/60">{t('rp.bar', { n: state.cursor - state.startCursor, total: state.bars.length - 1 - state.startCursor })}</span>
+            <div className="flex items-center gap-2 text-xs text-[var(--text)]/60">
+              <span
+                role="progressbar"
+                aria-label={t('rp.barAria', { n: state.cursor - state.startCursor, total: state.bars.length - 1 - state.startCursor })}
+                aria-valuemin={0}
+                aria-valuemax={Math.max(1, state.bars.length - 1 - state.startCursor)}
+                aria-valuenow={state.cursor - state.startCursor}
+                className="hidden sm:block h-1.5 w-24 rounded-full bg-[var(--surface-2)] overflow-hidden"
+              >
+                <span
+                  className="block h-full rounded-full bg-[var(--accent)]"
+                  style={{ width: `${Math.min(100, Math.max(0, ((state.cursor - state.startCursor) / Math.max(1, state.bars.length - 1 - state.startCursor)) * 100))}%` }}
+                />
+              </span>
+              <span>{t('rp.bar', { n: state.cursor - state.startCursor, total: state.bars.length - 1 - state.startCursor })}</span>
+            </div>
           </div>
 
           <ReplayChart state={state} blind={blind} revealAll={revealed} />

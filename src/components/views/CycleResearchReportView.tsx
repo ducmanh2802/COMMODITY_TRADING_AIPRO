@@ -65,10 +65,10 @@ export function CycleResearchReportView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--accent)]" aria-hidden="true" />
             <span>Báo cáo Nghiên cứu Chu kỳ Hàng ngày &amp; AI Briefing</span>
-          </h1>
+          </h2>
           <p className="text-sm text-[var(--text)]/65 mt-1">
             Top hàng hóa đáng chú ý, ứng viên tạo đáy, rủi ro giảm giá, biến động Cung–Cầu và lịch sự kiện theo giờ Việt Nam (ICT).
           </p>

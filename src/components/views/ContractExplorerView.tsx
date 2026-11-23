@@ -37,9 +37,9 @@ export function ContractExplorerView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">
+          <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">
             {t('exp.o.title')}
-          </h1>
+          </h2>
           <p className="text-sm text-[var(--text)]/65 mt-1">
             {t('exp.o.subtitle')}
           </p>

@@ -213,7 +213,7 @@ export function ExamRunner({ target, onExit }: { target: ExamTarget; onExit: () 
       <button type="button" onClick={onExit} className="text-xs text-[var(--accent-text)] hover:underline">
         {t('exam.back')}
       </button>
-      <h1 className="text-lg font-semibold text-[var(--text-strong)]">{title}</h1>
+      <h2 className="text-lg font-semibold text-[var(--text-strong)]">{title}</h2>
 
       {!submitted && (
         <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2">

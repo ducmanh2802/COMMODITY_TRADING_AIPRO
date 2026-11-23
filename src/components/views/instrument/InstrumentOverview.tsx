@@ -440,7 +440,7 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
             {initials}
           </span>
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text-strong)] break-words">{nameVi}</h1>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text-strong)] break-words">{nameVi}</h2>
             <p className="mt-0.5 text-sm text-[var(--muted)] break-words">
               {t('ins.exchangeLine', { exchange: instrument.exchange, code: instrument.exchangeSymbol })}
               {instrument.mxvMapping?.mxvSymbol ? ` · ${t('ins.mxvLine', { code: instrument.mxvMapping.mxvSymbol })}` : ''}

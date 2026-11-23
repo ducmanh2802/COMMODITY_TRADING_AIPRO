@@ -217,7 +217,7 @@ export function LessonPage({
       <button type="button" onClick={onBack} className="text-xs text-[var(--accent-text)] hover:underline">
         ← Về danh sách bài
       </button>
-      <h1 className="text-xl font-semibold text-[var(--text-strong)]">{lesson.title}</h1>
+      <h2 className="text-xl font-semibold text-[var(--text-strong)]">{lesson.title}</h2>
       <Card tone="accent">
         <p className="text-xs font-semibold text-[var(--accent-text)] mb-1">Mục tiêu</p>
         <p className="text-sm">{lesson.objective}</p>

@@ -302,7 +302,7 @@ export function ChartsView() {
     <div className="space-y-5">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('chart.title')}</h1>
+          <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('chart.title')}</h2>
           <p className="text-sm text-[var(--text)]/65 mt-1">
             {t('chart.subtitle')}
           </p>

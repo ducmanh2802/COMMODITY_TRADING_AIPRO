@@ -183,9 +183,9 @@ export function BacktestView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">
+        <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">
           {t('bt.title')}
-        </h1>
+        </h2>
         <p className="text-sm text-[var(--text)]/65 mt-1">
           {t('bt.subtitle')}
         </p>

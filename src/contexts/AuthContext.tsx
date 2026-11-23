@@ -1,14 +1,9 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import type { Auth, User } from 'firebase/auth';
 import {
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut,
-  type User,
-} from 'firebase/auth';
-import {
-  auth,
+  getAuthModules,
   getFirestoreModules,
-  googleProvider,
+  getLoadedAuthModules,
   handleFirestoreError,
   OperationType,
   testFirestoreConnection,
@@ -102,7 +97,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [signedInUid]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+    let disposed = false;
+    let unsubscribe: () => void = () => {};
+    let authInstance: Auth | null = null;
+
+    // Firebase Auth is loaded after first paint (idle) so it never blocks LCP.
+    const startAuth = () => {
+      void getAuthModules()
+        .then(({ auth, onAuthStateChanged }) => {
+          if (disposed) return;
+          authInstance = auth;
+          unsubscribe = onAuthStateChanged(auth, handleAuthChange);
+        })
+        .catch((err) => {
+          if (disposed) return;
+          setAuthError(err instanceof Error ? err.message : 'Could not load sign-in.');
+          setAuthReady(true);
+          setSettingsLoaded(true);
+        });
+    };
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    let idleId: number | null = null;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+    if (typeof w.requestIdleCallback === 'function') idleId = w.requestIdleCallback(startAuth, { timeout: 2500 });
+    else timerId = setTimeout(startAuth, 1200);
+
+    const handleAuthChange = (nextUser: User | null) => {
       setUser(nextUser);
       setAuthReady(true);
       setAuthError(null);
@@ -123,11 +146,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setSettingsLoaded(false);
       void bootstrapUserDocs(nextUser);
-    });
+    };
 
     // Ensures profile + settings docs exist. Never throws; errors become UI state.
     async function bootstrapUserDocs(nextUser: User): Promise<void> {
-      const isCurrent = () => auth.currentUser?.uid === nextUser.uid;
+      const isCurrent = () => authInstance?.currentUser?.uid === nextUser.uid;
       const email = nextUser.email ?? '';
 
       const userPath = `users/${nextUser.uid}`;
@@ -191,7 +214,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    return () => unsubscribe();
+    return () => {
+      disposed = true;
+      if (idleId !== null) w.cancelIdleCallback?.(idleId);
+      if (timerId !== null) clearTimeout(timerId);
+      unsubscribe();
+    };
   }, []);
 
   // Attach onSnapshot listener only for a verified user whose bootstrap has completed.
@@ -272,7 +300,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = useCallback(async () => {
     setAuthError(null);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const m = getLoadedAuthModules() ?? (await getAuthModules());
+      await m.signInWithPopup(m.auth, m.googleProvider);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Google Sign-In failed.';
       setAuthError(msg);
@@ -282,7 +311,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     setAuthError(null);
     try {
-      await signOut(auth);
+      const m = getLoadedAuthModules() ?? (await getAuthModules());
+      await m.signOut(m.auth);
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : 'Sign out failed.');
     }

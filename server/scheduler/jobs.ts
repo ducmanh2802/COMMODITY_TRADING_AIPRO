@@ -55,6 +55,14 @@ export interface SchedulerDeps {
   /** T67: Telegram zone + radar checks every 5 min; only passed when TELEGRAM_BOT_TOKEN is set. */
   telegramZones?: (() => Promise<unknown>) | null;
   telegramRadar?: (() => Promise<unknown>) | null;
+  /** T63: contest stop/target check + mark refresh every 5 min. */
+  contestStops?: (() => Promise<unknown>) | null;
+  /** T101: Web Push / email zone + radar checks every 5 min; only passed when VAPID or SMTP env is set. */
+  channelZones?: (() => Promise<unknown>) | null;
+  channelRadar?: (() => Promise<unknown>) | null;
+  /** T53: SQLite -> GCS backup; only passed when GCS_BACKUP_BUCKET is set. */
+  dbBackup?: (() => Promise<unknown>) | null;
+  dbBackupIntervalHours?: number;
   env?: Record<string, string | undefined>;
   now?: () => Date;
 }
@@ -183,6 +191,17 @@ export function buildSchedulerJobs(deps: SchedulerDeps): SchedulerJob[] {
       },
     });
   }
+  if (deps.contestStops) {
+    const run = deps.contestStops;
+    jobs.push({
+      id: 'contest-stops',
+      description: 'Paper contest: check stops/targets on latest server quotes and refresh scores (every 5 min)',
+      next: (n) => new Date(n.getTime() + 5 * MIN),
+      async run() {
+        await run();
+      },
+    });
+  }
   if (deps.telegramZones) {
     const run = deps.telegramZones;
     jobs.push({
@@ -200,6 +219,40 @@ export function buildSchedulerJobs(deps: SchedulerDeps): SchedulerJob[] {
       id: 'telegram-radar',
       description: 'Telegram: new Radar events (every 5 min, only with TELEGRAM_BOT_TOKEN)',
       next: (n) => new Date(n.getTime() + 5 * MIN),
+      async run() {
+        await run();
+      },
+    });
+  }
+  if (deps.channelZones) {
+    const run = deps.channelZones;
+    jobs.push({
+      id: 'channel-zones',
+      description: 'Web Push + email: watchlist price-zone alerts on latest delayed/closing prices (every 5 min, only with VAPID/SMTP env)',
+      next: (n) => new Date(n.getTime() + 5 * MIN),
+      async run() {
+        await run();
+      },
+    });
+  }
+  if (deps.channelRadar) {
+    const run = deps.channelRadar;
+    jobs.push({
+      id: 'channel-radar',
+      description: 'Web Push: new Radar events (every 5 min, only with VAPID env)',
+      next: (n) => new Date(n.getTime() + 5 * MIN),
+      async run() {
+        await run();
+      },
+    });
+  }
+  if (deps.dbBackup) {
+    const run = deps.dbBackup;
+    const hours = deps.dbBackupIntervalHours && deps.dbBackupIntervalHours > 0 ? deps.dbBackupIntervalHours : 6;
+    jobs.push({
+      id: 'db-backup',
+      description: `SQLite backup to Google Cloud Storage (every ${hours} h, only with GCS_BACKUP_BUCKET)`,
+      next: (n) => new Date(n.getTime() + hours * HOUR),
       async run() {
         await run();
       },

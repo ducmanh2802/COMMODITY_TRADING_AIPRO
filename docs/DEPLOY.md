@@ -71,9 +71,30 @@ Lựa chọn:
 3. **Chạy trên VM (Compute Engine)** hoặc máy cá nhân nếu cần ổ đĩa bền vững thật sự.
 4. Chuyển sang cơ sở dữ liệu quản lý (ví dụ Cloud SQL): cần sửa mã, hiện chưa hỗ trợ.
 
+## 4a. Lưu trữ bền vững
+
+Hai cách giữ dữ liệu thị trường (`data/market.db`: nến, COT, cơ bản, giá trong nước, liên kết thông báo) qua các lần khởi động lại:
+
+**Cách A - gắn volume vào Cloud Run** (Cloud Storage FUSE hoặc Filestore), đặt `MARKET_DB_PATH=/mnt/data/market.db`. Không cần mã thêm, nhưng SQLite trên GCS FUSE chậm và không an toàn nếu nhiều instance cùng ghi: giữ `--max-instances 1`. Filestore (NFS) ổn định hơn nhưng có chi phí cố định.
+
+**Cách B - sao lưu/khôi phục (đã có trong mã, tùy chọn)**: đặt `GCS_BACKUP_BUCKET=<tên bucket>`. Khi đó:
+- Lúc khởi động, nếu file DB không tồn tại hoặc rỗng, server tải đối tượng `latest`, giải nén, kiểm tra `PRAGMA integrity_check` rồi mới mở DB. Nếu khôi phục lỗi, server vẫn chạy với DB trống (không crash).
+- Job `db-backup` chạy mỗi 6 giờ (`GCS_BACKUP_INTERVAL_HOURS`), và một lần khi nhận SIGTERM (tối đa 20 giây). Mỗi bản là snapshot nhất quán (`VACUUM INTO`), nén gzip, tên `market-YYYYMMDD-HHmm.db.gz`, cộng đối tượng `latest`. Giữ `GCS_BACKUP_KEEP` bản mới nhất (mặc định 14).
+- Sao lưu ngay: `POST /api/admin/backup` (cần admin token). `GET /api/status` có `backup.lastBackupAt` và `backup.lastBackupError`.
+- Quyền IAM: gán cho service account của Cloud Run vai trò **Storage Object Admin** (`roles/storage.objectAdmin`) trên bucket đó. Không cần file key; trên máy ngoài GCP dùng `GOOGLE_APPLICATION_CREDENTIALS`.
+- Giới hạn: dữ liệu ghi sau bản sao lưu cuối (tối đa ~6 giờ nếu instance bị kill đột ngột) sẽ mất. Giữ 1 instance.
+
 ## 4b. Thông báo Telegram (tùy chọn)
 
 Đặt `TELEGRAM_BOT_TOKEN` (tạo bot qua @BotFather; trên Cloud Run dùng Secret Manager như mục 2). Không đặt = tính năng tắt hoàn toàn. Khi bật, server chạy worker long-poll `getUpdates` (không cần webhook) và hai job mỗi 5 phút (vùng giá, sự kiện Radar). Người dùng liên kết trong panel Danh sách theo dõi: lấy mã, gửi `/start <mã>` cho bot. Liên kết lưu trong SQLite (xem mục 4: DB tạm thời trên Cloud Run nên liên kết mất khi instance bị xóa). Giữ 1 instance để chỉ một worker poll. Tin nhắn dùng giá trễ/giá đóng cửa, chỉ để theo dõi.
+
+## 4c. Thông báo trình duyệt (Web Push) và email (tùy chọn)
+
+Web Push: tạo khóa bằng `npx web-push generate-vapid-keys`, đặt `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (dạng `mailto:...`; trên Cloud Run dùng Secret Manager). Không đặt = tắt (`GET /api/notify/push/key` trả 503). Đăng ký lưu trong SQLite (cùng DB mục 4); đăng ký hết hạn (404/410) tự bị xóa. Cần HTTPS (hoặc localhost).
+
+Email: đặt `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` và `APP_BASE_URL` (địa chỉ công khai dùng trong liên kết xác nhận/hủy, không lấy từ header Host). Double opt-in: người dùng nhập email, nhận thư chứa liên kết xác nhận; mỗi thư có liên kết hủy; tối đa 20 thư/ngày/địa chỉ. Email không bao giờ được ghi log đầy đủ. Vùng giá được lưu lúc đăng ký (muốn cập nhật: hủy rồi đăng ký lại).
+
+Hai job `channel-zones` và `channel-radar` chạy mỗi 5 phút, chỉ khi có cấu hình tương ứng. Nội dung dùng giá trễ/giá đóng cửa, chỉ để theo dõi, không phải khuyến nghị.
 
 ## 5. Firebase
 

@@ -1,4 +1,4 @@
-import { divergingFill } from '../../../shared/theme/chartTheme';
+import { divergingFill } from '../../../shared/theme/chartScale';
 
 /** Tile heatmap of % change. Colour intensity + an explicit signed number (never colour alone). */
 export interface HeatTile {

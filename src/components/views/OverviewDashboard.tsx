@@ -255,9 +255,9 @@ export function OverviewDashboard() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="text-xs font-medium text-[var(--accent-text)]">{t('fr.ov2.kicker')}</p>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--text-strong)] tracking-tight mt-0.5 text-balance">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--text-strong)] tracking-tight mt-0.5 text-balance">
             {t('fr.ov.hello')}
-          </h1>
+          </h2>
           <p className="text-sm text-[var(--text)]/65 mt-1">{t('fr.ov.sub')}</p>
           <p className="text-xs text-[var(--text)]/45 mt-1">
             {t('fr.ov2.context', {

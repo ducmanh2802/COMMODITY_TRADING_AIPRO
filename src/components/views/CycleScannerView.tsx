@@ -54,10 +54,10 @@ export function CycleScannerView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight flex items-center gap-2">
             <Radar className="w-5 h-5 text-[var(--accent)]" aria-hidden="true" />
             <span>Bộ lọc Săn Chu kỳ &amp; Vùng Đáy (Cycle Hunter Scanner)</span>
-          </h1>
+          </h2>
           <p className="text-sm text-[var(--text)]/65 mt-1">
             Tự động xếp các hàng hóa tiềm năng nhất (điểm cơ hội &amp; tạo đáy 0–100) lên đầu danh sách.
           </p>

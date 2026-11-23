@@ -159,7 +159,7 @@ export function ResearchNotebookView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('nb.title')}</h1>
+        <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('nb.title')}</h2>
         <p className="text-sm text-[var(--text)]/65 mt-1">{t('nb.subtitle')}</p>
         {!canWrite && <p className="text-xs text-[var(--warning)] mt-2">{t('nb.verifyEmail')}</p>}
       </div>

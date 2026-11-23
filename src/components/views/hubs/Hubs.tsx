@@ -1,27 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { useT } from '../../../i18n';
 import type { CycleMarketOverview } from '../../../shared/types/cycle';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
 import { CyclePhaseBadge } from '../../common/CyclePhaseBadge';
+import { lazyWithRetry } from '../../common/lazyWithRetry';
 import { EmptyState } from '../../ui/EmptyState';
 import { DualViewTabs } from '../DualViewTabs';
 import { LegacyModule } from '../LegacyModule';
 import { LazyPaperTradingView, LazyResearchNotebookView } from '../LazyOwnerViews';
 import { TodayPanel } from '../today/TodayPanel';
-import { RadarView } from '../radar/RadarView';
 import { WatchlistPanel } from '../../watchlist/WatchlistPanel';
-import { MarketPulsePanel } from '../pulse/MarketPulsePanel';
-import { WorldMarketsPanel } from '../world/WorldMarketsPanel';
-import { WeatherPanel } from '../weather/WeatherPanel';
-import { DriversPanel } from '../drivers/DriversPanel';
-import { HedgeWizard } from '../hedge/HedgeWizard';
-import { InstrumentOverview } from '../instrument/InstrumentOverview';
 import { NewsFeed } from '../news/NewsFeed';
 import { MacroPanel } from '../news/MacroPanel';
 import { CalendarPanel } from '../news/CalendarPanel';
-import { DomesticPricesPanel } from '../domestic/DomesticPricesPanel';
+
+// Heavy tab panels load on demand so the entry bundle stays small (LCP).
+const RadarView = lazyWithRetry(() => import('../radar/RadarView'), (m) => m.RadarView, undefined, 'RadarView');
+const MarketPulsePanel = lazyWithRetry(() => import('../pulse/MarketPulsePanel'), (m) => m.MarketPulsePanel, undefined, 'MarketPulsePanel');
+const WorldMarketsPanel = lazyWithRetry(() => import('../world/WorldMarketsPanel'), (m) => m.WorldMarketsPanel, undefined, 'WorldMarketsPanel');
+const WeatherPanel = lazyWithRetry(() => import('../weather/WeatherPanel'), (m) => m.WeatherPanel, undefined, 'WeatherPanel');
+const DriversPanel = lazyWithRetry(() => import('../drivers/DriversPanel'), (m) => m.DriversPanel, undefined, 'DriversPanel');
+const HedgeWizard = lazyWithRetry(() => import('../hedge/HedgeWizard'), (m) => m.HedgeWizard, undefined, 'HedgeWizard');
+const InstrumentOverview = lazyWithRetry<typeof import('../instrument/InstrumentOverview'), { cycleSlot?: ReactNode }>(
+  () => import('../instrument/InstrumentOverview'),
+  (m) => m.InstrumentOverview,
+  undefined,
+  'InstrumentOverview'
+);
+const DomesticPricesPanel = lazyWithRetry(() => import('../domestic/DomesticPricesPanel'), (m) => m.DomesticPricesPanel, undefined, 'DomesticPricesPanel');
 
 interface HubProps {
   tab?: string;

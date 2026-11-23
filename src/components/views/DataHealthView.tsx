@@ -171,7 +171,7 @@ export function DataHealthView() {
       {/* Header & Actions */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('fr.dh.title')}</h1>
+          <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('fr.dh.title')}</h2>
           <p className="text-sm text-[var(--text)]/65 mt-1">{t('fr.dh.sub')}</p>
         </div>
 

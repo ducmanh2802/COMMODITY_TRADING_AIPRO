@@ -6,6 +6,7 @@ import { closenessPct, distancePct } from '../../shared/watchlist/watchlist';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { EmptyState } from '../ui/EmptyState';
 import { TelegramCard } from './TelegramCard';
+import { PushEmailCards } from './PushEmailCards';
 import { WatchEditor } from './WatchButton';
 import { deleteWatchItem, useWatchlist } from './watchlistStore';
 import { useWatchMeta } from './useWatchMeta';
@@ -85,6 +86,7 @@ export function WatchlistPanel() {
         </ul>
       )}
       <TelegramCard />
+      <PushEmailCards />
     </div>
   );
 }

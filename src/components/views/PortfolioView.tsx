@@ -251,7 +251,7 @@ export function PortfolioView() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('pf.title')}</h1>
+          <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('pf.title')}</h2>
           <p className="text-sm text-[var(--text)]/65 mt-1">
             {t('pf.subtitleGuest')}
           </p>
@@ -280,7 +280,7 @@ export function PortfolioView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('pf.title')}</h1>
+          <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('pf.title')}</h2>
           <p className="text-sm text-[var(--text)]/65 mt-1">
             {t('pf.subtitle')}
           </p>

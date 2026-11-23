@@ -101,3 +101,35 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 });
+
+// T101: Web Push. Payload is {title, body, url}; wording is informational only, never advice.
+self.addEventListener('push', function(event) {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = {};
+  }
+  const title = typeof data.title === 'string' ? data.title : 'Commodity Trading AI Pro';
+  const body = typeof data.body === 'string' ? data.body : '';
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: body,
+      icon: '/icons/icon-192.svg',
+      data: { url: typeof data.url === 'string' && data.url.startsWith('/') ? data.url : '/' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(list) {
+      for (const c of list) {
+        if ('focus' in c) return c.focus();
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});

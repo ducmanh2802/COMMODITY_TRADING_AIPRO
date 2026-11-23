@@ -8,6 +8,7 @@ import { getVietnamClockLabel } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { LanguageSwitch } from '../common/LanguageSwitch';
 import { ThemeSwitch } from '../common/ThemeSwitch';
+import { TopBarMore } from './TopBarMore';
 import { RadarBell } from '../radar/RadarBell';
 import { WatchlistAlerts } from '../watchlist/WatchlistAlerts';
 import { useT } from '../../i18n';
@@ -47,7 +48,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
   const overallDataStatus = health?.capabilities.marketDataOverallStatus ?? 'UNAVAILABLE';
 
   return (
-    <header className="sticky top-0 z-30 bg-[var(--surface)]/90 backdrop-blur border-b border-[var(--border)] px-3 sm:px-5 py-2 flex flex-wrap items-center justify-between gap-2 sm:gap-3 shrink-0 max-w-full">
+    <header className="sticky top-0 z-30 bg-[var(--surface)]/90 backdrop-blur border-b border-[var(--border)] px-3 sm:px-5 py-2 flex flex-wrap lg:flex-nowrap items-center justify-between gap-2 sm:gap-3 shrink-0 max-w-full overflow-x-clip">
       {/* Left zone: Mobile menu trigger + Market selection + Instrument search */}
       <div className="flex items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
         <button
@@ -76,7 +77,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           ))}
         </div>
 
-        <div className="relative w-40 2xl:w-56 hidden sm:block">
+        <div className="relative flex-1 min-w-24 max-w-56 hidden sm:block">
           <label htmlFor="topbar-instrument-search" className="sr-only">
             {t('topbar.search')}
           </label>
@@ -101,7 +102,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
       </div>
 
       {/* Right zone: Timeframe + Data status + Local ICT clock + Refresh + User Profile */}
-      <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 max-w-full">
+      <div className="flex items-center gap-1.5 xl:gap-3 min-w-0 max-w-full shrink-0">
         <div className="hidden 2xl:flex items-center gap-1.5">
           <label htmlFor="topbar-timeframe" className="sr-only">
             {t('topbar.timeframe')}
@@ -141,8 +142,11 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
 
         <RadarBell />
         <WatchlistAlerts />
-        <ThemeSwitch />
-        <LanguageSwitch />
+        <div className="hidden xl:flex items-center gap-3">
+          <ThemeSwitch />
+          <LanguageSwitch />
+        </div>
+        <TopBarMore />
 
         <button
           type="button"
@@ -160,10 +164,12 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
             <button
               type="button"
               onClick={() => setActiveModule('settings')}
-              className="flex items-center gap-2 h-10 px-2.5 sm:px-3 bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-xs text-[var(--text)] hover:border-[var(--accent)] transition-colors whitespace-nowrap"
+              aria-label={user.displayName || user.email || t('topbar.signIn')}
+              title={user.displayName || user.email || undefined}
+              className="flex items-center justify-center gap-2 h-10 min-w-10 px-2.5 2xl:px-3 bg-[var(--surface-2)] border border-[var(--border)] rounded-[10px] text-xs text-[var(--text)] hover:border-[var(--accent)] transition-colors whitespace-nowrap"
             >
               <UserIcon className="w-3.5 h-3.5 text-[var(--accent)]" aria-hidden="true" />
-              <span className="hidden sm:inline max-w-[120px] truncate">
+              <span className="hidden 2xl:inline max-w-[120px] truncate">
                 {user.displayName || user.email}
               </span>
             </button>
@@ -183,10 +189,10 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
             onClick={() => void signInWithGoogle()}
             aria-label={t('topbar.signIn')}
             title={t('topbar.signIn')}
-            className="inline-flex items-center justify-center gap-1.5 h-10 w-10 sm:w-auto sm:px-4 bg-[var(--accent)] hover:brightness-110 text-white text-xs font-semibold rounded-[10px] transition-colors whitespace-nowrap shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 h-10 w-10 xl:w-auto xl:px-4 bg-[var(--accent)] hover:brightness-110 text-white text-xs font-semibold rounded-[10px] transition-colors whitespace-nowrap shrink-0"
           >
             <LogIn className="w-3.5 h-3.5" aria-hidden="true" />
-            <span className="hidden sm:inline">{t('topbar.signIn')}</span>
+            <span className="hidden xl:inline">{t('topbar.signIn')}</span>
           </button>
         )}
       </div>

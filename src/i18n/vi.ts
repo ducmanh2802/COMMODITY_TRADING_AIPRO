@@ -21,6 +21,7 @@ import * as onboarding from './dict/onboarding';
 import * as radar from './dict/radar';
 import * as watchlist from './dict/watchlist';
 import * as telegram from './dict/telegram';
+import * as push from './dict/push';
 import * as world from './dict/world';
 import * as ordercalc from './dict/ordercalc';
 import * as benchmark from './dict/benchmark';
@@ -29,12 +30,14 @@ import * as chain from './dict/chain';
 import * as instrument from './dict/instrument';
 import * as checklist from './dict/checklist';
 import * as paperstats from './dict/paperstats';
+import * as contest from './dict/contest';
 import * as compare from './dict/compare';
 import * as drawing from './dict/drawing';
 import * as weather from './dict/weather';
 import * as news2 from './dict/news2';
 import * as pwa from './dict/pwa';
 import * as replay from './dict/replay';
+import * as uipolish from './dict/uipolish';
 import * as learngoal from './dict/learngoal';
 import * as review from './dict/review';
 import * as exam from './dict/exam';
@@ -67,11 +70,13 @@ export const vi = {
   ...radar.vi,
   ...watchlist.vi,
   ...telegram.vi,
+  ...push.vi,
   ...world.vi,
   ...ordercalc.vi,
   ...instrument.vi,
   ...checklist.vi,
   ...paperstats.vi,
+  ...contest.vi,
   ...compare.vi,
   ...drawing.vi,
   ...benchmark.vi,
@@ -81,6 +86,7 @@ export const vi = {
   ...news2.vi,
   ...pwa.vi,
   ...replay.vi,
+  ...uipolish.vi,
   ...learngoal.vi,
   ...review.vi,
   ...exam.vi,

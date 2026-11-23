@@ -110,7 +110,7 @@ export default function ContractExplorerView() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('exp.title')}</h1>
+        <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('exp.title')}</h2>
         <p className="text-sm text-[var(--text)]/65 mt-1">
           {t('exp.subtitle')}
         </p>

@@ -84,9 +84,9 @@ export function CommodityWorldView() {
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-[var(--text-strong)] tracking-tight text-balance">
+          <h2 className="text-2xl font-semibold text-[var(--text-strong)] tracking-tight text-balance">
             Thế giới Hàng hóa Sống (Living Commodity World)
-          </h1>
+          </h2>
           <p className="text-sm text-[var(--muted)] mt-1">
             Danh mục {overview?.commodities.length ?? 21} hàng hóa phái sinh MXV &amp; quốc tế · tự động xếp các hàng hóa tiềm năng (điểm cơ hội &amp; chu kỳ cao) lên đầu danh sách.
           </p>

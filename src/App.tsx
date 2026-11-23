@@ -70,6 +70,8 @@ function TerminalWorkspace() {
         <TopBar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
 
         <main id="main-content" tabIndex={-1} aria-label={t(`n2.sec.${sectionOf(activeModule)}` as TKey)} ref={mainRef} className="focus:outline-none flex-1 p-4 sm:p-6 overflow-y-auto">
+          {/* Single page-level heading for assistive tech; views below render their own titles as h2. */}
+          <h1 className="sr-only">{t(`n2.sec.${sectionOf(activeModule)}` as TKey)}</h1>
           {renderActiveView()}
         </main>
 

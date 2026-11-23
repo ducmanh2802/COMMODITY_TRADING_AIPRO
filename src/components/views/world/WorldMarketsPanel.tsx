@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CircleCheck, CircleSlash } from 'lucide-react';
-import { divergingFill } from '../../../shared/theme/chartTheme';
+import { divergingFill } from '../../../shared/theme/chartScale';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { fmtFixed, useI18n } from '../../../i18n';
 import type { TFunction } from '../../../i18n';

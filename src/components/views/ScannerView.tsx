@@ -65,7 +65,7 @@ export function ScannerView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('scan.title')}</h1>
+        <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('scan.title')}</h2>
         <p className="text-sm text-[var(--text)]/65 mt-1">
           {t('scan.subtitle', { n: instruments.length })}
         </p>

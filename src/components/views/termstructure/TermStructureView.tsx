@@ -253,7 +253,7 @@ export default function TermStructureView() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('ts.title')}</h1>
+        <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('ts.title')}</h2>
         <p className="text-sm text-[var(--text)]/65 mt-1">
           {t('ts.subtitle', { tf: CURVE_TIMEFRAME })}
         </p>

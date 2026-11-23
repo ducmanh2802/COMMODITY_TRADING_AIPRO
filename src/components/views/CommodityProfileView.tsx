@@ -255,9 +255,9 @@ export function CommodityProfileView() {
 
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--text-strong)] tracking-tight text-balance">
+                <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--text-strong)] tracking-tight text-balance">
                   {nameVi} ({instrument.productName})
-                </h1>
+                </h2>
                 <div className="flex flex-wrap items-center gap-3 mt-2">
                   <CyclePhaseBadge phase={summary.cyclePhase} />
                   <span className="text-xs font-mono text-[var(--muted)]">

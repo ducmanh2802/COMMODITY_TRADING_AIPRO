@@ -355,7 +355,7 @@ export function TradeJournalView() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('jr.titleGuest')}</h1>
+          <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('jr.titleGuest')}</h2>
           <p className="text-sm text-[var(--text)]/65 mt-1">
             {t('jr.subtitleGuest')}
           </p>
@@ -383,7 +383,7 @@ export function TradeJournalView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('jr.title')}</h1>
+        <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('jr.title')}</h2>
         <p className="text-sm text-[var(--text)]/65 mt-1">
           {t('jr.subtitle')}
         </p>

@@ -22,7 +22,7 @@ import {
   useOptionMap,
 } from './shared';
 import { fmtFixed, fmtInt, useT } from '../../../i18n';
-import { divergingFill } from '../../../shared/theme/chartTheme';
+import { divergingFill } from '../../../shared/theme/chartScale';
 import { ScaleLegend } from '../../ui/viz/ScaleLegend';
 
 const MAX_SERIES = 8;

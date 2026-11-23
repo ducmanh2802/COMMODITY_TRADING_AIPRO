@@ -18,10 +18,12 @@ import { registerTodayRoutes } from './routes/today.ts';
 import { registerDriversRoutes } from './routes/drivers.ts';
 import { registerRadarRoutes } from './routes/radar.ts';
 import { registerNotifyRoutes } from './routes/notify.ts';
+import { registerContestRoutes } from './routes/contest.ts';
 import { MacroService } from './macro/service.ts';
 import { logger, errorSummary } from './lib/logger.ts';
 import { accessLogMiddleware, installProcessHooks, recordError } from './lib/observability.ts';
 import { registerStatusRoutes } from './routes/status.ts';
+import { registerBackupRoutes } from './routes/backup.ts';
 import type { SupplyMacroLike } from './services/supplyDemandOverlay.ts';
 import { ScorecardService } from './services/scorecard/scorecardService.ts';
 import { YahooFinanceAdapter, isYahooEnabled } from './providers/yahooAdapter.ts';
@@ -447,6 +449,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     }
   });
 
+  registerBackupRoutes(app, { requireAdmin });
   registerStatusRoutes(app, {
     requireAdmin,
     schedulerStatus: options.schedulerStatus,
@@ -842,6 +845,25 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   (app.locals.warmers as { name: string; refresh: () => Promise<void> }[]).push({ name: 'radar', refresh: () => radarCache.refresh() });
   // T67: optional Telegram notifications (off without TELEGRAM_BOT_TOKEN); server.ts starts the poller + jobs from these.
   registerNotifyRoutes(app);
+  // T63: monthly paper-trading contest (server-side fills on latest server quotes; SQLite; Firebase ID token for join/orders).
+  {
+    const contestInstruments = new Map<string, Awaited<ReturnType<typeof instrumentRepository.list>>[number]>();
+    void instrumentRepository.list({}).then((all) => all.forEach((i) => contestInstruments.set(i.id, i)));
+    registerContestRoutes(app, {
+      deps: {
+        getSpec: (id) => contestInstruments.get(id)?.specification ?? null,
+        getQuote: async (id) => {
+          const inst = contestInstruments.get(id);
+          if (!inst) return null;
+          return withRollCheck(candleRepository, inst, await providerRegistry.getQuoteForInstrument(inst));
+        },
+        getFx: async () => {
+          const r = await providerRegistry.getUsdVndRate();
+          return r.status === 'CURRENT' ? r.rate : null;
+        },
+      },
+    });
+  }
   app.locals.notifyDeps = {
     getRadar: () => radarCache.get().then((s) => s.value),
     getPrice: async (symbol: string): Promise<number | null> => {

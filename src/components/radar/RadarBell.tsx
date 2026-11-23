@@ -53,19 +53,21 @@ export function RadarBell() {
           setOpen((o) => !o);
           markRadarRead();
         }}
-        aria-label={radar.unread > 0 ? t('rd.bell.unread').replace('{count}', String(radar.unread)) : t('rd.bell.title')}
+        aria-label={radar.unread > 0 ? t('rd.bell.unread', { count: radar.unread }) : t('rd.bell.title')}
+        aria-haspopup="true"
+        aria-expanded={open}
         title={t('rd.bell.title')}
-        className="relative w-9 h-9 grid place-items-center bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border)] rounded-[10px] text-[var(--text)] transition-colors"
+        className="relative w-10 h-10 grid place-items-center bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border)] rounded-[10px] text-[var(--text)] transition-colors"
       >
         <Bell className="w-3.5 h-3.5" aria-hidden="true" />
         {radar.unread > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[var(--negative)] text-white text-[10px] leading-4 text-center">
+          <span aria-hidden="true" className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[var(--negative)] text-white text-[10px] leading-4 text-center">
             {radar.unread > 9 ? '9+' : radar.unread}
           </span>
         )}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-w-[90vw] z-40 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl p-3 space-y-2 text-xs text-[var(--text)]">
+        <div role="region" aria-label={t('rd.bell.panel')} className="absolute right-0 mt-2 w-80 max-w-[90vw] z-40 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl p-3 space-y-2 text-xs text-[var(--text)]">
           <div className="flex items-center justify-between">
             <strong>{t('rd.bell.title')}</strong>
             <button type="button" onClick={goRadar} className="text-[var(--accent-text)] hover:underline">
@@ -118,12 +120,12 @@ export function RadarBell() {
       )}
       {radar.toasts.length > 0 && (
         <div className="fixed bottom-4 right-4 z-50 space-y-2 w-80 max-w-[90vw]" role="status" aria-live="polite">
-          {radar.toasts.map((t) => (
-            <div key={t.id} className="flex items-start gap-2 bg-[var(--surface)] border border-[var(--accent)]/50 rounded-xl shadow-xl p-3 text-xs text-[var(--text-strong)]">
+          {radar.toasts.map((toast) => (
+            <div key={toast.id} className="flex items-start gap-2 bg-[var(--surface)] border border-[var(--accent)]/50 rounded-xl shadow-xl p-3 text-xs text-[var(--text-strong)]">
               <button type="button" onClick={goRadar} className="flex-1 text-left">
-                {t.text}
+                {toast.text}
               </button>
-              <button type="button" onClick={() => dismissToast(t.id)} aria-label="Đóng thông báo" className="text-[var(--text)]/60 hover:text-[var(--text-strong)]">
+              <button type="button" onClick={() => dismissToast(toast.id)} aria-label={t('rd.bell.dismiss')} className="grid place-items-center min-w-10 min-h-10 -m-2 text-[var(--text)]/60 hover:text-[var(--text-strong)]">
                 <X className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>

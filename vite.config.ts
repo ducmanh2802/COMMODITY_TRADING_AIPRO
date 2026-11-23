@@ -56,8 +56,14 @@ export default defineConfig(() => {
                 // Core Firebase libs shared by auth and firestore: keep them out of the firestore chunk so
                 // the (large) firestore chunk is a leaf that loads only on demand.
                 name: 'vendor-firebase',
-                test: /[\\/]node_modules[\\/]@firebase[\\/](app|util|component|logger|auth|installations)[\\/]/,
+                test: /[\\/]node_modules[\\/]@firebase[\\/](app|util|component|logger|installations)[\\/]/,
                 priority: 50,
+              },
+              {
+                // Firebase Auth is loaded after first paint (see src/firebase.ts getAuthModules).
+                name: 'vendor-auth',
+                test: /[\/]node_modules[\/](@firebase[\/]auth|firebase[\/]auth)[\/]/,
+                priority: 48,
               },
               {
                 name: 'vendor-firestore',
@@ -68,6 +74,24 @@ export default defineConfig(() => {
                 name: 'vendor-firebase',
                 test: /[\\/]node_modules[\\/](firebase|@firebase)[\\/]/,
                 priority: 30,
+              },
+              {
+                // Tiny vite dynamic-import helper: must not be co-located with heavy lazy-only libs.
+                name: 'preload-helper',
+                test: /preload-helper/,
+                priority: 60,
+              },
+              {
+                // Heavy libs that are only reached through dynamic import() (certificate PDF). Keeping them out of the
+                // catch-all `vendor` chunk stops the entry from downloading ~1 MB it never executes.
+                name: 'vendor-pdf',
+                test: /[\/]node_modules[\/](jspdf|html2canvas|canvg|pako|fflate|dompurify|fast-png|stackblur-canvas|iobuffer|core-js|rgbcolor|svg-pathdata|raf|performance-now|@babel[\/]runtime|text-segmentation|utrie|css-line-break)[\/]/,
+                priority: 45,
+              },
+              {
+                name: 'vendor-charts',
+                test: /[\/]node_modules[\/]lightweight-charts[\/]/,
+                priority: 44,
               },
               {
                 name: 'vendor-react',

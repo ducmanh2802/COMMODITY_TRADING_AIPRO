@@ -1,10 +1,34 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import type { Auth, GoogleAuthProvider } from 'firebase/auth';
 import firebaseConfig from '../firebase-applet-config.json';
 
 export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+
+type AuthModules = typeof import('firebase/auth') & { auth: Auth; googleProvider: GoogleAuthProvider };
+let authModules: AuthModules | null = null;
+let authModulesPromise: Promise<AuthModules> | null = null;
+
+/** Synchronous access once `getAuthModules()` has resolved (null before). */
+export function getLoadedAuthModules(): AuthModules | null {
+  return authModules;
+}
+
+/**
+ * Loads Firebase Auth on demand so it stays off the critical path (first paint / LCP).
+ * Cached: later calls resolve immediately.
+ */
+export function getAuthModules(): Promise<AuthModules> {
+  if (!authModulesPromise) {
+    authModulesPromise = import('firebase/auth').then((fa) => {
+      authModules = { ...fa, auth: fa.getAuth(app), googleProvider: new fa.GoogleAuthProvider() };
+      return authModules;
+    });
+    authModulesPromise.catch(() => {
+      authModulesPromise = null;
+    });
+  }
+  return authModulesPromise;
+}
 
 export enum OperationType {
   CREATE = 'create',
@@ -76,7 +100,7 @@ export function handleFirestoreError(
     code,
     operationType,
     path,
-    userId: auth.currentUser?.uid ?? null,
+    userId: authModules?.auth.currentUser?.uid ?? null,
     userMessage: userMessageForCode(code, operationType),
   };
   console.error('Firestore Error:', {

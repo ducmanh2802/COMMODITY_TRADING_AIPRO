@@ -6,7 +6,9 @@
 import type { Express, Request, Response } from 'express';
 import { sanitizeZone, type WatchZone } from '../../src/shared/watchlist/watchlist.ts';
 import { createRateLimiter } from '../middleware/rateLimit.ts';
+import type { Channels } from '../services/notify/channels.ts';
 import { NotifyStore } from '../services/notify/store.ts';
+import { registerChannelRoutes } from './notifyChannels.ts';
 import { clampText, getBotToken, isValidChatId, TelegramClient, type Messenger, type TelegramUpdate } from '../services/notify/telegram.ts';
 
 export const MAX_SYNC_ITEMS = 60;
@@ -26,6 +28,8 @@ export interface NotifyRouteOptions {
   /** Tests inject a fake service; production builds one from the token. */
   service?: NotifyService | null;
   now?: () => number;
+  /** T101: Web Push / email channels (tests inject; null = unconfigured; undefined = build from env). */
+  channels?: Channels | null;
 }
 
 export function createNotifyService(env: Record<string, string | undefined> = process.env): NotifyService | null {
@@ -46,6 +50,7 @@ export function registerNotifyRoutes(app: Express, options: NotifyRouteOptions =
   };
   if (configured) svc(); // fail early (and let server.ts pick it up from app.locals)
   app.locals.notify = service;
+  registerChannelRoutes(app, { env, now, channels: options.channels }); // T101: push + email (own env gates)
 
   const lim = (max: number) => createRateLimiter({ windowMs: 60_000, max });
   const off = (res: Response) => res.status(503).json({ error: 'TELEGRAM_DISABLED', message: 'Telegram notifications are not configured on this server.' });

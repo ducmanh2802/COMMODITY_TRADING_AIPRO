@@ -2,6 +2,7 @@
 import { readFileSync, statSync } from 'node:fs';
 import type { Express, RequestHandler } from 'express';
 import { errorRing, latencyTracker } from '../lib/observability.ts';
+import { getBackupStatus } from '../services/backup/sqliteBackup.ts';
 
 export interface StatusDeps {
   requireAdmin: RequestHandler;
@@ -80,6 +81,7 @@ export function registerStatusRoutes(app: Express, deps: StatusDeps): void {
             },
             providers,
             db: dbFiles(dbPaths),
+            backup: (({ lastBackupAt, lastBackupError }) => ({ lastBackupAt, lastBackupError }))(getBackupStatus()),
             errors: {
               last1h: errorRing.countSince(3_600_000, t),
               last24h: errorRing.countSince(86_400_000, t),

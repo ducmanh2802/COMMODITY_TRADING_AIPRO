@@ -113,9 +113,9 @@ export function SettingsView() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">
+        <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">
           {t('dash.st.title')}
-        </h1>
+        </h2>
         <p className="text-sm text-[var(--text)]/65 mt-1">
           {t('dash.st.subtitle')}
         </p>

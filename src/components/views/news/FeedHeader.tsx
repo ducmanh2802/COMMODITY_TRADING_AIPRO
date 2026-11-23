@@ -36,7 +36,7 @@ export function FeedHeader({
     <>
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{title}</h1>
+          <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{title}</h2>
           <p className="text-sm text-[var(--text)]/65 mt-1">{t('news.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">

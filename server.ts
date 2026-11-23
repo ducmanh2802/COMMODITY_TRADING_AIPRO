@@ -19,6 +19,11 @@ const PORT = Number(process.env.PORT ?? 3000);
 const isProduction = process.env.NODE_ENV === 'production';
 
 async function startServer(): Promise<void> {
+  // T53: restore the market DB from GCS (opt-in) BEFORE any module opens it. Never throws.
+  const { restoreOnStartup, readBackupConfig, runConfiguredBackup, backupOnShutdown } = await import(
+    './server/services/backup/sqliteBackup.ts'
+  );
+  await restoreOnStartup();
   const { createApiApp } = await import('./server/app.ts');
   const { MacroService } = await import('./server/macro/service.ts');
   const { CotService } = await import('./server/cot/service.ts');
@@ -92,6 +97,17 @@ async function startServer(): Promise<void> {
       console.log('Telegram notifications enabled (long-poll worker started).');
     }
   }
+  // T101: Web Push / email jobs exist only when VAPID or SMTP env is set (route module builds the channels).
+  const channels = app.locals.channels as import('./server/services/notify/channels.ts').Channels | null | undefined;
+  let channelJobs: { zones: () => Promise<unknown>; radar: (() => Promise<unknown>) | null } | null = null;
+  if (channels && notifyDeps) {
+    const { runChannelZoneCheck, runChannelRadarCheck } = await import('./server/services/notify/channelJobs.ts');
+    channelJobs = {
+      zones: () => runChannelZoneCheck({ store: channels.store, push: channels.push, email: channels.email, baseUrl: channels.baseUrl, getPrice: notifyDeps.getPrice }),
+      radar: channels.push ? () => runChannelRadarCheck({ store: channels.store, push: channels.push, getRadar: notifyDeps.getRadar }) : null,
+    };
+    console.log(`Push/email notifications enabled (push=${!!channels.push}, email=${!!channels.email}).`);
+  }
   if (isSchedulerEnabled()) {
     try {
       const registry = app.locals.providerRegistry as
@@ -113,8 +129,13 @@ async function startServer(): Promise<void> {
       scheduler = new Scheduler(
         buildSchedulerJobs({
           cot: () => (cotService ??= new CotService()),
+          contestStops: (app.locals.contest as { runStopCheck?: () => Promise<unknown> } | undefined)?.runStopCheck ?? null,
           telegramZones: telegramJobs?.zones ?? null,
           telegramRadar: telegramJobs?.radar ?? null,
+          dbBackup: readBackupConfig() ? () => runConfiguredBackup() : null,
+          dbBackupIntervalHours: readBackupConfig()?.intervalHours,
+          channelZones: channelJobs?.zones ?? null,
+          channelRadar: channelJobs?.radar ?? null,
           macro,
           fredSync: fred?.syncMacroSeries ? () => fred.syncMacroSeries!() : null,
           yahooHistorySync:
@@ -154,6 +175,14 @@ async function startServer(): Promise<void> {
     setInterval(() => void warmAll(), 5 * 60_000 + 5_000).unref();
   }
   const server = host ? app.listen(PORT, host, onListening) : app.listen(PORT, onListening);
+  if (readBackupConfig()) {
+    let shuttingDown = false;
+    process.once('SIGTERM', () => {
+      if (shuttingDown) return;
+      shuttingDown = true;
+      void backupOnShutdown(20_000).finally(() => process.exit(0));
+    });
+  }
   server.on('error', (err: NodeJS.ErrnoException) => {
     logger.error(
       err.code === 'EADDRINUSE'

@@ -79,6 +79,8 @@ function RegionMap({ regions, onPick, t }: { regions: WeatherRegionResult[]; onP
           >
             <title>{r.nameVi}</title>
             <circle cx={0} cy={0} r={9} fill={color} opacity={0.18} stroke="transparent" strokeWidth={1.5} />
+            {/* Transparent touch target: >= 40 CSS px across at phone widths (map scales to ~0.32 px/unit). */}
+            <circle cx={0} cy={0} r={26} fill="transparent" stroke="none" pointerEvents="all" />
             <SevShape sev={sev} cx={0} cy={0} color={color} />
           </g>
         );
@@ -195,7 +197,7 @@ function RegionCard({ r, t }: { r: WeatherRegionResult; t: TFunction }) {
                 key={id}
                 type="button"
                 onClick={() => openInstrumentIn(sym, 'instrument')}
-                className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-2 py-0.5 text-[var(--accent-text)] hover:border-[var(--accent)]/60"
+                className="inline-flex items-center min-h-10 rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1 text-[var(--accent-text)] hover:border-[var(--accent)]/60"
               >
                 {id}
               </button>
@@ -247,7 +249,7 @@ export function WeatherPanel() {
       {state === 'error' && (
         <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 text-sm text-[var(--text)]">
           <p>{t('wx.error')}</p>
-          <button type="button" onClick={() => load()} className="mt-2 rounded-md border border-[var(--border)] px-3 py-1 text-xs text-[var(--accent-text)]">
+          <button type="button" onClick={() => load()} className="mt-2 min-h-10 rounded-md border border-[var(--border)] px-3 py-1 text-xs text-[var(--accent-text)]">
             {t('wx.retry')}
           </button>
         </div>

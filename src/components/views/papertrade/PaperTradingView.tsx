@@ -50,6 +50,7 @@ import { OrderCalculator } from '../learn/OrderCalculator';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
 import { PlanBadge, PreTradeChecklist } from './PreTradeChecklist';
 import { ReplayView } from '../replay/ReplayView';
+import { ContestView } from '../contest/ContestView';
 import {
   DEFAULT_RISK_LIMIT_PCT,
   EMPTY_ANSWERS,
@@ -148,7 +149,7 @@ export function PaperTradingView() {
   const vcb = useVcbRate();
   const notes = useNoteOptions(cloud, user?.uid ?? null);
 
-  const [tab, setTab] = useState<'trade' | 'stats' | 'history' | 'replay'>('trade');
+  const [tab, setTab] = useState<'trade' | 'stats' | 'history' | 'replay' | 'contest'>('trade');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [importDismissed, setImportDismissed] = useState(false);
@@ -399,10 +400,10 @@ export function PaperTradingView() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight flex items-center gap-2">
+        <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight flex items-center gap-2">
           <GraduationCap className="w-5 h-5 text-[var(--accent)]" aria-hidden="true" />
           {t('pt.title')}
-        </h1>
+        </h2>
         <p className="text-sm text-[var(--text)]/70 mt-1">{t('pt.subtitle')}</p>
       </div>
 
@@ -448,7 +449,7 @@ export function PaperTradingView() {
       {message && <p className="text-xs text-[var(--accent-text)]" role="status">{message}</p>}
 
       <div className="flex gap-2" role="tablist">
-        {(['trade', 'stats', 'history', 'replay'] as const).map((k) => (
+        {(['trade', 'stats', 'history', 'replay', 'contest'] as const).map((k) => (
           <button
             key={k}
             type="button"
@@ -457,12 +458,14 @@ export function PaperTradingView() {
             onClick={() => setTab(k)}
             className={`px-4 py-2 text-sm rounded-md border ${tab === k ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--border)] text-[var(--text)]/80'}`}
           >
-            {t(k === 'trade' ? 'pt.tab.trade' : k === 'stats' ? 'ps.tab' : k === 'replay' ? 'rp.tab' : 'pt.tab.history')}
+            {t(k === 'trade' ? 'pt.tab.trade' : k === 'stats' ? 'ps.tab' : k === 'replay' ? 'rp.tab' : k === 'contest' ? 'ct.tab' : 'pt.tab.history')}
           </button>
         ))}
       </div>
 
-      {tab === 'replay' ? (
+      {tab === 'contest' ? (
+        <ContestView />
+      ) : tab === 'replay' ? (
         <ReplayView />
       ) : !store.ready ? (
         <p className="text-sm text-[var(--text)]/60">{t('pt.loading')}</p>

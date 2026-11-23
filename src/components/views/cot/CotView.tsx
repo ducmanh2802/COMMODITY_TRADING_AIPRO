@@ -126,7 +126,7 @@ export default function CotView() {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('cot.title')}</h1>
+          <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('cot.title')}</h2>
           <p className="text-sm text-[var(--text)]/65 mt-1">
             {t('cot.subtitle')}
           </p>
