@@ -65,7 +65,7 @@ export function lwBase(opts: { timeVisible?: boolean; secondsVisible?: boolean }
   return {
     autoSize: true,
     layout: {
-      background: { type: ColorType.Solid, color: cssVar('--surface', '#131A26') },
+      background: { type: ColorType.Solid, color: cssVar('--surface', '#201D30') },
       textColor: cssVar('--muted', 'rgba(228,231,236,0.68)'),
       fontSize: 11,
       attributionLogo: false,
