@@ -8,7 +8,10 @@ import type { InstrumentDefinition } from '../../src/shared/types/instrument.ts'
 import type { MarketCandle } from '../../src/shared/types/market.ts';
 import type { ICandleRepository } from '../storage/candleRepository.ts';
 import { type PersistProviderCandles } from '../providers/syncPersistence.ts';
-import { YAHOO_PROVIDER_ID, isYahooEnabled, type YahooIntradayTimeframe } from '../providers/yahooAdapter.ts';
+import { YAHOO_PROVIDER_ID, isYahooEnabled } from '../providers/yahooAdapter.ts';
+
+/** Intraday timeframes persisted by this job (the adapter's getCandles supports more). */
+export type YahooIntradayTimeframe = 'M15' | 'H1';
 import { YAHOO_HISTORY_CONTRACT_CODE } from './yahooHistory.ts';
 import { MIN_RETAINED_SESSIONS, retentionCutoffMs } from './sessions/sessionOf.ts';
 
@@ -18,9 +21,9 @@ export const YAHOO_INTRADAY_TIMEFRAMES: readonly YahooIntradayTimeframe[] = ['M1
 
 export interface YahooIntradayAdapterLike {
   supports(instrument: InstrumentDefinition): boolean;
-  getIntradayCandles(
+  getCandles(
     symbol: string,
-    timeframe: YahooIntradayTimeframe
+    timeframe: string
   ): Promise<{ candles: MarketCandle[]; status: string; reason?: string }>;
 }
 
@@ -57,7 +60,7 @@ export async function syncYahooIntraday(deps: {
       const base = { symbol: inst.exchangeSymbol, timeframe };
       try {
         requests += 1;
-        const res = await deps.adapter.getIntradayCandles(inst.exchangeSymbol, timeframe);
+        const res = await deps.adapter.getCandles(inst.exchangeSymbol, timeframe);
         if (res.candles.length === 0) {
           results.push({ ...base, status: 'UNAVAILABLE', barsFetched: 0, rowsWritten: 0, pruned: 0, message: res.reason ?? 'No bars returned.' });
           continue;

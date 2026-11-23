@@ -211,7 +211,7 @@ test('syncYahooIntraday: sequential 1 request per symbol/timeframe, persisted as
     const calls: string[] = [];
     const adapter = {
       supports: () => true,
-      async getIntradayCandles(symbol: string, tf: 'M15' | 'H1') {
+      async getCandles(symbol: string, tf: string) {
         calls.push(`${symbol}:${tf}`);
         const p = parseYahooIntradayCandles(FIXTURE.chart.result[0], zc, mapping, 'M15', nowMs);
         assert.ok(p.ok);
