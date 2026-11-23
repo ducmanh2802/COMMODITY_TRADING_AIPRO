@@ -7,6 +7,7 @@ import type { Scorecard, ScorecardListResponse } from '../../../shared/types/sco
 import type { TodayResponse } from '../../../shared/types/today';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
 import { buildVietnamEconomicCalendar } from '../../../shared/utils/vietnamCalendar';
+import { LazySection } from '../../common/LazySection';
 import { Card } from '../../ui/Card';
 import { EmptyState } from '../../ui/EmptyState';
 import { SectionHeader } from '../../ui/SectionHeader';
@@ -244,6 +245,7 @@ export function TodayPanel() {
 
         {/* Trend clarity cards */}
         {view.trends.length > 0 && (
+          <LazySection minHeight={220}>
           <section aria-label={t('n2.td.sec.trend')}>
             <CardTitle title={t('n2.td.sec.trend')} hint={t('n2.td.trendHint')} />
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -284,10 +286,12 @@ export function TodayPanel() {
               ))}
             </div>
           </section>
+          </LazySection>
         )}
 
         {/* Cycle phases */}
         {view.phases.length > 0 && (
+          <LazySection minHeight={120}>
           <Card as="section" aria-label={t('n2.td.sec.cycle')}>
             <CardTitle title={t('n2.td.sec.cycle')} hint={t('n2.td.cycleHint')} />
             <div className="flex flex-wrap gap-2">
@@ -307,6 +311,7 @@ export function TodayPanel() {
               ))}
             </div>
           </Card>
+          </LazySection>
         )}
 
         {/* Data quality (collapsed) */}

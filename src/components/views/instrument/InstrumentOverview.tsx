@@ -18,6 +18,7 @@ import { CandleChart } from '../charts/CandleChart';
 import { LegacyModule } from '../LegacyModule';
 import { LazyBriefView } from '../LazyOwnerViews';
 import { RelatedNews } from './RelatedNews';
+import { SessionHistoryCard } from './SessionHistoryCard';
 import {
   cotLight,
   fundamentalLight,
@@ -450,6 +451,8 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
       </div>
 
       <RelatedNews symbol={selectedSymbol} />
+
+      <SessionHistoryCard />
 
       {/* Main price chart (T76 plugs a benchmark fallback into the empty-state branch below) */}
       <section className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 space-y-3 min-w-0" aria-label={t('ins.chart.title')}>

@@ -10,6 +10,7 @@ import { createUnavailableQuote } from '../../src/shared/utils/validation.ts';
 import { CONTINUOUS_CONTRACT_CODE, type DatasetRecord, type ICandleRepository } from '../storage/candleRepository.ts';
 import { createProviderCandlePersister, VENDOR_CONTRACT_PREFIX, type PersistProviderCandles } from './syncPersistence.ts';
 import { syncYahooHistory } from '../services/yahooHistory.ts';
+import { syncYahooIntraday } from '../services/yahooIntradayHistory.ts';
 import { historicalCandleStore } from '../services/candleStore.ts';
 import { CsvHistoricalProvider } from './csvHistorical.ts';
 import {
@@ -476,6 +477,21 @@ export class ProviderRegistry {
       return { enabled: false, results: [], note: 'No candle repository configured; Yahoo history not persisted.' };
     }
     return syncYahooHistory({
+      adapter: this.yahoo,
+      repository: this.candleRepository,
+      persist: this.persistCandles,
+      providerName: this.yahoo.providerName,
+      instruments,
+      now,
+    });
+  }
+
+  /** Yahoo UNOFFICIAL intraday history (M15 + H1) with retention. No-op unless YAHOO_ENABLED=true. */
+  async syncYahooIntraday(instruments: InstrumentDefinition[], now?: () => number) {
+    if (!this.candleRepository || !this.persistCandles) {
+      return { enabled: false, results: [], requests: 0, note: 'No candle repository configured; Yahoo intraday not persisted.' };
+    }
+    return syncYahooIntraday({
       adapter: this.yahoo,
       repository: this.candleRepository,
       persist: this.persistCandles,

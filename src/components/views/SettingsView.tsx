@@ -7,6 +7,7 @@ import { useT } from '../../i18n';
 import { LanguageSwitch } from '../common/LanguageSwitch';
 import { ThemeSwitch } from '../common/ThemeSwitch';
 import { useUiMode } from '../../contexts/UiModeContext';
+import { BackupCard } from './BackupCard';
 
 export function SettingsView() {
   const {
@@ -144,7 +145,7 @@ export function SettingsView() {
           <div className="space-y-1">
             <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('dash.st.account')}</h2>
             <p className="text-xs text-[var(--text)]/65">
-              {t('dash.st.firestore')} <span className="font-mono text-[var(--text-strong)]">{firestoreStatus}</span>
+              {t('dash.st.firestore')} <span className="font-mono text-[var(--text-strong)]">{firestoreStatus === 'SIGNED_OUT' ? t('fs.signedOut') : firestoreStatus}</span>
             </p>
             {user ? (
               <p className="text-xs font-mono text-[var(--positive)]">
@@ -352,6 +353,8 @@ export function SettingsView() {
           </button>
         </div>
       </form>
+
+      <BackupCard />
     </div>
   );
 }

@@ -7,6 +7,19 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [
+      // i18n dict files export both `vi` and `en`. Give the English registry (src/i18n/en.ts) its own module
+      // instances of every dict (`?en` query) so the bundler can tree-shake `en` out of the eager Vietnamese
+      // chunk (and `vi` out of the lazy English chunk). No changes needed in dict files or registries.
+      {
+        name: 'i18n-split-en-dicts',
+        enforce: 'pre' as const,
+        async resolveId(this: any, source: string, importer: string | undefined, options: any) {
+          if (!importer || !/dict\//.test(source) || source.includes('?')) return null;
+          if (!/[\/]src[\/]i18n[\/]en\.ts$/.test(importer.split('?')[0])) return null;
+          const resolved = await this.resolve(source, importer, { ...options, skipSelf: true });
+          return resolved ? `${resolved.id}?en-only` : null;
+        },
+      },
       react(),
       tailwindcss(),
       // Copies src/assets into dist/ so root-relative URLs like
@@ -40,8 +53,15 @@ export default defineConfig(() => {
           codeSplitting: {
             groups: [
               {
+                // Core Firebase libs shared by auth and firestore: keep them out of the firestore chunk so
+                // the (large) firestore chunk is a leaf that loads only on demand.
+                name: 'vendor-firebase',
+                test: /[\\/]node_modules[\\/]@firebase[\\/](app|util|component|logger|auth|installations)[\\/]/,
+                priority: 50,
+              },
+              {
                 name: 'vendor-firestore',
-                test: /[\\/]node_modules[\\/]@firebase[\\/](firestore|webchannel-wrapper)[\\/]/,
+                test: /[\\/]node_modules[\\/](@firebase[\\/](firestore|webchannel-wrapper)|firebase[\\/]firestore)[\\/]/,
                 priority: 40,
               },
               {

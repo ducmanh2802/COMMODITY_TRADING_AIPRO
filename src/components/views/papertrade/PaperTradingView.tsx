@@ -3,7 +3,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { AlertTriangle, GraduationCap, LogIn } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTerminal } from '../../../contexts/TerminalContext';
-import { db } from '../../../firebase';
+import { db } from '../../../firestoreDb';
 import { fmtDateTime, fmtFixed, fmtInt, useT, type TKey } from '../../../i18n';
 import {
   DEFAULT_CAPITAL_VND,
@@ -49,6 +49,7 @@ import { usePaperStore } from './usePaperStore';
 import { OrderCalculator } from '../learn/OrderCalculator';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
 import { PlanBadge, PreTradeChecklist } from './PreTradeChecklist';
+import { ReplayView } from '../replay/ReplayView';
 import {
   DEFAULT_RISK_LIMIT_PCT,
   EMPTY_ANSWERS,
@@ -147,7 +148,7 @@ export function PaperTradingView() {
   const vcb = useVcbRate();
   const notes = useNoteOptions(cloud, user?.uid ?? null);
 
-  const [tab, setTab] = useState<'trade' | 'stats' | 'history'>('trade');
+  const [tab, setTab] = useState<'trade' | 'stats' | 'history' | 'replay'>('trade');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [importDismissed, setImportDismissed] = useState(false);
@@ -447,7 +448,7 @@ export function PaperTradingView() {
       {message && <p className="text-xs text-[var(--accent-text)]" role="status">{message}</p>}
 
       <div className="flex gap-2" role="tablist">
-        {(['trade', 'stats', 'history'] as const).map((k) => (
+        {(['trade', 'stats', 'history', 'replay'] as const).map((k) => (
           <button
             key={k}
             type="button"
@@ -456,12 +457,14 @@ export function PaperTradingView() {
             onClick={() => setTab(k)}
             className={`px-4 py-2 text-sm rounded-md border ${tab === k ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--border)] text-[var(--text)]/80'}`}
           >
-            {t(k === 'trade' ? 'pt.tab.trade' : k === 'stats' ? 'ps.tab' : 'pt.tab.history')}
+            {t(k === 'trade' ? 'pt.tab.trade' : k === 'stats' ? 'ps.tab' : k === 'replay' ? 'rp.tab' : 'pt.tab.history')}
           </button>
         ))}
       </div>
 
-      {!store.ready ? (
+      {tab === 'replay' ? (
+        <ReplayView />
+      ) : !store.ready ? (
         <p className="text-sm text-[var(--text)]/60">{t('pt.loading')}</p>
       ) : tab === 'stats' ? (
         <PaperStatsPanel startingCapitalVnd={session?.startingCapitalVnd ?? 0} trades={trades} instrumentName={instrumentName} />

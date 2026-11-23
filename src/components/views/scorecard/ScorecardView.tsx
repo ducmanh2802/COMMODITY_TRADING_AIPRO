@@ -111,7 +111,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-[var(--accent)] text-white disabled:opacity-60"
+            className="flex items-center gap-1.5 px-3 py-1.5 min-h-10 sm:min-h-0 text-xs rounded-md bg-[var(--accent)] text-white disabled:opacity-60"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
             {t('sc.refresh')}
@@ -126,7 +126,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
             type="button"
             aria-pressed={category === c}
             onClick={() => setCategory(c)}
-            className={`px-3 py-1 text-xs rounded-full border ${
+            className={`px-3 py-1 min-h-10 sm:min-h-0 text-xs rounded-full border ${
               category === c ? 'bg-[var(--accent-soft)] border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--muted)] hover:text-[var(--text-strong)]'
             }`}
           >
@@ -150,7 +150,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
 
       {data && rows.length > 0 && (
         <>
-        <ul className="md:hidden space-y-2" aria-label={t('sc.title')}>
+        <ul className="sm:hidden space-y-2" aria-label={t('sc.title')}>
           {rows.map((c) => {
             const name = lang === 'vi' && c.vietnameseName ? c.vietnameseName : c.productName;
             const cot = dimOf(c, 'cot');
@@ -167,7 +167,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
             return (
               <li key={c.instrumentId}>
                 <Card
-                  className="cursor-pointer space-y-2"
+                  className="cursor-pointer space-y-2 min-h-10"
                   role="button"
                   tabIndex={0}
                   onClick={() => pick(c.instrumentId, c.exchangeSymbol)}
@@ -178,21 +178,19 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
                     }
                   }}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-medium text-[var(--text-strong)] truncate">{name}</div>
-                      <div className="text-[11px] font-mono text-[var(--faint)] truncate">{c.exchangeSymbol} · {c.instrumentId.split(':')[0]}</div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="tabular-nums text-[var(--text-strong)]">{fmtPrice(c.price.value)}</div>
-                      <DataStatusBadge status={c.price.status as DataQualityStatus} sourceQuality={c.price.sourceQuality ?? undefined} compact />
-                    </div>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <div className="min-w-0 font-medium text-[var(--text-strong)] truncate">{name}</div>
+                    <div className="tabular-nums text-[var(--text-strong)] shrink-0">{fmtPrice(c.price.value)}</div>
                   </div>
-                  <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="text-[11px] font-mono text-[var(--faint)]">{c.exchangeSymbol} · {c.instrumentId.split(':')[0]}</span>
+                    <DataStatusBadge status={c.price.status as DataQualityStatus} sourceQuality={c.price.sourceQuality ?? undefined} compact />
+                  </div>
+                  <dl className="grid grid-cols-1 gap-y-2 text-xs">
                     {pairs.map(([label, val]) => (
                       <div key={label} className="flex items-center justify-between gap-2 min-w-0">
                         <dt className="text-[var(--muted)] shrink-0">{label}</dt>
-                        <dd className="min-w-0">{val}</dd>
+                        <dd className="min-w-0 flex flex-wrap justify-end gap-1">{val}</dd>
                       </div>
                     ))}
                   </dl>
@@ -201,7 +199,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
             );
           })}
         </ul>
-        <Card padded={false} className="overflow-x-auto hidden md:block">
+        <Card padded={false} className="overflow-x-auto hidden sm:block">
           <table className="w-full text-sm min-w-[900px]">
             <thead>
               <tr className="text-left text-xs text-[var(--muted)] border-b border-[var(--border)]">

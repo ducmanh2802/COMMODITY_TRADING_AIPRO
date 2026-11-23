@@ -6,6 +6,7 @@ if (process.argv.includes('--production')) {
   process.env.NODE_ENV = 'production';
 }
 
+import { errorSummary, logger } from './server/lib/logger.ts';
 import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
@@ -67,11 +68,30 @@ async function startServer(): Promise<void> {
   // refused connection to time out (~2 s per attempt on Windows): every API call took 4–5 s.
   const host = process.env.HOST?.trim() || undefined;
   const onListening = () => {
-    console.log(
+    logger.info(
       `COMMODITY TRADING AI PRO (${isProduction ? 'production' : 'development'}) listening on http://localhost:${PORT}` +
         (host ? ` (bound to ${host})` : ' (IPv4 + IPv6)'),
     );
   };
+  // T67: Telegram worker + jobs exist only when TELEGRAM_BOT_TOKEN is set (the route module builds the service).
+  const notify = app.locals.notify as import('./server/routes/notify.ts').NotifyService | null | undefined;
+  const notifyDeps = app.locals.notifyDeps as
+    | { getRadar: () => Promise<import('./src/shared/types/radar.ts').RadarResponse>; getPrice: (symbol: string) => Promise<number | null> }
+    | undefined;
+  let telegramJobs: { zones: () => Promise<unknown>; radar: () => Promise<unknown> } | null = null;
+  if (notify?.getUpdates && notifyDeps) {
+    const getUpdates = notify.getUpdates;
+    const { TelegramPoller } = await import('./server/services/notify/poller.ts');
+    const { runZoneCheck, runRadarCheck } = await import('./server/services/notify/jobs.ts');
+    {
+      new TelegramPoller({ getUpdates, store: notify.store, messenger: notify.messenger }).start();
+      telegramJobs = {
+        zones: () => runZoneCheck({ store: notify.store, messenger: notify.messenger, getPrice: notifyDeps.getPrice }),
+        radar: () => runRadarCheck({ store: notify.store, messenger: notify.messenger, getRadar: notifyDeps.getRadar }),
+      };
+      console.log('Telegram notifications enabled (long-poll worker started).');
+    }
+  }
   if (isSchedulerEnabled()) {
     try {
       const registry = app.locals.providerRegistry as
@@ -93,11 +113,17 @@ async function startServer(): Promise<void> {
       scheduler = new Scheduler(
         buildSchedulerJobs({
           cot: () => (cotService ??= new CotService()),
+          telegramZones: telegramJobs?.zones ?? null,
+          telegramRadar: telegramJobs?.radar ?? null,
           macro,
           fredSync: fred?.syncMacroSeries ? () => fred.syncMacroSeries!() : null,
           yahooHistorySync:
             (process.env.YAHOO_ENABLED ?? '').trim().toLowerCase() === 'true' && typeof app.locals.runYahooHistory === 'function'
               ? () => app.locals.runYahooHistory()
+              : null,
+          yahooIntradaySync:
+            (process.env.YAHOO_ENABLED ?? '').trim().toLowerCase() === 'true' && typeof app.locals.runYahooIntraday === 'function'
+              ? () => app.locals.runYahooIntraday()
               : null,
           fredPublicSync: fred?.syncPublicCsvMacroSeries
             ? async () => {
@@ -116,7 +142,7 @@ async function startServer(): Promise<void> {
       scheduler.start();
       void scheduler.runJob('fred-public-macro');
     } catch (err) {
-      console.error('Scheduler failed to start (continuing without it):', err instanceof Error ? err.message : 'unknown error');
+      logger.error('Scheduler failed to start (continuing without it)', { error: err instanceof Error ? err.message : 'unknown error' });
     }
   }
   if (isSchedulerEnabled()) {
@@ -129,7 +155,7 @@ async function startServer(): Promise<void> {
   }
   const server = host ? app.listen(PORT, host, onListening) : app.listen(PORT, onListening);
   server.on('error', (err: NodeJS.ErrnoException) => {
-    console.error(
+    logger.error(
       err.code === 'EADDRINUSE'
         ? `Port ${PORT} is already in use (another server instance?). Stop it or set PORT=...`
         : `Server error: ${err.message}`,
@@ -139,6 +165,6 @@ async function startServer(): Promise<void> {
 }
 
 startServer().catch((err) => {
-  console.error('Failed to start server:', err);
+  logger.error('Failed to start server', { error: errorSummary(err) });
   process.exit(1);
 });

@@ -1,6 +1,6 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { getLang, setStoredLang, type Lang } from './lang';
-import { translate, type TParams } from './translate';
+import { isEnglishLoaded, loadEnglish, translate, type TParams } from './translate';
 import type { TKey } from './vi';
 
 export type TFunction = (key: TKey, params?: TParams) => string;
@@ -25,7 +25,25 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setLangState(next);
   }, []);
 
-  const t = useCallback<TFunction>((key, params) => translate(lang, key, params), [lang]);
+  // Bumped when the (lazy) English dictionary arrives so `t` re-renders consumers.
+  const [enReady, setEnReady] = useState(isEnglishLoaded);
+  useEffect(() => {
+    if (lang !== 'en' || enReady) return;
+    let cancelled = false;
+    loadEnglish()
+      .then(() => {
+        if (!cancelled) setEnReady(true);
+      })
+      .catch(() => {
+        /* keep Vietnamese fallback; retried on next switch to EN */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [lang, enReady]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const t = useCallback<TFunction>((key, params) => translate(lang, key, params), [lang, enReady]);
   const value = useMemo(() => ({ lang, setLang, t }), [lang, setLang, t]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

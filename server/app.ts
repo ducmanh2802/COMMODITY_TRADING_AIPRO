@@ -6,6 +6,7 @@ import { getVietnamClockLabel, VIETNAM_TIMEZONE } from '../src/shared/utils/time
 import { instrumentRepository as defaultInstrumentRepository } from './services/instrumentRegistry.ts';
 import { ProviderRegistry } from './providers/registry.ts';
 import { registerDataRoutes } from './routes/dataRoutes.ts';
+import { registerSessionRoutes } from './routes/sessionRoutes.ts';
 import { registerContractRoutes } from './routes/contracts.ts';
 import { registerFuturesChainRoutes } from './routes/futuresChain.ts';
 import { registerCotRoutes } from './routes/cot.ts';
@@ -16,7 +17,11 @@ import { registerMarketPulseRoutes } from './routes/marketPulse.ts';
 import { registerTodayRoutes } from './routes/today.ts';
 import { registerDriversRoutes } from './routes/drivers.ts';
 import { registerRadarRoutes } from './routes/radar.ts';
+import { registerNotifyRoutes } from './routes/notify.ts';
 import { MacroService } from './macro/service.ts';
+import { logger, errorSummary } from './lib/logger.ts';
+import { accessLogMiddleware, installProcessHooks, recordError } from './lib/observability.ts';
+import { registerStatusRoutes } from './routes/status.ts';
 import type { SupplyMacroLike } from './services/supplyDemandOverlay.ts';
 import { ScorecardService } from './services/scorecard/scorecardService.ts';
 import { YahooFinanceAdapter, isYahooEnabled } from './providers/yahooAdapter.ts';
@@ -322,7 +327,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   const candleRepository = options.candles ?? getDefaultCandleRepository();
   const providerRegistry = options.providers ?? new ProviderRegistry({ candles: candleRepository });
   const logError =
-    options.logError ?? ((message: string, err: unknown) => console.error(message, err));
+    options.logError ?? ((message: string, err: unknown) => logger.error(message, { error: errorSummary(err) }));
 
   app.disable('x-powered-by');
   // Needed for a correct req.ip (rate limiting) behind a reverse proxy, e.g. TRUST_PROXY=1.
@@ -332,6 +337,8 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   }
 
   app.use(requestIdMiddleware);
+  app.use(accessLogMiddleware());
+  installProcessHooks();
   app.use(securityHeadersMiddleware);
 
   const requireAdmin = createRequireAdminToken({ token: options.adminToken, isLoopback: options.adminIsLoopback });
@@ -340,7 +347,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     if (options.logWarn) options.logWarn(adminWarning);
     else {
       adminAuthWarningLogged = true;
-      console.warn(adminWarning);
+      logger.warn(adminWarning);
     }
   }
 
@@ -360,6 +367,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   app.delete('/api/market/candles', requireAdmin);
   app.post('/api/providers/sync', requireAdmin);
   app.post('/api/providers/yahoo/history', requireAdmin);
+  app.post('/api/providers/yahoo/intraday', requireAdmin);
   app.post('/api/fundamental/records', requireAdmin);
   app.post('/api/domestic-prices', requireAdmin);
 
@@ -419,6 +427,13 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     } catch (err) {
       next(err);
     }
+  });
+
+  registerStatusRoutes(app, {
+    requireAdmin,
+    schedulerStatus: options.schedulerStatus,
+    providerSummary: async () => summarizeProviders(await providerRegistry.getAllHealth()),
+    dbPaths: options.candles ? [] : undefined,
   });
 
   app.get('/api/architecture', (_req: Request, res: Response) => {
@@ -485,6 +500,29 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
         return;
       }
       res.json(await runYahooHistory(parsed.data.symbol));
+    } catch (err) {
+      next(err);
+    }
+  });
+  // Intraday (M15 + H1) history with >= 20-session retention. Admin/loopback only; same gating as the D1 route.
+  const runYahooIntraday = async (symbol?: string) => {
+    const reg = providerRegistry as Partial<ProviderRegistry>;
+    if (typeof reg.syncYahooIntraday !== 'function') {
+      return { enabled: false, results: [], requests: 0, note: 'Yahoo intraday sync not available.' };
+    }
+    const all = await instrumentRepository.list({});
+    const targets = symbol ? all.filter((i) => i.exchangeSymbol.toUpperCase() === symbol.toUpperCase()) : all;
+    return reg.syncYahooIntraday(targets);
+  };
+  app.locals.runYahooIntraday = runYahooIntraday;
+  app.post('/api/providers/yahoo/intraday', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const parsed = z.object({ symbol: z.string().min(1).max(24).optional() }).safeParse(req.body ?? {});
+      if (!parsed.success) {
+        res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Invalid request.', details: parsed.error.issues });
+        return;
+      }
+      res.json(await runYahooIntraday(parsed.data.symbol));
     } catch (err) {
       next(err);
     }
@@ -610,6 +648,10 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     findInstrument: (idOrSymbol) => instrumentRepository.findBySymbol(idOrSymbol),
     candles: candleRepository,
     requireAdmin,
+  });
+  registerSessionRoutes(app, {
+    findInstrument: (idOrSymbol) => instrumentRepository.findBySymbol(idOrSymbol),
+    candles: candleRepository,
   });
   registerContractRoutes(app, { instruments: instrumentRepository });
   registerFuturesChainRoutes(app, { instruments: instrumentRepository });
@@ -746,6 +788,18 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
     getWasde: () => (driversMacro ??= new MacroService()).getWasde(),
   });
   (app.locals.warmers as { name: string; refresh: () => Promise<void> }[]).push({ name: 'radar', refresh: () => radarCache.refresh() });
+  // T67: optional Telegram notifications (off without TELEGRAM_BOT_TOKEN); server.ts starts the poller + jobs from these.
+  registerNotifyRoutes(app);
+  app.locals.notifyDeps = {
+    getRadar: () => radarCache.get().then((s) => s.value),
+    getPrice: async (symbol: string): Promise<number | null> => {
+      const inst = await instrumentRepository.findBySymbol(symbol);
+      if (!inst) return null;
+      const h = await scorecardService.history(inst);
+      const last = h.candles[h.candles.length - 1];
+      return last && Number.isFinite(last.close) ? last.close : null;
+    },
+  };
   (app.locals.warmers as { name: string; refresh: () => Promise<void> }[]).push({ name: 'weather', refresh: weatherRoutes.warm });
   registerScorecardRoutes(app, {
     service: scorecardService,
@@ -1266,6 +1320,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
       return;
     }
 
+    recordError(req, res, err, 500);
     logError(`[api] Unhandled error requestId=${requestId} ${req.method} ${req.originalUrl}`, err);
     res.status(500).json({
       error: 'INTERNAL_SERVER_ERROR',

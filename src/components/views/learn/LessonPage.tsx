@@ -5,8 +5,10 @@ import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { Exercise, RefusalBox, SourceLinks } from './Calculators';
 import type { ExampleCalc, Lesson, QuizQuestion } from './curriculum/types';
+import { LessonDiagram } from './diagrams/Diagrams';
 import { contractValue, marginCallDistance, marginLeverage, positionSize, rMultiple, rollCost, swingPlan, tickPnl } from './learnMath';
 import type { LessonProgress } from './progress';
+import { recordAnswerStored } from './review';
 
 const fmt = (v: number, digits = 2) => v.toLocaleString('vi-VN', { maximumFractionDigits: digits });
 
@@ -116,7 +118,7 @@ function SpecTable({ ids, instruments }: { ids: string[]; instruments: Instrumen
   );
 }
 
-function Quiz({ questions, best, onScore }: { questions: QuizQuestion[]; best?: number; onScore: (pct: number) => void }) {
+function Quiz({ lessonId, questions, best, onScore }: { lessonId: string; questions: QuizQuestion[]; best?: number; onScore: (pct: number) => void }) {
   const [picked, setPicked] = useState<(number | null)[]>(() => questions.map(() => null));
   const [submitted, setSubmitted] = useState(false);
   const correct = picked.filter((p, i) => p === questions[i].answer).length;
@@ -157,6 +159,7 @@ function Quiz({ questions, best, onScore }: { questions: QuizQuestion[]; best?: 
             disabled={!allAnswered}
             onClick={() => {
               setSubmitted(true);
+              questions.forEach((qu, i) => recordAnswerStored(lessonId, qu.q, picked[i] === qu.answer));
               onScore(pct);
             }}
             className="text-xs px-3 py-1.5 rounded-md bg-[var(--accent)] text-white disabled:opacity-40"
@@ -221,10 +224,11 @@ export function LessonPage({
           <p key={p}>{p}</p>
         ))}
       </div>
+      {lesson.diagram && <LessonDiagram id={lesson.diagram} />}
       {lesson.example && <ExampleBlock calc={lesson.example.calc} caption={lesson.example.caption} instruments={instruments} />}
       {lesson.textExample && <p className="text-xs rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3">Ví dụ: {lesson.textExample}</p>}
       {lesson.examples?.map((ex) => (
-        <div key={ex.title} className="rounded-md border border-[var(--border)] border-l-4 border-l-[var(--accent)] bg-[var(--surface-2)] p-3">
+        <div key={ex.title} className="rounded-md border border-[var(--accent)]/40 bg-[var(--accent-soft)] p-3">
           <p className="text-xs font-semibold text-[var(--accent-text)] mb-1">Ví dụ tình huống: {ex.title}</p>
           <p className="text-sm leading-relaxed">{ex.text}</p>
         </div>
@@ -291,7 +295,7 @@ export function LessonPage({
       )}
       <Card>
         <p className="text-sm font-semibold mb-3">Câu hỏi trắc nghiệm</p>
-        <Quiz questions={lesson.quiz} best={progress?.best} onScore={onScore} />
+        <Quiz lessonId={lesson.id} questions={lesson.quiz} best={progress?.best} onScore={onScore} />
       </Card>
       <SourceLinks sources={lesson.sources} />
       <div className="flex flex-wrap gap-2 items-center">

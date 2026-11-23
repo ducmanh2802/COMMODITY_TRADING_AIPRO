@@ -27,7 +27,9 @@
     "lucide-react": "^0.546.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
+    "topojson-client": "^3.1.0",
     "tsx": "^4.21.0",
+    "world-atlas": "^2.0.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -36,9 +38,11 @@
     "@playwright/test": "^1.65.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/express": "^4.17.21",
+    "@types/geojson": "^7946.0.16",
     "@types/node": "^22.14.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/topojson-client": "^3.1.5",
     "@vitejs/plugin-react": "^6.1.1",
     "autoprefixer": "^10.4.21",
     "eslint": "^10.15.0",

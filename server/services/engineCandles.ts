@@ -33,8 +33,8 @@ export async function loadEngineCandles(
     const key = { instrumentId: instrument.id, contractCode: CONTINUOUS_CONTRACT_CODE, timeframe };
     let contractCode: string = CONTINUOUS_CONTRACT_CODE;
     let { rows } = await repository.queryCandles(key, { limit: ENGINE_CANDLE_LIMIT });
-    if (rows.length === 0 && timeframe === 'D1') {
-      // CSV (CONTINUOUS) is canonical; only when none exists fall back to persisted Yahoo UNOFFICIAL history.
+    if (rows.length === 0 && (timeframe === 'D1' || timeframe === 'M15' || timeframe === 'H1')) {
+      // CSV (CONTINUOUS) is canonical; only when none exists fall back to persisted Yahoo UNOFFICIAL history (D1, and the M15/H1 intraday datasets).
       contractCode = YAHOO_HISTORY_CONTRACT_CODE;
       ({ rows } = await repository.queryCandles({ ...key, contractCode }, { limit: ENGINE_CANDLE_LIMIT }));
     }

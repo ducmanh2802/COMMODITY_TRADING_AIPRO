@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { collection, doc, onSnapshot, query, serverTimestamp, Timestamp, where, writeBatch, type WriteBatch } from 'firebase/firestore';
 import { useAuth } from '../../../contexts/AuthContext';
-import { db, handleFirestoreError, OperationType } from '../../../firebase';
+import { handleFirestoreError, OperationType } from '../../../firebase';
+import { db } from '../../../firestoreDb';
 import {
   EMPTY_STATE,
   LOCAL_KEY,

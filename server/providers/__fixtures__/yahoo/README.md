@@ -8,3 +8,9 @@
   `regularMarketTime` 1794938279 (2026-11-17T17:57:59Z), 4 daily bars dated 05:00Z (midnight New York).
 
 Yahoo data is UNOFFICIAL and for personal use only; this fixture exists solely for tests.
+
+`ZC_F_5d_15m.json`: one real intraday response (used by `server/services/sessions/sessions.test.ts`).
+
+- URL: `https://query1.finance.yahoo.com/v8/finance/chart/ZC%3DF?range=5d&interval=15m`
+- Fetched: 2026-11-23 ~14:00Z, anonymous request with a generic User-Agent; exchangeName CBT, currency USX.
+- Contains null bars and a final in-progress bar; the parser must drop both.

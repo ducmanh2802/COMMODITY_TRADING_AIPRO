@@ -13,7 +13,8 @@ import {
 import { BookOpen, LogIn, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
-import { db, handleFirestoreError, OperationType } from '../../firebase';
+import { handleFirestoreError, OperationType } from '../../firebase';
+import { db } from '../../firestoreDb';
 import type { ExchangeCode, InstrumentDefinition, Timeframe } from '../../shared/types/instrument';
 import { computeJournalExit, localDateTimeToIso, type JournalExitResult } from './journal/journalMath';
 import { fmtFixed, fmtNum, useT } from '../../i18n';

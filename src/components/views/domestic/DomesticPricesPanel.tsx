@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fmtDate, fmtFixed, fmtInt, useI18n } from '../../../i18n';
 import type { TKey } from '../../../i18n/vi';
-import { fetchJsonWithRetry } from '../../../shared/utils/http';
+import { fetchJsonWithRetry, invalidate } from '../../../shared/utils/http';
 import { DOMESTIC_COMMODITIES, type Basis, type DomesticCommodity, type DomesticPricePoint } from '../../../shared/domestic/basis';
 import type { DataQualityStatus } from '../../../shared/types/market';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
@@ -214,6 +214,7 @@ function EntryForm({ onSaved }: { onSaved: () => void }) {
         setMsg({ ok: false, text: t('dm.entry.failed', { msg: detail }) });
         return;
       }
+      invalidate('/api/domestic-prices');
       setMsg({ ok: true, text: t('dm.entry.saved', { n: data.total ?? 0 }) });
       onSaved();
     } catch (e) {

@@ -3,7 +3,8 @@ import { collection, deleteDoc, doc, onSnapshot, query, serverTimestamp, setDoc,
 import { LogIn, NotebookPen, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTerminal } from '../../../contexts/TerminalContext';
-import { db, handleFirestoreError, OperationType } from '../../../firebase';
+import { handleFirestoreError, OperationType } from '../../../firebase';
+import { db } from '../../../firestoreDb';
 import { fmtDateTime, useT, type TKey } from '../../../i18n';
 import {
   EMPTY_DRAFT,

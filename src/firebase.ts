@@ -1,10 +1,8 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { doc, getDocFromServer, getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
@@ -90,10 +88,20 @@ export function handleFirestoreError(
   return info;
 }
 
-export type FirestoreConnectionState = 'CHECKING' | 'ONLINE' | 'OFFLINE_OR_MISCONFIGURED' | 'ERROR';
+/**
+ * Loads Firestore on demand (separate `vendor-firestore` chunk). The main bundle never imports
+ * `firebase/firestore` statically; async callers use this getter, lazy views import `./firestoreDb`.
+ */
+export async function getFirestoreModules() {
+  const [fs, { db }] = await Promise.all([import('firebase/firestore'), import('./firestoreDb')]);
+  return { ...fs, db };
+}
+
+export type FirestoreConnectionState = 'SIGNED_OUT' | 'CHECKING' | 'ONLINE' | 'OFFLINE_OR_MISCONFIGURED' | 'ERROR';
 
 export async function testFirestoreConnection(): Promise<FirestoreConnectionState> {
   try {
+    const { db, doc, getDocFromServer } = await getFirestoreModules();
     await getDocFromServer(doc(db, 'test', 'connection'));
     return 'ONLINE';
   } catch (error) {

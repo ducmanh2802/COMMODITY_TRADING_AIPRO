@@ -13,7 +13,8 @@ import {
 import { Briefcase, LogIn, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
-import { db, handleFirestoreError, OperationType } from '../../firebase';
+import { handleFirestoreError, OperationType } from '../../firebase';
+import { db } from '../../firestoreDb';
 import type { ExchangeCode, ProductCategory } from '../../shared/types/instrument';
 import { fmtFixed, fmtInt, fmtNum, useT } from '../../i18n';
 

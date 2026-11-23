@@ -19,6 +19,7 @@ import { DataStatusBadge } from '../common/DataStatusBadge';
 import { fmtPrice } from '../common/quoteFormat';
 import { fmtNum, hasKey, useT } from '../../i18n';
 import { CotHealthSection } from './cot/CotHealthSection';
+import { SystemStatusPanel } from './SystemStatusPanel';
 
 interface ApiSecretSpec {
   provider: string;
@@ -166,6 +167,7 @@ export function DataHealthView() {
 
   return (
     <div className="space-y-6">
+      <SystemStatusPanel />
       {/* Header & Actions */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
@@ -327,10 +329,10 @@ export function DataHealthView() {
                 ? t('fr.dh.connected', { n: connectedCount, total: providers.length })
                 : t('fr.dh.checking')}
           </p>
-          <p className="text-[11px] text-[var(--text)]/55 break-words" title={`DB: ${firestoreStatus}`}>
+          <p className="text-[11px] text-[var(--text)]/55 break-words" title={`DB: ${firestoreStatus === 'SIGNED_OUT' ? t('fs.signedOut') : firestoreStatus}`}>
             {t('fr.dh.gemini', {
               state: health?.capabilities.geminiServerKeyConfigured ? t('fr.dh.keySet') : t('fr.dh.keyNotSet'),
-              db: firestoreStatus,
+              db: firestoreStatus === 'SIGNED_OUT' ? t('fs.signedOut') : firestoreStatus,
             })}
           </p>
           <p className="text-[11px] text-[var(--text)]/45 break-words">

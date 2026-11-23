@@ -71,6 +71,10 @@ Lựa chọn:
 3. **Chạy trên VM (Compute Engine)** hoặc máy cá nhân nếu cần ổ đĩa bền vững thật sự.
 4. Chuyển sang cơ sở dữ liệu quản lý (ví dụ Cloud SQL): cần sửa mã, hiện chưa hỗ trợ.
 
+## 4b. Thông báo Telegram (tùy chọn)
+
+Đặt `TELEGRAM_BOT_TOKEN` (tạo bot qua @BotFather; trên Cloud Run dùng Secret Manager như mục 2). Không đặt = tính năng tắt hoàn toàn. Khi bật, server chạy worker long-poll `getUpdates` (không cần webhook) và hai job mỗi 5 phút (vùng giá, sự kiện Radar). Người dùng liên kết trong panel Danh sách theo dõi: lấy mã, gửi `/start <mã>` cho bot. Liên kết lưu trong SQLite (xem mục 4: DB tạm thời trên Cloud Run nên liên kết mất khi instance bị xóa). Giữ 1 instance để chỉ một worker poll. Tin nhắn dùng giá trễ/giá đóng cửa, chỉ để theo dõi.
+
 ## 5. Firebase
 
 Đăng nhập (Firebase Auth) và Firestore dùng cấu hình ở `firebase-applet-config.json`, được đóng gói vào image (không dùng biến môi trường). Đây là cấu hình của một project Firebase cụ thể; nếu bạn dùng project riêng, hãy thay file này bằng cấu hình project của bạn.

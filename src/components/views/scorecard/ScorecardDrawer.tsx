@@ -71,7 +71,7 @@ export function ScorecardDrawer({ card, onClose }: Props) {
             <h2 className="text-lg font-semibold text-[var(--text-strong)] truncate">{name}</h2>
             <p className="text-xs font-mono text-[var(--faint)]">{card.instrumentId}</p>
           </div>
-          <button ref={closeRef} type="button" onClick={onClose} aria-label={t('sc.detail.close')} className="p-1.5 rounded-md border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text-strong)]">
+          <button ref={closeRef} type="button" onClick={onClose} aria-label={t('sc.detail.close')} className="p-1.5 min-w-10 min-h-10 inline-flex items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text-strong)]">
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
@@ -85,7 +85,7 @@ export function ScorecardDrawer({ card, onClose }: Props) {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 id="sc-narr" className="text-sm font-semibold text-[var(--text-strong)]">{t('sc.narr.title')}</h3>
             {(card.aiProvider === 'gemini' || card.aiProvider === 'ollama') && (
-              <button type="button" onClick={() => void runAi()} disabled={ai.kind === 'loading'} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-[var(--accent)] text-white disabled:opacity-60">
+              <button type="button" onClick={() => void runAi()} disabled={ai.kind === 'loading'} className="flex items-center gap-1.5 px-3 py-1.5 min-h-10 text-xs rounded-md bg-[var(--accent)] text-white disabled:opacity-60">
                 <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                 {ai.kind === 'loading' ? t('sc.ai.loading') : t('sc.ai.button')}
               </button>

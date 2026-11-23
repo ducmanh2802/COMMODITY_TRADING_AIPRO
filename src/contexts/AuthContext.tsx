@@ -6,18 +6,8 @@ import {
   type User,
 } from 'firebase/auth';
 import {
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  writeBatch,
-} from 'firebase/firestore';
-import {
   auth,
-  db,
+  getFirestoreModules,
   googleProvider,
   handleFirestoreError,
   OperationType,
@@ -78,7 +68,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const [firestoreStatus, setFirestoreStatus] = useState<FirestoreConnectionState>('CHECKING');
+  const [firestoreStatus, setFirestoreStatus] = useState<FirestoreConnectionState>('SIGNED_OUT');
   const [settings, setSettings] = useState<UserRiskSettings>({
     userId: 'anonymous',
     ...DEFAULT_USER_SETTINGS,
@@ -90,8 +80,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // The settings listener is attached only after this, avoiding a race with doc creation.
   const [bootstrappedUid, setBootstrappedUid] = useState<string | null>(null);
 
+  // Firestore (large chunk) is loaded only once a user signs in; anonymous sessions never need it.
+  const signedInUid = user?.uid ?? null;
   useEffect(() => {
+    if (!signedInUid) {
+      setFirestoreStatus('SIGNED_OUT');
+      return;
+    }
     let cancelled = false;
+    setFirestoreStatus('CHECKING');
     testFirestoreConnection()
       .then((state) => {
         if (!cancelled) setFirestoreStatus(state);
@@ -102,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [signedInUid]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
@@ -134,6 +131,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const email = nextUser.email ?? '';
 
       const userPath = `users/${nextUser.uid}`;
+      let fsm: Awaited<ReturnType<typeof getFirestoreModules>>;
+      try {
+        fsm = await getFirestoreModules();
+      } catch (err) {
+        const info = handleFirestoreError(err, OperationType.WRITE, userPath);
+        if (isCurrent()) {
+          setAuthError(`Could not sync user profile: ${info.userMessage}`);
+          setSettingsError(`Could not initialize settings: ${info.userMessage}`);
+          setBootstrappedUid(nextUser.uid);
+        }
+        return;
+      }
+      const { db, doc, getDoc, setDoc, updateDoc, serverTimestamp } = fsm;
       try {
         const userRef = doc(db, 'users', nextUser.uid);
         const userSnap = await getDoc(userRef);
@@ -195,9 +205,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const uid = user.uid;
     const settingsPath = `userSettings/${uid}`;
-    const settingsRef = doc(db, 'userSettings', uid);
-    const unsubSettings = onSnapshot(
-      settingsRef,
+    let disposed = false;
+    let unsubSettings: (() => void) | null = null;
+    void getFirestoreModules()
+      .then(({ db, doc, onSnapshot }) => {
+        if (disposed) return;
+        unsubSettings = onSnapshot(
+      doc(db, 'userSettings', uid),
       (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.data();
@@ -241,8 +255,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSettingsLoaded(true);
       }
     );
+      })
+      .catch((err) => {
+        if (disposed) return;
+        const info = handleFirestoreError(err, OperationType.GET, settingsPath);
+        setSettingsError(`Could not load settings: ${info.userMessage}`);
+        setSettingsLoaded(true);
+      });
 
-    return () => unsubSettings();
+    return () => {
+      disposed = true;
+      unsubSettings?.();
+    };
   }, [authReady, user, bootstrappedUid]);
 
   const signInWithGoogle = useCallback(async () => {
@@ -321,6 +345,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
 
       const settingsPath = `userSettings/${user.uid}`;
+      const { db, doc, collection, writeBatch, serverTimestamp } = await getFirestoreModules();
       // Firestore auto-id: 20 alphanumeric chars, satisfies isValidId in firestore.rules.
       const logRef = doc(collection(db, 'auditLogs'));
 

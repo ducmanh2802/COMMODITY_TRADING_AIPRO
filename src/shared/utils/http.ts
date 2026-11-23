@@ -59,7 +59,21 @@ export async function safeReadJson<T = unknown>(res: Response): Promise<T> {
   return parsed as T;
 }
 
+import { RequestCache, DEFAULT_TTL_MS } from './requestCache';
+
+const getCache = new RequestCache();
+
+/** Volatile endpoints that must always hit the network (pollers / live status). */
+const NO_CACHE_PREFIXES = ['/api/market/quotes', '/api/health', '/api/providers/health', '/api/radar'];
+
+/** Drop cached GET responses whose URL starts with prefix (call after writes). */
+export function invalidate(prefix = ''): void {
+  getCache.invalidate(prefix);
+}
+
 export interface FetchJsonWithRetryOptions {
+  /** Cache TTL in ms for GET reads (default 60 000; 0 disables). Ignored for non-GET and when fetchFn is injected unless set. */
+  ttlMs?: number;
   /** Number of retries after the initial attempt on transient proxy/HTML/network errors. Default 2. */
   retries?: number;
   /** Base delay between retries in ms (multiplied linearly by attempt). Default 650. */
@@ -94,6 +108,34 @@ export async function fetchJsonWithRetry<T = unknown>(
   input: RequestInfo | URL,
   init?: RequestInit,
   options: FetchJsonWithRetryOptions = {}
+): Promise<T> {
+  const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase();
+  const key = typeof input === 'string' ? input : input instanceof URL ? input.toString() : null;
+  const cacheable =
+    method === 'GET' && key !== null && (options.fetchFn === undefined || options.ttlMs !== undefined) && !NO_CACHE_PREFIXES.some((p) => key.startsWith(p));
+  if (!cacheable) return fetchJsonUncached<T>(input, init, options);
+
+  const signal = init?.signal ?? undefined;
+  if (signal?.aborted) throw signal.reason instanceof Error ? signal.reason : new Error('Aborted');
+  // Shared loader must not be tied to one caller's AbortSignal.
+  const { signal: _omit, ...rest } = init ?? {};
+  void _omit;
+  const pending = getCache.get<T>(key, () => fetchJsonUncached<T>(input, rest, options), { ttlMs: options.ttlMs ?? DEFAULT_TTL_MS });
+  if (!signal) return pending;
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(signal.reason instanceof Error ? signal.reason : new Error('Aborted'));
+    signal.addEventListener('abort', onAbort, { once: true });
+    pending.then(
+      (v) => { signal.removeEventListener('abort', onAbort); resolve(v); },
+      (e: unknown) => { signal.removeEventListener('abort', onAbort); reject(e); }
+    );
+  });
+}
+
+async function fetchJsonUncached<T>(
+  input: RequestInfo | URL,
+  init: RequestInit | undefined,
+  options: FetchJsonWithRetryOptions
 ): Promise<T> {
   const retries = options.retries ?? 2;
   const delayMs = options.delayMs ?? 650;

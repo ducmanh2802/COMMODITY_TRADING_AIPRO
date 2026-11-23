@@ -1,0 +1,38 @@
+// Section dictionary: optional Telegram notifications card in the watchlist panel. Keys prefixed 'tg.'.
+export const vi = {
+  'tg.title': 'Nhận thông báo qua Telegram',
+  'tg.off': 'Tính năng này đang tắt trên máy chủ (chưa đặt TELEGRAM_BOT_TOKEN). Thông báo trong ứng dụng vẫn hoạt động khi bạn mở tab.',
+  'tg.intro': 'Nhận nhắc khi giá đóng cửa/giá trễ vào vùng bạn đặt, kể cả khi không mở ứng dụng. Chỉ để theo dõi, không phải khuyến nghị.',
+  'tg.getCode': 'Lấy mã liên kết',
+  'tg.step': 'Mở bot và gửi lệnh: /start {code}',
+  'tg.openBot': 'Mở bot',
+  'tg.waiting': 'Đang chờ bạn gửi lệnh cho bot...',
+  'tg.linked': 'Đã liên kết với Telegram.',
+  'tg.test': 'Gửi thử',
+  'tg.testOk': 'Đã gửi tin nhắn thử.',
+  'tg.testFail': 'Không gửi được tin nhắn thử.',
+  'tg.sync': 'Đồng bộ vùng giá lên máy chủ (nhận thông báo khi không mở tab)',
+  'tg.radar': 'Nhận cả sự kiện Radar mới',
+  'tg.unlink': 'Hủy liên kết',
+  'tg.delayed': 'Thông báo dựa trên giá trễ/giá đóng cửa, không phải giá thời gian thực.',
+  'tg.error': 'Không kết nối được máy chủ.',
+};
+
+export const en: Record<keyof typeof vi, string> = {
+  'tg.title': 'Get notifications via Telegram',
+  'tg.off': 'This feature is off on the server (TELEGRAM_BOT_TOKEN is not set). In-app alerts still work while the tab is open.',
+  'tg.intro': 'Get reminded when the closing/delayed price enters a zone you set, even with the app closed. For monitoring only, not advice.',
+  'tg.getCode': 'Get link code',
+  'tg.step': 'Open the bot and send: /start {code}',
+  'tg.openBot': 'Open bot',
+  'tg.waiting': 'Waiting for you to message the bot...',
+  'tg.linked': 'Linked with Telegram.',
+  'tg.test': 'Send test',
+  'tg.testOk': 'Test message sent.',
+  'tg.testFail': 'Could not send the test message.',
+  'tg.sync': 'Sync price zones to the server (notify when the tab is closed)',
+  'tg.radar': 'Also get new Radar events',
+  'tg.unlink': 'Unlink',
+  'tg.delayed': 'Alerts use delayed/closing prices, not real-time prices.',
+  'tg.error': 'Could not reach the server.',
+};

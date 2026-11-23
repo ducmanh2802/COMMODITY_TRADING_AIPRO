@@ -1,4 +1,3 @@
-import { OverviewDashboard } from './OverviewDashboard';
 import { LazyAnalysisView, LazyChartsView, LazyCotView, LazyDataImportView } from './data/LazyViews';
 import { LazyContractExplorerView, LazyTermStructureView } from './explorer/LazyExplorerViews';
 import { LazyLearnView } from './learn/LazyLearnView';
@@ -28,13 +27,22 @@ import {
 } from './LazyOwnerViews';
 import type { AppModuleId } from '../../shared/types/risk';
 import { useT } from '../../i18n';
+import { lazyWithRetry } from '../common/lazyWithRetry';
+
+// Lazy so the 800+ line dashboard (and its deps) stay out of the main chunk; same retry helper as LazyOwnerViews.
+const LazyOverviewDashboard = lazyWithRetry(
+  () => import('./OverviewDashboard'),
+  (mod) => mod.OverviewDashboard,
+  'Đang tải mô-đun…',
+  'Lazy(OverviewDashboard)'
+);
 
 /** Renders one original (leaf) module view. Hubs reuse these inside tabs; hub ids themselves are not leaves. */
 export function LegacyModule({ id, onOpenInstrument }: { id: AppModuleId; onOpenInstrument?: (symbol: string) => void }) {
   const t = useT();
   switch (id) {
     case 'overview':
-      return <OverviewDashboard />;
+      return <LazyOverviewDashboard />;
     case 'commodity-world':
       return <LazyCommodityWorldView />;
     case 'commodity-profile':

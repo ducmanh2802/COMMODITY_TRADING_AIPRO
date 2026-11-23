@@ -1,4 +1,5 @@
 import * as core from './dict/core';
+import * as fsstatus from './dict/fsstatus';
 import * as dashboard from './dict/dashboard';
 import * as charting from './dict/charting';
 import * as data from './dict/data';
@@ -19,6 +20,7 @@ import * as hedge from './dict/hedge';
 import * as onboarding from './dict/onboarding';
 import * as radar from './dict/radar';
 import * as watchlist from './dict/watchlist';
+import * as telegram from './dict/telegram';
 import * as world from './dict/world';
 import * as ordercalc from './dict/ordercalc';
 import * as benchmark from './dict/benchmark';
@@ -32,10 +34,16 @@ import * as drawing from './dict/drawing';
 import * as weather from './dict/weather';
 import * as news2 from './dict/news2';
 import * as pwa from './dict/pwa';
+import * as replay from './dict/replay';
+import * as learngoal from './dict/learngoal';
+import * as review from './dict/review';
+import * as backup from './dict/backup';
+import * as sessions from './dict/sessions';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
   ...core.vi,
+  ...fsstatus.vi,
   ...dashboard.vi,
   ...charting.vi,
   ...data.vi,
@@ -56,6 +64,7 @@ export const vi = {
   ...onboarding.vi,
   ...radar.vi,
   ...watchlist.vi,
+  ...telegram.vi,
   ...world.vi,
   ...ordercalc.vi,
   ...instrument.vi,
@@ -69,6 +78,11 @@ export const vi = {
   ...weather.vi,
   ...news2.vi,
   ...pwa.vi,
+  ...replay.vi,
+  ...learngoal.vi,
+  ...review.vi,
+  ...backup.vi,
+  ...sessions.vi,
 };
 
 export type TKey = keyof typeof vi;

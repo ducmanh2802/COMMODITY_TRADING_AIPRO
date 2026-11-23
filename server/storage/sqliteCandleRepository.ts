@@ -196,6 +196,20 @@ export class SqliteCandleRepository implements ICandleRepository {
     });
   }
 
+  async deleteCandlesBefore(key: SeriesKey, beforeMs: number): Promise<number> {
+    return this.transaction(() => {
+      const r = this.db
+        .prepare(`DELETE FROM candles WHERE ${SERIES_WHERE} AND ts < ?`)
+        .run(key.instrumentId, key.contractCode, key.timeframe, beforeMs);
+      this.db
+        .prepare(
+          `DELETE FROM datasets WHERE ${SERIES_WHERE} AND NOT EXISTS (SELECT 1 FROM candles WHERE candles.dataset_id = datasets.id)`
+        )
+        .run(key.instrumentId, key.contractCode, key.timeframe);
+      return Number(r.changes);
+    });
+  }
+
   async queryCandles(key: SeriesKey, query: CandleQuery = {}): Promise<CandleQueryResult> {
     const fromMs = query.fromMs ?? Number.MIN_SAFE_INTEGER;
     const toMs = query.toMs ?? Number.MAX_SAFE_INTEGER;

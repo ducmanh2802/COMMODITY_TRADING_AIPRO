@@ -1,4 +1,5 @@
 import type { AppModuleId } from '../../../../shared/types/risk';
+import type { DiagramId } from '../diagrams/ids';
 
 export interface Source {
   label: string;
@@ -48,6 +49,8 @@ export interface Lesson {
   checklist?: { text: string; module?: AppModuleId; moduleLabel?: string }[];
   /** Statements that must be re-verified with MXV / the broker. */
   uncertain?: string[];
+  /** Inline SVG diagram shown after the body. */
+  diagram?: DiagramId;
 }
 
 export interface Level {

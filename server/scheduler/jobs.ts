@@ -50,6 +50,11 @@ export interface SchedulerDeps {
   fredPublicSync?: (() => Promise<{ synced: number; error?: string }>) | null;
   /** Yahoo UNOFFICIAL daily history (10y backfill once, then incremental); only passed when YAHOO_ENABLED. */
   yahooHistorySync?: (() => Promise<{ results: Array<{ status: string }> }>) | null;
+  /** Yahoo UNOFFICIAL intraday (M15 + H1) history with retention; only passed when YAHOO_ENABLED. */
+  yahooIntradaySync?: (() => Promise<{ results: Array<{ status: string }> }>) | null;
+  /** T67: Telegram zone + radar checks every 5 min; only passed when TELEGRAM_BOT_TOKEN is set. */
+  telegramZones?: (() => Promise<unknown>) | null;
+  telegramRadar?: (() => Promise<unknown>) | null;
   env?: Record<string, string | undefined>;
   now?: () => Date;
 }
@@ -160,6 +165,43 @@ export function buildSchedulerJobs(deps: SchedulerDeps): SchedulerJob[] {
         if (r.results.length > 0 && r.results.every((x) => x.status === 'FAILED' || x.status === 'UNAVAILABLE')) {
           throw new Error('Yahoo history: no instrument synced.');
         }
+      },
+    });
+  }
+  if (deps.yahooIntradaySync) {
+    const yahooIntradaySync = deps.yahooIntradaySync;
+    jobs.push({
+      id: 'yahoo-intraday',
+      description: 'Yahoo M15/H1 history for session analysis (startup + every 2 h, >= 20 sessions kept; UNOFFICIAL)',
+      next: (n) => new Date(n.getTime() + 2 * HOUR),
+      runOnStart: true,
+      async run() {
+        const r = await yahooIntradaySync();
+        if (r.results.length > 0 && r.results.every((x) => x.status === 'FAILED' || x.status === 'UNAVAILABLE')) {
+          throw new Error('Yahoo intraday: no instrument synced.');
+        }
+      },
+    });
+  }
+  if (deps.telegramZones) {
+    const run = deps.telegramZones;
+    jobs.push({
+      id: 'telegram-zones',
+      description: 'Telegram: watchlist price-zone alerts on latest delayed/closing prices (every 5 min, only with TELEGRAM_BOT_TOKEN)',
+      next: (n) => new Date(n.getTime() + 5 * MIN),
+      async run() {
+        await run();
+      },
+    });
+  }
+  if (deps.telegramRadar) {
+    const run = deps.telegramRadar;
+    jobs.push({
+      id: 'telegram-radar',
+      description: 'Telegram: new Radar events (every 5 min, only with TELEGRAM_BOT_TOKEN)',
+      next: (n) => new Date(n.getTime() + 5 * MIN),
+      async run() {
+        await run();
       },
     });
   }

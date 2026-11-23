@@ -147,6 +147,11 @@ export interface ICandleRepository {
   getDataset(id: string): Promise<DatasetRecord | null>;
   /** Deletes a dataset and every candle it owns. */
   deleteDataset(id: string): Promise<{ deleted: boolean; candlesDeleted: number }>;
+  /**
+   * Retention: deletes the candles of ONE series with timestamp < beforeMs, then the dataset records of that
+   * series that no longer own any candle. Returns the number of candles removed.
+   */
+  deleteCandlesBefore(key: SeriesKey, beforeMs: number): Promise<number>;
   queryCandles(key: SeriesKey, query?: CandleQuery): Promise<CandleQueryResult>;
   /** Computes what an import would do without writing anything (dry run). */
   previewImport(key: SeriesKey, rows: CandleRow[], mode: ImportMode, meta: ImportSeriesMeta): Promise<ImportPlan>;
@@ -310,6 +315,23 @@ export class InMemoryCandleRepository implements ICandleRepository {
       }
     }
     return { deleted: true, candlesDeleted };
+  }
+
+  async deleteCandlesBefore(key: SeriesKey, beforeMs: number): Promise<number> {
+    const rows = this.series.get(seriesKeyString(key));
+    if (!rows) return 0;
+    let removed = 0;
+    for (const ts of [...rows.keys()]) {
+      if (ts < beforeMs) {
+        rows.delete(ts);
+        removed += 1;
+      }
+    }
+    const owners = new Set([...rows.values()].map((r) => r.datasetId));
+    for (const d of [...this.datasets.values()]) {
+      if (datasetMatchesSeries(d, key) && !owners.has(d.id)) this.datasets.delete(d.id);
+    }
+    return removed;
   }
 
   async queryCandles(key: SeriesKey, query: CandleQuery = {}): Promise<CandleQueryResult> {

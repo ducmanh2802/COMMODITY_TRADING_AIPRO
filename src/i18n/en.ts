@@ -1,4 +1,5 @@
 import * as core from './dict/core';
+import * as fsstatus from './dict/fsstatus';
 import * as dashboard from './dict/dashboard';
 import * as charting from './dict/charting';
 import * as data from './dict/data';
@@ -19,6 +20,7 @@ import * as hedge from './dict/hedge';
 import * as onboarding from './dict/onboarding';
 import * as radar from './dict/radar';
 import * as watchlist from './dict/watchlist';
+import * as telegram from './dict/telegram';
 import * as world from './dict/world';
 import * as ordercalc from './dict/ordercalc';
 import * as benchmark from './dict/benchmark';
@@ -32,11 +34,17 @@ import * as drawing from './dict/drawing';
 import * as weather from './dict/weather';
 import * as news2 from './dict/news2';
 import * as pwa from './dict/pwa';
+import * as replay from './dict/replay';
+import * as learngoal from './dict/learngoal';
+import * as review from './dict/review';
+import * as backup from './dict/backup';
+import * as sessions from './dict/sessions';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
 export const en: Record<TKey, string> = {
   ...core.en,
+  ...fsstatus.en,
   ...dashboard.en,
   ...charting.en,
   ...data.en,
@@ -57,6 +65,7 @@ export const en: Record<TKey, string> = {
   ...onboarding.en,
   ...radar.en,
   ...watchlist.en,
+  ...telegram.en,
   ...world.en,
   ...ordercalc.en,
   ...instrument.en,
@@ -70,4 +79,9 @@ export const en: Record<TKey, string> = {
   ...weather.en,
   ...news2.en,
   ...pwa.en,
+  ...replay.en,
+  ...learngoal.en,
+  ...review.en,
+  ...backup.en,
+  ...sessions.en,
 };

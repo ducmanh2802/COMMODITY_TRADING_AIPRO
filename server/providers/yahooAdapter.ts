@@ -882,6 +882,48 @@ export class YahooFinanceAdapter implements MarketDataProvider {
     };
   }
 
+  /** Intraday candles (M15: 15m/1mo, H1: 60m/3mo), UNOFFICIAL and delayed. One request per call. */
+  async getIntradayCandles(
+    symbol: string,
+    timeframe: YahooIntradayTimeframe
+  ): Promise<{ candles: MarketCandle[]; status: DataQualityStatus; reason?: string }> {
+    if (!isYahooEnabled()) {
+      return { candles: [], status: 'UNAVAILABLE', reason: 'Yahoo adapter disabled (YAHOO_ENABLED is not true).' };
+    }
+    const inst = await instrumentRepository.findBySymbol(symbol);
+    if (!inst) return { candles: [], status: 'UNAVAILABLE', reason: `Instrument ${symbol} is not registered.` };
+    const mapping = YahooFinanceAdapter.mappingFor(inst.exchangeSymbol);
+    if (!mapping) {
+      return { candles: [], status: 'UNAVAILABLE', reason: `UNSUPPORTED - ${YahooFinanceAdapter.unsupportedReason(inst.exchangeSymbol)}` };
+    }
+    const spec = YAHOO_INTRADAY_SPEC[timeframe];
+    const fetched = await this.fetchChart(mapping.yahooSymbol, spec.range, spec.interval);
+    if (!fetched.ok) {
+      this.lastError = fetched.error;
+      return { candles: [], status: 'UNAVAILABLE', reason: `Yahoo request failed: ${fetched.error}` };
+    }
+    const parsed = parseYahooIntradayCandles(fetched.result, inst, mapping, timeframe, this.now());
+    if (!parsed.ok) {
+      this.lastError = parsed.reason;
+      return { candles: [], status: 'INVALID', reason: parsed.reason };
+    }
+    if (parsed.candles.length === 0) {
+      return { candles: [], status: 'UNAVAILABLE', reason: 'Yahoo returned no complete intraday bars.' };
+    }
+    const validation = validateCandleSeries(parsed.candles);
+    if (!validation.valid) {
+      this.lastError = validation.errors.join('; ');
+      return { candles: [], status: 'INVALID', reason: this.lastError };
+    }
+    this.lastSyncAt = new Date(this.now()).toISOString();
+    this.lastError = null;
+    return {
+      candles: validation.validCandles,
+      status: 'HISTORICAL',
+      reason: `UNOFFICIAL Yahoo ${mapping.yahooSymbol} ${timeframe} (${spec.range}), delayed ~${mapping.delayMinutes} min, ${YAHOO_CONTRACT_LABEL}; personal use only.${parsed.droppedIncomplete ? ` ${parsed.droppedIncomplete} incomplete bar(s) dropped.` : ''}${parsed.droppedOhlc ? ` ${parsed.droppedOhlc} bar(s) with inconsistent OHLC dropped.` : ''}${parsed.dropped ? ` ${parsed.dropped} null/duplicate bar(s) dropped.` : ''}`,
+    };
+  }
+
   async getVolume(): Promise<{ volume: number | null; timestamp: string | null; status: DataQualityStatus }> {
     return { volume: null, timestamp: null, status: 'UNAVAILABLE' };
   }
@@ -988,4 +1030,86 @@ export function parseYahooDailyCandles(
   // Keep one bar per trading date (last wins).
   const unique = candles.filter((c, i) => i === candles.length - 1 || candles[i + 1].timestamp !== c.timestamp);
   return { ok: true, candles: unique, dropped: dropped + (candles.length - unique.length) };
+}
+
+export type YahooIntradayTimeframe = 'M15' | 'H1';
+
+/** Yahoo limits: <1h bars <= 60 days, 1h bars <= 730 days. We ask for the smallest range that covers retention. */
+export const YAHOO_INTRADAY_SPEC: Readonly<Record<YahooIntradayTimeframe, { interval: string; range: string; barMs: number }>> = {
+  M15: { interval: '15m', range: '1mo', barMs: 15 * 60_000 },
+  H1: { interval: '60m', range: '3mo', barMs: 60 * 60_000 },
+};
+
+/**
+ * Parses an intraday chart response into candles (bar START time, UTC ISO) in our quotation unit.
+ * Dropped, never repaired: null/non-positive bars, bars with inconsistent OHLC, and bars not yet complete
+ * (start + bar length > now - exchange delay), so append-only storage never freezes a half-formed bar.
+ */
+export function parseYahooIntradayCandles(
+  result: YahooChartResult,
+  inst: InstrumentDefinition,
+  mapping: YahooSymbolMapping,
+  timeframe: YahooIntradayTimeframe,
+  nowMs: number
+): { ok: true; candles: MarketCandle[]; dropped: number; droppedOhlc: number; droppedIncomplete: number } | { ok: false; reason: string } {
+  const meta = result.meta ?? {};
+  if (meta.exchangeName !== mapping.expectedExchangeName || meta.currency !== mapping.expectedCurrency) {
+    return {
+      ok: false,
+      reason: `Yahoo ${mapping.yahooSymbol} returned ${meta.exchangeName ?? '?'}/${meta.currency ?? '?'}, expected ${mapping.expectedExchangeName}/${mapping.expectedCurrency}; refused.`,
+    };
+  }
+  const conv = yahooUnitConversion(meta.currency, inst.specification.quotationUnit);
+  if (!conv.ok) return { ok: false, reason: conv.reason };
+  const barMs = YAHOO_INTRADAY_SPEC[timeframe].barMs;
+  const completeBefore = nowMs - mapping.delayMinutes * 60_000;
+  const ts = result.timestamp ?? [];
+  const q = result.indicators?.quote?.[0] ?? {};
+  const retrievedAt = new Date(nowMs).toISOString();
+  const candles: MarketCandle[] = [];
+  let dropped = 0;
+  let droppedOhlc = 0;
+  let droppedIncomplete = 0;
+  for (let i = 0; i < ts.length; i++) {
+    const open = q.open?.[i];
+    const high = q.high?.[i];
+    const low = q.low?.[i];
+    const close = q.close?.[i];
+    const vol = q.volume?.[i];
+    if (typeof ts[i] !== 'number' || [open, high, low, close].some((v) => typeof v !== 'number' || !Number.isFinite(v) || v <= 0)) {
+      dropped += 1;
+      continue;
+    }
+    const o = open as number;
+    const h = high as number;
+    const l = low as number;
+    const c = close as number;
+    if (h < l || h < o || h < c || l > o || l > c) {
+      droppedOhlc += 1;
+      continue;
+    }
+    if (ts[i] * 1000 + barMs > completeBefore) {
+      droppedIncomplete += 1;
+      continue;
+    }
+    candles.push({
+      symbol: inst.exchangeSymbol,
+      exchange: inst.exchange,
+      timeframe: timeframe satisfies Timeframe,
+      timestamp: new Date(ts[i] * 1000).toISOString(),
+      retrievedAt,
+      open: applyUnitFactor(o, conv.factor),
+      high: applyUnitFactor(h, conv.factor),
+      low: applyUnitFactor(l, conv.factor),
+      close: applyUnitFactor(c, conv.factor),
+      volume: typeof vol === 'number' && Number.isFinite(vol) && vol >= 0 ? vol : null,
+      openInterest: null,
+      isComplete: true,
+      source: `${YAHOO_PROVIDER_ID}:${mapping.yahooSymbol}`,
+      status: 'HISTORICAL',
+    });
+  }
+  candles.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const unique = candles.filter((c, i) => i === candles.length - 1 || candles[i + 1].timestamp !== c.timestamp);
+  return { ok: true, candles: unique, dropped: dropped + (candles.length - unique.length), droppedOhlc, droppedIncomplete };
 }

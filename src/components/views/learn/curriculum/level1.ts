@@ -67,6 +67,7 @@ export const LEVEL1: Level = {
     },
     {
       id: 'l1-margin',
+      diagram: 'margin',
       title: 'Ký quỹ ban đầu, duy trì và đòn bẩy',
       objective: 'Hiểu ký quỹ, gọi ký quỹ và vì sao đòn bẩy khuếch đại cả lãi lẫn lỗ.',
       body: [
@@ -107,6 +108,7 @@ export const LEVEL1: Level = {
     },
     {
       id: 'l1-expiry-roll',
+      diagram: 'roll',
       title: 'Đáo hạn, chuyển kỳ (roll), FND và LTD',
       objective: 'Hiểu LTD, FND và vì sao nhà đầu cơ phải đóng hoặc roll sớm.',
       body: [
@@ -127,6 +129,7 @@ export const LEVEL1: Level = {
     },
     {
       id: 'l1-hedger-spec',
+      diagram: 'hedge',
       title: 'Nhà phòng hộ và nhà đầu cơ',
       objective: 'Phân biệt hai nhóm người chơi chính và vai trò của họ.',
       body: [

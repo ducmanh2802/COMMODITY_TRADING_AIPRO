@@ -6,6 +6,8 @@
  * - clock / timers / randomness injectable so tests use a fake clock and no network
  */
 
+import { logger } from '../lib/logger.ts';
+
 export interface SchedulerJob {
   id: string;
   description: string;
@@ -94,7 +96,7 @@ export class Scheduler {
     this.random = options.random ?? Math.random;
     this.jitterMs = options.jitterMs ?? 60_000;
     this.startupDelayMs = options.startupDelayMs ?? 10_000;
-    this.log = options.log ?? ((m) => console.warn(m));
+    this.log = options.log ?? ((m) => logger.warn(m));
     for (const job of jobs) {
       this.states.set(job.id, {
         job,

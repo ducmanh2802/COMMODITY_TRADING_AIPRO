@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
+import { MAP_H, MAP_W, projectX, projectY } from './mapProjection';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { fmtDateTime, useT } from '../../../i18n';
 import type { TFunction } from '../../../i18n';
@@ -39,28 +40,46 @@ function centroid(r: WeatherRegionResult) {
   return { lat, lon };
 }
 
-/** Equirectangular sketch (graticule + markers); no map library. */
+const LandLayer = lazy(() => import('./LandLayer'));
+const MARKER_SCALE = 2.6;
+
+/** Equirectangular map (cropped to growing-region band): lazy land outlines, graticule, focusable markers. */
 function RegionMap({ regions, onPick, t }: { regions: WeatherRegionResult[]; onPick: (id: string) => void; t: TFunction }) {
-  const W = 360;
-  const H = 180;
-  const x = (lon: number) => ((lon + 180) / 360) * W;
-  const y = (lat: number) => ((90 - lat) / 180) * H;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t('wx.mapLabel')} className="w-full h-auto rounded-md bg-[var(--surface-2)] border border-[var(--border)]">
-      {[-60, -30, 0, 30, 60].map((lat) => (
-        <line key={`la${lat}`} x1={0} x2={W} y1={y(lat)} y2={y(lat)} stroke={lat === 0 ? 'var(--chart-axis)' : 'var(--chart-grid)'} strokeWidth={1} />
+    <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} role="group" aria-label={t('wx.mapLabel')} className="w-full h-auto rounded-md bg-[var(--surface)] border border-[var(--border)]">
+      <Suspense fallback={null}>
+        <LandLayer />
+      </Suspense>
+      {[-30, 0, 30].map((lat) => (
+        <line key={`la${lat}`} x1={0} x2={MAP_W} y1={projectY(lat)} y2={projectY(lat)} stroke={lat === 0 ? 'var(--chart-axis)' : 'var(--chart-grid)'} strokeWidth={1} />
       ))}
-      {[-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150].map((lon) => (
-        <line key={`lo${lon}`} x1={x(lon)} x2={x(lon)} y1={0} y2={H} stroke="var(--chart-grid)" strokeWidth={1} />
+      {[-90, -60, -30, 0, 30, 60, 90, 120].map((lon) => (
+        <line key={`lo${lon}`} x1={projectX(lon)} x2={projectX(lon)} y1={0} y2={MAP_H} stroke="var(--chart-grid)" strokeWidth={1} />
       ))}
       {regions.map((r) => {
         const c = centroid(r);
-        const color = SEV_COLOR[severity(r)];
+        const sev = severity(r);
+        const color = SEV_COLOR[sev];
+        const label = `${r.nameVi}: ${t(`wx.legend.${sev}` as TKey)}`;
         return (
-          <g key={r.regionId} className="cursor-pointer" onClick={() => onPick(r.regionId)}>
+          <g
+            key={r.regionId}
+            role="button"
+            tabIndex={0}
+            aria-label={label}
+            className="cursor-pointer focus:outline-none focus-visible:[&>circle:first-of-type]:stroke-[var(--accent)]"
+            transform={`translate(${projectX(c.lon)} ${projectY(c.lat)}) scale(${MARKER_SCALE})`}
+            onClick={() => onPick(r.regionId)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onPick(r.regionId);
+              }
+            }}
+          >
             <title>{r.nameVi}</title>
-            <circle cx={x(c.lon)} cy={y(c.lat)} r={9} fill={color} opacity={0.18} />
-            <SevShape sev={severity(r)} cx={x(c.lon)} cy={y(c.lat)} color={color} />
+            <circle cx={0} cy={0} r={9} fill={color} opacity={0.18} stroke="transparent" strokeWidth={1.5} />
+            <SevShape sev={sev} cx={0} cy={0} color={color} />
           </g>
         );
       })}

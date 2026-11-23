@@ -27,6 +27,7 @@ export const LEVEL4: Level = {
     },
     {
       id: 'l4-technical',
+      diagram: 'candle',
       title: 'Kỹ thuật: MA, RSI, ATR, khối lượng',
       objective: 'Hiểu bốn công cụ phổ biến đo cái gì và không đo cái gì.',
       body: [
@@ -46,6 +47,7 @@ export const LEVEL4: Level = {
     },
     {
       id: 'l4-curve',
+      diagram: 'curve',
       title: 'Cấu trúc kỳ hạn: contango và backwardation',
       objective: 'Đọc đường cong giá các tháng và hiểu ý nghĩa với roll.',
       body: [

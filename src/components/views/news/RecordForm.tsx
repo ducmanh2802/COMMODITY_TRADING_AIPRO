@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { getAdminToken } from '../../../api/dataApi';
+import { invalidate } from '../../../shared/utils/http';
 import type { FundamentalMacroRecord, MarketDirection } from '../../../shared/types/analysis';
 import { hasKey, tr, useT } from '../../../i18n';
 
@@ -84,6 +85,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message ?? t('news.err.validation'));
+      invalidate('/api/fundamental');
       setSource('');
       setHeadline('');
       setSummary('');

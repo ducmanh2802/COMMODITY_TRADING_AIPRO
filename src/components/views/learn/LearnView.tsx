@@ -7,8 +7,10 @@ import { CURRICULUM } from './curriculum';
 import { GLOSSARY } from './glossary';
 import { filterSlang, SLANG, SLANG_TAGS, type SlangTag } from './glossarySlang';
 import { MONEY_WAYS, RISK_WARNINGS } from './learnContent';
+import { LearnGoalCard } from './LearnGoalCard';
 import { LessonPage } from './LessonPage';
 import { loadProgress, saveProgress, type LearnProgress } from './progress';
+import { ReviewCard } from './ReviewSession';
 
 type Page = { kind: 'home' } | { kind: 'lesson'; id: string } | { kind: 'glossary' } | { kind: 'extras' };
 
@@ -267,6 +269,8 @@ export default function LearnView() {
           </>
         }
       />
+      <ReviewCard />
+      <LearnGoalCard lessons={progress.lessons} onOpen={(id) => go({ kind: 'lesson', id })} />
       <Card tone="warning">
         <p className="text-xs">
           <strong>Tài liệu giáo dục, không phải tư vấn đầu tư.</strong> Giao dịch hợp đồng tương lai có đòn bẩy và có thể mất nhiều hơn số tiền bạn nghĩ. Chỉ giao dịch qua thành viên được MXV cấp phép. Nội dung đánh dấu "cần kiểm tra lại với MXV/công ty môi giới" chưa được xác minh với văn bản chính thức.
