@@ -28,6 +28,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
     timeframe,
     setTimeframe,
     health,
+    lastHealthUpdatedAt,
     loading,
     refreshBackendData,
     setActiveModule,
@@ -120,7 +121,16 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
         </div>
 
         <div className="hidden 2xl:flex items-center gap-3 h-9 px-3 bg-[var(--bg)] border border-[var(--border)] rounded-[10px]">
-          <DataStatusBadge status={overallDataStatus} />
+          <button
+            type="button"
+            onClick={() => setActiveModule('data-health')}
+            data-testid="topbar-data-health-status"
+            data-health-status={overallDataStatus}
+            title={lastHealthUpdatedAt ? new Date(lastHealthUpdatedAt).toLocaleTimeString() : undefined}
+            className="inline-flex items-center hover:opacity-85 transition-opacity"
+          >
+            <DataStatusBadge status={overallDataStatus} />
+          </button>
           <span className="text-[var(--border)]" aria-hidden="true">
             |
           </span>

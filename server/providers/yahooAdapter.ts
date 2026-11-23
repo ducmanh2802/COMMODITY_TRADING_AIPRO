@@ -1112,19 +1112,31 @@ export function parseYahooWeeklyCandles(
   return { ok: true, candles: unique, dropped: dropped + (candles.length - unique.length) };
 }
 
+const TIMEFRAME_INTERVAL_SEC: Partial<Record<Timeframe, number>> = {
+  M1: 60,
+  M5: 300,
+  M15: 900,
+  M30: 1800,
+  H1: 3600,
+  H4: 14400,
+};
+
 /**
  * Parses an intraday Yahoo chart response (`1m`, `5m`, `15m`, `1h`) into UTC candles.
- * Drops bars whose closing boundary `[tsSec, tsSec + intervalSec)` has not completed as of `nowMs`.
- * Exported for tests.
+ * Drops bars whose closing boundary `[tsSec, tsSec + intervalSec)` has not completed as of `nowMs - delayMinutes`.
+ * Supports both `(result, inst, mapping, tf, nowMs)` and `(result, inst, mapping, tf, intervalSec, nowMs)`.
  */
 export function parseYahooIntradayCandles(
   result: YahooChartResult,
   inst: InstrumentDefinition,
   mapping: YahooSymbolMapping,
   timeframe: Timeframe,
-  intervalSec: number,
-  nowMs: number
-): { ok: true; candles: MarketCandle[]; dropped: number } | { ok: false; reason: string } {
+  intervalSecOrNowMs: number,
+  maybeNowMs?: number
+): { ok: true; candles: MarketCandle[]; dropped: number; droppedIncomplete: number } | { ok: false; reason: string } {
+  const intervalSec =
+    maybeNowMs === undefined ? (TIMEFRAME_INTERVAL_SEC[timeframe] ?? 3600) : intervalSecOrNowMs;
+  const nowMs = maybeNowMs === undefined ? intervalSecOrNowMs : maybeNowMs;
   const meta = result.meta ?? {};
   if (meta.exchangeName !== mapping.expectedExchangeName || meta.currency !== mapping.expectedCurrency) {
     return {
@@ -1137,8 +1149,10 @@ export function parseYahooIntradayCandles(
   const ts = result.timestamp ?? [];
   const q = result.indicators?.quote?.[0] ?? {};
   const retrievedAt = new Date(nowMs).toISOString();
+  const cutoffMs = nowMs - (mapping.delayMinutes ?? 0) * 60_000;
   const candles: MarketCandle[] = [];
   let dropped = 0;
+  let droppedIncomplete = 0;
   for (let i = 0; i < ts.length; i++) {
     const open = q.open?.[i];
     const high = q.high?.[i];
@@ -1152,8 +1166,9 @@ export function parseYahooIntradayCandles(
       dropped += 1;
       continue;
     }
-    if ((ts[i] + intervalSec) * 1000 > nowMs) {
+    if ((ts[i] + intervalSec) * 1000 > cutoffMs) {
       dropped += 1; // bar interval has not yet closed
+      droppedIncomplete += 1;
       continue;
     }
     candles.push({
@@ -1175,5 +1190,5 @@ export function parseYahooIntradayCandles(
   }
   candles.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
   const unique = candles.filter((c, i) => i === candles.length - 1 || candles[i + 1].timestamp !== c.timestamp);
-  return { ok: true, candles: unique, dropped: dropped + (candles.length - unique.length) };
+  return { ok: true, candles: unique, dropped: dropped + (candles.length - unique.length), droppedIncomplete };
 }

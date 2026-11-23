@@ -7,7 +7,9 @@ import type { Scorecard, ScorecardListResponse } from '../../../shared/types/sco
 import type { TodayResponse } from '../../../shared/types/today';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
 import { buildVietnamEconomicCalendar } from '../../../shared/utils/vietnamCalendar';
+import { fmtDateTime } from '../../../i18n';
 import { LazySection } from '../../common/LazySection';
+import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { Card } from '../../ui/Card';
 import { EmptyState } from '../../ui/EmptyState';
 import { SectionHeader } from '../../ui/SectionHeader';
@@ -33,7 +35,7 @@ function trendDir(c: Scorecard): -1 | 0 | 1 {
 /** "Hôm nay nên chú ý gì": visual, neutral pointers built only from existing endpoints. */
 export function TodayPanel() {
   const { t, lang } = useI18n();
-  const { openInstrumentIn } = useTerminal();
+  const { openInstrumentIn, health, lastHealthUpdatedAt, setActiveModule } = useTerminal();
   const [score, setScore] = useState<ScorecardListResponse | null>(null);
   const [cycle, setCycle] = useState<CycleMarketOverview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -337,9 +339,32 @@ export function TodayPanel() {
     );
   }
 
+  const overallDataStatus = health?.capabilities.marketDataOverallStatus ?? 'UNAVAILABLE';
+  const healthCheckedLabel = lastHealthUpdatedAt ? fmtDateTime(lastHealthUpdatedAt) : '—';
+  const healthLabel = t('n2.td.healthAction', {
+    connected: health?.capabilities.marketDataProvidersConnected ?? 0,
+    total: health?.capabilities.marketDataProvidersTotal ?? 0,
+    time: healthCheckedLabel,
+  });
+
   return (
     <div className="space-y-4">
-      <SectionHeader title={t('n2.td.title')} />
+      <SectionHeader
+        title={t('n2.td.title')}
+        actions={
+          <button
+            type="button"
+            data-testid="dashboard-data-health-status"
+            data-health-status={overallDataStatus}
+            onClick={() => setActiveModule('data-health')}
+            aria-label={healthLabel}
+            title={healthLabel}
+            className="inline-flex items-center rounded-full hover:opacity-85 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+          >
+            <DataStatusBadge status={overallDataStatus} />
+          </button>
+        }
+      />
       {body}
       <FundamentalNewsFeed />
     </div>

@@ -147,6 +147,7 @@ export const vi = {
   'n2.td.feed.showFewer': 'Thu gọn danh sách',
   'n2.td.feed.lastPush': 'Cập nhật lúc {time}',
   'n2.td.feed.loadError': 'Không thể đồng bộ luồng tin cơ bản. Hãy thử làm mới.',
+  'n2.td.healthAction': 'Sức khoẻ dữ liệu: {connected}/{total} nguồn kết nối · kiểm tra lúc {time}',
 };
 
 export const en: Record<keyof typeof vi, string> = {
@@ -297,4 +298,5 @@ export const en: Record<keyof typeof vi, string> = {
   'n2.td.feed.showFewer': 'Show fewer',
   'n2.td.feed.lastPush': 'Synced {time}',
   'n2.td.feed.loadError': 'Unable to sync live fundamental stream. Try refreshing.',
+  'n2.td.healthAction': 'Data health: {connected}/{total} providers connected · checked {time}',
 };

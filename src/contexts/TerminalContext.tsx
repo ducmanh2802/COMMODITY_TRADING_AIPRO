@@ -5,9 +5,15 @@ import type { FullDataHealthReport } from '../shared/types/dataHealth';
 import type { AppModuleId, PhaseModuleDescriptor } from '../shared/types/risk';
 import type { RoadmapPhase } from '../shared/architecture';
 import { fetchJsonWithRetry, safeReadJson } from '../shared/utils/http';
+import {
+  HEALTH_POLL_INTERVAL_MS,
+  hasHealthSnapshotChanged,
+  startActiveHealthPoller,
+} from '../shared/utils/healthPolling';
 
 /** Auto-refresh period for quotes (ms); paused while the tab is hidden. */
 export const QUOTE_AUTO_REFRESH_MS = 20_000;
+export { HEALTH_POLL_INTERVAL_MS };
 
 export interface BackendHealthPayload {
   status: string;
@@ -25,6 +31,8 @@ export interface BackendHealthPayload {
     firebaseConfigured: boolean;
     marketDataProvidersTotal: number;
     marketDataProvidersConnected: number;
+    marketDataLiveProvidersConnected?: number;
+    marketDataHistoricalProvidersConnected?: number;
     marketDataOverallStatus: DataQualityStatus;
   };
 }
@@ -91,6 +99,9 @@ interface TerminalContextValue {
   /** Epoch ms of the last successful quotes response (null before the first). */
   lastUpdatedAt: number | null;
   refreshQuotes: () => Promise<void>;
+  /** Epoch ms of the last successful `/api/health` response (null before the first). */
+  lastHealthUpdatedAt: number | null;
+  refreshHealth: () => Promise<void>;
   syncProviderFeeds: (options?: {
     symbol?: string;
     timeframe?: Timeframe;
@@ -125,7 +136,12 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const warmupPollsRef = useRef(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+  const [lastHealthUpdatedAt, setLastHealthUpdatedAt] = useState<number | null>(null);
   const quotesInFlightRef = useRef(false);
+  const healthInFlightRef = useRef(false);
+  const healthRef = useRef<BackendHealthPayload | null>(null);
+  const activeModuleRef = useRef<AppModuleId>(activeModule);
+  activeModuleRef.current = activeModule;
 
   const refreshBackendData = useCallback(async () => {
     setLoading(true);
@@ -164,7 +180,11 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
         FullDataHealthReport | null,
       ];
 
-      if (healthJson) setHealth(healthJson);
+      if (healthJson) {
+        healthRef.current = healthJson;
+        setHealth(healthJson);
+        setLastHealthUpdatedAt(Date.now());
+      }
       if (provJson) setProviders(provJson.providers ?? []);
       if (instJson) setInstruments(instJson.instruments ?? []);
       if (quotesJson) {
@@ -206,6 +226,42 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       // Keep the previous quotes; their own timestamps/status keep ageing honestly.
     } finally {
       quotesInFlightRef.current = false;
+    }
+  }, []);
+
+  /**
+   * Health-only poll (`/api/health`); runs every 60s while the app is active.
+   * Silently syncs providers & detailed health report if capability status changed
+   * or when the user is viewing Data Health.
+   */
+  const refreshHealth = useCallback(async () => {
+    if (healthInFlightRef.current) return;
+    healthInFlightRef.current = true;
+    try {
+      const nextHealth = await fetchJsonWithRetry<BackendHealthPayload>('/api/health', undefined, { retries: 1 });
+      if (!nextHealth) return;
+      const prevHealth = healthRef.current;
+      const changed = hasHealthSnapshotChanged(prevHealth, nextHealth);
+      healthRef.current = nextHealth;
+      setHealth(nextHealth);
+      setLastHealthUpdatedAt(Date.now());
+
+      if (changed || activeModuleRef.current === 'data-health') {
+        const [provJson, reportJson] = await Promise.all([
+          fetchJsonWithRetry<{ providers?: ProviderHealth[] }>('/api/providers/health', undefined, { retries: 0 }).catch(
+            () => null
+          ),
+          fetchJsonWithRetry<FullDataHealthReport>('/api/data/health-report', undefined, { retries: 0 }).catch(
+            () => null
+          ),
+        ]);
+        if (provJson) setProviders(provJson.providers ?? []);
+        if (reportJson && Array.isArray(reportJson.commodities)) setDataHealthReport(reportJson);
+      }
+    } catch {
+      // Keep the previous health snapshot on transient background poll failure.
+    } finally {
+      healthInFlightRef.current = false;
     }
   }, []);
 
@@ -285,6 +341,14 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     };
   }, [refreshQuotes]);
 
+  // Periodic `/api/health` polling every 60s when the app is active (visible); catches up on resume.
+  useEffect(() => {
+    return startActiveHealthPoller({
+      intervalMs: HEALTH_POLL_INTERVAL_MS,
+      onPoll: refreshHealth,
+    });
+  }, [refreshHealth]);
+
   const openInstrumentIn = useCallback((symbol: string, module: AppModuleId) => {
     setSelectedSymbol(symbol);
     setActiveModule(module);
@@ -320,6 +384,8 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
         refreshBackendData,
         lastUpdatedAt,
         refreshQuotes,
+        lastHealthUpdatedAt,
+        refreshHealth,
         syncProviderFeeds,
         openInstrumentIn,
       }}
