@@ -29,6 +29,8 @@
   --muted: rgba(228, 225, 240, 0.76);
   --faint: rgba(228, 225, 240, 0.60);
   --accent: #7F52F2;
+  --on-accent: #FFFFFF;
+  --on-positive: #05210F;
   --accent-soft: rgba(139, 92, 246, 0.18);
   --accent-text: #C4B5FD;
   --positive: #60A5FA;
@@ -73,6 +75,8 @@
   --muted: rgba(36, 31, 54, 0.76);
   --faint: rgba(36, 31, 54, 0.68);
   --accent: #7C3AED;
+  --on-accent: #FFFFFF;
+  --on-positive: #FFFFFF;
   --accent-soft: rgba(124, 58, 237, 0.12);
   --accent-text: #6D28D9;
   --positive: #1D4ED8;
@@ -240,3 +244,14 @@ html[data-contrast="high"] :focus-visible {
   outline-offset: 3px;
   box-shadow: 0 0 0 6px var(--accent);
 }
+
+/* a11y (axe color-contrast): small text built from the accent / translucent text / warning utilities must meet 4.5:1.
+   Unlayered so these win over Tailwind's layered utilities. */
+:root .text-\[var\(--accent\)\] { color: var(--accent-text); }
+:root .text-\[var\(--text\)\]\/40,
+:root .text-\[var\(--text\)\]\/45,
+:root .text-\[var\(--text\)\]\/50,
+:root .text-\[var\(--text\)\]\/55,
+:root .text-\[var\(--text\)\]\/60 { color: var(--muted); }
+:root .text-\[var\(--warning\)\]\/80 { color: var(--warning); }
+:root .text-\[var\(--text-strong\)\]\/80 { color: var(--text-strong); }

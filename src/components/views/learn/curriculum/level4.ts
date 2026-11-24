@@ -8,6 +8,11 @@ export const LEVEL4: Level = {
   lessons: [
     {
       id: 'l4-fundamental',
+      figures: ['b-fund-balance', 'b-fund-chain'],
+      videos: [
+        { title: 'Fundamental Analysis - Futures Supply and Demand', url: 'https://www.youtube.com/watch?v=EZrc2JgEOkY', source: 'CME Group', lang: 'en', note: 'Phân tích cơ bản trên thị trường futures: cung và cầu ảnh hưởng giá thế nào (tiếng Anh).' },
+        { title: 'Investopedia Video: Fundamental vs Technical Analysis', url: 'https://www.youtube.com/watch?v=UMSmmIFM5Yg', source: 'Investopedia', lang: 'en', note: 'So sánh phân tích cơ bản và kỹ thuật (tiếng Anh).' },
+      ],
       title: 'Phân tích cơ bản',
       objective: 'Đọc bức tranh cung–cầu: sản lượng, tồn kho, thời tiết, USD.',
       body: [
@@ -15,6 +20,8 @@ export const LEVEL4: Level = {
         'Chỉ số thường dùng: tỷ lệ tồn kho/tiêu thụ, sản lượng dự báo, thời tiết ở vùng sản xuất chính, chính sách xuất nhập khẩu.',
         'Đồng USD mạnh thường gây áp lực lên giá hàng hoá định giá bằng USD (vì hàng hoá đắt hơn với người mua nước ngoài), nhưng quan hệ này không phải lúc nào cũng đúng.',
         'Phân tích cơ bản cho biết "vì sao", không cho biết "khi nào": thị trường có thể đi ngược cơ bản rất lâu.',
+        'Ví dụ từng bước (minh hoạ, không phải dữ liệu thật): (1) bạn đọc báo cáo và thấy dự báo tồn kho cuối vụ giảm; (2) hỏi tiếp: cầu có đang ổn định không; (3) ghi kết luận "nguồn cung chặt hơn, có xu hướng đỡ giá"; (4) kiểm tra xem biểu đồ và các dữ liệu khác ủng hộ hay mâu thuẫn. Bước 4 quan trọng vì thị trường có thể không phản ứng như cơ bản gợi ý.',
+        'Hình dung đơn giản: cơ bản là tấm bản đồ chỉ hướng chung, không phải đồng hồ báo giờ.',
       ],
       remember: ['Cơ bản cho biết lý do, không cho biết thời điểm.', 'Tồn kho thấp có xu hướng đẩy giá lên, nhưng không chắc chắn.'],
       quiz: [
@@ -27,6 +34,12 @@ export const LEVEL4: Level = {
     },
     {
       id: 'l4-technical',
+      figures: ['b-ma-cross', 'b-rsi-band', 'b-atr-range'],
+      videos: [
+        { title: 'Moving Averages', url: 'https://www.youtube.com/watch?v=57-LfRkVTwo', source: 'CME Group', lang: 'en', note: 'Cách tính và đọc đường trung bình động (tiếng Anh).' },
+        { title: 'Oscillators: MACD, RSI, Stochastic\'s', url: 'https://www.youtube.com/watch?v=W0u4RBHF_XQ', source: 'CME Group', lang: 'en', note: 'Các chỉ báo dao động như RSI đo động lượng (tiếng Anh).' },
+        { title: 'Calculating Volatility with Average True Range | Investopedia', url: 'https://www.youtube.com/watch?v=KJgvIlBJeYg', source: 'Investopedia', lang: 'en', note: 'ATR đo biên độ dao động (tiếng Anh).' },
+      ],
       diagram: 'candle',
       title: 'Kỹ thuật: MA, RSI, ATR, khối lượng',
       objective: 'Hiểu bốn công cụ phổ biến đo cái gì và không đo cái gì.',
@@ -35,6 +48,8 @@ export const LEVEL4: Level = {
         'RSI (0 đến 100) đo động lượng gần đây. Trên 70 thường gọi là quá mua, dưới 30 là quá bán. Trong xu hướng mạnh RSI có thể ở vùng "quá mua" rất lâu, nên không phải tín hiệu đảo chiều tự động.',
         'ATR đo biên độ dao động trung bình mỗi nến; dùng để ước lượng khoảng cách cắt lỗ và rủi ro tiền theo hợp đồng.',
         'Khối lượng (volume) cho biết mức độ tham gia; biến động giá kèm khối lượng lớn thường đáng tin hơn biến động khối lượng nhỏ.',
+        'Đọc MA từng bước: (1) xem giá nằm trên hay dưới MA dài; (2) xem MA nhanh (ngắn hạn) cắt lên hay cắt xuống MA chậm (dài hạn). Giao cắt chỉ cho biết đà đã đổi, nó đến sau giá chứ không báo trước.',
+        'Ví dụ ngô (số minh hoạ): ATR 8 cent. Tick ngô 0,25 cent = 12,5 USD, nên 8 cent = 32 tick = 400 USD mỗi hợp đồng. Con số này cho biết một nến bình thường dao động bao nhiêu tiền, để khoảng cách stop không quá sát vào nhiễu giá.',
       ],
       remember: ['MA trễ; RSI không phải tín hiệu đảo chiều tự động.', 'ATR đo rủi ro/biên độ, không chỉ hướng.'],
       quiz: [
@@ -47,6 +62,11 @@ export const LEVEL4: Level = {
     },
     {
       id: 'l4-curve',
+      figures: ['b-curve-roll', 'b-curve-why'],
+      videos: [
+        { title: 'What is Contango and Backwardation', url: 'https://www.youtube.com/watch?v=B3V7Go_CNkQ', source: 'CME Group', lang: 'en', note: 'Giải thích contango và backwardation (tiếng Anh).' },
+        { title: 'Understanding Futures Expiration & Contract Roll', url: 'https://www.youtube.com/watch?v=73RMlTVGCUc', source: 'CME Group', lang: 'en', note: 'Đáo hạn hợp đồng và roll sang tháng khác (tiếng Anh).' },
+      ],
       diagram: 'curve',
       title: 'Cấu trúc kỳ hạn: contango và backwardation',
       objective: 'Đọc đường cong giá các tháng và hiểu ý nghĩa với roll.',
@@ -54,6 +74,7 @@ export const LEVEL4: Level = {
         'Contango: tháng xa đắt hơn tháng gần (thường gặp khi chi phí lưu kho, tài chính cao hoặc tồn kho dồi dào). Backwardation: tháng xa rẻ hơn tháng gần (thường khi nguồn cung hiện tại khan hiếm).',
         'Với vị thế mua phải roll liên tục: contango có chi phí roll, backwardation có lợi roll (nếu đường cong giữ nguyên).',
         'Hình dạng đường cong là một gợi ý về cung–cầu hiện tại, không phải dự báo giá.',
+        'Đọc từng bước: (1) lấy giá tháng gần và tháng xa; (2) lấy xa trừ gần: dương là contango, âm là backwardation; (3) nhân chênh lệch với giá trị mỗi đơn vị giá. Ngô (số minh hoạ): gần 450, xa 456 cent, chênh +6 cent × 50 USD = 300 USD mỗi hợp đồng mỗi lần roll, trước phí.',
       ],
       remember: ['Contango: xa cao hơn gần. Backwardation: xa thấp hơn gần.', 'Roll trong contango tốn kém cho vị thế mua.'],
       quiz: [
@@ -67,6 +88,7 @@ export const LEVEL4: Level = {
     },
     {
       id: 'l4-cot',
+      figures: ['b-cot-groups', 'b-cot-timeline'],
       title: 'COT: vị thế của các nhóm lớn',
       objective: 'Hiểu báo cáo COT của CFTC và giới hạn của nó.',
       body: [
@@ -74,6 +96,7 @@ export const LEVEL4: Level = {
         'Dữ liệu thường được tính tại thứ Ba và công bố vào thứ Sáu, nên có độ trễ.',
         'Vị thế đầu cơ quá nghiêng một phía có thể cho thấy thị trường đông đúc, nhưng không cho biết thời điểm đảo chiều.',
         'COT áp dụng cho hợp đồng niêm yết tại Mỹ; không phải mọi mã trong ứng dụng đều có.',
+        'Đọc COT từng bước: (1) chọn thị trường; (2) xem nhóm nào giữ vị thế lớn (quỹ đầu cơ hay doanh nghiệp hàng thật); (3) so với các tuần trước xem vị thế đang tăng hay giảm; (4) nhớ dữ liệu đã cũ khoảng 3 ngày (từ thứ Ba đến thứ Sáu). Doanh nghiệp hàng thật thường giữ vị thế để phòng hộ, nên không nên coi đó là một lời dự đoán giá.',
       ],
       remember: ['COT trễ vài ngày.', 'Vị thế đông đúc không phải tín hiệu đảo chiều chính xác.'],
       quiz: [
@@ -86,12 +109,18 @@ export const LEVEL4: Level = {
     },
     {
       id: 'l4-seasonal',
+      figures: ['b-season-sketch'],
+      videos: [
+        { title: 'Seasonality in the Grain and Oilseed Markets', url: 'https://www.youtube.com/watch?v=6sApYAHh-UA', source: 'CME Group', lang: 'en', note: 'Mùa vụ trong thị trường ngũ cốc và hạt có dầu (tiếng Anh).' },
+        { title: 'Introduction to Natural Gas Seasonality', url: 'https://www.youtube.com/watch?v=YwN0HKbYWzM', source: 'CME Group', lang: 'en', note: 'Mùa vụ của khí tự nhiên (tiếng Anh).' },
+      ],
       title: 'Mùa vụ',
       objective: 'Dùng mùa vụ như bối cảnh, không phải quy luật chắc chắn.',
       body: [
         'Nhiều hàng hoá có chu kỳ theo mùa: gieo trồng, sinh trưởng, thu hoạch (nông sản) hoặc nhu cầu sưởi/làm mát (năng lượng).',
         'Biểu đồ mùa vụ cho thấy hành vi trung bình qua nhiều năm, nhưng từng năm có thể khác hoàn toàn do thời tiết và sự kiện bất thường.',
         'Dùng mùa vụ để biết "giai đoạn nào cần chú ý thời tiết/báo cáo", đừng dùng như tín hiệu vào lệnh.',
+        'Ví dụ cách dùng (minh hoạ): nếu lịch sử cho thấy thời tiết vùng trồng đặc biệt quan trọng vào một giai đoạn trong năm, bạn đánh dấu giai đoạn đó để theo dõi tin thời tiết và báo cáo. Bạn không kết luận "giá sẽ tăng vào tháng đó". Càng nhiều năm dữ liệu thì trung bình càng đáng tin hơn, nhưng từng năm vẫn có thể lệch xa trung bình.',
       ],
       remember: ['Mùa vụ là trung bình lịch sử, không phải bảo đảm.', 'Ít năm dữ liệu thì độ tin cậy thấp.'],
       quiz: [
@@ -104,12 +133,17 @@ export const LEVEL4: Level = {
     },
     {
       id: 'l4-correlation',
+      figures: ['b-corr-scale', 'b-corr-risk'],
+      videos: [
+        { title: 'Ray Dalio Breaks Down His "Holy Grail"', url: 'https://www.youtube.com/watch?v=Nu4lHaSh7D4', source: 'Investopedia', lang: 'en', note: 'Về đa dạng hoá: nhiều nguồn rủi ro không tương quan với nhau (tiếng Anh).' },
+      ],
       title: 'Tương quan giữa các mã',
       objective: 'Hiểu tương quan và vì sao nhiều vị thế "khác nhau" có thể là một rủi ro.',
       body: [
         'Tương quan đo mức hai mã cùng đi lên/xuống (từ -1 đến +1). Ví dụ vàng và bạc thường có tương quan dương cao.',
         'Nếu bạn mua cả vàng và bạc, rủi ro thực tế gần như gấp đôi một vị thế, không phải hai rủi ro độc lập.',
         'Tương quan thay đổi theo thời gian và thường tăng lên trong khủng hoảng.',
+        'Ví dụ (số minh hoạ): bạn chấp nhận rủi ro 1% vốn cho mỗi vị thế vàng và bạc. Nếu tương quan gần +1 và cả hai cùng đi ngược bạn, mức lỗ có thể gần 2% chứ không phải hai khoản 1% độc lập. Vì vậy hãy tham khảo màn Danh mục trước khi thêm một vị thế mới giống vị thế cũ.',
       ],
       remember: ['Tương quan cao nghĩa là rủi ro chồng lên nhau.', 'Tương quan không ổn định theo thời gian.'],
       quiz: [

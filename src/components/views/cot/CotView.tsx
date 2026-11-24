@@ -313,7 +313,7 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
             {t('cot.sync.status')} <span className={result.status === 'SUCCESS' ? 'text-[var(--positive)]' : result.status === 'PARTIAL' ? 'text-[var(--warning)]' : 'text-[var(--negative)]'}>{result.status}</span>{' '}
             · {t('cot.sync.code', { code: result.cftcContractMarketCode })}
           </p>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="text-[11px] font-mono min-w-[640px]">
               <thead>
                 <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
@@ -441,7 +441,7 @@ function CotResults({ data }: { data: CotQueryResponse }) {
         {a.gaps.length > 0 && (
           <div>
             <p className="text-xs text-[var(--warning)] font-medium mb-1">{t('cot.gaps.title', { n: a.gaps.length })}</p>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
               <table className="text-[11px] font-mono">
                 <thead>
                   <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
@@ -484,7 +484,7 @@ function CotResults({ data }: { data: CotQueryResponse }) {
           title={t('cot.latest.title', { date: fmtDate(latest.reportDate) })}
           subtitle={t('cot.latest.subtitle', { oi: fmtInt(latest.openInterest) })}
         >
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="w-full text-xs font-mono min-w-[720px]">
               <thead>
                 <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
@@ -544,7 +544,7 @@ function CotResults({ data }: { data: CotQueryResponse }) {
             )}
           </Panel>
           <Panel title={t('cot.recent.title', { n: Math.min(RECENT_WEEKS, recent.length) })} subtitle={t('cot.recent.subtitle')}>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
               <table className="w-full text-[11px] font-mono min-w-[860px]">
                 <thead>
                   <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">

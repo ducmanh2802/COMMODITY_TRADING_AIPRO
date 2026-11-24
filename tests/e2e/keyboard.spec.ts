@@ -64,8 +64,13 @@ test('tablist: arrow keys move selection', async ({ page }) => {
   await tabs.first().focus();
   await tabs.first().click();
   await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
+  // roving tabindex: only the selected tab is in the Tab order
+  await expect(tabs.first()).toHaveAttribute('tabindex', '0');
+  await expect(tabs.nth(1)).toHaveAttribute('tabindex', '-1');
   await page.keyboard.press('ArrowRight');
   await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+  await expect(tabs.nth(1)).toHaveAttribute('tabindex', '0');
+  await expect(tabs.first()).toHaveAttribute('tabindex', '-1');
   await page.keyboard.press('ArrowLeft');
   await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
 });

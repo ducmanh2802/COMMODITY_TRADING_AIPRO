@@ -8,6 +8,7 @@ export const LEVEL7: Level = {
   lessons: [
     {
       id: 'l7-swing',
+      figures: ['c-swing-r', 'c-swing-rules'],
       title: 'Lướt sóng: rủi ro trước, rồi khung 7 quy tắc',
       objective: 'Hiểu rủi ro đòn bẩy, khác biệt với lướt ngắn, và có khung quy tắc để kiểm thử.',
       body: [
@@ -32,6 +33,7 @@ export const LEVEL7: Level = {
     },
     {
       id: 'l7-backtest',
+      figures: ['c-backtest-flow', 'c-overfit'],
       title: 'Kiểm thử khung này bằng công cụ backtest',
       objective: 'Biết cấu hình và cách đọc kết quả, cùng các dấu hiệu đáng ngờ.',
       body: [
@@ -56,11 +58,13 @@ export const LEVEL7: Level = {
     },
     {
       id: 'l7-roadmap',
+      figures: ['c-roadmap-stairs'],
       title: 'Lộ trình: tập trên tài khoản giả lập trước',
       objective: 'Có kế hoạch từng bước trước khi dùng tiền thật.',
       body: [
         'Lộ trình gợi ý: học Cấp 1 đến 7 (gồm Cấp 5 Đọc biểu đồ); thực hành quy trình Cấp 7; backtest khung với phí thực tế; giả lập (paper trade) vài tháng và ghi nhật ký; chỉ khi kỷ luật ổn mới cân nhắc tiền thật với số vốn nhỏ bạn có thể chịu mất.',
         'Giả lập không bao gồm áp lực tâm lý khi mất tiền thật, nên kết quả thật có thể khác.',
+        'Từng bước cụ thể: (1) Học xong Cấp 1 đến 7. (2) Backtest khung quy tắc trên vài mã, nhập phí và trượt giá thực tế; nếu kết quả chỉ đẹp khi phí bằng 0 thì dừng. (3) Giả lập vài tháng, ghi mỗi lệnh vào nhật ký kèm lý do và cảm xúc. (4) Chỉ khi nhật ký cho thấy bạn làm đúng kế hoạch phần lớn các lệnh mới cân nhắc vốn nhỏ. Bước nào chưa đạt thì ở lại bước đó, không có thời hạn bắt buộc.',
         'Chỉ giao dịch qua thành viên được MXV cấp phép; kiểm tra tên trên mxv.com.vn. Cảnh giác "sàn" hứa lợi nhuận cố định, nhóm kín gợi ý lệnh, yêu cầu chuyển tiền vào tài khoản cá nhân.',
         'Nội dung này là giáo dục, không phải tư vấn đầu tư. Bạn tự chịu trách nhiệm về quyết định của mình.',
       ],

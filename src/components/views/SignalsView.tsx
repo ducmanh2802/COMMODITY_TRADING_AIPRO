@@ -188,7 +188,7 @@ export function SignalsView() {
         <div className="px-4 py-3 border-b border-[var(--border)]">
           <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('sig.rulebook')}</h2>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-left border-collapse min-w-[780px]">
             <thead>
               <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">

@@ -14,6 +14,10 @@ export const LEVEL3: Level = {
   lessons: [
     group({
       id: 'l3-grains',
+      figures: ['a-corn-uses', 'a-grain-calendar'],
+      videos: [
+        { title: 'Product: Corn', url: 'https://www.youtube.com/watch?v=aQeyOi7LhLw', source: 'CME Group', lang: 'en', note: 'Video tiếng Anh của CME Group: hợp đồng ngô, báo cáo cần theo dõi, cung cầu.' },
+      ],
       title: 'Nông sản: ngô và lúa mì',
       objective: 'Nắm yếu tố cung–cầu và mùa vụ của ngô (ZC) và lúa mì (ZW).',
       body: [
@@ -21,6 +25,7 @@ export const LEVEL3: Level = {
         'Lúa mì có vụ đông và vụ xuân ở nhiều nước (Mỹ, Nga, EU, Úc...). Chính sách xuất khẩu và thời tiết các vùng này ảnh hưởng giá.',
         'Báo cáo quan trọng: WASDE hằng tháng của USDA (cung–cầu, tồn kho), báo cáo diện tích gieo trồng và tồn kho theo quý, báo cáo tiến độ vụ mùa hằng tuần. Lịch cụ thể xem trên usda.gov.',
         'Liên hệ Việt Nam: Việt Nam nhập khẩu ngô và lúa mì làm thức ăn chăn nuôi và bột mì, nên giá thế giới tác động đến chi phí.',
+        'Về hợp đồng: ngô ZC và lúa mì ZW cùng có khối lượng 5.000 bushel và tick 0,25 cent (12,5 USD), nên giá đổi 1 cent tương đương 50 USD cho mỗi hợp đồng.',
       ],
       instrumentIds: ['CBOT:ZC', 'CBOT:ZW'],
       links: [{ module: 'commodity-profile', label: 'Hồ sơ hàng hoá' }, { module: 'cot', label: 'Báo cáo COT' }],
@@ -33,6 +38,10 @@ export const LEVEL3: Level = {
     }),
     group({
       id: 'l3-soy',
+      figures: ['a-soy-crush'],
+      videos: [
+        { title: 'Product: Soybeans', url: 'https://www.youtube.com/watch?v=4vduzKKyneE', source: 'CME Group', lang: 'en', note: 'Video tiếng Anh của CME Group: đậu tương, yếu tố mùa vụ và cung cầu (video cũ, quy cách xem Instrument Master).' },
+      ],
       title: 'Nông sản: đậu tương, khô đậu và dầu đậu tương',
       objective: 'Hiểu "bộ ba đậu tương" và quan hệ giữa chúng.',
       body: [
@@ -40,6 +49,7 @@ export const LEVEL3: Level = {
         'Yếu tố chính: sản lượng Mỹ, Brazil, Argentina; nhu cầu nhập khẩu của Trung Quốc; chính sách nhiên liệu sinh học ảnh hưởng dầu đậu tương.',
         'Báo cáo: WASDE, báo cáo xuất khẩu hằng tuần của USDA, diện tích gieo trồng.',
         'Liên hệ Việt Nam: Việt Nam nhập khẩu lượng lớn khô đậu và đậu tương cho thức ăn chăn nuôi, nên giá khô đậu tác động trực tiếp đến ngành chăn nuôi.',
+        'Khi giá khô đậu và dầu tăng nhanh hơn giá đậu tương, biên ép rộng ra và nhà máy ép có lợi hơn. Đây là quan hệ kinh tế để hiểu thị trường, không phải tín hiệu mua bán. Đậu tương ZS có khối lượng 5.000 bushel, tick 0,25 cent (12,5 USD).',
       ],
       instrumentIds: ['CBOT:ZS', 'CBOT:ZM', 'CBOT:ZL'],
       links: [{ module: 'commodity-profile', label: 'Hồ sơ hàng hoá' }, { module: 'term-structure', label: 'Cấu trúc kỳ hạn' }],
@@ -52,6 +62,7 @@ export const LEVEL3: Level = {
     }),
     group({
       id: 'l3-coffee',
+      figures: ['a-coffee-compare'],
       title: 'Nông sản: cà phê arabica và robusta',
       objective: 'Phân biệt arabica (KC) và robusta (RC), hiểu mùa vụ và rủi ro thời tiết.',
       body: [
@@ -59,6 +70,7 @@ export const LEVEL3: Level = {
         'Yếu tố chính: thời tiết (sương giá ở Brazil, hạn hán/mưa lớn ở Tây Nguyên), tồn kho, tỷ giá đồng real Brazil, nhu cầu tiêu thụ. Mùa thu hoạch robusta Việt Nam tập trung vào khoảng cuối năm, arabica Brazil khoảng giữa năm.',
         'Nguồn dữ liệu: báo cáo của USDA (Foreign Agricultural Service), tổ chức cà phê quốc tế ICO. Báo cáo COT cho thấy vị thế của quỹ đầu cơ.',
         'Liên hệ Việt Nam: giá robusta thế giới ảnh hưởng thu nhập của nông dân và doanh nghiệp xuất khẩu cà phê Việt Nam.',
+        'Lưu ý đơn vị: arabica KC niêm yết bằng cent/lb (37.500 lb mỗi hợp đồng, tick 0,05 cent = 18,75 USD); robusta RC niêm yết bằng USD/tấn (10 tấn mỗi hợp đồng, tick 1 USD = 10 USD). Hai loại không so sánh trực tiếp bằng con số giá.',
       ],
       instrumentIds: ['ICE:KC', 'ICE:RC'],
       links: [{ module: 'commodity-profile', label: 'Hồ sơ hàng hoá' }, { module: 'cot', label: 'Báo cáo COT' }],
@@ -71,6 +83,7 @@ export const LEVEL3: Level = {
     }),
     group({
       id: 'l3-softs',
+      figures: ['a-softs-cards'],
       title: 'Nông sản: đường, ca cao, bông, cao su',
       objective: 'Biết yếu tố riêng của bốn mặt hàng này.',
       body: [
@@ -78,6 +91,7 @@ export const LEVEL3: Level = {
         'Ca cao (ICE US: CC): tập trung ở Tây Phi (Bờ Biển Ngà, Ghana); thời tiết và bệnh cây ảnh hưởng mạnh; thị trường có thể biến động rất lớn.',
         'Bông (ICE US: CT): giá chịu ảnh hưởng từ Mỹ, Trung Quốc, Ấn Độ và nhu cầu ngành dệt may; Việt Nam nhập khẩu bông cho ngành dệt may.',
         'Cao su: Việt Nam là nước sản xuất lớn. Hợp đồng cao su không có trong Instrument Master của ứng dụng; bảng ký quỹ MXV (en.mxv.com.vn/trading/margin.html, kiểm tra 20/11/2026) có liệt kê cao su trong nhóm Softs; hãy xem trang MXV để biết đặc tả: cần kiểm tra lại với MXV/công ty môi giới.',
+        'Đơn vị khác nhau: đường SB 112.000 lb, tick 0,01 cent = 11,2 USD; ca cao CC 10 tấn, tick 1 USD = 10 USD; bông CT 50.000 lb, tick 0,01 cent = 5 USD.',
       ],
       instrumentIds: ['ICE:SB', 'ICE:CC', 'ICE:CT'],
       uncertain: ['Hợp đồng cao su: sàn tham chiếu và quy cách cần kiểm tra lại với MXV/công ty môi giới (mxv.com.vn).'],
@@ -91,6 +105,10 @@ export const LEVEL3: Level = {
     }),
     group({
       id: 'l3-precious',
+      figures: ['a-precious-cards'],
+      videos: [
+        { title: 'Product: Gold', url: 'https://www.youtube.com/watch?v=ce3QsKAu64A', source: 'CME Group', lang: 'en', note: 'Video tiếng Anh của CME Group: tổng quan hợp đồng vàng (video cũ, quy cách xem Instrument Master).' },
+      ],
       title: 'Kim loại quý: vàng, bạc, bạch kim',
       objective: 'Hiểu vì sao kim loại quý được xem là tài sản trú ẩn và khác nhau ở đâu.',
       body: [
@@ -98,6 +116,7 @@ export const LEVEL3: Level = {
         'Bạc (SI) vừa là kim loại đầu tư vừa là kim loại công nghiệp nên biến động mạnh hơn vàng. Bạch kim (PL) liên quan nhiều tới ngành ô tô (xúc tác khí thải) và nguồn cung hạn chế.',
         'Dữ liệu cần theo dõi: lãi suất và dữ liệu kinh tế Mỹ, chỉ số USD, báo cáo COT.',
         'Liên hệ Việt Nam: giá vàng trong nước có thể lệch với giá thế giới do cơ chế thị trường trong nước; đây là điều cần kiểm tra riêng.',
+        'Về hợp đồng: vàng GC là 100 troy oz, tick 0,1 USD = 10 USD, nên giá đổi 1 USD/oz tương đương 100 USD cho mỗi hợp đồng. Bạc SI là 5.000 troy oz, tick 0,005 USD = 25 USD.',
       ],
       instrumentIds: ['COMEX:GC', 'COMEX:SI', 'NYMEX:PL'],
       links: [{ module: 'cot', label: 'Báo cáo COT' }, { module: 'charts', label: 'Biểu đồ' }],
@@ -110,6 +129,10 @@ export const LEVEL3: Level = {
     }),
     group({
       id: 'l3-industrial',
+      figures: ['a-copper-chain'],
+      videos: [
+        { title: 'Products: Copper (HG)', url: 'https://www.youtube.com/watch?v=nNcDU--zIFc', source: 'CME Group', lang: 'en', note: 'Video tiếng Anh của CME Group: hợp đồng đồng COMEX và các yếu tố cung cầu.' },
+      ],
       title: 'Kim loại công nghiệp: đồng và quặng sắt',
       objective: 'Hiểu vì sao đồng được xem như phong vũ biểu kinh tế và vai trò của quặng sắt.',
       body: [
@@ -117,6 +140,7 @@ export const LEVEL3: Level = {
         'Quặng sắt (CME: TIO, SGX: FEF) là nguyên liệu chính của thép; giá phụ thuộc nhu cầu thép Trung Quốc và nguồn cung từ Úc, Brazil.',
         'Dữ liệu: PMI sản xuất, số liệu bất động sản và sản xuất thép của Trung Quốc, tồn kho kim loại.',
         'Liên hệ Việt Nam: ngành thép Việt Nam phụ thuộc nguyên liệu nhập khẩu, nên giá quặng sắt và than ảnh hưởng giá thép trong nước.',
+        'Về hợp đồng: đồng HG là 25.000 lb, tick 0,0005 USD/lb = 12,5 USD, nên giá đổi 1 cent/lb tương đương 250 USD cho mỗi hợp đồng.',
       ],
       instrumentIds: ['COMEX:HG', 'CME:TIO', 'SGX:FEF'],
       links: [{ module: 'markets', label: 'Thị trường' }, { module: 'charts', label: 'Biểu đồ' }],
@@ -129,6 +153,10 @@ export const LEVEL3: Level = {
     }),
     group({
       id: 'l3-oil',
+      figures: ['a-wti-brent'],
+      videos: [
+        { title: 'What is WTI Crude Oil?', url: 'https://www.youtube.com/watch?v=NgX2HYEYBWw', source: 'CME Group', lang: 'en', note: 'Video tiếng Anh của CME Group: dầu WTI là gì.' },
+      ],
       title: 'Năng lượng: dầu WTI và Brent',
       objective: 'Phân biệt WTI và Brent, nắm các yếu tố và báo cáo EIA.',
       body: [
@@ -136,6 +164,7 @@ export const LEVEL3: Level = {
         'Yếu tố chính: quyết định sản lượng của OPEC+, sản lượng dầu đá phiến Mỹ, nhu cầu kinh tế, địa chính trị, tồn kho, đồng USD.',
         'Báo cáo quan trọng: báo cáo tồn kho dầu hằng tuần của EIA (thường công bố vào giữa tuần theo giờ Mỹ) và API; báo cáo COT.',
         'Liên hệ Việt Nam: giá dầu thế giới ảnh hưởng giá xăng dầu trong nước và chi phí vận tải.',
+        'Về hợp đồng: WTI CL và Brent BRN đều là 1.000 thùng, tick 0,01 USD = 10 USD, nên giá đổi 1 USD/thùng tương đương 1.000 USD cho mỗi hợp đồng.',
       ],
       instrumentIds: ['NYMEX:CL', 'ICE:BRN'],
       links: [{ module: 'news', label: 'Tin tức' }, { module: 'term-structure', label: 'Cấu trúc kỳ hạn' }],
@@ -148,6 +177,10 @@ export const LEVEL3: Level = {
     }),
     group({
       id: 'l3-gas',
+      figures: ['a-gas-season'],
+      videos: [
+        { title: 'Product: Natural Gas', url: 'https://www.youtube.com/watch?v=rgBuC0pt8rQ', source: 'CME Group', lang: 'en', note: 'Video tiếng Anh của CME Group: khí tự nhiên, quy cách và yếu tố cung cầu.' },
+      ],
       title: 'Năng lượng: khí tự nhiên',
       objective: 'Hiểu tính mùa vụ và thời tiết của khí tự nhiên (NG).',
       body: [
@@ -155,6 +188,7 @@ export const LEVEL3: Level = {
         'Báo cáo tồn kho khí tự nhiên hằng tuần của EIA là sự kiện quan trọng; so sánh với mức trung bình nhiều năm để đánh giá.',
         'Giá khí tự nhiên có thể biến động rất mạnh trong thời gian ngắn, nên rủi ro đòn bẩy đặc biệt cao.',
         'Liên hệ Việt Nam: giá khí thế giới (LNG) liên quan chi phí điện và phân bón khi nhập khẩu, nhưng quan hệ không trực tiếp với Henry Hub.',
+        'Về hợp đồng: khí tự nhiên NG là 10.000 MMBtu, tick 0,001 USD = 10 USD, nên giá đổi 0,1 USD/MMBtu tương đương 1.000 USD cho mỗi hợp đồng.',
       ],
       instrumentIds: ['NYMEX:NG'],
       links: [{ module: 'news', label: 'Tin tức' }, { module: 'charts', label: 'Biểu đồ' }],

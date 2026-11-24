@@ -13,6 +13,7 @@ export const BACKUP_KEYS = {
   learn: 'learn.progress.v2',
   learnGoal: 'ctap.learnGoal',
   review: 'ctap.review.v1',
+  program: 'ctap.program.v1',
 } as const;
 
 export type BackupSection = keyof typeof BACKUP_KEYS;
@@ -99,6 +100,9 @@ export function validateBackup(json: unknown): ValidateResult {
   }
   if (data.review !== null && typeof data.review !== 'object') {
     return { ok: false, error: 'Lịch ôn tập trong tệp không hợp lệ.' };
+  }
+  if (data.program !== null && (typeof data.program !== 'object' || Array.isArray(data.program))) {
+    return { ok: false, error: 'Dữ liệu lộ trình 3 tháng trong tệp không hợp lệ.' };
   }
   return { ok: true, backup: { version: o.version, exportedAt: o.exportedAt, data } };
 }

@@ -270,7 +270,7 @@ export function AiAnalystView() {
               <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('air.inputs')}</h2>
               <p className="text-[11px] text-[var(--text)]/55 mt-0.5">{t('air.inputsHint')}</p>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
               <table className="w-full text-xs text-left">
                 <thead className="text-[var(--text)]/55">
                   <tr className="border-b border-[var(--border)]">

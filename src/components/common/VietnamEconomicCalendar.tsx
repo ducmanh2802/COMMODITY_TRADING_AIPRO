@@ -149,7 +149,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                       key={sym}
                       type="button"
                       onClick={() => openInstrumentIn(sym, 'charts')}
-                      className="px-2 py-1 bg-[var(--bg)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-mono text-white transition-colors"
+                      className="px-2 py-1 bg-[var(--bg)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-mono text-[var(--text-strong)] hover:text-white transition-colors"
                     >
                       {sym}
                     </button>
@@ -344,7 +344,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                           key={sym}
                           type="button"
                           onClick={() => openInstrumentIn(sym, 'charts')}
-                          className="px-2 py-0.5 bg-[var(--bg)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-mono text-white transition-colors"
+                          className="px-2 py-0.5 bg-[var(--bg)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-mono text-[var(--text-strong)] hover:text-white transition-colors"
                         >
                           {sym}
                         </button>
@@ -413,7 +413,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                                 key={sym}
                                 type="button"
                                 onClick={() => openInstrumentIn(sym, 'charts')}
-                                className="px-1.5 py-0.5 bg-[var(--bg)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-mono text-white transition-colors"
+                                className="px-1.5 py-0.5 bg-[var(--bg)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-mono text-[var(--text-strong)] hover:text-white transition-colors"
                               >
                                 {sym}
                               </button>

@@ -403,8 +403,8 @@ export function ChartsView() {
         </div>
       </div>
 
-      {datasetsError && <p className="text-xs text-[var(--negative)]">{datasetsError}</p>}
-      {candlesError && <p className="text-xs text-[var(--negative)]">{candlesError}</p>}
+      {datasetsError && <p role="alert" className="text-xs text-[var(--negative)]">{datasetsError}</p>}
+      {candlesError && <p role="alert" className="text-xs text-[var(--negative)]">{candlesError}</p>}
 
       {/* Provenance banner */}
       {contractSeries.resolved.source === 'CONTRACT' && (

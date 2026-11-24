@@ -6,6 +6,8 @@ import { Card } from '../../ui/Card';
 import { Exercise, RefusalBox, SourceLinks } from './Calculators';
 import type { ExampleCalc, Lesson, QuizQuestion } from './curriculum/types';
 import { LessonDiagram } from './diagrams/Diagrams';
+import { LessonFigures } from './diagrams/Figures';
+import { LessonVideos } from './LessonVideos';
 import { contractValue, marginCallDistance, marginLeverage, positionSize, rMultiple, rollCost, swingPlan, tickPnl } from './learnMath';
 import type { LessonProgress } from './progress';
 import { recordAnswerStored } from './review';
@@ -83,7 +85,7 @@ function SpecTable({ ids, instruments }: { ids: string[]; instruments: Instrumen
   const rows = ids.map((id) => instruments.find((i) => i.id === id)).filter((i): i is InstrumentDefinition => !!i);
   if (!rows.length) return <p className="text-xs text-[var(--muted)]">Chưa có đặc tả từ Instrument Master (đang tải hoặc không có).</p>;
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" tabIndex={0}>
       <table className="w-full text-xs">
         <thead className="text-[var(--muted)]">
           <tr>
@@ -228,6 +230,8 @@ export function LessonPage({
         ))}
       </div>
       {lesson.diagram && <LessonDiagram id={lesson.diagram} />}
+      {lesson.figures && lesson.figures.length > 0 && <LessonFigures ids={lesson.figures} />}
+      {lesson.videos && lesson.videos.length > 0 && <LessonVideos videos={lesson.videos} />}
       {lesson.example && <ExampleBlock calc={lesson.example.calc} caption={lesson.example.caption} instruments={instruments} />}
       {lesson.textExample && <p className="text-xs rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3">Ví dụ: {lesson.textExample}</p>}
       {lesson.examples?.map((ex) => (

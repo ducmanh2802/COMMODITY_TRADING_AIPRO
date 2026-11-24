@@ -58,7 +58,7 @@ export function MacroRecordCards({ records }: { records: FundamentalMacroRecord[
                           href={`https://fred.stlouisfed.org/series/${id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[var(--accent-text)] hover:underline"
+                          className="text-[var(--accent-text)] underline"
                           title={r.source}
                         >
                           {sourceLabel(r)}

@@ -30,7 +30,7 @@ export function seriesVar(i: number): string {
 export function divergingFill(value: number | null, maxAbs: number): string {
   if (value === null || !Number.isFinite(value) || maxAbs <= 0 || value === 0) return 'var(--div-mid)';
   const k = Math.min(1, Math.abs(value) / maxAbs);
-  const pct = Math.round((0.3 + 0.3 * k) * 100);
+  const pct = Math.round((0.22 + 0.26 * k) * 100);
   const pole = value >= 0 ? 'var(--positive)' : 'var(--negative)';
   return `color-mix(in srgb, ${pole} ${pct}%, var(--div-mid))`;
 }

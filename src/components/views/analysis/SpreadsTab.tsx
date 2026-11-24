@@ -283,7 +283,7 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
               </span>
             </div>
           )}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="text-xs font-mono min-w-[420px]">
               <thead>
                 <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">

@@ -96,7 +96,7 @@ export function PreTradeChecklist({ answers, onAnswer, events, eventsManual, onE
               <span className={`font-semibold ${pctTone}`}>{t('ck.risk.pct', { pct: fmtFixed(risk.riskPct, 2), vnd: fmtVnd(risk.riskVnd) })}</span>
               <span className={`font-semibold ${rTone}`}>{risk.r === null ? t('ck.risk.noTarget') : t('ck.risk.r', { r: fmtFixed(risk.r, 2) })}</span>
             </p>
-            {risk.level === 'overLimit' && <p className="text-[var(--negative)]">{t('ck.risk.over', { pct: limitPct })}</p>}
+            {risk.level === 'overLimit' && <p role="alert" className="text-[var(--negative)]">{t('ck.risk.over', { pct: limitPct })}</p>}
             {risk.level !== 'overLimit' && risk.r !== null && risk.r < MIN_GOOD_R && <p className="text-[var(--warning)]">{t('ck.risk.lowR')}</p>}
           </>
         )}

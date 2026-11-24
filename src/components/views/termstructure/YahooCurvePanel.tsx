@@ -19,7 +19,7 @@ function CurveBody({ data }: { data: Ok }) {
         · {data.unit}
         {result ? ` · ${result.shape}` : ''}
       </p>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" tabIndex={0}>
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="border-b border-[var(--border)] text-[var(--text)]/65">
@@ -95,7 +95,7 @@ export function YahooCurvePanel({ instrumentId }: { instrumentId: string }) {
       <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('ts.yc.title')}</h2>
       <p className="text-[11px] text-[var(--text)]/55">{t('ts.yc.note')}</p>
       {state.s === 'loading' && <p className="text-xs text-[var(--text)]/55">{t('ts.yc.loading')}</p>}
-      {state.s === 'error' && <p className="text-xs font-mono text-[var(--negative)]">{state.message}</p>}
+      {state.s === 'error' && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{state.message}</p>}
       {state.s === 'ok' && state.data.status === 'UNAVAILABLE' && (
         <div className="flex items-start gap-2 text-xs">
           <DataStatusBadge status="UNAVAILABLE" />

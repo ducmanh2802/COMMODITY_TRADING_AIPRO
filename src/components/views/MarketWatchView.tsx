@@ -137,7 +137,7 @@ export function MarketWatchView() {
 
       {/* High-Density Market Watch Data Grid */}
       <Card padded={false} className="overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-left border-collapse md:min-w-[920px]">
             <thead>
               <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/60 text-xs uppercase tracking-wide text-[var(--muted)]">

@@ -111,7 +111,7 @@ export function VolatilityTab({ options }: { options: SeriesOption[] }) {
       {results && (
         <>
           <Panel title={t('an.vol.latest')} subtitle={t('an.vol.latestSub', { w: windowLen, af: Number.isFinite(af) ? af : '—' })}>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
               <table className="w-full text-left text-xs min-w-[560px]">
                 <thead>
                   <tr className="border-b border-[var(--border)] text-[var(--text)]/60">

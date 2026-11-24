@@ -8,6 +8,7 @@ export const LEVEL2: Level = {
   lessons: [
     {
       id: 'l2-mxv',
+      figures: ['a-mxv-ecosystem', 'a-mxv-vs-hnx'],
       title: 'MXV là gì?',
       objective: 'Biết MXV, loại hợp đồng giao dịch và mối liên thông với sàn quốc tế.',
       body: [
@@ -15,6 +16,7 @@ export const LEVEL2: Level = {
         'Hợp đồng trên MXV liên thông với các sàn quốc tế như CME Group (CBOT, NYMEX, COMEX), ICE, LME, SGX, OSE và Bursa Malaysia Derivatives (theo en.mxv.com.vn/overview.html, kiểm tra 20/11/2026). Giá tham chiếu theo các sàn gốc.',
         'MXV khác Sở Giao dịch Chứng khoán Hà Nội (HNX): HNX niêm yết chứng khoán phái sinh (hợp đồng tương lai VN30, trái phiếu Chính phủ), còn MXV là hàng hoá.',
         'Danh mục hợp đồng, khối lượng, quy cách của MXV có thể thay đổi; luôn xem trang chính thức của MXV.',
+        'Đường đi của một lệnh: bạn đặt lệnh trên phần mềm của thành viên môi giới, thành viên đưa lệnh lên sàn MXV, giá tham chiếu theo sàn quốc tế liên thông. Bạn luôn làm việc với thành viên, không làm việc trực tiếp với sàn.',
       ],
       remember: ['MXV: sàn hàng hoá, liên thông CME/ICE/SGX.', 'HNX là chứng khoán phái sinh, không phải hàng hoá.'],
       uncertain: ['Danh mục hợp đồng đang niêm yết và quy cách chính xác: cần kiểm tra lại với MXV/công ty môi giới (mxv.com.vn).'],
@@ -27,12 +29,14 @@ export const LEVEL2: Level = {
     },
     {
       id: 'l2-brokers',
+      figures: ['a-broker-check', 'a-broker-flags'],
       title: 'Thành viên môi giới của MXV',
       objective: 'Biết vì sao phải giao dịch qua thành viên được cấp phép và cách kiểm tra.',
       body: [
         'Nhà đầu tư không giao dịch trực tiếp trên MXV mà qua thành viên kinh doanh của MXV (công ty môi giới). Theo một nguồn báo chí, tại 01/09/2026 MXV có 33 thành viên; con số này có thể đã thay đổi.',
         'Cách kiểm tra: tìm tên công ty trong danh sách thành viên trên website MXV, không chỉ tin vào quảng cáo của công ty đó.',
         'Công ty không có tên trong danh sách thành viên và hứa hẹn lợi nhuận là dấu hiệu cảnh báo (xem Cấp 6 về lừa đảo).',
+        'Mẹo thực hành: tự gõ địa chỉ website MXV thay vì bấm đường link trong tin nhắn lạ. Nếu còn nghi ngờ, hãy liên hệ MXV qua kênh liên lạc công khai trên website chính thức để hỏi công ty đó có phải thành viên hay không.',
       ],
       remember: ['Chỉ giao dịch qua thành viên có tên trên website MXV.', 'Không chuyển tiền vào tài khoản cá nhân.'],
       uncertain: ['Số lượng và danh sách thành viên hiện tại: cần kiểm tra lại với MXV (mxv.com.vn).'],
@@ -45,12 +49,14 @@ export const LEVEL2: Level = {
     },
     {
       id: 'l2-hours',
+      figures: ['a-time-shift'],
       title: 'Giờ giao dịch liên thông',
       objective: 'Hiểu vì sao phần lớn hoạt động diễn ra chiều tối đến rạng sáng giờ Việt Nam.',
       body: [
         'Vì liên thông với sàn Mỹ và châu Âu, nhiều hợp đồng sôi động vào chiều tối đến rạng sáng giờ Việt Nam, khi sàn Mỹ mở cửa và các báo cáo (USDA, EIA) được công bố.',
         'Giờ giao dịch của mỗi mã khác nhau và thay đổi theo giờ mùa hè/mùa đông của Mỹ, trong khi Việt Nam không đổi giờ.',
         'Vì vậy cần tra lịch giao dịch từng mã và lịch công bố báo cáo, không tự suy luận.',
+        'Ví dụ: 9:00 sáng tại New York là 20:00 giờ Việt Nam khi Mỹ dùng giờ mùa hè (chênh 11 giờ) và 21:00 khi Mỹ dùng giờ mùa đông (chênh 12 giờ). Vì vậy cùng một báo cáo có thể rơi vào giờ khác nhau theo mùa.',
       ],
       remember: ['Giờ của sàn Mỹ đổi theo mùa, giờ Việt Nam thì không.', 'Báo cáo quan trọng thường gây biến động mạnh.'],
       uncertain: ['Giờ mở/đóng cửa cụ thể từng hợp đồng: cần kiểm tra lại với MXV/công ty môi giới.'],
@@ -63,12 +69,14 @@ export const LEVEL2: Level = {
     },
     {
       id: 'l2-fx-fees',
+      figures: ['a-fx-flow', 'a-fee-list'],
       title: 'Quy đổi USD/VND và phí',
       objective: 'Hiểu lãi lỗ tính bằng USD nhưng ký quỹ bằng VND, và biết các loại phí cần hỏi.',
       body: [
         'Hợp đồng quốc tế định giá bằng USD (hoặc cent), còn ký quỹ ở Việt Nam thường nộp bằng VND và quy đổi theo tỷ giá do thành viên/sàn áp dụng. Lãi lỗ vì thế chịu ảnh hưởng thêm bởi tỷ giá.',
         'Theo quy định công bố của một thành viên (Finhay), ký quỹ ban đầu cho cá nhân tính từ ký quỹ cơ sở của sàn nhân hệ số, rồi quy đổi theo tỷ giá; hệ số và ngưỡng thanh lý có thể đổi theo thời kỳ.',
         'Các loại phí cần hỏi: phí giao dịch mỗi lot (thường cố định), phí dữ liệu giá, phí qua đêm/khác nếu có. Mức phí cụ thể khác nhau giữa các thành viên.',
+        'Ví dụ (tỷ giá giả định 25.000 VND/USD): 1 tick ngô là 12,5 USD = 312.500 VND; ngô tăng 10 cent là 40 tick = 500 USD = 12.500.000 VND cho mỗi hợp đồng.',
       ],
       example: undefined,
       textExample: 'Tick ngô 12,5 USD. Nếu tỷ giá giả định là 25.000 VND/USD (số minh hoạ), 1 tick tương đương 312.500 VND. Dùng máy tính "Quy đổi" để thử với tỷ giá thực của bạn.',
@@ -84,6 +92,7 @@ export const LEVEL2: Level = {
     },
     {
       id: 'l2-account',
+      figures: ['a-account-steps'],
       title: 'Quy trình mở tài khoản',
       objective: 'Nắm các bước điển hình và điều cần đọc kỹ trước khi nộp tiền.',
       body: [
@@ -91,6 +100,7 @@ export const LEVEL2: Level = {
         'Đọc kỹ: biểu phí, quy tắc ký quỹ/thanh lý, quy định đóng/roll trước FND, cách rút tiền.',
         'Khách cá nhân thường không được nhận hàng vật chất: phải đóng hoặc roll trước FND.',
         'Quy trình, giấy tờ và điều kiện cụ thể do từng thành viên quy định.',
+        'Trước khi nộp tiền, hãy tự hỏi năm câu: Công ty có trong danh sách thành viên MXV không? Biểu phí ghi rõ ở đâu? Khi nào bị gọi ký quỹ và thanh lý? Phải đóng hoặc roll trước ngày nào? Rút tiền bằng cách nào và mất bao lâu?',
       ],
       remember: ['Đọc kỹ hợp đồng trước khi ký và nộp tiền.', 'Thủ tục cụ thể do thành viên quy định.'],
       uncertain: ['Giấy tờ, điều kiện, thời gian mở tài khoản: cần kiểm tra lại với MXV/công ty môi giới.'],
@@ -103,12 +113,14 @@ export const LEVEL2: Level = {
     },
     {
       id: 'l2-legal',
+      figures: ['a-legal-map'],
       title: 'Pháp lý: những điều có thể kiểm chứng',
       objective: 'Phân biệt các văn bản pháp lý liên quan và biết điều gì cần kiểm tra lại.',
       body: [
         'Nghị định 158/2020/NĐ-CP quy định về chứng khoán phái sinh và thị trường chứng khoán phái sinh (HNX), không phải khung pháp lý riêng của hàng hoá MXV.',
         'Giao dịch hàng hoá qua Sở Giao dịch Hàng hoá trước đây theo Nghị định 158/2006/NĐ-CP và 51/2018/NĐ-CP. Nghị định 302/2026/NĐ-CP (ban hành 01/08/2026, hiệu lực 15/09/2026) quy định chi tiết Luật Thương mại về mua bán hàng hoá qua Sở Giao dịch Hàng hoá và, theo Điều 40, chấm dứt hiệu lực của NĐ 158/2006 và NĐ 51/2018 (đối chiếu trên LuatVietnam, kiểm tra 20/11/2026). Thông tư 47/2026/TT-BCT hướng dẫn thi hành.',
         'Vì văn bản pháp luật thay đổi, đừng dựa vào bài này để kết luận pháp lý: hãy kiểm tra văn bản gốc và hỏi MXV/công ty môi giới.',
+        'Cách đọc văn bản pháp luật: xem tên văn bản và cơ quan ban hành, ngày ban hành, ngày có hiệu lực, và điều khoản nói văn bản cũ nào hết hiệu lực. Chỉ khi đối chiếu ba điều này với bản gốc mới nên kết luận.',
       ],
       remember: ['NĐ 158/2020 là về chứng khoán phái sinh.', 'Pháp luật thay đổi: luôn đối chiếu văn bản gốc.'],
       uncertain: [

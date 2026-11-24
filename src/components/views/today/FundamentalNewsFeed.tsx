@@ -329,7 +329,7 @@ export function FundamentalNewsFeed() {
       )}
 
       {loading && summary.total === 0 ? (
-        <div className="p-4 space-y-3" aria-busy="true" aria-label={t('news.list.loading')}>
+        <div className="p-4 space-y-3" role="status" aria-busy="true" aria-label={t('news.list.loading')}>
           <Skeleton className="h-14" />
           <Skeleton className="h-14" />
           <Skeleton className="h-14" />

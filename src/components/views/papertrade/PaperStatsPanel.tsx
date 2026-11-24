@@ -36,7 +36,7 @@ function StatsCurve({ curve, dd, baseline, label, ddLabel }: { curve: CurvePoint
 function GroupTable({ rows, nameOf }: { rows: GroupStats[]; nameOf: (k: string) => string }) {
   const t = useT();
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" tabIndex={0}>
       <table className="w-full text-xs">
         <thead>
           <tr className="text-left text-[var(--text)]/55">

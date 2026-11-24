@@ -97,7 +97,7 @@ function ReleaseList({ items }: { items: WasdeRelease[] }) {
           {r.files.length > 0 && (
             <span className="flex gap-1">
               {r.files.map((f) => (
-                <a key={f} href={f} target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">
+                <a key={f} href={f} target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] underline">
                   {f.split('.').pop()}
                 </a>
               ))}
@@ -194,7 +194,7 @@ export function MacroDataPanel() {
               ) : (
                 <p className="text-[11px] font-mono text-[var(--warning)]/80">
                   {t('macro.wasde.noUpcoming')}{' '}
-                  <a href="https://www.usda.gov/oce/commodity/wasde" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">
+                  <a href="https://www.usda.gov/oce/commodity/wasde" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] underline">
                     usda.gov/oce/commodity/wasde
                   </a>
                 </p>

@@ -37,8 +37,8 @@ export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDel
           {t('common.refresh')}
         </button>
       </div>
-      {error && <p className="px-4 py-2 text-xs text-[var(--negative)] border-b border-[var(--border)]">{error}</p>}
-      <div className="overflow-x-auto">
+      {error && <p role="alert" className="px-4 py-2 text-xs text-[var(--negative)] border-b border-[var(--border)]">{error}</p>}
+      <div className="overflow-x-auto" tabIndex={0}>
         <table className="w-full text-left border-collapse min-w-[1080px]">
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">
@@ -158,7 +158,7 @@ export function ConfirmDeleteDialog({ dataset, busy, error, onCancel, onConfirm 
           {t('data.ds.confirm2', { source: dataset.sourceLabel })}{' '}
           <span className="font-mono text-[var(--text-strong)]">{fmtInt(dataset.insertedCount)}</span> {t('data.ds.confirm3')}
         </p>
-        {error && <p className="text-xs text-[var(--negative)]">{error}</p>}
+        {error && <p role="alert" className="text-xs text-[var(--negative)]">{error}</p>}
         <div className="flex justify-end gap-2">
           <button
             ref={cancelRef}

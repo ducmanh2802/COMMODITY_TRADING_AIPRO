@@ -68,7 +68,7 @@ export function FuturesChainPanel({ instrumentId }: { instrumentId: string }) {
       <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('chain.title')}</h2>
       <p className="text-[11px] text-[var(--text)]/55">{t('chain.note')}</p>
       {state.s === 'loading' && <p className="text-xs text-[var(--text)]/55">{t('chain.loading')}</p>}
-      {state.s === 'error' && <p className="text-xs font-mono text-[var(--negative)]">{state.message}</p>}
+      {state.s === 'error' && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{state.message}</p>}
       {state.s === 'ok' && state.data.status === 'UNAVAILABLE' && (
         <div className="flex items-start gap-2 text-xs">
           <DataStatusBadge status="UNAVAILABLE" />
@@ -91,7 +91,7 @@ export function FuturesChainPanel({ instrumentId }: { instrumentId: string }) {
               })}
             </p>
           )}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="w-full min-w-[640px] text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-[var(--border)] text-[var(--text)]/65">

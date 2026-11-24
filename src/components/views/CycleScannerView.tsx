@@ -156,7 +156,7 @@ export function CycleScannerView() {
           </span>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[var(--border)] text-xs text-[var(--text)]/55">

@@ -1,4 +1,4 @@
-import { onTablistKeyDown } from '../../shared/hooks/tablistKeys';
+import { onTablistKeyDown, tablistRef } from '../../shared/hooks/tablistKeys';
 import { useMemo, useState } from 'react';
 import {
   Activity,
@@ -348,7 +348,7 @@ export function DataHealthView() {
 
       {/* Navigation Tabs */}
       <div
-        role="tablist" onKeyDown={onTablistKeyDown}
+        role="tablist" ref={tablistRef} onKeyDown={onTablistKeyDown}
         aria-label={t('fr.dh.tabsAria')}
         className="flex flex-wrap items-center gap-1 border-b border-[var(--border)] pb-2"
       >
@@ -442,7 +442,7 @@ export function DataHealthView() {
                 {t('fr.dh.loadingReport')}
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-left border-collapse min-w-[980px]">
                   <thead>
                     <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-[11px] text-[var(--text)]/65">
@@ -648,7 +648,7 @@ export function DataHealthView() {
               <p className="text-xs text-[var(--text)]/55 mt-0.5">{t('fr.dh.provSub')}</p>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
               <table className="w-full text-left border-collapse min-w-[820px]">
                 <thead>
                   <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">
@@ -706,7 +706,7 @@ export function DataHealthView() {
               <p className="text-xs text-[var(--text)]/60 mt-0.5">{t('fr.dh.envHint')}</p>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
               <table className="w-full text-left border-collapse min-w-[860px]">
                 <thead>
                   <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">
@@ -760,7 +760,7 @@ export function DataHealthView() {
                 <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('fr.dh.fundTitle')}</h2>
                 <p className="text-xs text-[var(--text)]/55 mt-0.5">{t('fr.dh.fundSub')}</p>
               </div>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-left border-collapse min-w-[880px]">
                   <thead>
                     <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">
@@ -837,7 +837,7 @@ export function DataHealthView() {
                 {t('fr.dh.dsEmpty')}
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-left border-collapse min-w-[760px]">
                   <thead>
                     <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">

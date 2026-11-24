@@ -6,15 +6,15 @@ export const LEARN_GOALS: LearnGoal[] = ['understand', 'hedge', 'swing'];
 export const LEARN_PATHS: Record<LearnGoal, string[]> = {
   understand: [
     'l1-commodity', 'l1-spot-futures', 'l1-hedger-spec', 'l1-contract', 'l2-mxv', 'l3-grains', 'l3-precious', 'l3-oil',
-    'l4-fundamental', 'l4-curve', 'l4-seasonal', 'l4-cot', 'l4-correlation', 'l6-data-labels', 'l5-mistakes', 'l5-scam',
+    'l4-fundamental', 'l4-curve', 'l4-seasonal', 'l4-cot', 'l4-correlation', 'l6-data-labels', 'l5-mistakes', 'l5-who-profits', 'l5-scam',
   ],
   hedge: [
     'l1-commodity', 'l1-spot-futures', 'l1-hedger-spec', 'l1-contract', 'l1-margin', 'l1-expiry-roll', 'l2-mxv', 'l2-fx-fees',
-    'l3-grains', 'l3-soy', 'l3-coffee', 'l4-fundamental', 'l4-curve', 'l5-sizing', 'l5-mistakes', 'l10-contract', 'l10-costs', 'l10-account',
+    'l3-grains', 'l3-soy', 'l3-coffee', 'l4-fundamental', 'l4-curve', 'l5-sizing', 'l5-mistakes', 'l5-who-profits', 'l10-contract', 'l10-costs', 'l10-account',
   ],
   swing: [
     'l1-spot-futures', 'l1-contract', 'l1-margin', 'l1-pnl', 'l8-dow', 'l8-price-action', 'l8-volume', 'l8-combine',
-    'l5-sizing', 'l5-stop', 'l5-mistakes', 'l7-swing', 'l7-backtest', 'l9-expectancy', 'l9-setups', 'l10-account', 'l10-margin', 'l9-plan',
+    'l5-sizing', 'l5-stop', 'l5-mistakes', 'l5-who-profits', 'l7-swing', 'l7-backtest', 'l9-expectancy', 'l9-setups', 'l10-account', 'l10-margin', 'l9-plan',
   ],
 };
 

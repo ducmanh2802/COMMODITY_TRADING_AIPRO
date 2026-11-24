@@ -150,7 +150,7 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
           </div>
           <StatusBlock label={t('an.corr.matrixLabel')} status={matrix.status} reason={matrix.reason} warnings={matrix.warnings} />
           {matrix.status === 'OK' && (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
               <table className="text-xs font-mono border-collapse">
                 <thead>
                   <tr>

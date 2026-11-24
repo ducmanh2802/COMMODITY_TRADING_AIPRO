@@ -49,6 +49,10 @@ export interface Lesson {
   checklist?: { text: string; module?: AppModuleId; moduleLabel?: string }[];
   /** Statements that must be re-verified with MXV / the broker. */
   uncertain?: string[];
+  /** Curated videos from reputable sources (verified to exist). */
+  videos?: LessonVideo[];
+  /** Extra inline SVG figures (keys of diagrams/group{A,B,C}.tsx), shown after the body in order. */
+  figures?: string[];
   /** Inline SVG diagram shown after the body. */
   diagram?: DiagramId;
 }
@@ -94,3 +98,14 @@ export const SRC = {
   eia: { label: 'EIA – Weekly Petroleum Status Report', url: 'https://www.eia.gov/petroleum/supply/weekly/' },
   eiaGas: { label: 'EIA – Natural Gas Weekly Update', url: 'https://www.eia.gov/naturalgas/weekly/' },
 } satisfies Record<string, Source>;
+
+export interface LessonVideo {
+  title: string;
+  url: string;
+  /** Publisher, e.g. "CME Group", "CFTC", "MXV". */
+  source: string;
+  lang: 'vi' | 'en';
+  duration?: string;
+  /** One line on what to watch for. */
+  note?: string;
+}

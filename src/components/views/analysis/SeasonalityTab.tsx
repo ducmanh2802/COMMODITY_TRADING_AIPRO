@@ -142,7 +142,7 @@ export function SeasonalityTab({ options }: { options: SeriesOption[] }) {
                   {t('an.seas.yearsCovered')} <span className="text-[var(--text-strong)]">{res.yearsCovered}</span>{' '}
                   {t('an.seas.required', { n: Number.isFinite(minYears) ? minYears : '—' })}
                 </p>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" tabIndex={0}>
                   <table className="text-xs font-mono min-w-[420px]">
                     <thead>
                       <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
@@ -171,7 +171,7 @@ export function SeasonalityTab({ options }: { options: SeriesOption[] }) {
           {res.status === 'OK' && (
             <>
               <Panel title={t('an.seas.stats')}>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" tabIndex={0}>
                   <table className="w-full text-xs font-mono min-w-[640px]">
                     <thead>
                       <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">

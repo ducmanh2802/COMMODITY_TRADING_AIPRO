@@ -8,6 +8,7 @@ export const LEVEL8: Level = {
   lessons: [
     {
       id: 'l8-dow',
+      figures: ['c-dow-hhhl', 'c-dow-phases'],
       diagram: 'dow',
       title: 'Lý thuyết Dow: nền móng của phân tích xu hướng',
       objective: 'Nắm 6 nguyên lý Dow và cách nhận biết một xu hướng còn hay đã kết thúc.',
@@ -39,6 +40,7 @@ export const LEVEL8: Level = {
     },
     {
       id: 'l8-price-action',
+      figures: ['c-pa-zones', 'c-pa-candles'],
       diagram: 'pinbar',
       title: 'Price Action: đọc hành vi giá không cần chỉ báo',
       objective: 'Biết vẽ hỗ trợ/kháng cự, nhận diện cấu trúc thị trường và vài mẫu nến cơ bản.',
@@ -70,6 +72,7 @@ export const LEVEL8: Level = {
     },
     {
       id: 'l8-volume',
+      figures: ['c-vol-oi'],
       title: 'Khối lượng (Volume) và Hợp đồng mở (Open Interest)',
       objective: 'Dùng khối lượng và hợp đồng mở để đánh giá sức mạnh của một nhịp giá.',
       body: [
@@ -100,6 +103,7 @@ export const LEVEL8: Level = {
     },
     {
       id: 'l8-combine',
+      figures: ['c-five-steps'],
       diagram: 'srflip',
       title: 'Kết hợp: quy trình đọc biểu đồ 5 bước',
       objective: 'Ghép Dow, Price Action và Khối lượng thành một quy trình kiểm tra trước khi ra quyết định giả lập.',

@@ -63,7 +63,7 @@ export function CotHealthSection() {
       </div>
       {error && <p className="px-4 py-3 text-xs text-[var(--warning)]">{t('cot.h.unavailable', { error })}</p>}
       {health && (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
               <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">

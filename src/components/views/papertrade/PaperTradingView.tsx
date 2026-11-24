@@ -1,4 +1,4 @@
-import { onTablistKeyDown } from '../../../shared/hooks/tablistKeys';
+import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TrapDialog } from '../../common/TrapDialog';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
@@ -450,7 +450,7 @@ export function PaperTradingView() {
       {store.error && <p className="text-xs text-[var(--negative)]" role="alert">{store.error}</p>}
       {message && <p className="text-xs text-[var(--accent-text)]" role="status">{message}</p>}
 
-      <div className="flex gap-2 overflow-x-auto snap-x -mx-1 px-1 pb-1" role="tablist" onKeyDown={onTablistKeyDown}>
+      <div className="flex gap-2 overflow-x-auto snap-x -mx-1 px-1 pb-1" role="tablist" ref={tablistRef} onKeyDown={onTablistKeyDown}>
         {(['trade', 'stats', 'history', 'replay', 'contest'] as const).map((k) => (
           <button
             key={k}
@@ -510,7 +510,7 @@ export function PaperTradingView() {
                 <label htmlFor="pt-capital" className={labelCls}>{t('pt.session.capital')}</label>
                 <input id="pt-capital" inputMode="numeric" value={newCapital} onChange={(e) => setNewCapital(e.target.value)} className={`${inputCls} font-mono`} />
               </div>
-              <button type="submit" className={`${bigBtn} bg-[var(--positive)] hover:bg-[var(--positive)]/90 text-[#05210F]`}>{t('pt.session.create')}</button>
+              <button type="submit" className={`${bigBtn} bg-[var(--positive)] hover:bg-[var(--positive)]/90 text-[var(--on-positive)]`}>{t('pt.session.create')}</button>
             </form>
             {formError && <p className="text-xs text-[var(--negative)]" role="alert">{formError}</p>}
           </div>
@@ -602,7 +602,7 @@ export function PaperTradingView() {
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-3">
-                  <button type="button" aria-pressed={side === 'LONG'} onClick={() => setSide('LONG')} className={`${bigBtn} border ${side === 'LONG' ? 'bg-[var(--positive)] border-[var(--positive)] text-[#05210F]' : 'border-[var(--border)] text-[var(--text)]'}`}>{t('pt.side.buy')}</button>
+                  <button type="button" aria-pressed={side === 'LONG'} onClick={() => setSide('LONG')} className={`${bigBtn} border ${side === 'LONG' ? 'bg-[var(--positive)] border-[var(--positive)] text-[var(--on-positive)]' : 'border-[var(--border)] text-[var(--text)]'}`}>{t('pt.side.buy')}</button>
                   <button type="button" aria-pressed={side === 'SHORT'} onClick={() => setSide('SHORT')} className={`${bigBtn} border ${side === 'SHORT' ? 'bg-[var(--negative)] border-[var(--negative)] text-white' : 'border-[var(--border)] text-[var(--text)]'}`}>{t('pt.side.sell')}</button>
                 </div>
                 <p className="text-[11px] text-[var(--text)]/60">{side === 'LONG' ? t('pt.side.buyExplain') : t('pt.side.sellExplain')}</p>
@@ -772,7 +772,7 @@ export function PaperTradingView() {
             <p className="text-[11px] text-[var(--warning)]">{t('pt.confirm.virtual')}</p>
             <div className="grid grid-cols-2 gap-3">
               <button type="button" className={`${bigBtn} border border-[var(--border)]`} onClick={() => setPending(null)}>{pending.warn > 0 ? t('ck.warn.back') : t('pt.cancel')}</button>
-              <button type="button" className={`${bigBtn} bg-[var(--positive)] text-[#05210F]`} onClick={() => void confirmOrder()}>{pending.warn > 0 ? t('ck.warn.go') : t('pt.confirm.ok')}</button>
+              <button type="button" className={`${bigBtn} bg-[var(--positive)] text-[var(--on-positive)]`} onClick={() => void confirmOrder()}>{pending.warn > 0 ? t('ck.warn.go') : t('pt.confirm.ok')}</button>
             </div>
           </div>
         </TrapDialog>

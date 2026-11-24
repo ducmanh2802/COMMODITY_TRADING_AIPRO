@@ -241,7 +241,7 @@ export function ContestView() {
             {(me.positions ?? []).length === 0 ? (
               <p className="text-xs text-[var(--text)]/60">{t('ct.pos.empty')}</p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-xs">
                   <tbody>
                     {[...(me.positions ?? [])].reverse().map((p) => (
@@ -273,7 +273,7 @@ export function ContestView() {
         {rows.length === 0 ? (
           <p className="text-xs text-[var(--text)]/60">{t('ct.lb.empty')}</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-left text-[var(--text)]/55">

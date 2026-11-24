@@ -228,7 +228,7 @@ export function ScannerView() {
                 {t('scan.noSetups')}
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-left border-collapse min-w-[880px]">
                   <thead>
                     <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">

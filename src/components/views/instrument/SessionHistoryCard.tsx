@@ -116,7 +116,7 @@ export function SessionHistoryCard() {
                 </span>
               </p>
               {data.status === 'PARTIAL' && <p className="text-xs text-[var(--warning)]">{t('ses.partial', { n: data.count })}</p>}
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
                 <table className="w-full min-w-[520px] text-xs">
                   <thead>
                     <tr className="text-left text-[var(--muted)]">

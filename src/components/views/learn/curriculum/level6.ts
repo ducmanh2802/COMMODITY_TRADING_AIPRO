@@ -10,6 +10,7 @@ export const LEVEL6: Level = {
   lessons: [
     {
       id: 'l6-data-labels',
+      figures: ['b-data-labels', 'b-delay-gap'],
       title: 'Đọc thẻ giá và nhãn dữ liệu: khi nào KHÔNG nên tin một con số',
       objective: 'Hiểu các nhãn chất lượng dữ liệu và biết khi nào phải dừng phân tích.',
       body: [
@@ -17,6 +18,7 @@ export const LEVEL6: Level = {
         'Quy tắc: số liệu trễ vẫn dùng được để học và nghiên cứu xu hướng dài hạn, nhưng không dùng để quyết định mức giá khớp lệnh chính xác. Giá trễ 15 phút có thể cách xa giá thực lúc có báo cáo lớn.',
         'Dừng và kiểm tra lại khi: nhãn "Giá cũ"; thời gian cập nhật lâu bất thường; nguồn không chính thức nhưng bạn định dựa vào một mức giá cụ thể; dữ liệu chuỗi liên tục có khoảng nhảy giá khi chuyển kỳ hạn (roll gap).',
         'Ứng dụng không thay thế bảng giá của công ty môi giới. Khi quyết định có tiền thật, đối chiếu với nền tảng của thành viên MXV.',
+        'Ví dụ: giá ngô hiển thị "trễ ~15 phút" đúng lúc vừa có báo cáo WASDE. Con số trên màn hình có thể là giá của 15 phút trước, khi giá chưa kịp phản ứng. Bạn dùng nó để hiểu bối cảnh, còn khi cần giá khớp thì mở bảng giá của công ty môi giới.',
       ],
       remember: ['Giá trễ dùng để nghiên cứu, không để canh giá khớp chính xác.', 'Thấy "Giá cũ" hoặc cập nhật quá lâu: dừng và kiểm tra.'],
       quiz: [
@@ -30,6 +32,11 @@ export const LEVEL6: Level = {
     },
     {
       id: 'l6-indicators',
+      figures: ['b-indicator-map', 'b-consensus'],
+      videos: [
+        { title: 'Moving Averages', url: 'https://www.youtube.com/watch?v=57-LfRkVTwo', source: 'CME Group', lang: 'en', note: 'Cách tính và đọc đường trung bình động (tiếng Anh).' },
+        { title: 'Oscillators: MACD, RSI, Stochastic\'s', url: 'https://www.youtube.com/watch?v=W0u4RBHF_XQ', source: 'CME Group', lang: 'en', note: 'Các chỉ báo dao động như RSI đo động lượng (tiếng Anh).' },
+      ],
       title: 'Đọc từng chỉ số trong "Đánh giá các mã" và "Phân tích chi tiết"',
       objective: 'Với mỗi chỉ số: đo cái gì, đọc giá trị thế nào, hiểu sai thường gặp, và điều nó KHÔNG cho biết.',
       body: [
@@ -42,6 +49,7 @@ export const LEVEL6: Level = {
         `Mùa vụ: hành vi trung bình theo thời điểm trong năm. Hiểu sai: coi là quy luật. Không cho biết: năm nay có giống năm trước không; ít năm dữ liệu thì không đáng tin.`,
         `Cấu trúc kỳ hạn: contango hay backwardation giữa các tháng. ${ILLUS} Tháng gần 450, tháng xa 456 là contango 6 cent. Gợi ý về cung–cầu và chi phí roll; không dự báo giá.`,
         'Nguyên tắc chung: không chỉ báo nào đứng một mình. Hãy tìm sự đồng thuận hoặc mâu thuẫn giữa chúng, rồi ghi lại bạn diễn giải thế nào.',
+        'Mẹo đọc nhanh: với mỗi chỉ số, tự hỏi hai câu: "nó đo gì?" và "nó KHÔNG cho tôi biết gì?". Nếu không trả lời được câu thứ hai, bạn đang tin nó quá mức. Sau đó xếp các chỉ số vào ba nhóm: ủng hộ, trung lập, mâu thuẫn.',
       ],
       remember: ['Mỗi chỉ số trả lời MỘT câu hỏi và bỏ ngỏ nhiều câu khác.', 'Tìm sự đồng thuận/mâu thuẫn giữa các chỉ số, đừng tin một mình nó.'],
       quiz: [
@@ -56,11 +64,16 @@ export const LEVEL6: Level = {
     },
     {
       id: 'l6-process',
+      figures: ['b-seven-steps'],
+      videos: [
+        { title: 'Position and risk management for individual traders', url: 'https://www.youtube.com/watch?v=3q_H4GnZZII', source: 'CME Group', lang: 'en', note: 'Quản lý vị thế và rủi ro cho nhà giao dịch cá nhân (tiếng Anh).' },
+      ],
       title: 'Quy trình 7 bước nghiên cứu một mã',
       objective: 'Có một danh sách kiểm tra lặp lại được; mỗi bước dẫn tới màn hình tương ứng.',
       body: [
         'Danh sách dưới đây là khung nghiên cứu, không phải tín hiệu. Bạn là người quyết định cuối cùng và chịu trách nhiệm về quyết định đó.',
         'Đánh dấu từng bước khi hoàn thành. Tiến độ lưu trên trình duyệt của bạn.',
+        'Cách dùng: đi từ bước 1 đến 7 theo thứ tự; nếu bước 1 (dữ liệu) không đạt thì dừng, đừng đi tiếp. Bước 6 chuyển nhận định thành số tiền cụ thể; bước 7 biến mỗi lần nghiên cứu thành bài học, kể cả khi bạn quyết định không làm gì.',
       ],
       checklist: [
         { text: '1. Kiểm tra chất lượng dữ liệu: nhãn nguồn, độ trễ, giá cũ.', module: 'data-health', moduleLabel: 'Sức khoẻ dữ liệu' },
@@ -82,6 +95,7 @@ export const LEVEL6: Level = {
     },
     {
       id: 'l6-example',
+      figures: ['b-zc-indicators', 'b-zc-risk'],
       title: 'Ví dụ hoàn chỉnh: nghiên cứu ngô (ZC)',
       objective: 'Đi qua 7 bước với số liệu giả định, để thấy cách ghép các chỉ số.',
       body: [

@@ -1,4 +1,4 @@
-import { onTablistKeyDown } from '../../../shared/hooks/tablistKeys';
+import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
 import { useMemo, useState } from 'react';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
@@ -10,6 +10,7 @@ import { GLOSSARY } from './glossary';
 import { filterSlang, SLANG, SLANG_TAGS, type SlangTag } from './glossarySlang';
 import { MONEY_WAYS, RISK_WARNINGS } from './learnContent';
 import { LearnGoalCard } from './LearnGoalCard';
+import { ProgramCard } from '../program/ProgramCard';
 import { LessonPage } from './LessonPage';
 import { loadProgress, saveProgress, type LearnProgress } from './progress';
 import { ReviewCard } from './ReviewSession';
@@ -129,7 +130,7 @@ function Glossary({ onBack }: { onBack: () => void }) {
         ← Về Học viện
       </button>
       <SectionHeader level={1} title="Thuật ngữ" subtitle={tab === 'formal' ? `${GLOSSARY.length} thuật ngữ. Gõ để tìm.` : 'Từ lóng & từ dân đầu tư hay dùng'} />
-      <div role="tablist" onKeyDown={onTablistKeyDown} className="flex gap-2 flex-wrap">
+      <div role="tablist" ref={tablistRef} onKeyDown={onTablistKeyDown} className="flex gap-2 flex-wrap">
         <button type="button" role="tab" aria-selected={tab === 'formal'} onClick={() => setTab('formal')} className={chipCls(tab === 'formal')}>
           Thuật ngữ chính thức
         </button>
@@ -171,7 +172,7 @@ function Extras({ onBack }: { onBack: () => void }) {
         ← Về Học viện
       </button>
       <SectionHeader level={1} title="Các cách kiếm tiền và cảnh báo rủi ro" />
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" tabIndex={0}>
         <table className="w-full text-xs border border-[var(--border)]">
           <thead className="bg-[var(--surface)] text-[var(--muted)]">
             <tr>
@@ -286,6 +287,7 @@ export default function LearnView() {
       />
       <ReviewCard />
       <LearnGoalCard lessons={progress.lessons} onOpen={(id) => go({ kind: 'lesson', id })} />
+      <ProgramCard onOpenLesson={(id) => go({ kind: 'lesson', id })} onOpenExam={(target) => go({ kind: 'exam', target })} />
       <Card tone="warning">
         <p className="text-xs">
           <strong>Tài liệu giáo dục, không phải tư vấn đầu tư.</strong> Giao dịch hợp đồng tương lai có đòn bẩy và có thể mất nhiều hơn số tiền bạn nghĩ. Chỉ giao dịch qua thành viên được MXV cấp phép. Nội dung đánh dấu "cần kiểm tra lại với MXV/công ty môi giới" chưa được xác minh với văn bản chính thức.

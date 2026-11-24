@@ -318,7 +318,7 @@ export function HedgeWizard() {
             <span className="text-xs text-[var(--faint)]">{t('hd.s4.basisChgNote')}</span>
           </label>
           <div className="text-xs text-[var(--faint)]">{t(role === 'seller' ? 'hd.s4.seller' : 'hd.s4.buyer')}</div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="w-full text-xs">
               <thead className="text-[var(--faint)]">
                 <tr>

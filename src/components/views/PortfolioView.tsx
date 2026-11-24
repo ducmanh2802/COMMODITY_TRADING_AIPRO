@@ -446,10 +446,11 @@ export function PortfolioView() {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder={t('pf.notesPh')}
+          aria-label={t('pf.notesPh')}
           maxLength={500}
           className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs text-[var(--text-strong)]"
         />
-        {error && <p className="text-xs font-mono text-[var(--negative)]">{error}</p>}
+        {error && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
       </form>
 
       {/* Positions Ledger */}
@@ -461,7 +462,7 @@ export function PortfolioView() {
         {positions.length === 0 ? (
           <div className="p-6 text-xs font-mono text-[var(--text)]/60">{t('pf.empty')}</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="w-full text-left border-collapse min-w-[780px]">
               <thead>
                 <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">

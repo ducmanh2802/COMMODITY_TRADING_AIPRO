@@ -1,4 +1,4 @@
-import { onTablistKeyDown } from '../../../shared/hooks/tablistKeys';
+import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { fmtFixed, useI18n } from '../../../i18n';
@@ -56,7 +56,7 @@ function WhyBlock({ data, l }: { data: DriversResponse; l: L }) {
     .join('\n');
   return (
     <Block title={t('drv.why.title')} summary={tx(h.sentence, l)} source={more}>
-      <div className="flex gap-2" role="tablist" onKeyDown={onTablistKeyDown}>
+      <div className="flex gap-2" role="tablist" ref={tablistRef} onKeyDown={onTablistKeyDown}>
         {([1, 5, 20] as const).map((d) => (
           <button
             key={d}
@@ -92,7 +92,7 @@ function ConeRows({ h, l }: { h: ConeHorizon; l: L }) {
   return (
     <div className="space-y-1">
       <p className="text-xs font-medium text-[var(--text)]">{t(h.days === 5 ? 'drv.cone.h5' : 'drv.cone.h21')}</p>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" tabIndex={0}>
       <table className="text-xs">
         <tbody>
           {h.parametric && (
@@ -200,7 +200,7 @@ export function DriversPanel() {
     );
   if (!data)
     return (
-      <div className="space-y-3" aria-busy="true" aria-label={t('drv.loading')}>
+      <div className="space-y-3" role="status" aria-busy="true" aria-label={t('drv.loading')}>
         <Skeleton className="h-32" />
         <Skeleton className="h-48" />
       </div>

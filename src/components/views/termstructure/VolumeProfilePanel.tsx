@@ -87,7 +87,7 @@ export function VolumeProfilePanel({ instrumentId }: { instrumentId: string }) {
         </div>
       )}
       {candles.s === 'loading' && <p className="text-xs text-[var(--text)]/55">{t('vp.loading')}</p>}
-      {candles.s === 'error' && <p className="text-xs font-mono text-[var(--negative)]">{candles.message}</p>}
+      {candles.s === 'error' && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{candles.message}</p>}
       {candles.s === 'ok' && !profile && <p className="text-xs text-[var(--text)]/60">{t('vp.noVolume')}</p>}
       {profile && candles.s === 'ok' && (
         <>

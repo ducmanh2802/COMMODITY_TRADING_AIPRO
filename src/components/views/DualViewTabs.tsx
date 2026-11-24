@@ -1,4 +1,4 @@
-import { onTablistKeyDown } from '../../shared/hooks/tablistKeys';
+import { onTablistKeyDown, tablistRef } from '../../shared/hooks/tablistKeys';
 import { useState, type ReactNode } from 'react';
 
 export interface DualViewTab {
@@ -17,7 +17,7 @@ export function DualViewTabs({ tabs, initialTabId }: { tabs: DualViewTab[]; init
   const current = tabs.find((t) => t.id === active) ?? tabs[0];
   return (
     <div className="space-y-4">
-      <div role="tablist" onKeyDown={onTablistKeyDown} className="flex flex-nowrap overflow-x-auto sm:flex-wrap gap-2 border-b border-white/10 pb-2">
+      <div role="tablist" ref={tablistRef} onKeyDown={onTablistKeyDown} className="flex flex-nowrap overflow-x-auto sm:flex-wrap gap-2 border-b border-white/10 pb-2">
         {tabs.map((tab) => (
           <button
             key={tab.id}

@@ -8,12 +8,18 @@ export const LEVEL5: Level = {
   lessons: [
     {
       id: 'l5-sizing',
+      figures: ['b-risk-slice', 'b-size-flow'],
+      videos: [
+        { title: 'Position and risk management for individual traders', url: 'https://www.youtube.com/watch?v=3q_H4GnZZII', source: 'CME Group', lang: 'en', note: 'Quản lý vị thế và rủi ro cho nhà giao dịch cá nhân (tiếng Anh).' },
+      ],
       title: 'Khối lượng vị thế theo % vốn',
       objective: 'Tính số hợp đồng sao cho mức lỗ nếu sai nằm trong ngân sách rủi ro.',
       body: [
         'Thay vì hỏi "mua bao nhiêu hợp đồng", hãy hỏi "tôi chấp nhận mất tối đa bao nhiêu tiền nếu nhận định sai?". Nhiều giáo trình dùng một tỷ lệ nhỏ của vốn cho mỗi lệnh; tỷ lệ phù hợp do bạn tự quyết định.',
         'Số hợp đồng = ngân sách rủi ro ÷ rủi ro mỗi hợp đồng (khoảng cách stop quy ra tiền, cộng phí). Làm tròn xuống.',
         'Nếu một hợp đồng đã vượt ngân sách rủi ro, kết luận hợp lý là không vào lệnh, không phải nới stop.',
+        'Làm từng bước với số minh hoạ ngô: vốn 10.000 USD, rủi ro 2% = 200 USD. Stop cách 8 cent, mỗi cent ngô = 50 USD nên rủi ro mỗi hợp đồng là 400 USD. 200 ÷ 400 = 0,5, làm tròn xuống = 0 hợp đồng: không vào lệnh.',
+        'Nếu vốn 30.000 USD, rủi ro 2% = 600 USD và stop cách 12 cent = 600 USD mỗi hợp đồng thì được 600 ÷ 600 = 1 hợp đồng. Đổi một trong ba số (vốn, % rủi ro, khoảng stop) là kết quả đổi theo.',
       ],
       example: { caption: 'Vốn 10.000 USD, rủi ro 2% (200 USD), stop cách 8 cent (số minh hoạ)', calc: { kind: 'sizing', instrumentId: 'CBOT:ZC', equity: 10000, riskPct: 2, stop: 8, costs: 0 } },
       remember: ['Ngân sách rủi ro tính bằng tiền, trước khi vào lệnh.', 'Một hợp đồng vượt ngân sách: không vào lệnh.'],
@@ -28,6 +34,11 @@ export const LEVEL5: Level = {
     },
     {
       id: 'l5-stop',
+      figures: ['b-stop-ladder', 'b-stop-gap', 'b-equity-stops'],
+      videos: [
+        { title: 'Investopedia Video: The Stop Loss Order', url: 'https://www.youtube.com/watch?v=MfDKUU6OBxc', source: 'Investopedia', lang: 'en', note: 'Lệnh cắt lỗ là gì (tiếng Anh).' },
+        { title: 'Investopedia Video: Stop Order vs Limit Order', url: 'https://www.youtube.com/watch?v=TeHmx3H54jo', source: 'Investopedia', lang: 'en', note: 'Khác nhau giữa lệnh stop và lệnh giới hạn (tiếng Anh).' },
+      ],
       title: 'Cắt lỗ là công cụ quản trị rủi ro',
       objective: 'Hiểu khái niệm cắt lỗ và giới hạn của nó (không phải lời khuyên vào lệnh cụ thể).',
       body: [
@@ -35,6 +46,8 @@ export const LEVEL5: Level = {
         'Giá có thể nhảy qua mức stop (gap) hoặc khớp xấu hơn (trượt giá), nhất là khi có tin lớn hoặc thanh khoản mỏng.',
         'Stop nên xuất phát từ biên độ dao động bình thường (ví dụ bội số của ATR) và từ kịch bản "điều gì chứng minh nhận định của tôi sai", không từ số tiền bạn "muốn" mất.',
         'Bài học này giải thích khái niệm; ứng dụng không đưa ra khuyến nghị mua bán cụ thể.',
+        'Ví dụ minh hoạ (ngô): vào ở 450, stop 442 nên rủi ro 8 cent = 400 USD, gọi là 1R. Nếu mục tiêu chốt lời cách 16 cent (= 800 USD, 2R) thì tỷ lệ rủi ro:lợi nhuận là 1:2. Bỏ qua phí, thắng khoảng 1/3 số lệnh là hoà vốn: một lệnh +2R bù hai lệnh −1R. Đây chỉ là phép tính minh hoạ, không phải khuyến nghị và không bảo đảm kết quả.',
+        'Hai loại stop thường gặp: stop thị trường (khớp theo giá có sẵn khi mức stop bị chạm) và stop-limit (có giá giới hạn nhưng có thể không khớp). Hãy tự kiểm tra nền tảng của công ty môi giới hỗ trợ loại nào.',
       ],
       remember: ['Stop giới hạn lỗ dự kiến, không bảo đảm tuyệt đối.', 'Stop đặt trước khi vào lệnh và không dời xa khi lỗ.'],
       quiz: [
@@ -47,12 +60,14 @@ export const LEVEL5: Level = {
     },
     {
       id: 'l5-journal',
+      figures: ['b-journal-r', 'b-journal-loop'],
       title: 'Nhật ký giao dịch',
       objective: 'Ghi lại quyết định để học từ chính mình.',
       body: [
         'Ghi mỗi lệnh: lý do vào, stop, rủi ro (R), kết quả, cảm xúc khi vào/thoát. Nhật ký giúp bạn nhận ra mẫu hình sai lặp lại.',
         'Đo kết quả bằng R-multiple (lãi/lỗ chia cho rủi ro ban đầu) để so sánh các lệnh khác kích cỡ.',
         'Xem lại hằng tuần: đúng kế hoạch hay phá kế hoạch? Kết quả tốt do làm đúng hay do may?',
+        'Ví dụ R-multiple: nếu R = 200 USD, lệnh lãi 300 USD là +1,5R, lệnh lỗ 200 USD là −1R. Bốn lệnh −1R, +2R, −1R, +1,5R cộng lại là +1,5R (= 300 USD). Hãy ghi cả cảm xúc (sợ, hưng phấn) vì cảm xúc thường là nguồn gốc của các lỗi lặp lại.',
       ],
       remember: ['Nhật ký giúp phân biệt kỹ năng và may mắn.', 'R-multiple = lãi/lỗ chia rủi ro ban đầu.'],
       quiz: [
@@ -65,6 +80,10 @@ export const LEVEL5: Level = {
     },
     {
       id: 'l5-mistakes',
+      figures: ['b-revenge-loop', 'b-drawdown-table'],
+      videos: [
+        { title: 'Position and risk management for individual traders', url: 'https://www.youtube.com/watch?v=3q_H4GnZZII', source: 'CME Group', lang: 'en', note: 'Quản lý vị thế và rủi ro cho nhà giao dịch cá nhân (tiếng Anh).' },
+      ],
       title: 'Sai lầm phổ biến của người mới',
       objective: 'Nhận diện những lỗi thường gặp để tránh.',
       body: [
@@ -73,6 +92,8 @@ export const LEVEL5: Level = {
         'Giao dịch theo tin đồn hoặc nhóm kín, giao dịch quá thường xuyên (phí và trượt giá bào mòn vốn).',
         'Giữ vị thế qua báo cáo lớn mà không hiểu; quên FND/ngày đáo hạn.',
         'Mong lợi nhuận nhanh. Nhiều nhà giao dịch cá nhân dùng đòn bẩy bị lỗ; không có lợi nhuận nào được bảo đảm.',
+        'Vì sao lỗ lớn khó gỡ: mất 10% cần lãi khoảng 11,1% để về hoà vốn; mất 50% cần lãi 100%. Công thức: cần hồi = 1 ÷ (1 − mức lỗ) − 1. Vì vậy giữ lỗ nhỏ quan trọng hơn săn lãi lớn.',
+        'Vòng xoáy gỡ gạc: thua, muốn gỡ, tăng khối lượng hoặc dời stop, rủi ro lớn hơn, thua lớn hơn. Cách phòng: viết sẵn quy tắc từ trước (ví dụ nghỉ sau một số lệnh thua liên tiếp) và làm theo khi cảm xúc đang mạnh.',
       ],
       remember: ['Đòn bẩy cao và không kỷ luật là nguyên nhân thường gặp của thua lỗ.', 'Tập trên tài khoản giả lập trước.'],
       quiz: [
@@ -84,6 +105,11 @@ export const LEVEL5: Level = {
     },
     {
       id: 'l5-who-profits',
+      figures: ['b-who-players', 'b-hedge-vs-spec'],
+      videos: [
+        { title: 'Creating a Hedge Strategy', url: 'https://www.youtube.com/watch?v=65x02VncVNY', source: 'CME Group', lang: 'en', note: 'Cách doanh nghiệp phòng hộ bằng futures (tiếng Anh).' },
+        { title: 'How to Hedge Grain Risk', url: 'https://www.youtube.com/watch?v=PaCpn4RqEMI', source: 'CME Group', lang: 'en', note: 'Phòng hộ rủi ro giá ngũ cốc (tiếng Anh).' },
+      ],
       title: 'Ai kiếm tiền trên thị trường phái sinh hàng hoá — và vì sao đa số nhà đầu tư cá nhân thua lỗ',
       objective: 'Biết các nhóm người chơi, cách mỗi nhóm kiếm tiền hoặc giảm rủi ro, và vì sao nhà đầu tư cá nhân khó thắng.',
       body: [
@@ -129,6 +155,11 @@ export const LEVEL5: Level = {
     },
     {
       id: 'l5-scam',
+      figures: ['b-scam-flags', 'b-scam-verify'],
+      videos: [
+        { title: 'Commodity Pool Fraud (A Dramatization)', url: 'https://www.youtube.com/watch?v=chN1KSU9meA', source: 'CFTC', lang: 'en', note: 'Tái hiện một kiểu lừa đảo để học cách nhận biết dấu hiệu (tiếng Anh).' },
+        { title: 'Precious Metals Fraud', url: 'https://www.youtube.com/watch?v=az7PHFL8zMk', source: 'CFTC', lang: 'en', note: 'Cảnh báo lừa đảo kim loại quý (tiếng Anh).' },
+      ],
       title: 'Lừa đảo và "sàn ma"',
       objective: 'Nhận diện sàn/nhóm không phép và biết cách kiểm tra.',
       body: [
@@ -136,6 +167,7 @@ export const LEVEL5: Level = {
         'Dấu hiệu lừa đảo: hứa lợi nhuận cố định hoặc "chắc chắn", yêu cầu chuyển tiền vào tài khoản cá nhân, ép nạp thêm tiền, "thầy" gợi ý lệnh qua nhóm kín, phần mềm lạ không thuộc thành viên, không rút được tiền.',
         'Nếu nghi ngờ, dừng chuyển tiền, lưu bằng chứng và hỏi trực tiếp MXV hoặc cơ quan chức năng.',
         'Ứng dụng này không đặt lệnh với broker và không phải môi giới.',
+        'Kiểm tra từng bước trước khi chuyển tiền: (1) tự gõ mxv.com.vn và đối chiếu tên công ty môi giới; (2) kiểm tra tài khoản nhận tiền có đúng của công ty chứ không phải cá nhân; (3) nên thử rút một khoản nhỏ trước khi nạp thêm. Nếu bị chặn hoặc bị ép nạp thêm, dừng lại ngay.',
       ],
       remember: ['Chỉ giao dịch qua thành viên MXV, tự kiểm tra trên website MXV.', 'Lợi nhuận cố định là dấu hiệu lừa đảo.'],
       quiz: [

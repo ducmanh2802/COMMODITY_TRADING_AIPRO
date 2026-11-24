@@ -271,7 +271,7 @@ export function MarketPulsePanel() {
           </Card>
           <Card className="space-y-3">
             <h4 className="text-sm font-medium text-[var(--text)]">{t('pulse.groupTitle')}</h4>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
               <table className="w-full text-xs tabular-nums">
                 <thead className="text-[var(--faint)]">
                   <tr>

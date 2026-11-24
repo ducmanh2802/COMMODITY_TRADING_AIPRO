@@ -234,7 +234,7 @@ export function ResearchNotebookView() {
             </div>
           </div>
         </fieldset>
-        {error && <p className="text-xs font-mono text-[var(--negative)]">{error}</p>}
+        {error && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
         <div className="flex justify-end gap-2">
           {(editingId || draft !== EMPTY_DRAFT) && (
             <button type="button" onClick={resetForm} className="px-3 py-1.5 border border-[var(--border)] rounded-md text-xs text-[var(--text)]/80">
@@ -270,7 +270,7 @@ export function ResearchNotebookView() {
           </select>
           <input type="search" aria-label={t('nb.filterText')} placeholder={t('nb.filterText')} value={filter.text} onChange={(e) => setFilter((f) => ({ ...f, text: e.target.value }))} className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs text-[var(--text-strong)]" />
         </div>
-        {loadError && <p className="px-4 py-2 text-xs text-[var(--negative)]">{loadError}</p>}
+        {loadError && <p role="alert" className="px-4 py-2 text-xs text-[var(--negative)]">{loadError}</p>}
         {visible.length === 0 ? (
           <div className="p-6 text-xs font-mono text-[var(--text)]/60">{notes.length === 0 ? t('nb.empty') : t('nb.emptyFiltered')}</div>
         ) : (

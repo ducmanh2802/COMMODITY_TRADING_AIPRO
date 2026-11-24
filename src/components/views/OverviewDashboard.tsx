@@ -622,7 +622,7 @@ export function OverviewDashboard() {
             </button>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="w-full text-left border-collapse min-w-[560px]">
               <thead>
                 <tr className="border-b border-[var(--border)] text-xs text-[var(--text)]/55">

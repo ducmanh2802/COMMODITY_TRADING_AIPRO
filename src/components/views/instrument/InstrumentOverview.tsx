@@ -326,7 +326,7 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
 
   if (loading && !dossier) {
     return (
-      <div className="space-y-4" aria-busy="true" aria-label={t('ins.loading')}>
+      <div className="space-y-4" role="status" aria-busy="true" aria-label={t('ins.loading')}>
         <Skeleton className="h-32" />
         <Skeleton className="h-48" />
       </div>

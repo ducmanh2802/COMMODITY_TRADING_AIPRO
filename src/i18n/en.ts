@@ -47,6 +47,7 @@ import * as backup from './dict/backup';
 import * as sessions from './dict/sessions';
 import * as lab from './dict/lab';
 import * as readability from './dict/readability';
+import * as program from './dict/program';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
@@ -100,4 +101,5 @@ export const en: Record<TKey, string> = {
   ...sessions.en,
   ...lab.en,
   ...readability.en,
+  ...program.en,
 };

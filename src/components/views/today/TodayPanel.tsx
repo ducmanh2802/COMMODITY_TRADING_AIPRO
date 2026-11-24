@@ -16,6 +16,7 @@ import { EmptyState } from '../../ui/EmptyState';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
 import { FundamentalNewsFeed } from './FundamentalNewsFeed';
+import { TodayWeekCard } from '../program/TodayWeekCard';
 
 const FLAT = 0.002; // |change| below 0.2% counts as "flat"
 
@@ -135,7 +136,7 @@ export function TodayPanel() {
   let body: ReactNode;
   if (loading) {
     body = (
-      <div className="space-y-3" aria-busy="true" aria-label={t('n2.td.loading')}>
+      <div className="space-y-3" role="status" aria-busy="true" aria-label={t('n2.td.loading')}>
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
           {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}
         </div>
@@ -239,7 +240,7 @@ export function TodayPanel() {
                     >
                       <span className={`flex w-12 shrink-0 flex-col items-center rounded-lg border py-1 ${e.inDays <= 1 ? 'border-[var(--warning)] text-[var(--warning)]' : 'border-[var(--border)] text-[var(--text-strong)]'}`}>
                         <span className="text-lg font-bold leading-none">{e.day}</span>
-                        <span className="text-[10px] opacity-80">{t('n2.td.month', { m: e.month })}</span>
+                        <span className="text-[10px]">{t('n2.td.month', { m: e.month })}</span>
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm text-[var(--text)] leading-snug">{e.title}</span>
@@ -367,14 +368,15 @@ export function TodayPanel() {
             data-testid="dashboard-data-health-status"
             data-health-status={overallDataStatus}
             onClick={() => setActiveModule('data-health')}
-            aria-label={healthLabel}
             title={healthLabel}
             className="inline-flex items-center rounded-full hover:opacity-85 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
           >
             <DataStatusBadge status={overallDataStatus} />
+            <span className="sr-only">{healthLabel}</span>
           </button>
         }
       />
+      <TodayWeekCard />
       {body}
       <FundamentalNewsFeed />
     </div>

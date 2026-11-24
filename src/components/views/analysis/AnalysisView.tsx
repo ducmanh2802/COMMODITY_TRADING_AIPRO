@@ -1,4 +1,4 @@
-import { onTablistKeyDown } from '../../../shared/hooks/tablistKeys';
+import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
 /**
  * Analysis module (`analysis`): research screens over imported historical series —
  * Volatility, Correlation, Seasonality, Spreads, Drawdown/returns.
@@ -55,7 +55,7 @@ export default function AnalysisView() {
         </button>
       </div>
 
-      <div role="tablist" onKeyDown={onTablistKeyDown} aria-label={t('an.tabsAria')} className="flex flex-wrap items-center gap-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-1.5 w-fit">
+      <div role="tablist" ref={tablistRef} onKeyDown={onTablistKeyDown} aria-label={t('an.tabsAria')} className="flex flex-wrap items-center gap-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-1.5 w-fit">
         {TABS.map((tb) => (
           <button
             key={tb.id}

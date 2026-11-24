@@ -308,7 +308,7 @@ function GlobalMacro() {
     <section className="space-y-3">
       <SectionHeader title={t('wd.macro.title')} subtitle={t('wd.macro.subtitle')} />
       {loading ? (
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-label={t('wd.macro.loading')}>
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" role="status" aria-busy="true" aria-label={t('wd.macro.loading')}>
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} className="h-32 w-full" />
           ))}

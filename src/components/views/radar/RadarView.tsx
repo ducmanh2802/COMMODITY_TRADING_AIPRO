@@ -111,7 +111,7 @@ function ItemCard({ item, rank, muted, onOpen }: { item: RadarItem; rank: number
         <div className="flex flex-wrap gap-1.5">
           {active.length === 0 && <span className="text-xs text-[var(--text)]/50">{t('rd.item.noSignals')}</span>}
           {active.map((s) => (
-            <span key={s.id} title={s.reason ?? ''} className="px-2 py-0.5 rounded-full text-[11px] bg-[var(--accent)]/15 border border-[var(--accent)]/30 text-[#BFDBFE]">
+            <span key={s.id} title={s.reason ?? ''} className="px-2 py-0.5 rounded-full text-[11px] bg-[var(--accent)]/15 border border-[var(--accent)]/30 text-[var(--accent-text)]">
               {s.label} +{s.points}
             </span>
           ))}

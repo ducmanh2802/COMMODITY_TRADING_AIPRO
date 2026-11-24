@@ -215,15 +215,7 @@ function CommodityWorldCard({
 
   return (
     <div
-      role="button"
-      tabIndex={0}
       onClick={onSelect}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onSelect();
-        }
-      }}
       className="group relative text-left cursor-pointer shadow-[var(--shadow-card)] hover:-translate-y-0.5 bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)]/70 rounded-[var(--radius-md)] overflow-hidden transition-all duration-200 focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] flex flex-col"
     >
       {/* Photographic 16:9 Canvas with measured contrast scrim */}
@@ -288,10 +280,15 @@ function CommodityWorldCard({
           >
             <CyclePhaseBadge phase={cyclePhase} compact />
           </span>
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent)] group-hover:translate-x-0.5 transition-transform whitespace-nowrap shrink-0">
-            <span>Hồ sơ chu kỳ</span>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onSelect(); }}
+            aria-label={`Hồ sơ chu kỳ: ${nameVi}`}
+            className="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent)] group-hover:translate-x-0.5 transition-transform whitespace-nowrap shrink-0 rounded focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+          >
+            <span aria-hidden="true">Hồ sơ chu kỳ</span>
             <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
-          </span>
+          </button>
         </div>
 
         <div className="grid grid-cols-3 gap-3 pt-2.5 border-t border-[var(--border)] text-xs">

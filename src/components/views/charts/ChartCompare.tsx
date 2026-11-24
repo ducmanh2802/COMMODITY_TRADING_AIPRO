@@ -1,4 +1,4 @@
-import { onTablistKeyDown } from '../../../shared/hooks/tablistKeys';
+import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CrosshairMode, LineSeries, createChart, type IChartApi, type ISeriesApi, type Time } from 'lightweight-charts';
 import { X } from 'lucide-react';
@@ -429,7 +429,7 @@ export function ChartCompareSection() {
   };
   return (
     <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-4">
-      <div className="flex gap-2" role="tablist" onKeyDown={onTablistKeyDown}>
+      <div className="flex gap-2" role="tablist" ref={tablistRef} onKeyDown={onTablistKeyDown}>
         {(['compare', 'multi'] as const).map((k) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? btnOn : btn} onClick={() => setTab(k)}>
             {t(k === 'compare' ? 'cmp.tab.compare' : 'cmp.tab.multi')}

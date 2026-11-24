@@ -8,6 +8,7 @@ export const LEVEL10: Level = {
   lessons: [
     {
       id: 'l10-account',
+      figures: ['c-long-short', 'c-order-types'],
       title: 'Đặt lệnh: Long, Short và các loại lệnh',
       objective: 'Biết cách mở/đóng vị thế và dùng đúng lệnh giới hạn, lệnh thị trường, lệnh dừng.',
       body: [
@@ -33,6 +34,7 @@ export const LEVEL10: Level = {
     },
     {
       id: 'l10-contract',
+      figures: ['c-contract-specs'],
       title: 'Đọc thông số hợp đồng và tính tiền lãi lỗ',
       objective: 'Từ khối lượng hợp đồng và bước giá, tính được 1 cent / 1 USD thay đổi giá bằng bao nhiêu tiền.',
       body: [
@@ -61,6 +63,7 @@ export const LEVEL10: Level = {
     },
     {
       id: 'l10-margin',
+      figures: ['c-leverage', 'c-margin-ladder'],
       title: 'Ký quỹ, đòn bẩy và margin call',
       objective: 'Hiểu ký quỹ ban đầu, ký quỹ duy trì, cách tính đòn bẩy và khi nào bị gọi ký quỹ.',
       body: [
@@ -88,6 +91,8 @@ export const LEVEL10: Level = {
     },
     {
       id: 'l10-corn',
+      figures: ['c-corn-trade', 'c-order-calc'],
+      videos: [{ title: "Product: Corn", url: 'https://www.youtube.com/watch?v=aQeyOi7LhLw', source: "CME Group", lang: 'en', note: "Giới thiệu hợp đồng ngô của CME Group: thông số hợp đồng, báo cáo quan trọng và yếu tố cung cầu." }],
       title: 'Ví dụ A–Z: một lệnh MUA ngô',
       objective: 'Theo dõi một lệnh Long từ phân tích, đặt lệnh, quản lý đến đóng lệnh, với số tiền cụ thể.',
       body: [
@@ -118,6 +123,8 @@ export const LEVEL10: Level = {
     },
     {
       id: 'l10-robusta',
+      figures: ['c-robusta-trade', 'c-hedge-farmer'],
+      videos: [{ title: "Comparing Grain Buying Strategies", url: 'https://www.youtube.com/watch?v=JsU5_g8Y8ak', source: "CME Group", lang: 'en', note: "CME minh hoạ cách dùng hợp đồng tương lai để giữ giá (hedge); nói về bên mua ngũ cốc, logic bù trừ tương tự bên bán." }],
       title: 'Ví dụ A–Z: một lệnh BÁN cà phê Robusta',
       objective: 'Hiểu cách kiếm lời khi giá giảm và vì sao hợp đồng lớn đòi hỏi vốn lớn hơn.',
       body: [
@@ -147,6 +154,7 @@ export const LEVEL10: Level = {
     },
     {
       id: 'l10-costs',
+      figures: ['c-costs-stack', 'c-roll-contango'],
       title: 'Chi phí, tỷ giá, đáo hạn và chuyển kỳ hạn (roll)',
       objective: 'Biết các khoản làm giảm lợi nhuận và cách tránh rủi ro giao nhận khi đáo hạn.',
       body: [
@@ -174,6 +182,8 @@ export const LEVEL10: Level = {
     },
     {
       id: 'l10-ways',
+      figures: ['c-four-ways', 'c-drivers-map', 'c-calendar-spread', 'c-report-cal'],
+      videos: [{ title: "Future Spread Overview", url: 'https://www.youtube.com/watch?v=H81aB91gMX8', source: "CME Group", lang: 'en', note: "Tổng quan về giao dịch chênh lệch (spread), gồm spread lịch như cách số 4 trong bài." }, { title: "Understanding Agricultural Calendar Spread Options", url: 'https://www.youtube.com/watch?v=qkTPk37xrjE', source: "CME Group", lang: 'en', note: "CME giải thích chênh lệch kỳ hạn nông sản (cấu trúc kỳ hạn); nâng cao, xem sau khi quen spread." }],
       title: '4 cách kiếm lợi nhuận và khi nào dùng',
       objective: 'Phân biệt lướt sóng xu hướng, giao dịch theo cung cầu, theo mùa vụ và giao dịch chênh lệch (spread).',
       body: [
@@ -201,6 +211,7 @@ export const LEVEL10: Level = {
     },
     {
       id: 'l10-ready',
+      figures: ['c-ready-gate'],
       title: 'Trước khi dùng tiền thật: checklist cuối',
       objective: 'Tự kiểm tra mình đã sẵn sàng chưa và bắt đầu tiền thật đúng cách.',
       body: [

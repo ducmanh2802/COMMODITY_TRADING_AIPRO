@@ -77,7 +77,7 @@ export function WatchEditor({ symbol, item, onClose }: { symbol: string; item?: 
           <input className={field} inputMode="decimal" value={level} onChange={(e) => setLevel(e.target.value)} />
         </label>
       )}
-      {error && <p className="text-xs text-[var(--negative)]">{t('wl.editor.invalid')}</p>}
+      {error && <p role="alert" className="text-xs text-[var(--negative)]">{t('wl.editor.invalid')}</p>}
       <p className="text-xs text-[var(--muted)]">{t('wl.editor.hint')}</p>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={submit} className="min-h-[40px] px-4 rounded-lg bg-[var(--accent)] text-white text-sm font-semibold">

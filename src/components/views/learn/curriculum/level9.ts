@@ -8,6 +8,8 @@ export const LEVEL9: Level = {
   lessons: [
     {
       id: 'l9-living',
+      figures: ['c-living-capital', 'c-compound'],
+      videos: [{ title: "Intro to compound interest | Class 8 (India) | Math | Khan Academy", url: 'https://www.youtube.com/watch?v=inayVc1w72M', source: "Khan Academy", lang: 'en', note: "Giải thích lãi kép so với lãi đơn, giúp hiểu vì sao lãi kép chậm nhưng mạnh khi không rút tiền." }],
       title: 'Trading để sống: tính vốn và kỳ vọng thực tế',
       objective: 'Biết tính số vốn cần có, mức lãi hợp lý và vì sao vốn nhỏ + mục tiêu lớn = cháy tài khoản.',
       body: [
@@ -35,6 +37,8 @@ export const LEVEL9: Level = {
     },
     {
       id: 'l9-expectancy',
+      figures: ['c-expectancy'],
+      videos: [{ title: "Mean (expected value) of a discrete random variable", url: 'https://www.youtube.com/watch?v=qafPcWNUiM8', source: "Khan Academy", lang: 'en', note: "Khái niệm giá trị kỳ vọng (trung bình có trọng số xác suất): nền tảng toán của công thức Kỳ vọng = %thắng × lãi − %thua × lỗ." }, { title: "Expected profit from lottery ticket", url: 'https://www.youtube.com/watch?v=6vlBOHckmzU', source: "Khan Academy", lang: 'en', note: "Ví dụ tính lãi kỳ vọng: cùng cách nhân xác suất với kết quả như khi tính kỳ vọng mỗi lệnh." }],
       title: 'Kỳ vọng toán học (Expectancy) và R-multiple',
       objective: 'Hiểu vì sao tỷ lệ thắng không quan trọng bằng kỳ vọng, và cách tính kỳ vọng từ nhật ký.',
       body: [
@@ -63,6 +67,7 @@ export const LEVEL9: Level = {
     },
     {
       id: 'l9-money',
+      figures: ['c-drawdown', 'c-sizing-calc'],
       title: 'Quản lý vốn: khối lượng, drawdown và giới hạn ngày',
       objective: 'Tính khối lượng chính xác theo rủi ro, hiểu toán học của drawdown và đặt "cầu dao" bảo vệ tài khoản.',
       body: [
@@ -94,6 +99,7 @@ export const LEVEL9: Level = {
     },
     {
       id: 'l9-setups',
+      figures: ['c-setups-3'],
       title: '3 setup cụ thể: Pullback, Breakout–Retest, Range',
       objective: 'Có 3 mẫu giao dịch rõ ràng với điều kiện vào, stop, mục tiêu và điều kiện huỷ.',
       body: [
@@ -122,6 +128,7 @@ export const LEVEL9: Level = {
     },
     {
       id: 'l9-mtf',
+      figures: ['c-mtf-ladder'],
       title: 'Phân tích đa khung thời gian',
       objective: 'Dùng khung lớn để chọn hướng, khung vừa để tìm setup, khung nhỏ để tinh chỉnh điểm vào.',
       body: [
@@ -148,6 +155,7 @@ export const LEVEL9: Level = {
     },
     {
       id: 'l9-psychology',
+      figures: ['c-psy-traps'],
       title: 'Tâm lý giao dịch: 6 cái bẫy và cách thoát',
       objective: 'Nhận ra những sai lầm cảm xúc phổ biến và có quy tắc cụ thể để chặn chúng.',
       body: [
@@ -177,6 +185,7 @@ export const LEVEL9: Level = {
     },
     {
       id: 'l9-plan',
+      figures: ['c-plan-card', 'c-daily-loop'],
       title: 'Kế hoạch giao dịch (Trading Plan) và thói quen hằng ngày',
       objective: 'Viết được một kế hoạch giao dịch hoàn chỉnh và một quy trình trước/trong/sau phiên.',
       body: [
@@ -210,6 +219,7 @@ export const LEVEL9: Level = {
     },
     {
       id: 'l9-review',
+      figures: ['c-journal-loop', 'c-metrics-card'],
       title: 'Tự đánh giá: đọc nhật ký như một nhà quản lý quỹ',
       objective: 'Biết các chỉ số cần tính từ nhật ký và cách quyết định khi nào sẵn sàng tăng vốn.',
       body: [

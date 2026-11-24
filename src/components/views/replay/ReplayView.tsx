@@ -419,7 +419,7 @@ export function ReplayView() {
                 <Stat label={t('rp.end.pnl')} value={`${stats.pnlUsd > 0 ? '+' : ''}${fmtInt(stats.pnlUsd)}`} />
               </div>
               <p className="text-[11px] text-[var(--text)]/55">{t('rp.end.disciplineHint')}</p>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="text-left text-[var(--text)]/55">

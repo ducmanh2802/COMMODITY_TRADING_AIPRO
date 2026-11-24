@@ -47,6 +47,7 @@ import * as backup from './dict/backup';
 import * as sessions from './dict/sessions';
 import * as lab from './dict/lab';
 import * as readability from './dict/readability';
+import * as program from './dict/program';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
@@ -99,6 +100,7 @@ export const vi = {
   ...sessions.vi,
   ...lab.vi,
   ...readability.vi,
+  ...program.vi,
 };
 
 export type TKey = keyof typeof vi;

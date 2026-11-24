@@ -608,6 +608,7 @@ export function TradeJournalView() {
             value={rationale}
             onChange={(e) => setRationale(e.target.value)}
             placeholder={t('jr.rationalePh')}
+            aria-label={t('jr.rationalePh')}
             maxLength={1000}
             className="sm:col-span-2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs text-[var(--text-strong)]"
           />
@@ -626,7 +627,7 @@ export function TradeJournalView() {
         <p className="text-[11px] text-[var(--text)]/45">
           {t('jr.formula')}
         </p>
-        {error && <p className="text-xs font-mono text-[var(--negative)]">{error}</p>}
+        {error && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
 
         <div className="flex justify-end">
           <button
@@ -648,7 +649,7 @@ export function TradeJournalView() {
         {entries.length === 0 ? (
           <div className="p-6 text-xs font-mono text-[var(--text)]/60">{t('jr.empty')}</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="w-full text-left border-collapse min-w-[780px]">
               <thead>
                 <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/50 text-xs text-[var(--text)]/65">
@@ -780,7 +781,7 @@ export function TradeJournalView() {
                 {w}
               </p>
             ))}
-          {closing.error && <p className="text-xs font-mono text-[var(--negative)]">{closing.error}</p>}
+          {closing.error && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{closing.error}</p>}
           <div className="flex justify-end gap-2">
             <button
               type="button"

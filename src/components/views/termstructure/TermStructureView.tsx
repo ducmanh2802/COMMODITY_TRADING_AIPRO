@@ -86,7 +86,7 @@ function SnapshotDetails({ snap, title }: { snap: CurveSnapshot; title: string }
 
       {r?.status === 'OK' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="w-full text-left text-xs border-collapse">
               <caption className="text-left text-[var(--text)]/55 pb-1">{t('ts.curvePoints', { date: fmtDate(r.valuationDate) })}</caption>
               <thead>
@@ -111,7 +111,7 @@ function SnapshotDetails({ snap, title }: { snap: CurveSnapshot; title: string }
               </tbody>
             </table>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="w-full text-left text-xs border-collapse">
               <caption className="text-left text-[var(--text)]/55 pb-1">{t('ts.adjacentSpreads')}</caption>
               <thead>
@@ -334,7 +334,7 @@ export default function TermStructureView() {
 
           {primary.state === 'ok' && <SnapshotDetails snap={primary.data} title={t('ts.curveAsOf')} />}
           {compareOn && secondary.state === 'ok' && <SnapshotDetails snap={secondary.data} title={t('ts.compareCurveAsOf')} />}
-          {compareOn && secondary.state === 'error' && <p className="text-xs font-mono text-[var(--negative)]">{secondary.message}</p>}
+          {compareOn && secondary.state === 'error' && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{secondary.message}</p>}
 
           {instrument && datasets.state === 'ok' && <SpreadHistoryPanel instrument={instrument} contracts={contracts} />}
         </>

@@ -8,12 +8,14 @@ export const LEVEL1: Level = {
   lessons: [
     {
       id: 'l1-commodity',
+      figures: ['a-commodity-groups', 'a-supply-demand'],
       title: 'Hàng hoá là gì?',
       objective: 'Phân biệt các nhóm hàng hoá và hiểu vì sao giá của chúng dao động.',
       body: [
         'Hàng hoá (commodity) là sản phẩm gần như đồng nhất, có thể thay thế cho nhau: ngô, cà phê, đồng, dầu thô... Hai tấn đồng cùng chuẩn chất lượng có giá trị như nhau dù do ai sản xuất.',
         'Ba nhóm chính trên thị trường phái sinh: nông sản (ngô, đậu tương, cà phê, đường...), kim loại (vàng, bạc, đồng...) và năng lượng (dầu thô, khí tự nhiên).',
         'Giá hàng hoá do cung và cầu quyết định: thời tiết, mùa vụ, tồn kho, chính sách, đồng USD, tăng trưởng kinh tế... Vì vậy giá có thể biến động rất mạnh trong thời gian ngắn.',
+        'Cách đọc nhanh một tin tức: hãy tự hỏi hai câu. Tin này làm nguồn cung tăng hay giảm? Làm nhu cầu tăng hay giảm? Cung giảm hoặc cầu tăng thường đẩy giá lên; cung tăng hoặc cầu giảm thường đẩy giá xuống. Đây là mô tả cơ chế, không phải dự báo giá.',
       ],
       textExample: 'Hạn hán làm giảm sản lượng cà phê, nguồn cung giảm nên giá có xu hướng tăng. Đây là quan hệ cung–cầu cơ bản, không phải lời hứa giá sẽ tăng.',
       remember: ['Hàng hoá có tính đồng nhất nên được giao dịch theo hợp đồng chuẩn hoá.', 'Giá chịu tác động của cung, cầu, thời tiết và USD.'],
@@ -26,6 +28,10 @@ export const LEVEL1: Level = {
     },
     {
       id: 'l1-spot-futures',
+      figures: ['a-spot-forward-futures', 'a-clearing-flow'],
+      videos: [
+        { title: 'What are Futures Contracts?', url: 'https://www.youtube.com/watch?v=DIJgms3O_lM', source: 'CME Group', lang: 'en', note: 'Video tiếng Anh của CME Group: hợp đồng tương lai chuẩn hoá giao dịch trên sàn là gì.' },
+      ],
       title: 'Giá giao ngay và hợp đồng tương lai',
       objective: 'Phân biệt giao ngay, forward và futures; hiểu trung tâm bù trừ.',
       body: [
@@ -33,6 +39,7 @@ export const LEVEL1: Level = {
         'Forward: hai bên tự thoả thuận mua/bán tại một giá, giao trong tương lai. Không qua sàn nên có rủi ro đối tác không thực hiện.',
         'Hợp đồng tương lai (futures): forward được chuẩn hoá (khối lượng, chất lượng, tháng giao) và giao dịch trên sàn. Trung tâm bù trừ đứng giữa hai bên; lãi/lỗ được tính hằng ngày (mark-to-market).',
         'Phần lớn người giao dịch không nhận hay giao hàng thật; họ đóng vị thế trước khi hợp đồng đáo hạn.',
+        'Từng bước với một hợp đồng futures: (1) bạn mua 1 hợp đồng, trung tâm bù trừ trở thành bên đối ứng của bạn; (2) mỗi ngày giá thanh toán đổi, phần chênh lệch được cộng hoặc trừ vào tài khoản; (3) khi bạn bán để đóng vị thế, tổng lãi/lỗ cộng dồn là kết quả cuối cùng.',
       ],
       textExample: 'Bạn mua 1 hợp đồng ngô tháng 12. Bạn không cần có kho hay nông trại; bạn chỉ có lãi hoặc lỗ theo chênh lệch giá khi đóng vị thế.',
       remember: ['Futures = forward chuẩn hoá trên sàn, có bù trừ.', 'Lãi lỗ được cập nhật hằng ngày.'],
@@ -45,12 +52,17 @@ export const LEVEL1: Level = {
     },
     {
       id: 'l1-contract',
+      figures: ['a-spec-card', 'a-month-codes'],
+      videos: [
+        { title: 'Learn About Contract Specifications', url: 'https://www.youtube.com/watch?v=mrHPm0ZiDhw', source: 'CME Group', lang: 'en', note: 'Video tiếng Anh của CME Group: cách đọc đặc tả hợp đồng (khối lượng, tick, tháng đáo hạn).' },
+      ],
       title: 'Đặc tả hợp đồng: khối lượng, tick, tháng đáo hạn',
       objective: 'Đọc được đặc tả một hợp đồng và tính giá trị một tick.',
       body: [
         'Khối lượng hợp đồng: ví dụ 1 hợp đồng ngô CBOT (ZC) là 5.000 bushel. Tick (bước giá) là mức thay đổi giá nhỏ nhất. Giá trị tick = khối lượng × tick.',
         'Mỗi hợp đồng có các tháng đáo hạn. Mã tháng: F = tháng 1, G = 2, H = 3, J = 4, K = 5, M = 6, N = 7, Q = 8, U = 9, V = 10, X = 11, Z = 12. Ví dụ ZCZ6 = ngô, tháng 12, năm 2026.',
         'Số liệu cụ thể (khối lượng, tick, giá trị tick) lấy từ Instrument Master của ứng dụng, đối chiếu tài liệu chính thức của sàn. Chỉ mã có trạng thái VERIFIED mới được dùng để tính.',
+        'Ví dụ bằng số: ngô ZC có tick 0,25 cent và khối lượng 5.000 bushel. 0,25 cent = 0,0025 USD, nhân 5.000 bushel = 12,5 USD cho mỗi tick. Giá tăng 10 cent là 40 tick, tức 40 × 12,5 = 500 USD cho một hợp đồng.',
       ],
       example: { caption: 'Ngô ZC: giá tăng 10 cent/bushel với 1 hợp đồng', calc: { kind: 'tickPnl', instrumentId: 'CBOT:ZC', priceMove: 10, contracts: 1 } },
       remember: ['Giá trị tick = khối lượng × tick.', 'Mã tháng: F G H J K M N Q U V X Z = tháng 1 đến 12.'],
@@ -67,6 +79,7 @@ export const LEVEL1: Level = {
     },
     {
       id: 'l1-margin',
+      figures: ['a-leverage-bars', 'a-margin-steps'],
       diagram: 'margin',
       title: 'Ký quỹ ban đầu, duy trì và đòn bẩy',
       objective: 'Hiểu ký quỹ, gọi ký quỹ và vì sao đòn bẩy khuếch đại cả lãi lẫn lỗ.',
@@ -75,6 +88,7 @@ export const LEVEL1: Level = {
         'Nếu lỗ làm tiền trong tài khoản xuống dưới mức duy trì (maintenance margin), bạn bị gọi ký quỹ phải nộp bổ sung. Không bổ sung kịp, vị thế có thể bị thanh lý bắt buộc.',
         'Đòn bẩy = giá trị danh nghĩa ÷ ký quỹ. Đòn bẩy càng cao thì chỉ cần giá đi ngược một tỷ lệ nhỏ là mất hết ký quỹ.',
         'Mức ký quỹ do sàn/thành viên đặt và thay đổi theo thời kỳ, nên bài tập yêu cầu bạn tự nhập số lấy từ bảng ký quỹ hiện hành.',
+        'Ví dụ (số giả định): giá ngô 450 cent (4,50 USD/bushel), một hợp đồng 5.000 bushel có giá trị danh nghĩa 22.500 USD. Nếu ký quỹ giả định là 1.500 USD thì đòn bẩy là 15 lần: giá đổi 3% tương đương 675 USD, bằng 45% ký quỹ.',
       ],
       example: { caption: 'Giá ngô 450 cent, ký quỹ giả định 1.500 USD/hợp đồng (số minh hoạ, không phải ký quỹ thật)', calc: { kind: 'leverage', instrumentId: 'CBOT:ZC', price: 450, marginUsd: 1500, movePct: -3 } },
       remember: ['Ký quỹ là tiền đảm bảo, không phải giá mua.', 'Đòn bẩy cao: giá đi ngược nhỏ cũng đủ mất hết ký quỹ.'],
@@ -89,12 +103,14 @@ export const LEVEL1: Level = {
     },
     {
       id: 'l1-pnl',
+      figures: ['a-long-short', 'a-pnl-worked'],
       title: 'Lãi lỗ được tính thế nào',
       objective: 'Tính lãi/lỗ theo số tick và số hợp đồng; biết lãi lỗ chưa gồm phí.',
       body: [
         'Lãi/lỗ = (biến động giá ÷ tick) × giá trị tick × số hợp đồng. Mua (long) có lãi khi giá tăng; bán (short) có lãi khi giá giảm.',
         'Kết quả thực tế còn trừ phí giao dịch và chênh lệch giá khớp (trượt giá).',
         'Lỗ của vị thế có thể vượt cả ký quỹ ban đầu nếu giá biến động mạnh và không kịp đóng vị thế.',
+        'Các bước tính: (1) đổi biến động giá ra số tick; (2) nhân với giá trị tick; (3) nhân với số hợp đồng; (4) đổi dấu theo hướng vị thế; (5) trừ phí. Ví dụ bán (short) 1 hợp đồng ngô mà giá tăng 4 cent: 16 tick × 12,5 USD = 200 USD lỗ.',
       ],
       example: { caption: 'Mua 2 hợp đồng ngô ZC, giá giảm 6 cent/bushel', calc: { kind: 'tickPnl', instrumentId: 'CBOT:ZC', priceMove: -6, contracts: 2 } },
       remember: ['Lãi lỗ = số tick × giá trị tick × số hợp đồng.', 'Chưa gồm phí và trượt giá.'],
@@ -108,6 +124,10 @@ export const LEVEL1: Level = {
     },
     {
       id: 'l1-expiry-roll',
+      figures: ['a-expiry-timeline', 'a-roll-steps'],
+      videos: [
+        { title: 'What is contango and backwardation in WTI Crude Oil?', url: 'https://www.youtube.com/watch?v=IWOllM4hzoY', source: 'CME Group', lang: 'en', note: 'Video tiếng Anh của CME Group: contango và backwardation, liên quan chi phí roll.' },
+      ],
       diagram: 'roll',
       title: 'Đáo hạn, chuyển kỳ (roll), FND và LTD',
       objective: 'Hiểu LTD, FND và vì sao nhà đầu cơ phải đóng hoặc roll sớm.',
@@ -115,6 +135,7 @@ export const LEVEL1: Level = {
         'LTD (Last Trading Day) là ngày giao dịch cuối cùng của hợp đồng. FND (First Notice Day) là ngày đầu tiên bên bán có thể thông báo giao hàng với hợp đồng giao vật chất.',
         'Nhà đầu cơ thường không muốn nhận/giao hàng, nên đóng vị thế hoặc roll (đóng tháng gần, mở tháng xa) trước FND. Nhiều thành viên môi giới chuyển hợp đồng sang chế độ chỉ được đóng vị thế vài ngày trước FND.',
         'Roll có chi phí hoặc lợi ích bằng chênh lệch giá giữa tháng xa và tháng gần (contango: tốn kém cho vị thế mua; backwardation: có lợi).',
+        'Hình dung: hợp đồng tháng gần giống chuyến tàu sắp đến ga cuối. Nếu không muốn xuống ga (nhận hàng thật), bạn phải đổi sang chuyến sau (roll) hoặc xuống tàu (đóng vị thế) trước khi tàu đến ga thông báo FND.',
       ],
       example: { caption: 'Roll 2 hợp đồng ngô mua: bán tháng gần 450, mua tháng xa 455 (giá minh hoạ)', calc: { kind: 'roll', instrumentId: 'CBOT:ZC', near: 450, far: 455, contracts: 2 } },
       remember: ['Đóng hoặc roll trước FND nếu không muốn giao nhận hàng.', 'Roll trong contango tốn chi phí cho vị thế mua.'],
@@ -129,6 +150,10 @@ export const LEVEL1: Level = {
     },
     {
       id: 'l1-hedger-spec',
+      figures: ['a-hedger-spec', 'a-risk-transfer'],
+      videos: [
+        { title: 'Comparing Grain Buying Strategies', url: 'https://www.youtube.com/watch?v=JsU5_g8Y8ak', source: 'CME Group', lang: 'en', note: 'Video tiếng Anh của CME Group: bên mua ngũ cốc phòng hộ rủi ro giá bằng futures, quyền chọn hoặc thị trường giao ngay.' },
+      ],
       diagram: 'hedge',
       title: 'Nhà phòng hộ và nhà đầu cơ',
       objective: 'Phân biệt hai nhóm người chơi chính và vai trò của họ.',
@@ -136,6 +161,7 @@ export const LEVEL1: Level = {
         'Người phòng hộ (hedger) là doanh nghiệp có hàng thật (nông dân, nhà nhập khẩu, nhà chế biến). Họ dùng futures để khoá giá, giảm rủi ro biến động.',
         'Nhà đầu cơ (speculator) chấp nhận rủi ro giá để tìm lợi nhuận và đóng góp thanh khoản.',
         'Hai nhóm cần nhau: người phòng hộ chuyển rủi ro, người đầu cơ nhận rủi ro. Nhận rủi ro không có nghĩa là có lợi thế.',
+        'Ví dụ minh hoạ (số giả định): nhà máy mua 2 hợp đồng ngô (10.000 bushel) để phòng hộ. Nếu giá ngô tăng 10 cent/bushel, chi phí mua hàng thật tăng 0,10 × 10.000 = 1.000 USD, còn hợp đồng mua lãi 2 × 500 = 1.000 USD. Hai khoản gần như bù nhau (chưa tính phí và chênh lệch giá giao ngay so với giá futures).',
       ],
       textExample: 'Nhà máy thức ăn chăn nuôi mua hợp đồng khô đậu tương để khoá chi phí đầu vào. Nếu giá tăng, chi phí mua hàng thật cao hơn được bù bởi lãi trên hợp đồng.',
       remember: ['Hedger giảm rủi ro; speculator nhận rủi ro.', 'Cá nhân thường là nhà đầu cơ.'],

@@ -253,7 +253,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
           </div>
         )}
 
-        {error && <p className="text-xs font-mono text-[var(--negative)]">{error}</p>}
+        {error && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
 
         <div className="flex justify-end">
           <button

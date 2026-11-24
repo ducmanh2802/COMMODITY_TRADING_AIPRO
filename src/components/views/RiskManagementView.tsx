@@ -448,7 +448,7 @@ export function RiskManagementView() {
             <p className="text-xs font-mono text-[var(--warning)]">{fxNotice}</p>
           )}
 
-          {error && <p className="text-xs font-mono text-[var(--negative)]">{error}</p>}
+          {error && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
 
           <div className="flex justify-end">
             <button
