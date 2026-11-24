@@ -4,6 +4,7 @@ import type {
   MarketDirection,
 } from '../../src/shared/types/analysis.ts';
 import type { DataQualityStatus } from '../../src/shared/types/market.ts';
+import type { FundamentalRepository } from '../storage/fundamentalRepository.ts';
 
 type MacroDatasetType =
   | 'USDA_REPORT'
@@ -176,6 +177,35 @@ export class FundamentalStore {
   private readonly records: FundamentalMacroRecord[] = [];
   private readonly news: SourcedNewsItem[] = [];
   private readonly listeners = new Set<FundamentalStoreListener>();
+  private repo: FundamentalRepository | null = null;
+
+  /**
+   * Attaches SQLite persistence: loads stored records into memory (restart recovery), prunes old rows,
+   * then writes every addRecord through. Persistence failures never break the in-memory store.
+   * Loaded records keep their original publicationTimestamp, so the normal staleness logic marks them STALE.
+   */
+  attachPersistence(repo: FundamentalRepository, opts: { retentionDays?: number; nowMs?: number } = {}): number {
+    this.repo = repo;
+    try {
+      repo.prune(opts.nowMs, opts.retentionDays);
+      let n = 0;
+      for (const rec of repo.loadAll()) {
+        const idx = this.records.findIndex(
+          (r) => r.dataset === rec.dataset && r.source === rec.source && (r.observationDate ?? r.dataPeriod) === (rec.observationDate ?? rec.dataPeriod)
+        );
+        if (idx >= 0) continue; // fresher in-memory copy wins
+        this.records.push(rec);
+        n++;
+      }
+      return n;
+    } catch {
+      return 0;
+    }
+  }
+
+  detachPersistence(): void {
+    this.repo = null;
+  }
 
   subscribe(listener: FundamentalStoreListener): () => void {
     this.listeners.add(listener);
@@ -267,6 +297,11 @@ export class FundamentalStore {
     } else {
       this.records.push(created);
     }
+    try {
+      this.repo?.upsert(created);
+    } catch {
+      // Disk problems must not block live data.
+    }
     this.emit({ kind: 'RECORD', timestamp: new Date().toISOString(), record: created });
     return created;
   }
@@ -307,6 +342,11 @@ export class FundamentalStore {
     const hadItems = this.records.length > 0 || this.news.length > 0;
     this.records.length = 0;
     this.news.length = 0;
+    try {
+      this.repo?.clear();
+    } catch {
+      /* ignore */
+    }
     if (hadItems) {
       this.emit({ kind: 'CLEAR', timestamp: new Date().toISOString() });
     }

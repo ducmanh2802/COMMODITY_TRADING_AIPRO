@@ -237,7 +237,7 @@ export function WeatherPanel() {
     <section className="space-y-4">
       <SectionHeader
         title={t('wx.title')}
-        actions={data && <span className="text-xs text-[var(--muted)]">{t('wx.updated', { time: fmtDateTime(data.retrievedAt) })}</span>}
+        actions={data && data.status !== 'UNAVAILABLE' && <span className="text-xs text-[var(--muted)]">{t('wx.updated', { time: fmtDateTime(data.retrievedAt) })}</span>}
       />
       {state === 'loading' && !data && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -254,7 +254,15 @@ export function WeatherPanel() {
           </button>
         </div>
       )}
-      {data && data.regions.length === 0 && state !== 'error' && <p className="text-sm text-[var(--muted)]">{t('wx.empty')}</p>}
+      {data && data.status === 'UNAVAILABLE' && state !== 'error' && (
+        <div role="status" className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 text-sm text-[var(--text)]">
+          <p className="text-[var(--warning)]">{t('wx.unavailable')}</p>
+          <button type="button" onClick={() => load()} className="mt-2 min-h-10 rounded-md border border-[var(--border)] px-3 py-1 text-xs text-[var(--accent-text)]">
+            {t('wx.retry')}
+          </button>
+        </div>
+      )}
+      {data && data.status !== 'UNAVAILABLE' && data.regions.length === 0 && state !== 'error' && <p className="text-sm text-[var(--muted)]">{t('wx.empty')}</p>}
       {data && data.regions.length > 0 && (
         <>
           <div className="mx-auto max-w-2xl space-y-2">

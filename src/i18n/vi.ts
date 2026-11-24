@@ -1,5 +1,6 @@
 import * as core from './dict/core';
 import * as fsstatus from './dict/fsstatus';
+import * as freshness from './dict/freshness';
 import * as dashboard from './dict/dashboard';
 import * as charting from './dict/charting';
 import * as data from './dict/data';
@@ -51,6 +52,7 @@ import * as readability from './dict/readability';
 export const vi = {
   ...core.vi,
   ...fsstatus.vi,
+  ...freshness.vi,
   ...dashboard.vi,
   ...charting.vi,
   ...data.vi,

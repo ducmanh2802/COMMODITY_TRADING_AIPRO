@@ -28,6 +28,9 @@ export interface WeatherRegionResult {
 }
 
 export interface WeatherRegionsResponse {
+  /** Set to 'UNAVAILABLE' (with `reason`, empty `regions`) when the provider failed and no stale copy exists. */
+  status?: 'UNAVAILABLE';
+  reason?: string;
   retrievedAt: string;
   regions: WeatherRegionResult[];
 }

@@ -24,6 +24,7 @@ import { logger, errorSummary } from './lib/logger.ts';
 import { accessLogMiddleware, installProcessHooks, recordError } from './lib/observability.ts';
 import { apiCompress } from './lib/apiCompress.ts';
 import { registerStatusRoutes } from './routes/status.ts';
+import { FreshnessTracker, createFreshnessSnapshot, freshnessObserver } from './lib/freshness.ts';
 import { registerBackupRoutes } from './routes/backup.ts';
 import type { SupplyMacroLike } from './services/supplyDemandOverlay.ts';
 import { ScorecardService } from './services/scorecard/scorecardService.ts';
@@ -362,6 +363,8 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   app.use(apiCompress());
   installProcessHooks();
   app.use(securityHeadersMiddleware);
+  const freshnessTracker = new FreshnessTracker();
+  app.use(freshnessObserver(freshnessTracker));
 
   const requireAdmin = createRequireAdminToken({ token: options.adminToken, isLoopback: options.adminIsLoopback });
   const adminWarning = adminAuthStartupWarning(options.adminToken);
@@ -452,11 +455,20 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   });
 
   registerBackupRoutes(app, { requireAdmin });
+  const freshnessSnapshot = createFreshnessSnapshot({
+    providers: () => providerRegistry.getAllHealth(),
+    datasets: async () => (await candleRepository.listDatasets()).map((d) => ({ instrumentId: d.instrumentId, timeframe: d.timeframe, lastTimestamp: d.lastTimestamp })),
+    jobs: () => (options.schedulerStatus?.() as { jobs?: Array<{ id: string; enabled: boolean; lastRunAt: string | null; lastSuccessAt: string | null; nextRunAt: string | null }> } | undefined)?.jobs ?? [],
+    fundamentals: () => fundamentalStore.listRecords(),
+    tracker: freshnessTracker,
+  });
+  app.locals.freshnessSnapshot = freshnessSnapshot;
   registerStatusRoutes(app, {
     requireAdmin,
     schedulerStatus: options.schedulerStatus,
     providerSummary: async () => summarizeProviders(await providerRegistry.getAllHealth()),
     dbPaths: options.candles ? [] : undefined,
+    freshness: freshnessSnapshot,
   });
 
   app.get('/api/architecture', (_req: Request, res: Response) => {

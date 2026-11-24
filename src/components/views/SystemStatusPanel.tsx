@@ -4,6 +4,8 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { useI18n } from '../../i18n';
+import type { TKey } from '../../i18n/vi';
 
 interface StatusJob {
   id: string;
@@ -12,7 +14,16 @@ interface StatusJob {
   lastError: string | null;
   nextRun: string | null;
 }
+interface FreshnessRow {
+  id: string;
+  label: string;
+  status: 'FRESH' | 'STALE' | 'UNAVAILABLE';
+  lastSuccessAt: string | null;
+  ageMs: number | null;
+  cadenceMs: number;
+}
 interface SystemStatus {
+  freshness?: FreshnessRow[];
   uptimeSec: number;
   version: string;
   memory: { rssMb: number };
@@ -31,6 +42,74 @@ function fmtTime(iso: string | null): string {
   if (!iso) return 'chưa chạy';
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? '-' : d.toLocaleString('vi-VN');
+}
+
+const FRESH_TONE: Record<FreshnessRow['status'], string> = {
+  FRESH: 'text-[var(--accent-text)]',
+  STALE: 'text-[var(--warning)]',
+  UNAVAILABLE: 'text-[var(--negative)]',
+};
+
+/** Compact freshness table, worst first (server already sorts). Shows non-fresh rows; the rest behind a toggle. */
+function FreshnessTable({ rows }: { rows: FreshnessRow[] }) {
+  const { t } = useI18n();
+  const [all, setAll] = useState(false);
+  const bad = rows.filter((r) => r.status !== 'FRESH');
+  const shown = all ? rows : bad.slice(0, 8);
+  const counts = {
+    ok: rows.length - bad.length,
+    stale: rows.filter((r) => r.status === 'STALE').length,
+    na: rows.filter((r) => r.status === 'UNAVAILABLE').length,
+  };
+  const ago = (ms: number | null): string => {
+    if (ms === null) return t('fresh.never');
+    if (ms < 3_600_000) return t('fresh.agoMin', { n: Math.max(1, Math.round(ms / 60_000)) });
+    if (ms < 86_400_000) return t('fresh.agoHour', { n: Math.round(ms / 3_600_000) });
+    return t('fresh.agoDay', { n: Math.round(ms / 86_400_000) });
+  };
+  const every = (ms: number): string => {
+    if (ms < 3_600_000) return t('fresh.everyMin', { n: Math.round(ms / 60_000) });
+    if (ms < 86_400_000) return t('fresh.everyHour', { n: Math.round(ms / 3_600_000) });
+    return t('fresh.everyDay', { n: Math.round(ms / 86_400_000) });
+  };
+  return (
+    <div>
+      <h3 className="font-medium text-[var(--text-strong)]">{t('fresh.title')}</h3>
+      <p className={`mt-0.5 ${bad.length > 0 ? 'text-[var(--warning)]' : 'text-[var(--text)]/70'}`}>
+        {bad.length === 0 ? t('fresh.allOk') : t('fresh.summary', counts)}
+      </p>
+      {shown.length > 0 && (
+        <div className="mt-2 overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="text-[var(--text)]/55">
+              <tr>
+                <th className="pr-3 py-1 font-normal">{t('fresh.colSource')}</th>
+                <th className="pr-3 py-1 font-normal">{t('fresh.colStatus')}</th>
+                <th className="pr-3 py-1 font-normal">{t('fresh.colLast')}</th>
+                <th className="py-1 font-normal">{t('fresh.colCadence')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((r) => (
+                <tr key={r.id} className="border-t border-[var(--border)]">
+                  <td className="pr-3 py-1 text-[var(--text-strong)]">{r.label}</td>
+                  <td className={`pr-3 py-1 font-medium ${FRESH_TONE[r.status]}`}>{t(`fresh.${r.status}` as TKey)}</td>
+                  <td className="pr-3 py-1 whitespace-nowrap">{ago(r.ageMs)}</td>
+                  <td className="py-1 whitespace-nowrap">{every(r.cadenceMs)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {rows.length > shown.length && (
+        <button type="button" onClick={() => setAll(true)} className="mt-1 text-[var(--accent-text)] cursor-pointer">
+          {t('fresh.showAll', { n: rows.length })}
+        </button>
+      )}
+      <p className="mt-1 text-[var(--text)]/55">{t('fresh.note')}</p>
+    </div>
+  );
 }
 
 export function SystemStatusPanel() {
@@ -96,6 +175,7 @@ export function SystemStatusPanel() {
               </dd>
             </div>
           </dl>
+          {data.freshness && data.freshness.length > 0 && <FreshnessTable rows={data.freshness} />}
           <details>
             <summary className="cursor-pointer text-[var(--accent-text)]">Chi tiết tác vụ và tốc độ phản hồi</summary>
             <ul className="mt-2 space-y-1">

@@ -2,12 +2,15 @@
 import { readFileSync, statSync } from 'node:fs';
 import type { Express, RequestHandler } from 'express';
 import { errorRing, latencyTracker } from '../lib/observability.ts';
+import { registerFreshnessRoute, type FreshnessRow } from '../lib/freshness.ts';
 import { getBackupStatus } from '../services/backup/sqliteBackup.ts';
 
 export interface StatusDeps {
   requireAdmin: RequestHandler;
   schedulerStatus?: () => unknown;
   providerSummary?: () => Promise<unknown>;
+  /** Freshness rows (server/lib/freshness.ts); omitted = empty list. */
+  freshness?: () => Promise<FreshnessRow[]>;
   dbPaths?: string[];
   now?: () => number;
   cacheMs?: number;
@@ -60,6 +63,12 @@ export function registerStatusRoutes(app: Express, deps: StatusDeps): void {
         } catch {
           providers = { error: 'unavailable' };
         }
+        let freshness: FreshnessRow[] = [];
+        try {
+          freshness = (await deps.freshness?.()) ?? [];
+        } catch {
+          freshness = [];
+        }
         cache = {
           at: t,
           body: {
@@ -80,6 +89,7 @@ export function registerStatusRoutes(app: Express, deps: StatusDeps): void {
               })),
             },
             providers,
+            freshness,
             db: dbFiles(dbPaths),
             backup: (({ lastBackupAt, lastBackupError }) => ({ lastBackupAt, lastBackupError }))(getBackupStatus()),
             errors: {
@@ -96,6 +106,8 @@ export function registerStatusRoutes(app: Express, deps: StatusDeps): void {
       next(err);
     }
   });
+
+  if (deps.freshness) registerFreshnessRoute(app, deps.freshness);
 
   app.get('/api/status/errors', deps.requireAdmin, (_req, res) => {
     res.json({ countsByRoute: errorRing.countsByRoute(), recent: errorRing.list() });

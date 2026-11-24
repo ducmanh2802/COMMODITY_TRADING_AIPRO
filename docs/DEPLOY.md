@@ -88,6 +88,8 @@ Hai cách giữ dữ liệu thị trường (`data/market.db`: nến, COT, cơ b
 
 Đặt `TELEGRAM_BOT_TOKEN` (tạo bot qua @BotFather; trên Cloud Run dùng Secret Manager như mục 2). Không đặt = tính năng tắt hoàn toàn. Khi bật, server chạy worker long-poll `getUpdates` (không cần webhook) và hai job mỗi 5 phút (vùng giá, sự kiện Radar). Người dùng liên kết trong panel Danh sách theo dõi: lấy mã, gửi `/start <mã>` cho bot. Liên kết lưu trong SQLite (xem mục 4: DB tạm thời trên Cloud Run nên liên kết mất khi instance bị xóa). Giữ 1 instance để chỉ một worker poll. Tin nhắn dùng giá trễ/giá đóng cửa, chỉ để theo dõi.
 
+Cảnh báo quản trị về dữ liệu cũ (tùy chọn): đặt thêm `TELEGRAM_ADMIN_CHAT_ID` (id số của chat riêng với bot; nhắn `/start` cho bot trước). Khi một nguồn dữ liệu (nến D1, COT, FRED, EIA, tác vụ định kỳ...) quá 2 lần chu kỳ cập nhật dự kiến, server gửi MỘT tin nhắn cho chat này (kiểm tra mỗi 10 phút) và không gửi lại cho đến khi nguồn đó phục hồi. Không đặt = tắt. Xem trạng thái tại `GET /api/status/freshness` hoặc mục `freshness` của `GET /api/status`. Cuối tuần được bỏ qua cho nguồn theo ngày giao dịch; ngày nghỉ lễ chưa được tính riêng (ngưỡng 2 lần chu kỳ đã bù phần lớn).
+
 ## 4c. Thông báo trình duyệt (Web Push) và email (tùy chọn)
 
 Web Push: tạo khóa bằng `npx web-push generate-vapid-keys`, đặt `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (dạng `mailto:...`; trên Cloud Run dùng Secret Manager). Không đặt = tắt (`GET /api/notify/push/key` trả 503). Đăng ký lưu trong SQLite (cùng DB mục 4); đăng ký hết hạn (404/410) tự bị xóa. Cần HTTPS (hoặc localhost).
@@ -146,6 +148,7 @@ gcloud run services delete commodity-aipro --region asia-southeast1      # xóa 
 | `OLLAMA_URL` | URL model Ollama cục bộ (khi AI_PROVIDER=ollama) | `http://localhost:11434` | — |
 | `OLLAMA_MODEL` | Tên model Ollama | `llama3.2` | — |
 | `TELEGRAM_BOT_TOKEN` | Token bot Telegram (tạo qua @BotFather) cho cảnh báo | trống | Có (trống = tắt) |
+| `TELEGRAM_ADMIN_CHAT_ID` | Id chat nhận cảnh báo dữ liệu cũ (mục 4b) | trống | Có (trống = tắt) |
 | `GCS_BACKUP_BUCKET` | Tên bucket GCS sao lưu DB (mục 4a) | trống | Có (trống = tắt) |
 | `GCS_BACKUP_KEEP` | Số bản sao lưu giữ lại | `14` | — |
 | `GCS_BACKUP_INTERVAL_HOURS` | Chu kỳ sao lưu (giờ) | `6` | — |

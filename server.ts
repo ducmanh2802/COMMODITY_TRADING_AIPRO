@@ -24,6 +24,15 @@ async function startServer(): Promise<void> {
     './server/services/backup/sqliteBackup.ts'
   );
   await restoreOnStartup();
+  // Fundamental (FRED/EIA/USDA) records persist in the same market DB; load them so panels are not empty after a restart.
+  try {
+    const { FundamentalRepository } = await import('./server/storage/fundamentalRepository.ts');
+    const { fundamentalStore } = await import('./server/services/fundamentalService.ts');
+    const loaded = fundamentalStore.attachPersistence(new FundamentalRepository());
+    logger.info(`Fundamental store: loaded ${loaded} persisted records.`);
+  } catch (err) {
+    logger.warn(`Fundamental persistence unavailable: ${errorSummary(err)}`);
+  }
   const { createApiApp } = await import('./server/app.ts');
   const { MacroService } = await import('./server/macro/service.ts');
   const { CotService } = await import('./server/cot/service.ts');
@@ -176,6 +185,17 @@ async function startServer(): Promise<void> {
     const warmAll = () => Promise.all(warmers.map((w) => w.refresh()));
     setTimeout(() => void warmAll(), 500).unref();
     setInterval(() => void warmAll(), 5 * 60_000 + 5_000).unref();
+  }
+  // Optional admin alert when a data source stays STALE > 2x cadence (needs the Telegram bot + TELEGRAM_ADMIN_CHAT_ID).
+  const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID?.trim();
+  const freshnessSnapshot = app.locals.freshnessSnapshot as (() => Promise<import('./server/lib/freshness.ts').FreshnessRow[]>) | undefined;
+  if (adminChatId && notify?.messenger && freshnessSnapshot) {
+    const { FreshnessAlerter } = await import('./server/lib/freshness.ts');
+    const alerter = new FreshnessAlerter({ send: async (text) => (await notify.messenger.sendMessage(adminChatId, text)).ok });
+    const tick = () => void freshnessSnapshot().then((rows) => alerter.check(rows)).catch(() => undefined);
+    setTimeout(tick, 10 * 60_000).unref();
+    setInterval(tick, 10 * 60_000).unref();
+    logger.info('Data freshness admin alerts enabled.');
   }
   const server = host ? app.listen(PORT, host, onListening) : app.listen(PORT, onListening);
   if (readBackupConfig()) {

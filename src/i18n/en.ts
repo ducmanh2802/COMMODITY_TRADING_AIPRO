@@ -1,5 +1,6 @@
 import * as core from './dict/core';
 import * as fsstatus from './dict/fsstatus';
+import * as freshness from './dict/freshness';
 import * as dashboard from './dict/dashboard';
 import * as charting from './dict/charting';
 import * as data from './dict/data';
@@ -52,6 +53,7 @@ import type { TKey } from './vi';
 export const en: Record<TKey, string> = {
   ...core.en,
   ...fsstatus.en,
+  ...freshness.en,
   ...dashboard.en,
   ...charting.en,
   ...data.en,
