@@ -48,6 +48,8 @@ import * as sessions from './dict/sessions';
 import * as lab from './dict/lab';
 import * as readability from './dict/readability';
 import * as program from './dict/program';
+import * as discipline from './dict/discipline';
+import * as papercoach from './dict/papercoach';
 import * as academy from './dict/academy';
 import type { TKey } from './vi';
 
@@ -103,5 +105,7 @@ export const en: Record<TKey, string> = {
   ...lab.en,
   ...readability.en,
   ...program.en,
+  ...discipline.en,
+  ...papercoach.en,
   ...academy.en,
 };

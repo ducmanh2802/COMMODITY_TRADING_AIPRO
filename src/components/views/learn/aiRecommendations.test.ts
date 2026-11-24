@@ -33,6 +33,8 @@ test('normalizeOpenPositions resolves instruments and merges duplicate symbol+si
         researchNoteId: '',
         stopLoss: null,
         takeProfit: null,
+        marginPerContractUsd: 0,
+        entryFeeVnd: 0,
       },
       {
         id: 'p2',
@@ -47,6 +49,8 @@ test('normalizeOpenPositions resolves instruments and merges duplicate symbol+si
         researchNoteId: '',
         stopLoss: null,
         takeProfit: null,
+        marginPerContractUsd: 0,
+        entryFeeVnd: 0,
       },
     ],
     [

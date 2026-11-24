@@ -48,6 +48,8 @@ import * as sessions from './dict/sessions';
 import * as lab from './dict/lab';
 import * as readability from './dict/readability';
 import * as program from './dict/program';
+import * as discipline from './dict/discipline';
+import * as papercoach from './dict/papercoach';
 import * as academy from './dict/academy';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
@@ -102,6 +104,8 @@ export const vi = {
   ...lab.vi,
   ...readability.vi,
   ...program.vi,
+  ...discipline.vi,
+  ...papercoach.vi,
   ...academy.vi,
 };
 

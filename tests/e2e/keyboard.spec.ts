@@ -58,8 +58,8 @@ test('TopBar overflow menu: Escape closes and returns focus to trigger', async (
 test('tablist: arrow keys move selection', async ({ page }) => {
   await load(page);
   await page.locator('nav:visible li > button:visible', { hasText: 'Học viện' }).first().click();
-  await page.getByRole('button', { name: /^Thuật ngữ/ }).click();
   const tabs = page.locator('main [role="tablist"]:visible').first().locator('[role="tab"]');
+  await tabs.first().waitFor();
   expect(await tabs.count()).toBeGreaterThanOrEqual(2);
   await tabs.first().focus();
   await tabs.first().click();

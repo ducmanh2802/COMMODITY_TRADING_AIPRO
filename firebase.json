@@ -1,7 +1,10 @@
 {
-  "firestore": {
-    "rules": "firestore.rules"
-  },
+  "firestore": [
+    {
+      "database": "ai-studio-6f98b601-73f5-4577-98fe-4d91676673fb",
+      "rules": "firestore.rules"
+    }
+  ],
   "emulators": {
     "singleProjectMode": true,
     "firestore": {

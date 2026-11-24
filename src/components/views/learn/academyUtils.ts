@@ -2,7 +2,7 @@ import type { CalculatorId, Lesson, Level } from './curriculum/types';
 import type { ExamStore } from './exam/examLogic';
 import { FINAL_ID } from './exam/examLogic';
 import type { GlossaryTerm } from './glossary';
-import type { SlangEntry } from './glossarySlang';
+import type { SlangTerm as SlangEntry } from './glossarySlang';
 import { LEARN_PATHS, type LearnGoal } from './learnPaths';
 import type { LearnProgress } from './progress';
 

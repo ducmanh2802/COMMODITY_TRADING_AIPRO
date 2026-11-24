@@ -6,7 +6,7 @@
  */
 import { VIETNAM_TIMEZONE } from './time';
 
-type ExchangeId = 'CBOT' | 'NYMEX' | 'COMEX' | 'ICEUS' | 'ICEEU' | 'SGX' | 'LME';
+export type ExchangeId = 'CBOT' | 'NYMEX' | 'COMEX' | 'ICEUS' | 'ICEEU' | 'SGX' | 'LME';
 
 /** One recurring weekly window: starts at local weekday `day` (0=Sun..6=Sat) `start` HH:MM, lasts `minutes`. */
 interface SessionWindow {

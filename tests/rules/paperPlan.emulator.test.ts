@@ -320,3 +320,29 @@ test('order: other user cannot read/write order with plan', async () => {
   await assertFails(b.doc('paperOrders/o1').update({ journal: 'hack', plan: validPlan() }));
   await assertFails(b.doc('paperOrders/o1').delete());
 });
+// --------------------------------------------------------------------------- orders: mistake tags
+
+test('order: owner can add valid mistake tags and note after close', async () => {
+  await seedSession('s1');
+  const a = as('userA');
+  await assertSucceeds(a.doc('paperOrders/o1').set(baseOrder()));
+  await assertSucceeds(a.doc('paperOrders/o1').update({ mistakeTags: ['fomo', 'noStop'], mistakeNote: 'vào lệnh vội' }));
+});
+
+test('order: unknown tag, too many tags or long note are denied', async () => {
+  await seedSession('s1');
+  const a = as('userA');
+  await assertSucceeds(a.doc('paperOrders/o1').set(baseOrder()));
+  await assertFails(a.doc('paperOrders/o1').update({ mistakeTags: ['luck'] }));
+  await assertFails(a.doc('paperOrders/o1').update({ mistakeTags: 'fomo' }));
+  await assertFails(a.doc('paperOrders/o1').update({ mistakeTags: Array(10).fill('other') }));
+  await assertFails(a.doc('paperOrders/o1').update({ mistakeNote: 'x'.repeat(141) }));
+});
+
+test('order: tag update cannot change pnl; other user cannot tag', async () => {
+  await seedSession('s1');
+  const a = as('userA');
+  await assertSucceeds(a.doc('paperOrders/o1').set(baseOrder()));
+  await assertFails(a.doc('paperOrders/o1').update({ mistakeTags: ['fomo'], pnlVnd: 999 }));
+  await assertFails(as('userB').doc('paperOrders/o1').update({ mistakeTags: ['fomo'] }));
+});
