@@ -55,5 +55,14 @@ test('csv has BOM, escapes commas and quotes', () => {
   const lines = csv.slice(1).trim().split('\r\n');
   assert.equal(lines.length, 2);
   assert.equal(lines[0].split(',')[0], 'Ngày mở');
-  assert.equal(lines[1], '1970-01-01 00:00,1970-01-01 01:00,"A,""B""",Mua,2,10.5,11,1234,1.23,Có');
+  assert.equal(lines[1], '1970-01-01 00:00,1970-01-01 01:00,"A,""B""",Mua,2,10.5,11,1234,1.23,Có,,');
+});
+
+test('csv exports mistake tags (Vietnamese labels joined by "; ") and the mistake note, escaped', () => {
+  const csv = tradesToCsv([
+    { openedAtMs: 0, closedAtMs: 0, instrumentId: 'X', side: 'SHORT', contracts: 1, entryPrice: 1, exitPrice: 2, pnlVnd: -5, rMultiple: null, mistakeTags: ['noStop', 'revenge'], mistakeNote: 'vội, "gỡ"' },
+  ]);
+  const lines = csv.slice(1).trim().split('\r\n');
+  assert.deepEqual(lines[0].split(',').slice(-2), ['Lỗi đã gắn', 'Ghi chú lỗi']);
+  assert.equal(lines[1], '1970-01-01 00:00,1970-01-01 00:00,X,Bán,1,1,2,-5,,,"Không đặt cắt lỗ; Lệnh ""gỡ"" (trả thù)","vội, ""gỡ"""');
 });

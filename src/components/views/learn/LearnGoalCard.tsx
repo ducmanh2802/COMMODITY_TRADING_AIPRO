@@ -50,6 +50,7 @@ export function LearnGoalCard({ lessons, onOpen, onGoalChange }: Props) {
         <div
           className="flex-1 h-2 rounded-full overflow-hidden bg-[var(--surface-2)]"
           role="progressbar"
+          aria-label={t('learngoal.path', { goal: t(`learngoal.${goal}`) })}
           aria-valuemin={0}
           aria-valuemax={s.total}
           aria-valuenow={s.doneCount}

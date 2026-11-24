@@ -77,7 +77,7 @@ function DatapointRow({ d }: { d: MacroDatapoint }) {
       </p>
       <p className="text-[11px] text-[var(--text)]/50 break-words">
         {t('macro.source')}: {d.sourceName}{' '}
-        <a href={d.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 min-h-10 sm:min-h-0 text-[var(--accent)] hover:underline">
+        <a href={d.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 min-h-10 sm:min-h-0 text-[var(--accent-text)] underline underline-offset-2">
           {t('macro.openSource')} <ExternalLink className="w-3 h-3" aria-hidden="true" />
         </a>
       </p>

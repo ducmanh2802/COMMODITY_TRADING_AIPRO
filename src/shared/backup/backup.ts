@@ -3,6 +3,8 @@
  * learning progress, learn goal, review schedule) plus a CSV export of closed paper trades. Pure: storage is injected.
  */
 
+import { vi as disciplineVi } from '../../i18n/dict/discipline';
+
 const BACKUP_VERSION = 1;
 
 /** localStorage keys. Keep in sync with the owning modules (paperModel LOCAL_KEY, watchlist, drawings, learn/*). */
@@ -173,9 +175,18 @@ export interface CsvTrade {
   pnlVnd: number;
   rMultiple: number | null;
   plan?: { onPlan: boolean };
+  /** Self-review mistake codes (see papertrade/mistakeStats MISTAKE_TAGS); absent on untagged trades. */
+  mistakeTags?: readonly string[];
+  mistakeNote?: string;
 }
 
-const CSV_HEADER = ['Ngày mở', 'Ngày đóng', 'Mã', 'Chiều', 'Số HĐ', 'Giá vào', 'Giá ra', 'Lãi/lỗ (VND)', 'R', 'Theo kế hoạch'];
+const CSV_HEADER = ['Ngày mở', 'Ngày đóng', 'Mã', 'Chiều', 'Số HĐ', 'Giá vào', 'Giá ra', 'Lãi/lỗ (VND)', 'R', 'Theo kế hoạch', 'Lỗi đã gắn', 'Ghi chú lỗi'];
+
+/** Vietnamese mistake labels (same text as the `mk.tag.*` keys in the vi dictionary); unknown codes pass through. */
+function mistakeLabel(code: string): string {
+  const key = `mk.tag.${code}` as keyof typeof disciplineVi;
+  return key in disciplineVi ? disciplineVi[key] : code;
+}
 
 function csvCell(v: string | number): string {
   const s = String(v);
@@ -199,6 +210,8 @@ export function tradesToCsv(trades: CsvTrade[]): string {
     Math.round(t.pnlVnd),
     t.rMultiple === null || t.rMultiple === undefined ? '' : Math.round(t.rMultiple * 100) / 100,
     t.plan ? (t.plan.onPlan ? 'Có' : 'Không') : '',
+    (t.mistakeTags ?? []).map(mistakeLabel).join('; '),
+    t.mistakeNote ?? '',
   ]);
   return '﻿' + [CSV_HEADER, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }

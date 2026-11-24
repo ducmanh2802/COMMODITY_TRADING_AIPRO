@@ -116,7 +116,7 @@ export function OrderCalculator({
       type="button"
       aria-pressed={dir === d}
       onClick={() => setDir(d)}
-      className={`py-2 rounded-md border text-sm font-semibold ${dir === d ? 'bg-[var(--accent)] border-[var(--accent)] text-[var(--bg)]' : 'border-[var(--border)] text-[var(--text)] bg-[var(--surface)]'}`}
+      className={`py-2 rounded-md border text-sm font-semibold ${dir === d ? 'bg-[var(--accent)] border-[var(--accent)] text-[var(--on-accent)]' : 'border-[var(--border)] text-[var(--text)] bg-[var(--surface)]'}`}
     >
       {label}
     </button>

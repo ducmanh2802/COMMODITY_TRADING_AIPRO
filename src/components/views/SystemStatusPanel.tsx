@@ -79,7 +79,7 @@ function FreshnessTable({ rows }: { rows: FreshnessRow[] }) {
         {bad.length === 0 ? t('fresh.allOk') : t('fresh.summary', counts)}
       </p>
       {shown.length > 0 && (
-        <div className="mt-2 overflow-x-auto">
+        <div className="mt-2 overflow-x-auto" tabIndex={0} role="region" aria-label={t('fresh.title')}>
           <table className="w-full text-left">
             <thead className="text-[var(--text)]/55">
               <tr>

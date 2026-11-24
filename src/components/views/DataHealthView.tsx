@@ -526,7 +526,7 @@ export function DataHealthView() {
                           <button
                             type="button"
                             onClick={() => openInstrumentIn(row.symbol, 'commodity-profile')}
-                            className="px-2.5 py-1 bg-[var(--surface-2)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-medium text-white transition-colors whitespace-nowrap"
+                            className="px-2.5 py-1 bg-[var(--surface-2)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-medium text-[var(--text-strong)] hover:text-[var(--on-accent)] transition-colors whitespace-nowrap"
                           >
                             {t('fr.dh.profile')}
                           </button>
@@ -872,7 +872,7 @@ export function DataHealthView() {
                           <button
                             type="button"
                             onClick={() => openInstrumentIn(ds.symbol, 'charts')}
-                            className="px-2.5 py-1 bg-[var(--surface-2)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-medium text-white transition-colors"
+                            className="px-2.5 py-1 bg-[var(--surface-2)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-medium text-[var(--text-strong)] hover:text-[var(--on-accent)] transition-colors"
                           >
                             {t('fr.dh.openChart')}
                           </button>

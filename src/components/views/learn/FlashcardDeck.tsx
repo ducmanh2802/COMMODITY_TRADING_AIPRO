@@ -153,6 +153,7 @@ export function FlashcardDeck() {
         <div
           className="flex-1 h-2 rounded-full overflow-hidden bg-[var(--surface-2)]"
           role="progressbar"
+          aria-label={t('ac.fc.mastered', { done: masteredInSource, total: fullDeck.length })}
           aria-valuemin={0}
           aria-valuemax={fullDeck.length}
           aria-valuenow={masteredInSource}
