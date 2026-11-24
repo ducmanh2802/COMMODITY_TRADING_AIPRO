@@ -1,13 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { chartPalette, useThemeKey, withAlpha } from '../../shared/theme/chartColors';
 import {
   ArrowLeft,
+  BellRing,
   Bot,
   Calendar,
+  CircleCheck,
+  Clock,
   Compass,
+  Crosshair,
+  Gem,
+  Info,
   Layers,
+  RefreshCcw,
+  Scale,
   ShieldAlert,
+  Target,
   TrendingUp,
+  Zap,
+  type LucideIcon,
 } from 'lucide-react';
 import { createChart, CandlestickSeries } from 'lightweight-charts';
 import { lwBase } from '../../shared/theme/chartTheme';
@@ -23,6 +34,7 @@ import { CyclePhaseBadge, getBottomScoreAccent } from '../common/CyclePhaseBadge
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { SupplyDemandRow } from '../common/SupplyDemandRow';
 import { fetchJsonWithRetry, safeReadJson } from '../../shared/utils/http';
+import { useT, type TKey } from '../../i18n';
 
 type ChartHorizon = '1Y' | '3Y' | '5Y' | '10Y' | 'ALL';
 
@@ -34,7 +46,64 @@ const HORIZON_DAYS: Record<ChartHorizon, number> = {
   ALL: 365 * 50,
 };
 
+/** Semicircle gauge 0-100 for the bottom score; the arc colour follows the classification accent (currentColor). */
+function ScoreGauge({ score, accent, label }: { score: number | null; accent: string; label: string }) {
+  const arc = 'M 10 60 A 50 50 0 0 1 110 60';
+  const v = score === null ? 0 : Math.min(100, Math.max(0, score));
+  return (
+    <svg viewBox="0 0 120 68" className={`w-full max-w-[200px] mx-auto block ${accent}`} role="img" aria-label={label}>
+      <path d={arc} fill="none" stroke="var(--border)" strokeWidth="10" strokeLinecap="round" />
+      {score !== null && v > 0 && (
+        <path d={arc} fill="none" stroke="currentColor" strokeWidth="10" strokeLinecap="round" pathLength={100} strokeDasharray={`${v} 100`} />
+      )}
+      <text x="60" y="56" textAnchor="middle" className="fill-current font-mono font-bold" fontSize="22">
+        {score === null ? '—' : score}
+      </text>
+      <text x="10" y="67" textAnchor="middle" fontSize="7" fill="var(--faint)">0</text>
+      <text x="110" y="67" textAnchor="middle" fontSize="7" fill="var(--faint)">100</text>
+    </svg>
+  );
+}
+
+/** Inline (i) disclosure: compact trigger, explanation expands in flow (no overflow at 390px). */
+function InfoToggle({ id, label, children }: { id: string; label: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        aria-label={label}
+        title={label}
+        onClick={() => setOpen((v) => !v)}
+        className="shrink-0 inline-flex items-center justify-center w-9 h-9 -m-1.5 rounded-full text-[var(--muted)] hover:text-[var(--text-strong)]"
+      >
+        <Info className="w-4 h-4" aria-hidden="true" />
+      </button>
+      {open && (
+        <p id={id} role="note" className="basis-full text-[11px] leading-relaxed text-[var(--text)] bg-[var(--surface-2)] border border-[var(--border)] rounded-md p-2.5">
+          {children}
+        </p>
+      )}
+    </>
+  );
+}
+
+const VERDICT_CHIPS: Array<{ key: TKey; field: keyof NonNullable<EightQuestionVerdict['answers']>; icon: LucideIcon }> = [
+  { key: 'prof.q1', field: 'q1CyclePhase', icon: RefreshCcw },
+  { key: 'prof.q2', field: 'q2SupplyDemandState', icon: Scale },
+  { key: 'prof.q3', field: 'q3ValuableOrTrap', icon: Gem },
+  { key: 'prof.q4', field: 'q4BottomProbabilityAssessment', icon: Target },
+  { key: 'prof.q5', field: 'q5KeyDriversAndRisks', icon: Zap },
+  { key: 'prof.q6', field: 'q6ShouldActNowOrWait', icon: Clock },
+  { key: 'prof.q7', field: 'q7EntryZoneInvalidationTargets', icon: Crosshair },
+  { key: 'prof.q8', field: 'q8ConfirmationTriggers', icon: BellRing },
+];
+
 export function CommodityProfileView() {
+  const t = useT();
+  const [eduOpen, setEduOpen] = useState(false);
   const { selectedSymbol, setSelectedSymbol, instruments, setActiveModule, datasets } = useTerminal();
   const [dossier, setDossier] = useState<CommodityProfileDossier | null>(null);
   const [candles, setCandles] = useState<MarketCandle[]>([]);
@@ -388,36 +457,46 @@ export function CommodityProfileView() {
         </section>
 
         {/* 100-Point Bottom Detection Summary Card (1/3) */}
-        <section className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-4 space-y-4">
-          <div className="flex items-start justify-between gap-2">
-            <div>
+        <section className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-4 space-y-4 min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <h2 className="text-sm font-semibold text-[var(--text-strong)]">Động cơ Phát hiện Đáy (100 Điểm)</h2>
               <p className="text-xs text-[var(--faint)] mt-0.5">
                 Trọng số quan sát thực tế: {bottomDetection.observedWeight}/100
               </p>
             </div>
-            <span
-              className={`text-2xl font-mono font-bold tabular-nums ${getBottomScoreAccent(
-                bottomDetection.classification
-              )}`}
-            >
-              {bottomDetection.totalScore !== null ? bottomDetection.totalScore : '—'}
-            </span>
+            <InfoToggle id="prof-bottom-method" label={t('prof.method')}>
+              {bottomDetection.methodologyNote}
+            </InfoToggle>
           </div>
 
-          <div className="bg-[var(--bg)] border border-[var(--border)] rounded p-3 space-y-1.5">
-            <p className={`text-xs font-medium ${getBottomScoreAccent(bottomDetection.classification)}`}>
+          <div className="bg-[var(--bg)] border border-[var(--border)] rounded p-3 space-y-2" data-testid="bottom-score-gauge">
+            <ScoreGauge
+              score={bottomDetection.totalScore}
+              accent={getBottomScoreAccent(bottomDetection.classification)}
+              label={bottomDetection.totalScore !== null ? t('prof.gaugeAria', { v: bottomDetection.totalScore }) : t('prof.gaugeNone')}
+            />
+            <p className={`text-xs font-medium text-center ${getBottomScoreAccent(bottomDetection.classification)}`}>
               {bottomDetection.classificationLabelVi}
             </p>
-            <p className="text-xs font-mono text-[var(--muted)] tabular-nums">
-              Model Confidence Score:{' '}
-              {bottomDetection.modelConfidenceScore !== null
-                ? `${bottomDetection.modelConfidenceScore}/100`
-                : 'DATA_UNAVAILABLE'}
-            </p>
-            <p className="text-[11px] text-[var(--faint)] leading-relaxed">
-              {bottomDetection.methodologyNote}
-            </p>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px] text-[var(--muted)]">
+                <span>{t('prof.confidence')}</span>
+                <span className="font-mono tabular-nums">
+                  {bottomDetection.modelConfidenceScore !== null ? `${bottomDetection.modelConfidenceScore}/100` : '—'}
+                </span>
+              </div>
+              <div
+                className="h-1.5 w-full bg-[var(--surface-2)] rounded overflow-hidden"
+                role="img"
+                aria-label={`${t('prof.confidence')}: ${bottomDetection.modelConfidenceScore !== null ? `${bottomDetection.modelConfidenceScore}/100` : '—'}`}
+              >
+                <div
+                  className="h-full rounded bg-[var(--accent)]"
+                  style={{ width: `${bottomDetection.modelConfidenceScore !== null ? Math.min(100, Math.max(0, bottomDetection.modelConfidenceScore)) : 0}%` }}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -461,9 +540,7 @@ export function CommodityProfileView() {
               <h2 className="text-sm font-semibold text-[var(--text-strong)]">
                 AI Verdict — 8 Câu hỏi Nghiên cứu Chu kỳ
               </h2>
-              <p className="text-xs text-[var(--faint)]">
-                Phân tích server-side qua Gemini dựa hoàn toàn trên dữ liệu định lượng và Cung–Cầu đã kiểm chứng.
-              </p>
+              <p className="text-xs text-[var(--faint)]">Gemini · server-side</p>
             </div>
           </div>
 
@@ -478,11 +555,34 @@ export function CommodityProfileView() {
           </button>
         </div>
 
-        {!verdict ? (
-          <p className="text-xs text-[var(--muted)]">
-            Nhấn nút phía trên để AI trả lời toàn diện 8 câu hỏi trọng tâm: Giai đoạn chu kỳ, Trạng thái Cung–Cầu, Định giá hay Bẫy giảm giá, Độ tin cậy tạo đáy, Động lực/Rủi ro, Hành động ngay hay Chờ xác nhận, Vùng mua/Vô hiệu/Mục tiêu và Tín hiệu kích hoạt.
-          </p>
-        ) : verdict.status !== 'OK' || !verdict.answers ? (
+        {!verdict && <p className="text-xs text-[var(--muted)]">{t('prof.verdictHint')}</p>}
+        <ul className="grid grid-cols-2 sm:grid-cols-4 gap-2" aria-label={t('prof.chipsAria')} data-testid="verdict-chips">
+          {VERDICT_CHIPS.map(({ key, field, icon: Icon }, idx) => {
+            const answers = verdict?.status === 'OK' ? verdict.answers : null;
+            const answered = !!answers?.[field];
+            return (
+              <li
+                key={key}
+                className={`flex items-center gap-1.5 min-w-0 rounded-xl border px-2.5 py-1.5 text-[11px] leading-tight ${
+                  answered
+                    ? 'border-[var(--accent)]/60 bg-[var(--accent)]/10 text-[var(--text-strong)]'
+                    : 'border-[var(--border)] bg-[var(--bg)] text-[var(--muted)]'
+                }`}
+              >
+                {answered ? (
+                  <CircleCheck className="w-3.5 h-3.5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+                ) : (
+                  <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                )}
+                <span className="min-w-0 break-words">
+                  {idx + 1}. {t(key)}
+                </span>
+                <span className="sr-only">— {answered ? t('prof.answered') : t('prof.notAnswered')}</span>
+              </li>
+            );
+          })}
+        </ul>
+        {!verdict ? null : verdict.status !== 'OK' || !verdict.answers ? (
           <div className="bg-[var(--bg)] border border-[var(--warning)]/40 rounded-md p-3 text-xs text-[var(--warning)] flex items-start gap-2">
             <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
             <span>{verdict.message ?? `Status: ${verdict.status}`}</span>
@@ -543,16 +643,31 @@ export function CommodityProfileView() {
       </section>
 
       {/* Dual Trade Setup Plans: A. Long-Term Cycle Investing & B. Swing Trading */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          aria-expanded={eduOpen}
+          aria-controls="prof-edu-note"
+          onClick={() => setEduOpen((v) => !v)}
+          className="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-[var(--warning)]/60 bg-[var(--warning)]/10 px-3 py-1 text-xs font-medium text-[var(--warning)]"
+          data-testid="profile-edu-badge"
+        >
+          <ShieldAlert className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          <span className="truncate">{t('prof.eduBadge')}</span>
+          <Info className="w-3.5 h-3.5 shrink-0 opacity-70" aria-hidden="true" />
+          <span className="sr-only">{t('prof.eduMore')}</span>
+        </button>
+        {eduOpen && (
+          <p id="prof-edu-note" role="note" className="basis-full text-xs leading-relaxed text-[var(--text)] bg-[var(--surface-2)] border border-[var(--border)] rounded-md p-3">
+            {t('prof.eduFull')}
+          </p>
+        )}
+      </div>
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {[tradePlans.longTermCycle, tradePlans.swingTrading].map((plan) => (
           <div key={plan.horizonType} className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-5 space-y-4">
             <div className="flex items-start justify-between gap-3 border-b border-[var(--border)] pb-3">
-              <div>
-                <h2 className="text-sm font-semibold text-[var(--text-strong)]">{plan.title}</h2>
-                <p className="text-xs font-mono text-[var(--faint)] mt-0.5">
-                  Chế độ: Hỗ trợ ra quyết định (Tự động giao dịch: TẮT)
-                </p>
-              </div>
+              <h2 className="text-sm font-semibold text-[var(--text-strong)] min-w-0">{plan.title}</h2>
               <span className="font-mono text-xs px-2 py-0.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] whitespace-nowrap">
                 {plan.status}
               </span>
@@ -560,7 +675,7 @@ export function CommodityProfileView() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="bg-[var(--bg)] border border-[var(--border)] rounded p-2.5">
-                <span className="block text-[11px] text-[var(--faint)]">Vùng mua tối ưu</span>
+                <span className="block text-[11px] text-[var(--faint)]">{t('prof.refZone')}</span>
                 <span className="font-mono text-[var(--text-strong)] tabular-nums">
                   {plan.entryZone.low !== null && plan.entryZone.high !== null
                     ? `${plan.entryZone.low} – ${plan.entryZone.high}`

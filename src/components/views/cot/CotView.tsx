@@ -226,11 +226,22 @@ export default function CotView() {
         )}
       </Panel>
 
-      {mapping?.status === 'REPORTED' && <SyncPanel instrumentId={mapping.instrumentId} onSynced={() => setReloadToken((t) => t + 1)} />}
-
       {loading && <p className="text-xs text-[var(--text)]/55">{t('cot.loading')}</p>}
       {error && <Notice tone="error">{error}</Notice>}
       {data && <CotResults data={data} />}
+
+      {/* Admin-only tool: collapsed unless an admin token is already stored in this tab (sessionStorage). */}
+      {mapping?.status === 'REPORTED' && (
+        <details open={readAdminToken() !== '' || undefined} className="group rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+          <summary className="cursor-pointer select-none px-4 py-3 min-h-[44px] flex items-center gap-2 text-xs font-medium text-[var(--text)]/75">
+            <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
+            {t('cot.sync.adminSummary')}
+          </summary>
+          <div className="p-2 pt-0">
+            <SyncPanel instrumentId={mapping.instrumentId} onSynced={() => setReloadToken((t) => t + 1)} />
+          </div>
+        </details>
+      )}
     </div>
   );
 }
@@ -404,80 +415,43 @@ function CotResults({ data }: { data: CotQueryResponse }) {
 
   return (
     <div className="space-y-4">
-      <Panel title={t('cot.prov.title')}>
-        <dl className="grid gap-2 text-xs md:grid-cols-2">
-          <div>
-            <dt className="text-[var(--text)]/55">{t('cot.prov.sources')}</dt>
-            <dd className="font-mono text-[11px] text-[var(--text-strong)] break-all">
-              {data.provenance.sources.length ? data.provenance.sources.map((s) => <div key={s}>{s}</div>) : t('cot.prov.noReports')}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[var(--text)]/55">{t('cot.prov.fetchedAt')}</dt>
-            <dd className="font-mono text-[var(--text-strong)]">{data.provenance.fetchedAt ?? '—'}</dd>
-            <dt className="text-[var(--text)]/55 mt-1">{t('cot.prov.retrievedAt')}</dt>
-            <dd className="font-mono text-[var(--text-strong)]">{data.retrievedAt}</dd>
-          </div>
-        </dl>
-        <Notice tone="warn">
-          <p className="font-semibold">{t('cot.lookahead.title')}</p>
-          {latest ? (
-            <p>
-              {t('cot.lookahead.1')} <span className="font-mono">{fmtDate(latest.reportDate)}</span> {t('cot.lookahead.2')}{' '}
-              <span className="font-mono">{fmtDate(latest.expectedReleaseDate)}</span> {t('cot.lookahead.3')}
-              {latest.expectedReleaseDate > todayIso ? t('cot.lookahead.future') : '.'}
-            </p>
-          ) : null}
-          <p>{data.timingNotice}</p>
-        </Notice>
-      </Panel>
-
       <Panel
         title={t('cot.an.title')}
         subtitle={t('cot.an.subtitle', { rt: data.reportType, n: data.count, lb: a.lookbackWeeks, mm: a.maxMissingWeeks })}
       >
-        <StatusBlock label={t('cot.an.label')} status={a.status} reason={a.reason} warnings={a.warnings} />
-        {rows.length === 0 && a.status !== 'INVALID_INPUT' && <Notice tone="info">{t('cot.an.noReports')}</Notice>}
-        {a.gaps.length > 0 && (
-          <div>
-            <p className="text-xs text-[var(--warning)] font-medium mb-1">{t('cot.gaps.title', { n: a.gaps.length })}</p>
-            <div className="overflow-x-auto" tabIndex={0}>
-              <table className="text-[11px] font-mono">
-                <thead>
-                  <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
-                    <th className="py-1 pr-3 text-left font-medium">{t('cot.gaps.after')}</th>
-                    <th className="py-1 px-3 text-left font-medium">{t('cot.gaps.before')}</th>
-                    <th className="py-1 px-3 text-right font-medium">{t('cot.gaps.days')}</th>
-                    <th className="py-1 px-3 text-right font-medium">{t('cot.gaps.missing')}</th>
-                    <th className="py-1 px-3 text-left font-medium">{t('cot.gaps.kind')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border)]/70">
-                  {a.gaps.map((g) => (
-                    <tr key={`${g.after}-${g.before}`}>
-                      <td className="py-1 pr-3">{fmtDate(g.after)}</td>
-                      <td className="py-1 px-3">{fmtDate(g.before)}</td>
-                      <td className="py-1 px-3 text-right">{g.days}</td>
-                      <td className="py-1 px-3 text-right">{g.missingWeeks ?? '—'}</td>
-                      <td className="py-1 px-3">{g.kind}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        <div className="flex flex-wrap items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <StatusBlock label={t('cot.an.label')} status={a.status} reason={a.reason} warnings={a.warnings} />
           </div>
-        )}
-        <details className="text-[11px] text-[var(--text)]/60">
-          <summary className="cursor-pointer">{t('cot.formulas')}</summary>
-          <ul className="mt-1 space-y-0.5 font-mono">
-            {Object.entries(a.formula).map(([k, v]) => (
-              <li key={k}>
-                {k}: {v}
-              </li>
-            ))}
-          </ul>
-        </details>
+          {a.gaps.length > 0 && (
+            <span className="shrink-0 inline-flex items-center rounded-full border border-[var(--warning)]/50 bg-[var(--warning)]/10 px-2 py-0.5 text-[11px] font-medium text-[var(--warning)]">
+              {t('cot.gaps.chip', { n: a.gaps.length })}
+            </span>
+          )}
+        </div>
+        {rows.length === 0 && a.status !== 'INVALID_INPUT' && <Notice tone="info">{t('cot.an.noReports')}</Notice>}
+        {latest && <CotReleaseTimeline reportDate={latest.reportDate} releaseDate={latest.expectedReleaseDate} todayIso={todayIso} />}
       </Panel>
+
+      {showValues && (
+        <>
+          <Panel title={t('cot.chart.net')}>
+            <TimeSeriesChart lines={netLines} valueFormatter={intFmt} referenceLines={ZERO} ariaLabel={t('cot.chart.netAria')} />
+          </Panel>
+          <Panel title={t('cot.chart.pct')}>
+            <TimeSeriesChart lines={pctLines} valueFormatter={pctFmt} referenceLines={ZERO} height={220} ariaLabel={t('cot.chart.pctAria')} />
+          </Panel>
+          <Panel title={t('cot.chart.index', { n: a.lookbackWeeks })} subtitle={t('cot.chart.indexSub')}>
+            {a.status === 'OK' ? (
+              <TimeSeriesChart lines={idxLines} valueFormatter={idxFmt} referenceLines={INDEX_BANDS} height={220} ariaLabel={t('cot.chart.indexAria')} />
+            ) : (
+              <Notice tone="warn">
+                {t('cot.chart.indexHidden', { status: a.status, reason: a.reason })}
+              </Notice>
+            )}
+          </Panel>
+        </>
+      )}
 
       {showValues && latest && (
         <Panel
@@ -527,69 +501,167 @@ function CotResults({ data }: { data: CotQueryResponse }) {
       )}
 
       {showValues && (
-        <>
-          <Panel title={t('cot.chart.net')}>
-            <TimeSeriesChart lines={netLines} valueFormatter={intFmt} referenceLines={ZERO} ariaLabel={t('cot.chart.netAria')} />
-          </Panel>
-          <Panel title={t('cot.chart.pct')}>
-            <TimeSeriesChart lines={pctLines} valueFormatter={pctFmt} referenceLines={ZERO} height={220} ariaLabel={t('cot.chart.pctAria')} />
-          </Panel>
-          <Panel title={t('cot.chart.index', { n: a.lookbackWeeks })} subtitle={t('cot.chart.indexSub')}>
-            {a.status === 'OK' ? (
-              <TimeSeriesChart lines={idxLines} valueFormatter={idxFmt} referenceLines={INDEX_BANDS} height={220} ariaLabel={t('cot.chart.indexAria')} />
-            ) : (
-              <Notice tone="warn">
-                {t('cot.chart.indexHidden', { status: a.status, reason: a.reason })}
-              </Notice>
-            )}
-          </Panel>
-          <Panel title={t('cot.recent.title', { n: Math.min(RECENT_WEEKS, recent.length) })} subtitle={t('cot.recent.subtitle')}>
-            <div className="overflow-x-auto" tabIndex={0}>
-              <table className="w-full text-[11px] font-mono min-w-[860px]">
-                <thead>
-                  <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
-                    <th className="py-1.5 px-2 text-left font-medium">{t('cot.recent.date')}</th>
-                    <th className="py-1.5 px-2 text-left font-medium">{t('cot.recent.release')}</th>
-                    <th className="py-1.5 px-2 text-right font-medium" title={t('term.openInterest')}>
-                      {t('cot.recent.oi')}
+        <Panel title={t('cot.recent.title', { n: Math.min(RECENT_WEEKS, recent.length) })} subtitle={t('cot.recent.subtitle')}>
+          <div className="overflow-x-auto" tabIndex={0}>
+            <table className="w-full text-[11px] font-mono min-w-[860px]">
+              <thead>
+                <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
+                  <th className="py-1.5 px-2 text-left font-medium">{t('cot.recent.date')}</th>
+                  <th className="py-1.5 px-2 text-left font-medium">{t('cot.recent.release')}</th>
+                  <th className="py-1.5 px-2 text-right font-medium" title={t('term.openInterest')}>
+                    {t('cot.recent.oi')}
+                  </th>
+                  {cats.map((c) => (
+                    <th key={c} className="py-1.5 px-2 text-right font-medium">
+                      {t('cot.recent.netDelta', { cat: categoryLabel(c) })}
                     </th>
-                    {cats.map((c) => (
-                      <th key={c} className="py-1.5 px-2 text-right font-medium">
-                        {t('cot.recent.netDelta', { cat: categoryLabel(c) })}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border)]/70">
-                  {recent.map((r) => (
-                    <tr key={r.reportDate}>
-                      <td className="py-1.5 px-2 text-[var(--text-strong)]">{fmtDate(r.reportDate)}</td>
-                      <td className="py-1.5 px-2 text-[var(--text)]/60">{fmtDate(r.expectedReleaseDate)}</td>
-                      <td className="py-1.5 px-2 text-right tabular-nums">{fmtInt(r.openInterest)}</td>
-                      {cats.map((c) => {
-                        const v = r.categories[c];
-                        const d = v?.netChangeWoW ?? null;
-                        return (
-                          <td key={c} className="py-1.5 px-2 text-right tabular-nums">
-                            <span className="text-[var(--text-strong)]">{fmtSigned(v?.net)}</span>
-                            <span className={`ml-1.5 ${d === null ? 'text-[var(--warning)]/80' : d > 0 ? 'text-[var(--positive)]' : d < 0 ? 'text-[var(--negative)]' : 'text-[var(--text)]/60'}`}>
-                              {d === null ? t('cot.gap') : fmtSigned(d)}
-                            </span>
-                          </td>
-                        );
-                      })}
-                    </tr>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </Panel>
-        </>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]/70">
+                {recent.map((r) => (
+                  <tr key={r.reportDate}>
+                    <td className="py-1.5 px-2 text-[var(--text-strong)]">{fmtDate(r.reportDate)}</td>
+                    <td className="py-1.5 px-2 text-[var(--text)]/60">{fmtDate(r.expectedReleaseDate)}</td>
+                    <td className="py-1.5 px-2 text-right tabular-nums">{fmtInt(r.openInterest)}</td>
+                    {cats.map((c) => {
+                      const v = r.categories[c];
+                      const d = v?.netChangeWoW ?? null;
+                      return (
+                        <td key={c} className="py-1.5 px-2 text-right tabular-nums">
+                          <span className="text-[var(--text-strong)]">{fmtSigned(v?.net)}</span>
+                          <span className={`ml-1.5 ${d === null ? 'text-[var(--warning)]/80' : d > 0 ? 'text-[var(--positive)]' : d < 0 ? 'text-[var(--negative)]' : 'text-[var(--text)]/60'}`}>
+                            {d === null ? t('cot.gap') : fmtSigned(d)}
+                          </span>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
       )}
 
       {showValues && (
         <OpenInterestPanel data={data} />
       )}
+
+      <details className="rounded-lg border border-[var(--border)] bg-[var(--surface)]" data-testid="cot-provenance">
+        <summary className="cursor-pointer select-none px-4 py-3 min-h-[44px] flex items-center text-sm font-medium text-[var(--text-strong)]">
+          {t('cot.prov.details')}
+        </summary>
+        <div className="space-y-3 border-t border-[var(--border)] p-4">
+          <dl className="grid gap-2 text-xs md:grid-cols-2">
+            <div>
+              <dt className="text-[var(--text)]/55">{t('cot.prov.sources')}</dt>
+              <dd className="font-mono text-[11px] text-[var(--text-strong)] break-all">
+                {data.provenance.sources.length ? data.provenance.sources.map((s) => <div key={s}>{s}</div>) : t('cot.prov.noReports')}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[var(--text)]/55">{t('cot.prov.fetchedAt')}</dt>
+              <dd className="font-mono text-[var(--text-strong)]">{data.provenance.fetchedAt ?? '—'}</dd>
+              <dt className="text-[var(--text)]/55 mt-1">{t('cot.prov.retrievedAt')}</dt>
+              <dd className="font-mono text-[var(--text-strong)]">{data.retrievedAt}</dd>
+            </div>
+          </dl>
+          <p className="text-[11px] text-[var(--text)]/70">{data.timingNotice}</p>
+          {a.gaps.length > 0 && (
+            <div>
+              <p className="text-xs text-[var(--warning)] font-medium mb-1">{t('cot.gaps.title', { n: a.gaps.length })}</p>
+              <div className="overflow-x-auto" tabIndex={0}>
+                <table className="text-[11px] font-mono">
+                  <thead>
+                    <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
+                      <th className="py-1 pr-3 text-left font-medium">{t('cot.gaps.after')}</th>
+                      <th className="py-1 px-3 text-left font-medium">{t('cot.gaps.before')}</th>
+                      <th className="py-1 px-3 text-right font-medium">{t('cot.gaps.days')}</th>
+                      <th className="py-1 px-3 text-right font-medium">{t('cot.gaps.missing')}</th>
+                      <th className="py-1 px-3 text-left font-medium">{t('cot.gaps.kind')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border)]/70">
+                    {a.gaps.map((g) => (
+                      <tr key={`${g.after}-${g.before}`}>
+                        <td className="py-1 pr-3">{fmtDate(g.after)}</td>
+                        <td className="py-1 px-3">{fmtDate(g.before)}</td>
+                        <td className="py-1 px-3 text-right">{g.days}</td>
+                        <td className="py-1 px-3 text-right">{g.missingWeeks ?? '—'}</td>
+                        <td className="py-1 px-3">{g.kind}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          <details className="text-[11px] text-[var(--text)]/60">
+            <summary className="cursor-pointer">{t('cot.formulas')}</summary>
+            <ul className="mt-1 space-y-0.5 font-mono">
+              {Object.entries(a.formula).map(([k, v]) => (
+                <li key={k}>
+                  {k}: {v}
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
+      </details>
+    </div>
+  );
+}
+
+/** Whole days between two ISO dates (b - a). */
+function isoDayDiff(a: string, b: string): number {
+  return Math.round((Date.parse(`${b.slice(0, 10)}T00:00:00Z`) - Date.parse(`${a.slice(0, 10)}T00:00:00Z`)) / 86_400_000);
+}
+
+/**
+ * Look-ahead notice as a mini timeline: Tuesday as-of date -> Friday release (estimate) with a "today" marker.
+ * Nodes are ordered by date; only dates from the report itself (plus today) are shown.
+ */
+function CotReleaseTimeline({ reportDate, releaseDate, todayIso }: { reportDate: string; releaseDate: string; todayIso: string }) {
+  const t = useT();
+  const pending = releaseDate > todayIso;
+  type Node = { key: string; date: string; label: string; dot: string };
+  const asOf: Node = { key: 'asof', date: reportDate, label: t('cot.tl.asOf'), dot: 'bg-[var(--accent)]' };
+  const rel: Node = { key: 'rel', date: releaseDate, label: t('cot.tl.release'), dot: 'bg-[var(--warning)]' };
+  const today: Node = { key: 'today', date: todayIso, label: t('cot.tl.today'), dot: 'bg-[var(--surface)] ring-2 ring-[var(--text-strong)]' };
+  const nodes = pending ? [asOf, today, rel] : [asOf, rel, today];
+  return (
+    <div className="rounded-md border border-[var(--border)] bg-[var(--bg)] p-3 space-y-2" data-testid="cot-release-timeline">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-medium text-[var(--text-strong)]">{t('cot.tl.title')}</p>
+        <span
+          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+            pending ? 'border-[var(--warning)]/50 bg-[var(--warning)]/10 text-[var(--warning)]' : 'border-[var(--border)] text-[var(--text)]/70'
+          }`}
+        >
+          {pending ? t('cot.tl.pending') : t('cot.tl.published')}
+        </span>
+      </div>
+      <ol
+        className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-start gap-x-1.5"
+        aria-label={t('cot.tl.aria', { asOf: fmtDate(reportDate), rel: fmtDate(releaseDate), today: fmtDate(todayIso) })}
+      >
+        {nodes.map((n, i) => (
+          <li key={n.key} className="contents">
+            {i > 0 && (
+              <span aria-hidden="true" className="mt-1 flex flex-col items-center text-[10px] text-[var(--text)]/55 tabular-nums whitespace-nowrap">
+                <span className="block h-px w-6 sm:w-12 bg-[var(--border)] mt-1" />
+                {t('cot.tl.days', { n: Math.abs(isoDayDiff(nodes[i - 1].date, n.date)) })}
+              </span>
+            )}
+            <span className="flex min-w-0 flex-col items-center text-center gap-1">
+              <span aria-hidden="true" className={`block h-3 w-3 rounded-full ${n.dot}`} />
+              <span className="font-mono text-[11px] text-[var(--text-strong)]">{fmtDate(n.date)}</span>
+              <span className="text-[10px] leading-tight text-[var(--text)]/65 break-words">{n.label}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }

@@ -18,6 +18,10 @@ export const vi = {
   'bm.empty': 'Chưa có dữ liệu tham chiếu.',
   'bm.points': '{n} điểm',
   'bm.chartLabel': 'Biểu đồ giá tham chiếu {label}',
+  'bm.introShort': 'Chuỗi giá tham chiếu công khai cho mã chưa có giá hợp đồng miễn phí.',
+  'bm.details': 'Chi tiết nguồn & đơn vị',
+  'bm.unitPillAria': 'Đơn vị: {unit}',
+  'bm.unitConvertedAria': 'Đơn vị gốc {native} đã quy đổi sang {unit}',
 };
 
 export const en: Record<keyof typeof vi, string> = {
@@ -39,4 +43,8 @@ export const en: Record<keyof typeof vi, string> = {
   'bm.empty': 'No reference data yet.',
   'bm.points': '{n} points',
   'bm.chartLabel': 'Reference price chart {label}',
+  'bm.introShort': 'Public reference series for instruments with no free contract prices.',
+  'bm.details': 'Source & unit details',
+  'bm.unitPillAria': 'Unit: {unit}',
+  'bm.unitConvertedAria': 'Native unit {native} converted to {unit}',
 };

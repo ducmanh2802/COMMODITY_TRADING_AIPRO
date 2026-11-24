@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { LineSeries, createChart, type UTCTimestamp } from 'lightweight-charts';
-import { ExternalLink, Info } from 'lucide-react';
+import { ArrowRight, ExternalLink, Info } from 'lucide-react';
 import { fmtDate, fmtFixed, useT } from '../../../i18n';
 import { LINE_WIDTH, lwBase, seriesColor } from '../../../shared/theme/chartTheme';
 import { SessionHistoryTable } from '../../common/SessionHistoryTable';
+import { SourceChip } from '../../common/SourceChip';
 
 /** T76: reference (benchmark) line chart for instruments with no futures history. Never a contract price. */
 interface BenchmarkItem {
@@ -114,7 +115,7 @@ export function BenchmarkReferencePanel() {
     <section aria-label={t('bm.title')} className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-4">
       <div>
         <h2 className="text-base font-semibold text-[var(--text-strong)]">{t('bm.title')}</h2>
-        <p className="text-xs text-[var(--text)]/65 mt-1 max-w-3xl">{t('bm.intro')}</p>
+        <p className="text-xs text-[var(--text)]/65 mt-1 max-w-3xl">{t('bm.introShort')}</p>
       </div>
 
       <div className="flex flex-wrap items-end gap-4">
@@ -147,40 +148,69 @@ export function BenchmarkReferencePanel() {
         <p className="h-[340px] flex items-center justify-center text-xs text-[var(--text)]/55">{t('bm.loading')}</p>
       ) : series && series.points.length > 0 ? (
         <>
-          <dl className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-[var(--text)]/80">
-            <div>
-              <dt className="inline text-[var(--text)]/55">{t('bm.source')}: </dt>
-              <dd className="inline text-[var(--text-strong)]">{series.source}</dd>
-            </div>
-            <div>
-              <dt className="inline text-[var(--text)]/55">{t('bm.frequency')}: </dt>
-              <dd className="inline text-[var(--text-strong)]">{freqLabel(series.frequency)}</dd>
-            </div>
-            <div>
-              <dt className="inline text-[var(--text)]/55">{t('bm.lastDate')}: </dt>
-              <dd className="inline text-[var(--text-strong)]">{series.lastUpdated ? fmtDate(series.lastUpdated) : t('common.na')}</dd>
-            </div>
-            <div>
-              <dt className="inline text-[var(--text)]/55">{t('bm.unit')}: </dt>
-              <dd className="inline font-mono text-[var(--text-strong)]">{series.unit}</dd>
-            </div>
-            <div className="text-[var(--text)]/55">{t('bm.points', { n: series.points.length })}</div>
-            <a
-              href={series.sourceUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="inline-flex items-center gap-1 text-[var(--accent-text)] hover:underline"
-            >
-              {t('bm.openSource')}
-              <ExternalLink className="w-3 h-3" aria-hidden="true" />
-            </a>
-          </dl>
-          <p className="text-xs text-[var(--text)]/70">{series.label}</p>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {series.unit !== series.nativeUnit ? (
+              <span
+                className="inline-flex min-h-9 items-center gap-1 rounded-full border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-2.5 font-mono text-[var(--text-strong)] break-all"
+                aria-label={t('bm.unitConvertedAria', { native: series.nativeUnit, unit: series.unit })}
+              >
+                <span className="text-[var(--muted)]">{series.nativeUnit}</span>
+                <ArrowRight className="w-3 h-3 shrink-0" aria-hidden="true" />
+                <span>{series.unit}</span>
+              </span>
+            ) : (
+              <span
+                className="inline-flex min-h-9 items-center rounded-full border border-[var(--border)] bg-[var(--surface-2)] px-2.5 font-mono text-[var(--text-strong)] break-all"
+                aria-label={t('bm.unitPillAria', { unit: series.unit })}
+              >
+                {series.unit}
+              </span>
+            )}
+            <SourceChip sources={[series.source, series.sourceUrl]}>{series.source}</SourceChip>
+            <span className="inline-flex min-h-9 items-center rounded-full border border-[var(--border)] px-2.5 text-[var(--text)]/80">
+              {freqLabel(series.frequency)} · {series.lastUpdated ? fmtDate(series.lastUpdated) : t('common.na')}
+            </span>
+          </div>
           <BenchmarkLine points={series.points} unit={series.unit} ariaLabel={t('bm.chartLabel', { label: series.label })} />
-          <p className="text-[11px] text-[var(--text)]/60">
-            {series.unit !== series.nativeUnit && <>{t('bm.nativeUnit', { unit: series.nativeUnit })} {series.conversionNote} </>}
-            {t('bm.unitNote')}
-          </p>
+          <details className="text-xs text-[var(--text)]/80">
+            <summary className="cursor-pointer select-none min-h-9 flex items-center text-[var(--text)]/70">{t('bm.details')}</summary>
+            <div className="mt-2 space-y-2">
+              <p className="text-[var(--text)]/70">{t('bm.intro')}</p>
+              <dl className="flex flex-wrap gap-x-6 gap-y-1">
+                <div>
+                  <dt className="inline text-[var(--text)]/55">{t('bm.source')}: </dt>
+                  <dd className="inline text-[var(--text-strong)]">{series.source}</dd>
+                </div>
+                <div>
+                  <dt className="inline text-[var(--text)]/55">{t('bm.frequency')}: </dt>
+                  <dd className="inline text-[var(--text-strong)]">{freqLabel(series.frequency)}</dd>
+                </div>
+                <div>
+                  <dt className="inline text-[var(--text)]/55">{t('bm.lastDate')}: </dt>
+                  <dd className="inline text-[var(--text-strong)]">{series.lastUpdated ? fmtDate(series.lastUpdated) : t('common.na')}</dd>
+                </div>
+                <div>
+                  <dt className="inline text-[var(--text)]/55">{t('bm.unit')}: </dt>
+                  <dd className="inline font-mono text-[var(--text-strong)]">{series.unit}</dd>
+                </div>
+                <div className="text-[var(--text)]/55">{t('bm.points', { n: series.points.length })}</div>
+              </dl>
+              <p>{series.label}</p>
+              <p className="text-[11px] text-[var(--text)]/60">
+                {series.unit !== series.nativeUnit && <>{t('bm.nativeUnit', { unit: series.nativeUnit })} {series.conversionNote} </>}
+                {t('bm.unitNote')}
+              </p>
+              <a
+                href={series.sourceUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-1 text-[var(--accent-text)] hover:underline"
+              >
+                {t('bm.openSource')}
+                <ExternalLink className="w-3 h-3" aria-hidden="true" />
+              </a>
+            </div>
+          </details>
           <SessionHistoryTable
             mode="benchmark"
             points={series.points}

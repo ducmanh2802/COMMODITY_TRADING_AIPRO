@@ -180,11 +180,47 @@ const TONE_VAR: Record<LightTone, string> = {
   grey: 'var(--muted)',
 };
 
-/** One of the 4 context cards: colored dot + one sentence + "?" tooltip with method, source and date. */
+/** Roll-mismatch warning as a compact gold chip; the full explanation opens inline below it. */
+function RollMismatchChip({ pct, text, t }: { pct: string; text: string; t: (k: TKey, p?: Record<string, string | number>) => string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-1.5 sm:flex sm:flex-col sm:items-end" data-testid="instrument-roll-mismatch">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="ins-roll-mismatch-tip"
+        aria-label={t('ins.rollChipAria', { pct })}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex min-h-9 items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border border-[var(--warning)] text-[var(--warning)] bg-[var(--surface-2)]"
+      >
+        <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
+        {t('ins.rollChip', { pct })}
+        <HelpCircle className="w-3.5 h-3.5 opacity-70" aria-hidden="true" />
+      </button>
+      {open && (
+        <p id="ins-roll-mismatch-tip" role="note" className="mt-1.5 max-w-md text-left text-xs leading-relaxed text-[var(--text)] bg-[var(--surface-2)] border border-[var(--border)] rounded-lg p-2.5">
+          {text}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** 0-100 mini bar from a value the light already carries (seasonal hit-rate, COT index). Never invented. */
+function lightBar(light: ContextLight): { value: number; label: TKey; ticks: number[] } | null {
+  if (light.tone === 'grey') return null;
+  if (light.id === 'seasonal' && typeof light.params.hit === 'number') return { value: light.params.hit, label: 'ins.ctx.bar.seasonal', ticks: [50] };
+  if (light.id === 'cot' && typeof light.params.idx === 'number') return { value: light.params.idx, label: 'ins.ctx.bar.cot', ticks: [10, 90] };
+  return null;
+}
+
+/** One of the 4 context cards: tone icon + 1-3 word headline + optional mini bar; full sentence, method, source and date sit behind "?". */
 function ContextCard({ light, t }: { light: ContextLight; t: (k: TKey, p?: Record<string, string | number>) => string }) {
   const [tip, setTip] = useState(false);
   const color = TONE_VAR[light.tone];
   const sentence = t(`ins.ctx.${light.id}.${light.msg}` as TKey, light.params);
+  const headline = t(`ins.ctx.${light.id}.${light.msg}.short` as TKey, light.params);
+  const bar = lightBar(light);
   const meta = [
     light.source ? t('ins.ctx.src', { s: light.source }) : null,
     light.asOf ? t('ins.ctx.asOf', { d: light.asOf.length >= 10 ? fmtDate(light.asOf.slice(0, 10)) : light.asOf }) : t('ins.ctx.noDate'),
@@ -209,9 +245,28 @@ function ContextCard({ light, t }: { light: ContextLight; t: (k: TKey, p?: Recor
           <HelpCircle className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
-      <p className="text-sm leading-snug text-[var(--text-strong)]">{sentence}</p>
+      <p className="text-base font-bold leading-tight" style={{ color: light.tone === 'grey' ? 'var(--muted)' : 'var(--text-strong)' }} title={sentence}>
+        {headline}
+        <span className="sr-only"> — {sentence}</span>
+      </p>
+      {bar && (
+        <div className="space-y-1">
+          <div
+            className="relative h-1.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)] overflow-hidden"
+            role="img"
+            aria-label={t(bar.label, light.params)}
+          >
+            <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.min(100, Math.max(0, bar.value))}%`, background: color }} />
+            {bar.ticks.map((x) => (
+              <span key={x} aria-hidden="true" className="absolute inset-y-0 w-px bg-[var(--text)]/30" style={{ left: `${x}%` }} />
+            ))}
+          </div>
+          <p className="text-[11px] tabular-nums text-[var(--muted)]">{t(bar.label, light.params)}</p>
+        </div>
+      )}
       {tip && (
         <div id={tipId} role="tooltip" className="text-xs leading-relaxed text-[var(--text)] bg-[var(--surface-2)] border border-[var(--border)] rounded-lg p-2.5 space-y-1">
+          <p className="font-medium text-[var(--text-strong)]">{sentence}</p>
           <p>{t(`ins.ctx.${light.id}.help` as TKey)}</p>
           <p className="text-[var(--muted)]">{meta.join(' · ')}</p>
         </div>
@@ -497,11 +552,15 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
             </p>
           )}
           {showMismatch && stats && mismatchPct !== null && (
-            <p className="mt-1.5 max-w-md sm:ml-auto text-xs text-[var(--warning)]" data-testid="instrument-roll-mismatch">
-              ⚠ {quote.contractMonth
-                ? t('ins.rollMismatchContract', { quote: fmtPrice(quote.price ?? 0), contract: lang === 'en' ? (quote.contractLabel ?? quote.contractMonth) : `${Number(quote.contractMonth.slice(5, 7))}/${quote.contractMonth.slice(0, 4)}`, close: fmtPrice(stats.last.close), pct: fmtFixed(Math.abs(mismatchPct), 1) })
-                : t('ins.rollMismatch', { quote: fmtPrice(quote.price ?? 0), close: fmtPrice(stats.last.close), pct: fmtFixed(Math.abs(mismatchPct), 1) })}
-            </p>
+            <RollMismatchChip
+              pct={fmtFixed(Math.abs(mismatchPct), 1)}
+              text={
+                quote.contractMonth
+                  ? t('ins.rollMismatchContract', { quote: fmtPrice(quote.price ?? 0), contract: lang === 'en' ? (quote.contractLabel ?? quote.contractMonth) : `${Number(quote.contractMonth.slice(5, 7))}/${quote.contractMonth.slice(0, 4)}`, close: fmtPrice(stats.last.close), pct: fmtFixed(Math.abs(mismatchPct), 1) })
+                  : t('ins.rollMismatch', { quote: fmtPrice(quote.price ?? 0), close: fmtPrice(stats.last.close), pct: fmtFixed(Math.abs(mismatchPct), 1) })
+              }
+              t={t}
+            />
           )}
         </div>
       </section>

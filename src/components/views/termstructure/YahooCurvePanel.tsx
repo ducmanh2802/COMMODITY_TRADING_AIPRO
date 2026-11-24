@@ -93,7 +93,12 @@ export function YahooCurvePanel({ instrumentId }: { instrumentId: string }) {
   return (
     <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-2">
       <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('ts.yc.title')}</h2>
-      <p className="text-[11px] text-[var(--text)]/55">{t('ts.yc.note')}</p>
+      <ul className="flex flex-wrap items-center gap-1.5 text-[11px]" aria-label={t('ts.yc.badgesAria')}>
+        <li className="rounded-full border border-[var(--border)] bg-[var(--surface-2)] px-2 py-0.5 font-medium text-[var(--text-strong)]">{t('ts.yc.badgeYahoo')}</li>
+        <li className="rounded-full border border-[var(--warning)]/50 bg-[var(--warning)]/10 px-2 py-0.5 font-medium text-[var(--warning)]">{t('ts.yc.badgeUnofficial')}</li>
+        <li className="rounded-full border border-[var(--border)] px-2 py-0.5 text-[var(--text)]/75">{t('ts.yc.badgeDelay')}</li>
+        <li className="rounded-full border border-[var(--border)] px-2 py-0.5 font-mono text-[var(--text)]/75">D1</li>
+      </ul>
       {state.s === 'loading' && <p className="text-xs text-[var(--text)]/55">{t('ts.yc.loading')}</p>}
       {state.s === 'error' && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{state.message}</p>}
       {state.s === 'ok' && state.data.status === 'UNAVAILABLE' && (
@@ -103,16 +108,20 @@ export function YahooCurvePanel({ instrumentId }: { instrumentId: string }) {
         </div>
       )}
       {state.s === 'ok' && state.data.status !== 'UNAVAILABLE' && <CurveBody data={state.data} />}
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[11px] text-[var(--text)]/50">{t('ts.yc.csvHint')}</p>
-        <button
-          type="button"
-          onClick={() => setActiveModule('data-import')}
-          className="text-[11px] font-medium text-[var(--accent-text)] hover:underline whitespace-nowrap"
-        >
-          {t('ts.yc.importCsv')}
-        </button>
-      </div>
+      <details className="text-[11px] text-[var(--text)]/60">
+        <summary className="cursor-pointer select-none min-h-9 flex items-center">{t('ts.yc.more')}</summary>
+        <div className="mt-1 space-y-2">
+          <p>{t('ts.yc.note')}</p>
+          <p>{t('ts.yc.csvHint')}</p>
+          <button
+            type="button"
+            onClick={() => setActiveModule('data-import')}
+            className="min-h-9 text-[11px] font-medium text-[var(--accent-text)] hover:underline"
+          >
+            {t('ts.yc.importCsv')}
+          </button>
+        </div>
+      </details>
     </section>
   );
 }

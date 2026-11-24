@@ -83,6 +83,11 @@ test('bottomDetectionEngine scores strong bottom candidate (>= 70) when depresse
   assert.equal(plans.longTermCycle.autoExecutionAllowed, false);
   assert.equal(plans.swingTrading.autoExecutionAllowed, false);
   assert.ok((plans.longTermCycle.riskRewardRatio ?? 0) >= 1.5);
+  // Education-only wording: position-sizing text is an illustration, never a recommendation.
+  for (const plan of [plans.longTermCycle, plans.swingTrading]) {
+    assert.match(plan.positionSizingGuidance, /^Ví dụ minh họa/);
+    assert.doesNotMatch(plan.positionSizingGuidance, /Khuyến nghị chia|giải ngân/);
+  }
 });
 
 test('bottomDetectionEngine suppresses bottom score when price sits at multi-year highs', () => {

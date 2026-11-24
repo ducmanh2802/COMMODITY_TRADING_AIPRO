@@ -463,15 +463,15 @@ export function buildDualTradeSetupPlans(params: {
     entryZone: {
       low: ltEntryLow,
       high: ltEntryHigh,
-      note: 'Vùng giải ngân từng phần quanh hỗ trợ cấu trúc tuần/tháng (không mua đuổi).',
+      note: 'Vùng tham chiếu minh họa quanh hỗ trợ cấu trúc tuần/tháng.',
     },
     stopLoss: ltSl,
     takeProfits: [ltTp1, ltTp2],
     riskRewardRatio: ltRR,
     positionSizingGuidance:
       params.instrument.isMvxListed
-        ? `Khuyến nghị chia 2–3 đợt giải ngân trên MXV (${params.instrument.mxvMapping?.mxvSymbol ?? params.instrument.exchangeSymbol}), tổng rủi ro <= 1.0%–1.5% NAV.`
-        : 'Chia 2–3 đợt vị thế trung dài hạn, tổng rủi ro tối đa 1.0%–1.5% NAV.',
+        ? `Ví dụ minh họa: người học thường chia vị thế thành nhiều phần nhỏ và giới hạn tổng rủi ro khoảng 1%–1.5% vốn; mã tham chiếu MXV: ${params.instrument.mxvMapping?.mxvSymbol ?? params.instrument.exchangeSymbol}.`
+        : 'Ví dụ minh họa: người học thường chia vị thế thành nhiều phần nhỏ và giới hạn tổng rủi ro khoảng 1%–1.5% vốn.',
     confirmationRequired: params.bottomDetection.confirmationConditions,
     invalidationCondition: `Đóng cửa tuần dưới ${ltSl} (thủng đáy chu kỳ 30 phiên - 1.5×ATR).`,
   };
@@ -512,7 +512,7 @@ export function buildDualTradeSetupPlans(params: {
     takeProfits: [swTp1, swTp2],
     riskRewardRatio: swRR,
     positionSizingGuidance:
-      'Sử dụng Risk Management Calculator để tính chính xác số lot theo kích thước tick MXV/Quốc tế (rủi ro <= 1% tài khoản).',
+      'Ví dụ minh họa: dùng công cụ tính rủi ro để thử tính số lot theo kích thước tick MXV/quốc tế với mức rủi ro giả định khoảng 1% vốn.',
     confirmationRequired: [
       `Giá D1 giữ vững trên vùng ${swEntryLow} và không xuất hiện nến đảo chiều khối lượng lớn.`,
       'Kiểm tra lịch công bố dữ liệu USDA / EIA / FOMC theo giờ Việt Nam trước khi vào lệnh.',

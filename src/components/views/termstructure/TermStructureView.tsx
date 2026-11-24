@@ -137,7 +137,11 @@ function SnapshotDetails({ snap, title }: { snap: CurveSnapshot; title: string }
                 ))}
               </tbody>
             </table>
-            <p className="text-[11px] font-mono text-[var(--text)]/45 mt-1">{t('ts.formulaNote', { formula: ROLL_YIELD_FORMULA })}</p>
+            <figure className="mt-2 rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 space-y-1" aria-label={t('ts.formulaTitle')}>
+              <figcaption className="text-[11px] font-medium text-[var(--text)]/70">{t('ts.formulaTitle')}</figcaption>
+              <code className="block font-mono text-[11px] text-[var(--text-strong)] break-words">{ROLL_YIELD_FORMULA}</code>
+              <span className="inline-block rounded-full border border-[var(--border)] px-2 py-0.5 text-[10px] text-[var(--text)]/65">{t('ts.formulaBasis')}</span>
+            </figure>
           </div>
         </div>
       )}
@@ -172,12 +176,15 @@ function SnapshotDetails({ snap, title }: { snap: CurveSnapshot; title: string }
         </ul>
       )}
       {snap.included.length > 0 && (
-        <p className="text-[11px] text-[var(--text)]/45">
-          {t('ts.pricesNote', {
-            tf: CURVE_TIMEFRAME,
-            sources: [...new Set(snap.included.map((i) => i.datasetSource))].join('; '),
-          })}
-        </p>
+        <details className="text-[11px] text-[var(--text)]/55">
+          <summary className="cursor-pointer select-none min-h-9 flex items-center">{t('ts.notesMore')}</summary>
+          <p className="mt-1">
+            {t('ts.pricesNote', {
+              tf: CURVE_TIMEFRAME,
+              sources: [...new Set(snap.included.map((i) => i.datasetSource))].join('; '),
+            })}
+          </p>
+        </details>
       )}
     </section>
   );
@@ -254,9 +261,11 @@ export default function TermStructureView() {
     <div className="space-y-5">
       <div>
         <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('ts.title')}</h2>
-        <p className="text-sm text-[var(--text)]/65 mt-1">
-          {t('ts.subtitle', { tf: CURVE_TIMEFRAME })}
-        </p>
+        <p className="text-sm text-[var(--text)]/65 mt-1">{t('ts.subtitleShort', { tf: CURVE_TIMEFRAME })}</p>
+        <details className="mt-1 text-xs text-[var(--text)]/60">
+          <summary className="cursor-pointer select-none min-h-9 flex items-center">{t('ts.aboutMore')}</summary>
+          <p className="mt-1 max-w-3xl">{t('ts.subtitle', { tf: CURVE_TIMEFRAME })}</p>
+        </details>
       </div>
 
       <div className="flex flex-wrap items-end gap-3 text-xs text-[var(--text)]/65">
