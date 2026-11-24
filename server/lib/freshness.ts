@@ -4,10 +4,13 @@
  *   FRESH        effective age <= cadence * STALE_FACTOR
  *   STALE        older than that
  *   UNAVAILABLE  never succeeded / no data
- * "Effective age" skips Saturday+Sunday (UTC) for trading-day sources. Exchange holidays are NOT modelled
- * (rough by design: the alert threshold is 2x cadence, which absorbs a normal holiday).
+ * "Effective age" skips Saturday+Sunday (UTC) for trading-day sources, plus exchange holidays of the
+ * instrument's exchange for D1 candles (shared holiday calendars; MXV uses its own closed days).
+ * Unknown exchange -> weekend-only (fail safe). Quotes are never STALE while every market session is closed.
  */
 import type { Express, NextFunction, Request, Response } from 'express';
+import { resolveHolidays, type HolidayCalendarId } from '../../src/shared/contracts/holidays/index.ts';
+import { evaluateVietnamTradingSessions, MARKET_HOLIDAYS } from '../../src/shared/utils/vietnamCalendar.ts';
 
 export type FreshnessStatus = 'FRESH' | 'STALE' | 'UNAVAILABLE';
 
@@ -53,10 +56,76 @@ export function weekendMsBetween(fromMs: number, toMs: number): number {
   return total;
 }
 
-/** Age in ms; with tradingDaysOnly the weekend portion is removed. Never negative. */
-export function effectiveAgeMs(lastMs: number, nowMs: number, tradingDaysOnly: boolean): number {
+/** Milliseconds of weekend days or days in `holidays` (ISO yyyy-mm-dd, UTC) inside (fromMs, toMs]. */
+export function closedMsBetween(fromMs: number, toMs: number, holidays?: ReadonlySet<string>): number {
+  if (!holidays || holidays.size === 0) return weekendMsBetween(fromMs, toMs);
+  if (!(toMs > fromMs)) return 0;
+  let total = 0;
+  let dayStart = Math.floor(fromMs / DAY) * DAY;
+  while (dayStart < toMs) {
+    const d = new Date(dayStart);
+    const dow = d.getUTCDay();
+    if (dow === 0 || dow === 6 || holidays.has(d.toISOString().slice(0, 10))) {
+      total += Math.max(0, Math.min(toMs, dayStart + DAY) - Math.max(fromMs, dayStart));
+    }
+    dayStart += DAY;
+  }
+  return total;
+}
+
+/** Age in ms; with tradingDaysOnly the weekend (and optional holiday) portion is removed. Never negative. */
+export function effectiveAgeMs(lastMs: number, nowMs: number, tradingDaysOnly: boolean, holidays?: ReadonlySet<string>): number {
   const raw = Math.max(0, nowMs - lastMs);
-  return tradingDaysOnly ? Math.max(0, raw - weekendMsBetween(lastMs, nowMs)) : raw;
+  return tradingDaysOnly ? Math.max(0, raw - closedMsBetween(lastMs, nowMs, holidays)) : raw;
+}
+
+/** Exchange prefix of an instrument id like "CBOT:ZS". */
+function exchangeOf(instrumentId: string): string | null {
+  const i = instrumentId.indexOf(':');
+  return i > 0 ? instrumentId.slice(0, i).toUpperCase() : null;
+}
+
+/** Shared holiday calendars for an instrument; [] = unknown (weekend-only). Brent has no sourced calendar. */
+export function calendarsFor(instrumentId: string): HolidayCalendarId[] {
+  const ex = exchangeOf(instrumentId);
+  const sym = instrumentId.slice(instrumentId.indexOf(':') + 1).toUpperCase();
+  switch (ex) {
+    case 'CBOT':
+    case 'CME':
+    case 'COMEX':
+    case 'NYMEX':
+      return ['CME_US'];
+    case 'SGX':
+      return ['SG_PUBLIC'];
+    case 'ICE':
+      if (sym === 'BRN') return [];
+      return sym === 'RC' ? ['ICE_EU_SOFTS_LONDON'] : ['ICE_US'];
+    default:
+      return [];
+  }
+}
+
+/** Weekday holiday dates (ISO) between two instants for the instrument's exchange; empty when unknown. */
+export function holidaysFor(instrumentId: string, fromMs: number, toMs: number): Set<string> {
+  const out = new Set<string>();
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs)) return out;
+  const fromYear = new Date(fromMs).getUTCFullYear();
+  const toYear = new Date(Math.max(fromMs, toMs)).getUTCFullYear();
+  const cals = calendarsFor(instrumentId);
+  if (cals.length > 0) for (const d of resolveHolidays(cals, fromYear, toYear).dates) out.add(d);
+  if (exchangeOf(instrumentId) === 'MXV') {
+    for (const h of MARKET_HOLIDAYS) if (h.mxvImpact === 'MXV_CLOSED' && h.affectedExchanges.includes('MXV')) out.add(h.dateIso);
+  }
+  return out;
+}
+
+/** true when no market session is open or on a break at `nowMs` (overnight/weekend/holiday). Fail safe: false on error. */
+export function allMarketsClosed(nowMs: number): boolean {
+  try {
+    return evaluateVietnamTradingSessions(new Date(nowMs)).every((s) => s.state === 'CLOSED' || s.state === 'HOLIDAY_CLOSED');
+  } catch {
+    return false;
+  }
 }
 
 export function classify(effAgeMs: number | null, cadenceMs: number): FreshnessStatus {
@@ -129,11 +198,12 @@ export interface FreshnessInput {
 
 function makeRow(
   now: number,
-  r: { id: string; group: FreshnessRow['group']; label: string; last: string | null; cadence: CadenceSpec; alertable?: boolean; forceUnavailable?: boolean },
+  r: { id: string; group: FreshnessRow['group']; label: string; last: string | null; cadence: CadenceSpec; alertable?: boolean; forceUnavailable?: boolean; holidays?: ReadonlySet<string>; marketClosed?: boolean },
 ): FreshnessRow {
   const lastMs = r.last && !r.forceUnavailable ? Date.parse(r.last) : NaN;
   const has = Number.isFinite(lastMs);
-  const eff = has ? effectiveAgeMs(lastMs, now, r.cadence.tradingDaysOnly) : null;
+  let eff = has ? effectiveAgeMs(lastMs, now, r.cadence.tradingDaysOnly, r.holidays) : null;
+  if (eff !== null && r.marketClosed) eff = 0; // nothing to refresh while every market is closed
   return {
     id: r.id,
     group: r.group,
@@ -178,6 +248,7 @@ export function computeFreshness(input: FreshnessInput): FreshnessRow[] {
         cadence: CADENCE.quotes,
         alertable: false,
         forceUnavailable: p.connectionState === 'UNAVAILABLE',
+        marketClosed: allMarketsClosed(now),
       }),
     );
   }
@@ -189,7 +260,16 @@ export function computeFreshness(input: FreshnessInput): FreshnessRow[] {
     if (Number.isFinite(t) && t > (latestD1.get(d.instrumentId) ?? -Infinity)) latestD1.set(d.instrumentId, t);
   }
   for (const [id, t] of latestD1) {
-    rows.push(makeRow(now, { id: `candles:D1:${id}`, group: 'candles', label: `Nến ngày: ${id}`, last: new Date(t).toISOString(), cadence: CADENCE.candlesD1 }));
+    rows.push(
+      makeRow(now, {
+        id: `candles:D1:${id}`,
+        group: 'candles',
+        label: `Nến ngày: ${id}`,
+        last: new Date(t).toISOString(),
+        cadence: CADENCE.candlesD1,
+        holidays: holidaysFor(id, t, now),
+      }),
+    );
   }
 
   for (const j of input.jobs ?? []) {

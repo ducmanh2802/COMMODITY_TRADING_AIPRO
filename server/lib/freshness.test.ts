@@ -9,6 +9,9 @@ import {
   computeFreshness,
   effectiveAgeMs,
   extractObservation,
+  allMarketsClosed,
+  calendarsFor,
+  holidaysFor,
   weekendMsBetween,
 } from './freshness.ts';
 
@@ -138,4 +141,66 @@ test('alerter never alerts on non-alertable (on-demand) sources', async () => {
   });
   assert.deepEqual(await alerter.check(rows), []);
   assert.equal(sent.length, 0);
+});
+
+// --- exchange holidays ---
+function d1Row(id: string, last: number, now: number) {
+  const rows = computeFreshness({ now, datasets: [{ instrumentId: id, timeframe: 'D1', lastTimestamp: new Date(last).toISOString() }] });
+  const row = rows.find((r) => r.id === `candles:D1:${id}`);
+  assert.ok(row);
+  return row;
+}
+
+test('US Thanksgiving 2026-11-26 is skipped for CME/CBOT, not for unknown exchange', () => {
+  const last = Date.UTC(2026, 10, 25); // Wed
+  const now = Date.UTC(2026, 10, 30, 12); // Mon
+  assert.ok(holidaysFor('CBOT:ZS', last, now).has('2026-11-26'));
+  const r = d1Row('CBOT:ZS', last, now);
+  assert.equal(r.effectiveAgeMs, 2.5 * D);
+  assert.equal(r.status, 'FRESH');
+  const u = d1Row('XYZ:A', last, now);
+  assert.equal(u.effectiveAgeMs, 3.5 * D);
+  assert.equal(u.status, 'STALE');
+});
+
+test('Christmas 2026-12-25 + weekend combo for ICE US softs', () => {
+  const last = Date.UTC(2026, 11, 23);
+  const now = Date.UTC(2026, 11, 28, 12);
+  assert.equal(d1Row('ICE:KC', last, now).effectiveAgeMs, 2.5 * D);
+  assert.equal(d1Row('ICE:KC', last, now).status, 'FRESH');
+  assert.equal(d1Row('ICE:BRN', last, now).status, 'STALE'); // Brent: no sourced calendar -> weekend-only
+});
+
+test('Tet 2027: MXV_CLOSED day from holiday data (2027-02-06, Saturday) is a holiday, banking-only 2027-02-05 is not', () => {
+  const last = Date.UTC(2027, 1, 5);
+  const now = Date.UTC(2027, 1, 8, 12);
+  const h = holidaysFor('MXV:ZSE', last, now);
+  assert.ok(h.has('2027-02-06'));
+  assert.ok(!h.has('2027-02-05'));
+  assert.equal(d1Row('MXV:ZSE', last, now).effectiveAgeMs, 1.5 * D); // Fri..Mon12h = 3.5d - weekend 2d
+});
+
+test('MXV weekday closure 2027-05-31 is skipped for MXV ids', () => {
+  const last = Date.UTC(2027, 4, 28);
+  const now = Date.UTC(2027, 5, 1, 12);
+  assert.equal(d1Row('MXV:ZSE', last, now).effectiveAgeMs, 1.5 * D);
+  assert.equal(d1Row('XYZ:ZSE', last, now).effectiveAgeMs, 2.5 * D);
+});
+
+test('unknown exchange and ids without prefix fall back to weekend-only', () => {
+  assert.deepEqual(calendarsFor('FOO:BAR'), []);
+  assert.deepEqual(calendarsFor('nocolon'), []);
+  assert.equal(holidaysFor('nocolon', Date.UTC(2026, 10, 25), Date.UTC(2026, 10, 30)).size, 0);
+  assert.equal(effectiveAgeMs(FRI, MON, true, new Set()), D);
+  assert.equal(effectiveAgeMs(FRI, MON, true, new Set(['2026-11-23'])), D / 2); // Monday holiday: its 12h also removed
+});
+
+test('quotes are not stale while every market is closed (weekend)', () => {
+  const sat = Date.UTC(2026, 10, 28, 12);
+  assert.equal(allMarketsClosed(sat), true);
+  const rows = computeFreshness({
+    now: sat,
+    providers: [{ providerId: 'p', name: 'P', connectionState: 'CONNECTED', credentialsConfigured: true, supportsRealtime: true, lastSuccessfulSyncAt: new Date(Date.UTC(2026, 10, 20, 12)).toISOString() }],
+  });
+  assert.equal(rows.find((r) => r.id === 'quotes:p')?.status, 'FRESH');
 });
