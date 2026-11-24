@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { AccountCurrency } from '../../shared/types/risk';
 import { fmtFixed, fmtInt, fmtNum, useT } from '../../i18n';
+import { fieldErrorProps } from '../common/fieldErrors';
 
 /** One-line subtitle + (i) button revealing the full text (popover pattern copied from InstrumentOverview ContextCard). */
 function OneLineSubtitle({ id, text, helpLabel }: { id: string; text: string; helpLabel: string }) {
@@ -89,6 +90,7 @@ export function RiskManagementView() {
   const [output, setOutput] = useState<RiskCalculationResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [invalidIds, setInvalidIds] = useState<string[]>([]);
   const [fxFetching, setFxFetching] = useState(false);
   const [fxNotice, setFxNotice] = useState<string | null>(null);
 
@@ -124,16 +126,16 @@ export function RiskManagementView() {
 
   const handleCalculate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const missing = [
-      [entryPrice, t('risk.f.entry')],
-      [stopLossPrice, t('risk.f.stop')],
-      [commission, t('risk.f.commission')],
-      [exchangeFee, t('risk.f.exchangeFee')],
-      [brokerageFee, t('risk.f.brokerFee')],
-      [slippageTicks, t('risk.f.slippage')],
-    ]
-      .filter(([v]) => v.trim() === '' || !Number.isFinite(Number(v)))
-      .map(([, label]) => label);
+    const bad = [
+      [entryPrice, t('risk.f.entry'), 'risk-entry'],
+      [stopLossPrice, t('risk.f.stop'), 'risk-sl'],
+      [commission, t('risk.f.commission'), 'risk-comm'],
+      [exchangeFee, t('risk.f.exchangeFee'), 'risk-exfee'],
+      [brokerageFee, t('risk.f.brokerFee'), 'risk-brkfee'],
+      [slippageTicks, t('risk.f.slippage'), 'risk-slip'],
+    ].filter(([v]) => v.trim() === '' || !Number.isFinite(Number(v)));
+    const missing = bad.map(([, label]) => label);
+    setInvalidIds(bad.map(([, , id]) => id));
     if (missing.length > 0) {
       setOutput(null);
       setError(t('risk.missing', { fields: missing.join(', ') }));
@@ -207,7 +209,7 @@ export function RiskManagementView() {
                 id="risk-symbol"
                 value={selectedSymbol}
                 onChange={(e) => setSelectedSymbol(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)]"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)]"
               >
                 {instruments.map((inst) => (
                   <option key={inst.id} value={inst.exchangeSymbol}>
@@ -225,7 +227,7 @@ export function RiskManagementView() {
                 id="risk-currency"
                 value={accountCurrency}
                 onChange={(e) => setAccountCurrency(e.target.value as AccountCurrency)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)]"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)]"
               >
                 <option value="USD">USD</option>
                 <option value="VND">VND</option>
@@ -244,7 +246,7 @@ export function RiskManagementView() {
                 step="any"
                 value={accountEquity}
                 onChange={(e) => setAccountEquity(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
 
@@ -258,7 +260,7 @@ export function RiskManagementView() {
                 step="0.05"
                 value={riskPct}
                 onChange={(e) => setRiskPct(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
 
@@ -272,7 +274,7 @@ export function RiskManagementView() {
                 min="1"
                 value={maxContractsPerInstrument}
                 onChange={(e) => setMaxContractsPerInstrument(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
           </div>
@@ -284,12 +286,13 @@ export function RiskManagementView() {
               </label>
               <input
                 id="risk-entry"
+                {...fieldErrorProps(!!error && invalidIds.includes('risk-entry'), 'risk-form-err')}
                 type="number"
                 step="any"
                 placeholder={t('risk.entryPh')}
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
 
@@ -299,12 +302,13 @@ export function RiskManagementView() {
               </label>
               <input
                 id="risk-sl"
+                {...fieldErrorProps(!!error && invalidIds.includes('risk-sl'), 'risk-form-err')}
                 type="number"
                 step="any"
                 placeholder={t('risk.stopPh')}
                 value={stopLossPrice}
                 onChange={(e) => setStopLossPrice(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
 
@@ -319,7 +323,7 @@ export function RiskManagementView() {
                 placeholder={t('risk.optional')}
                 value={takeProfitPrice}
                 onChange={(e) => setTakeProfitPrice(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
           </div>
@@ -331,12 +335,13 @@ export function RiskManagementView() {
               </label>
               <input
                 id="risk-comm"
+                {...fieldErrorProps(!!error && invalidIds.includes('risk-comm'), 'risk-form-err')}
                 type="number"
                 step="any"
                 placeholder={t('risk.commissionPh')}
                 value={commission}
                 onChange={(e) => setCommission(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
             <div>
@@ -345,12 +350,13 @@ export function RiskManagementView() {
               </label>
               <input
                 id="risk-exfee"
+                {...fieldErrorProps(!!error && invalidIds.includes('risk-exfee'), 'risk-form-err')}
                 type="number"
                 step="any"
                 placeholder={t('risk.exFeePh')}
                 value={exchangeFee}
                 onChange={(e) => setExchangeFee(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
             <div>
@@ -359,12 +365,13 @@ export function RiskManagementView() {
               </label>
               <input
                 id="risk-brkfee"
+                {...fieldErrorProps(!!error && invalidIds.includes('risk-brkfee'), 'risk-form-err')}
                 type="number"
                 step="any"
                 placeholder={t('risk.brkFeePh')}
                 value={brokerageFee}
                 onChange={(e) => setBrokerageFee(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
             <div>
@@ -373,12 +380,13 @@ export function RiskManagementView() {
               </label>
               <input
                 id="risk-slip"
+                {...fieldErrorProps(!!error && invalidIds.includes('risk-slip'), 'risk-form-err')}
                 type="number"
                 step="0.5"
                 placeholder={t('risk.slippagePh')}
                 value={slippageTicks}
                 onChange={(e) => setSlippageTicks(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-2 text-xs font-mono text-[var(--text-strong)] tabular-nums"
               />
             </div>
           </div>
@@ -395,7 +403,7 @@ export function RiskManagementView() {
                   min="0"
                   value={currentOpenPositions}
                   onChange={(e) => setCurrentOpenPositions(e.target.value)}
-                  className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]"
+                  className="w-1/2 bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]"
                 />
                 <input
                   aria-label={t('risk.maxOpenPos')}
@@ -403,7 +411,7 @@ export function RiskManagementView() {
                   min="1"
                   value={maxOpenPositions}
                   onChange={(e) => setMaxOpenPositions(e.target.value)}
-                  className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]"
+                  className="w-1/2 bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]"
                 />
               </div>
             </div>
@@ -419,7 +427,7 @@ export function RiskManagementView() {
                   step="0.1"
                   value={currentOpenRiskPct}
                   onChange={(e) => setCurrentOpenRiskPct(e.target.value)}
-                  className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]"
+                  className="w-1/2 bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]"
                 />
                 <input
                   aria-label={t('risk.maxPortRisk')}
@@ -427,7 +435,7 @@ export function RiskManagementView() {
                   step="0.5"
                   value={maxPortfolioRiskPct}
                   onChange={(e) => setMaxPortfolioRiskPct(e.target.value)}
-                  className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]"
+                  className="w-1/2 bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2 py-1.5 text-xs font-mono text-[var(--text-strong)]"
                 />
               </div>
             </div>
@@ -442,7 +450,7 @@ export function RiskManagementView() {
                 step="0.5"
                 value={dailyLossLimitPct}
                 onChange={(e) => setDailyLossLimitPct(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
               />
             </div>
 
@@ -469,7 +477,7 @@ export function RiskManagementView() {
                 placeholder={needsFx ? t('risk.required') : '1.0'}
                 value={fxRate}
                 onChange={(e) => setFxRate(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2.5 py-1.5 text-xs font-mono text-[var(--text-strong)]"
               />
             </div>
           </div>
@@ -478,7 +486,7 @@ export function RiskManagementView() {
             <p className="text-xs font-mono text-[var(--warning)]">{fxNotice}</p>
           )}
 
-          {error && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
+          {error && <p id="risk-form-err" role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
 
           <div className="flex justify-end">
             <button

@@ -48,6 +48,7 @@ import { PaperStatsPanel } from './PaperStatsPanel';
 import { EventRiskBanner } from './EventRiskBanner';
 import { WeeklyReviewCard } from './WeeklyReviewCard';
 import { ExpiryCalendar, RollReminderChip } from './ExpiryCalendar';
+import { fieldErrorProps, paperBadNumberFields, paperOrderReasonFields, type PaperOrderField, type PaperSessionField } from '../../common/fieldErrors';
 import { Stat, bigBtn, cardCls, fmtPct, fmtVnd, inputCls, labelCls, pnlColor, signedVnd } from './paperUi';
 import { usePaperStore } from './usePaperStore';
 import { CoolOffBanner, CoolOffToggle } from './CoolOffBanner';
@@ -202,6 +203,7 @@ export function PaperTradingView() {
   const [newName, setNewName] = useState(() => t('pt.session.defaultName', { date: new Date().toLocaleDateString('vi-VN') }));
   const [newCapital, setNewCapital] = useState(String(DEFAULT_CAPITAL_VND));
   const [formError, setFormError] = useState<string | null>(null);
+  const [formErrField, setFormErrField] = useState<PaperSessionField | null>(null);
 
   // order form
   const [instId, setInstId] = useState('');
@@ -211,6 +213,7 @@ export function PaperTradingView() {
   const [tpText, setTpText] = useState('');
   const [marginText, setMarginText] = useState('');
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [orderErrFields, setOrderErrFields] = useState<PaperOrderField[]>([]);
   const [pending, setPending] = useState<PendingOrder | null>(null);
   const [calcOpen, setCalcOpen] = useState(false);
   const [answers, setAnswers] = useState<Answers>(EMPTY_ANSWERS);
@@ -314,8 +317,10 @@ export function PaperTradingView() {
 
   const createSession = async () => {
     const name = validateSessionName(newName);
+    setFormErrField(name ? 'name' : null);
     if (name) return setFormError(t(`pt.err.${name}` as TKey));
     const cap = Number(newCapital.replace(/[.,\s]/g, ''));
+    if (validateCapital(cap)) setFormErrField('capital');
     if (validateCapital(cap)) return setFormError(t('pt.err.capitalRange', { min: fmtInt(PAPER_LIMITS.capitalMin), max: fmtInt(PAPER_LIMITS.capitalMax) }));
     setFormError(null);
     const s = newSession(newPaperId('ses'), newName, cap);
@@ -329,6 +334,7 @@ export function PaperTradingView() {
 
   const prepareOrder = () => {
     setOrderError(null);
+    setOrderErrFields([]);
     if (coolOffNow(state)) return setOrderError(t('co.blocked'));
     if (!session || !snap || !inst) return setOrderError(t('pt.err.pickInstrument'));
     if (!specRes || !specRes.ok) return setOrderError(t(`pt.specBlock.${specRes ? specRes.reason : 'NO_SPEC'}` as TKey));
@@ -338,9 +344,11 @@ export function PaperTradingView() {
     const sl = numOrNull(slText);
     const tp = numOrNull(tpText);
     const mg = numOrNull(marginText);
+    setOrderErrFields(paperBadNumberFields(sl, tp, mg));
     if (sl === 'bad' || tp === 'bad' || mg === 'bad') return setOrderError(t('pt.err.badNumber'));
     const fill = fillPrice(specRes.spec, side, gate.price, session.settings.slippageTicks, true);
     const check = checkOrder(specRes.spec, { side, contracts, fill, stopLoss: sl, takeProfit: tp, explicitMarginUsd: mg }, snap, fx, session.settings);
+    setOrderErrFields(check.ok ? [] : paperOrderReasonFields(check.reason));
     if (!check.ok) return setOrderError(t(`pt.order.${check.reason}` as TKey));
     const risk = computeRisk({ side, fill, stopLoss: sl, takeProfit: tp, contracts, pointValueUsd: specRes.spec.pointValueUsd, feePerContractUsd: session.settings.feePerContractUsd, fx, equityVnd: snap.equityVnd, limitPct });
     const plan = buildPlan(answers, events, eventsManual, risk, limitPct);
@@ -553,15 +561,15 @@ export function PaperTradingView() {
             >
               <div>
                 <label htmlFor="pt-name" className={labelCls}>{t('pt.session.name')}</label>
-                <input id="pt-name" value={newName} maxLength={PAPER_LIMITS.nameMax} onChange={(e) => setNewName(e.target.value)} className={inputCls} />
+                <input id="pt-name" {...fieldErrorProps(!!formError && formErrField === 'name', 'pt-form-err')} value={newName} maxLength={PAPER_LIMITS.nameMax} onChange={(e) => setNewName(e.target.value)} className={inputCls} />
               </div>
               <div>
                 <label htmlFor="pt-capital" className={labelCls}>{t('pt.session.capital')}</label>
-                <input id="pt-capital" inputMode="numeric" value={newCapital} onChange={(e) => setNewCapital(e.target.value)} className={`${inputCls} font-mono`} />
+                <input id="pt-capital" {...fieldErrorProps(!!formError && formErrField === 'capital', 'pt-form-err')} inputMode="numeric" value={newCapital} onChange={(e) => setNewCapital(e.target.value)} className={`${inputCls} font-mono`} />
               </div>
               <button type="submit" className={`${bigBtn} bg-[var(--positive)] hover:bg-[var(--positive)]/90 text-[var(--on-positive)]`}>{t('pt.session.create')}</button>
             </form>
-            {formError && <p className="text-xs text-[var(--negative)]" role="alert">{formError}</p>}
+            {formError && <p id="pt-form-err" className="text-xs text-[var(--negative)]" role="alert">{formError}</p>}
           </div>
 
           {session && snap && (
@@ -660,19 +668,19 @@ export function PaperTradingView() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
                     <label htmlFor="pt-qty" className={labelCls}>{t('pt.order.qty')}</label>
-                    <input id="pt-qty" inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} className={`${inputCls} font-mono`} />
+                    <input id="pt-qty" {...fieldErrorProps(!!orderError && orderErrFields.includes('qty'), 'pt-order-err')} inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} className={`${inputCls} font-mono`} />
                   </div>
                   <div>
                     <label htmlFor="pt-sl" className={labelCls}>{t('pt.order.sl')}</label>
-                    <input id="pt-sl" inputMode="decimal" value={slText} onChange={(e) => setSlText(e.target.value)} className={`${inputCls} font-mono`} placeholder={t('pt.order.optional')} />
+                    <input id="pt-sl" {...fieldErrorProps(!!orderError && orderErrFields.includes('sl'), 'pt-order-err')} inputMode="decimal" value={slText} onChange={(e) => setSlText(e.target.value)} className={`${inputCls} font-mono`} placeholder={t('pt.order.optional')} />
                   </div>
                   <div>
                     <label htmlFor="pt-tp" className={labelCls}>{t('pt.order.tp')}</label>
-                    <input id="pt-tp" inputMode="decimal" value={tpText} onChange={(e) => setTpText(e.target.value)} className={`${inputCls} font-mono`} placeholder={t('pt.order.optional')} />
+                    <input id="pt-tp" {...fieldErrorProps(!!orderError && orderErrFields.includes('tp'), 'pt-order-err')} inputMode="decimal" value={tpText} onChange={(e) => setTpText(e.target.value)} className={`${inputCls} font-mono`} placeholder={t('pt.order.optional')} />
                   </div>
                   <div>
                     <label htmlFor="pt-margin" className={labelCls}>{t('pt.order.margin')}</label>
-                    <input id="pt-margin" inputMode="decimal" value={marginText} onChange={(e) => setMarginText(e.target.value)} className={`${inputCls} font-mono`} placeholder={t('pt.order.marginDefault', { pct: session.settings.marginPct })} />
+                    <input id="pt-margin" {...fieldErrorProps(!!orderError && orderErrFields.includes('margin'), 'pt-order-err')} inputMode="decimal" value={marginText} onChange={(e) => setMarginText(e.target.value)} className={`${inputCls} font-mono`} placeholder={t('pt.order.marginDefault', { pct: session.settings.marginPct })} />
                   </div>
                 </div>
                 <p className="text-[11px] text-[var(--text)]/60">{t('pt.order.marginAssumed')}</p>
@@ -690,7 +698,7 @@ export function PaperTradingView() {
                   risk={riskNow}
                 />
                 <button type="button" onClick={prepareOrder} className={`${bigBtn} w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white`}>{t('pt.order.review')}</button>
-                {orderError && <p className="text-xs text-[var(--negative)]" role="alert">{orderError}</p>}
+                {orderError && <p id="pt-order-err" className="text-xs text-[var(--negative)]" role="alert">{orderError}</p>}
               </div>
 
               <ExpiryCalendar instruments={instruments} heldIds={positions.map((x) => x.instrumentId)} />

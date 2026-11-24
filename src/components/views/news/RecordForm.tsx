@@ -4,6 +4,7 @@ import { getAdminToken } from '../../../api/dataApi';
 import { invalidate } from '../../../shared/utils/http';
 import type { FundamentalMacroRecord, MarketDirection } from '../../../shared/types/analysis';
 import { hasKey, tr, useT } from '../../../i18n';
+import { fieldErrorProps } from '../../common/fieldErrors';
 
 /** Code plus Vietnamese/English label, e.g. "BULLISH · Tăng giá"; unknown codes are shown as-is. */
 export function codeLabel(prefix: 'news.dir.' | 'news.rev.', code: string): string {
@@ -30,19 +31,23 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
   const [summary, setSummary] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [badFields, setBadFields] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setBadFields([!source.trim() && 'source', !pubTs.trim() && 'ts'].filter((x): x is string => !!x));
     if (!source.trim() || !pubTs.trim()) {
       setError(t('news.err.required'));
       return;
     }
     const pubMs = new Date(pubTs).getTime();
     if (Number.isNaN(pubMs)) {
+      setBadFields(['ts']);
       setError(t('news.err.invalidTs'));
       return;
     }
     if (pubMs > Date.now() + 60_000) {
+      setBadFields(['ts']);
       setError(t('news.err.futureTs'));
       return;
     }
@@ -51,6 +56,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
       return;
     }
     if (kind === 'MACRO' && !dataset.trim()) {
+      setBadFields(['dataset']);
       setError(t('news.err.dataset'));
       return;
     }
@@ -125,6 +131,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
             </label>
             <input
               id="fund-source"
+              {...fieldErrorProps(!!error && badFields.includes('source'), 'fund-form-err')}
               type="text"
               placeholder={t('news.form.sourcePlaceholder')}
               aria-label={t('news.form.sourcePlaceholder')}
@@ -139,6 +146,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
             </label>
             <input
               id="fund-ts"
+              {...fieldErrorProps(!!error && badFields.includes('ts'), 'fund-form-err')}
               type="datetime-local"
               value={pubTs}
               onChange={(e) => setPubTs(e.target.value)}
@@ -151,6 +159,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
             </label>
             <input
               id="fund-dataset"
+              {...fieldErrorProps(!!error && badFields.includes('dataset'), 'fund-form-err')}
               type="text"
               placeholder={t('news.form.datasetPlaceholder')}
               aria-label={t('news.form.datasetPlaceholder')}
@@ -253,7 +262,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
           </div>
         )}
 
-        {error && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
+        {error && <p id="fund-form-err" role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
 
         <div className="flex justify-end">
           <button

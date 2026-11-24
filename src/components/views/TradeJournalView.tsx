@@ -13,6 +13,7 @@ import {
 import { BookOpen, Info, LogIn, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
+import { fieldErrorProps } from '../common/fieldErrors';
 import { handleFirestoreError, OperationType } from '../../firebase';
 import { db } from '../../firestoreDb';
 import type { ExchangeCode, InstrumentDefinition, Timeframe } from '../../shared/types/instrument';
@@ -134,6 +135,7 @@ export function TradeJournalView() {
   const [rationale, setRationale] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [badFields, setBadFields] = useState<string[]>([]);
   const [closing, setClosing] = useState<ClosingState | null>(null);
 
   const selectedInstrument = instruments.find((i) => i.id === instrumentId) ?? null;
@@ -243,17 +245,20 @@ export function TradeJournalView() {
     const tp = Number(takeProfit);
     const qty = Math.trunc(Number(positionSize));
     const costs = tradingCosts === '' ? 0 : Number(tradingCosts);
+    setBadFields([!(ep > 0) && 'entry', !(sl > 0) && 'sl', !(tp > 0) && 'tp', !(qty >= 1) && 'qty'].filter((x): x is string => !!x));
     if (!(ep > 0 && sl > 0 && tp > 0 && qty >= 1)) {
       setError(t('jr.invalidInputs'));
       return;
     }
     if (!(costs >= 0)) {
+      setBadFields(['costs']);
       setError(t('jr.costsNonNeg'));
       return;
     }
     // Entry time: user-entered; for an OPEN trade left blank it is the logging time.
     const entryIso = localDateTimeToIso(entryTime) ?? (status === 'OPEN' ? new Date().toISOString() : null);
     if (!entryIso) {
+      setBadFields(['entryTime']);
       setError(t('jr.needEntryTime'));
       return;
     }
@@ -262,14 +267,17 @@ export function TradeJournalView() {
     if (status === 'CLOSED') {
       const iso = localDateTimeToIso(exitTime);
       if (!iso) {
+        setBadFields(['exitTime']);
         setError(t('jr.needExitTime'));
         return;
       }
       if (Date.parse(iso) < Date.parse(entryIso)) {
+        setBadFields(['entryTime', 'exitTime']);
         setError(t('jr.exitBeforeEntry'));
         return;
       }
       if (!formExit || !formExit.ok) {
+        setBadFields(['exitPrice']);
         setError(formExit && !formExit.ok ? formExit.reason : t('jr.needExitPrice'));
         return;
       }
@@ -474,7 +482,7 @@ export function TradeJournalView() {
               id="jrn-sym"
               value={instrumentId}
               onChange={(e) => setInstrumentId(e.target.value)}
-              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
             >
               <option value="">{t('jr.selectPh')}</option>
               {instruments.map((i) => (
@@ -493,7 +501,7 @@ export function TradeJournalView() {
                 id="jrn-dir"
                 value={direction}
                 onChange={(e) => setDirection(e.target.value as 'LONG' | 'SHORT')}
-                className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-2 text-xs font-mono text-[var(--text-strong)]"
+                className="w-1/2 bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2 py-2 text-xs font-mono text-[var(--text-strong)]"
               >
                 <option value="LONG">{t('jr.dir.LONG')}</option>
                 <option value="SHORT">{t('jr.dir.SHORT')}</option>
@@ -502,7 +510,7 @@ export function TradeJournalView() {
                 aria-label={t('jr.timeframe')}
                 value={tf}
                 onChange={(e) => setTf(e.target.value as Timeframe)}
-                className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-2 text-xs font-mono text-[var(--text-strong)]"
+                className="w-1/2 bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2 py-2 text-xs font-mono text-[var(--text-strong)]"
               >
                 {(['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'] as Timeframe[]).map((x) => (
                   <option key={x} value={x}>{x}</option>
@@ -520,7 +528,7 @@ export function TradeJournalView() {
               value={strategy}
               placeholder={t('jr.strategyPh')}
               onChange={(e) => setStrategy(e.target.value)}
-              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
             />
           </div>
           <div>
@@ -533,27 +541,30 @@ export function TradeJournalView() {
                 type="number"
                 step="any"
                 placeholder={t('jr.entryPh')}
+                {...fieldErrorProps(!!error && badFields.includes('entry'), 'jr-form-err')}
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
-                className="w-1/3 bg-[var(--bg)] border border-[var(--border)] rounded px-1.5 py-2 text-xs font-mono text-[var(--text-strong)]"
+                className="w-1/3 bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded px-1.5 py-2 text-xs font-mono text-[var(--text-strong)]"
               />
               <input
                 aria-label={t('term.stopLoss')}
                 type="number"
                 step="any"
                 placeholder={t('jr.slPh')}
+                {...fieldErrorProps(!!error && badFields.includes('sl'), 'jr-form-err')}
                 value={stopLoss}
                 onChange={(e) => setStopLoss(e.target.value)}
-                className="w-1/3 bg-[var(--bg)] border border-[var(--border)] rounded px-1.5 py-2 text-xs font-mono text-[var(--text-strong)]"
+                className="w-1/3 bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded px-1.5 py-2 text-xs font-mono text-[var(--text-strong)]"
               />
               <input
                 aria-label={t('term.takeProfit')}
                 type="number"
                 step="any"
                 placeholder={t('jr.tpPh')}
+                {...fieldErrorProps(!!error && badFields.includes('tp'), 'jr-form-err')}
                 value={takeProfit}
                 onChange={(e) => setTakeProfit(e.target.value)}
-                className="w-1/3 bg-[var(--bg)] border border-[var(--border)] rounded px-1.5 py-2 text-xs font-mono text-[var(--text-strong)]"
+                className="w-1/3 bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded px-1.5 py-2 text-xs font-mono text-[var(--text-strong)]"
               />
             </div>
           </div>
@@ -566,15 +577,16 @@ export function TradeJournalView() {
                 id="jrn-size"
                 type="number"
                 min="1"
+                {...fieldErrorProps(!!error && badFields.includes('qty'), 'jr-form-err')}
                 value={positionSize}
                 onChange={(e) => setPositionSize(e.target.value)}
-                className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded px-2 py-2 text-xs font-mono text-[var(--text-strong)]"
+                className="w-1/2 bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded px-2 py-2 text-xs font-mono text-[var(--text-strong)]"
               />
               <select
                 aria-label={t('jr.tradeStatus')}
                 value={status}
                 onChange={(e) => setStatus(e.target.value as 'OPEN' | 'CLOSED')}
-                className="w-1/2 bg-[var(--bg)] border border-[var(--border)] rounded px-2 py-2 text-xs font-mono text-[var(--text-strong)]"
+                className="w-1/2 bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded px-2 py-2 text-xs font-mono text-[var(--text-strong)]"
               >
                 <option value="OPEN">{t('jr.status.OPEN')}</option>
                 <option value="CLOSED">{t('jr.status.CLOSED')}</option>
@@ -598,9 +610,10 @@ export function TradeJournalView() {
             type="datetime-local"
             aria-label={t('jr.entryTime')}
             title={t('jr.entryTimeTitle')}
+            {...fieldErrorProps(!!error && badFields.includes('entryTime'), 'jr-form-err')}
             value={entryTime}
             onChange={(e) => setEntryTime(e.target.value)}
-            className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)]"
+            className="bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)]"
           />
           <input
             type="number"
@@ -609,17 +622,19 @@ export function TradeJournalView() {
             aria-label={t('jr.exitPrice')}
             placeholder={t('jr.exitPrice')}
             disabled={status === 'OPEN'}
+            {...fieldErrorProps(!!error && badFields.includes('exitPrice'), 'jr-form-err')}
             value={exitPrice}
             onChange={(e) => setExitPrice(e.target.value)}
-            className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)] disabled:opacity-40"
+            className="bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)] disabled:opacity-40"
           />
           <input
             type="datetime-local"
             aria-label={t('jr.exitTime')}
             disabled={status === 'OPEN'}
+            {...fieldErrorProps(!!error && badFields.includes('exitTime'), 'jr-form-err')}
             value={exitTime}
             onChange={(e) => setExitTime(e.target.value)}
-            className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)] disabled:opacity-40"
+            className="bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)] disabled:opacity-40"
           />
           <input
             type="number"
@@ -627,9 +642,10 @@ export function TradeJournalView() {
             min="0"
             aria-label={t('jr.costs')}
             placeholder={t('jr.costsPh')}
+            {...fieldErrorProps(!!error && badFields.includes('costs'), 'jr-form-err')}
             value={tradingCosts}
             onChange={(e) => setTradingCosts(e.target.value)}
-            className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)]"
+            className="bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)]"
           />
           <input
             type="text"
@@ -638,7 +654,7 @@ export function TradeJournalView() {
             placeholder={t('jr.rationalePh')}
             aria-label={t('jr.rationalePh')}
             maxLength={1000}
-            className="sm:col-span-2 bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs text-[var(--text-strong)]"
+            className="sm:col-span-2 bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-1.5 text-xs text-[var(--text-strong)]"
           />
         </div>
 
@@ -655,7 +671,7 @@ export function TradeJournalView() {
         <p className="text-[11px] text-[var(--text)]/45">
           {t('jr.formula')}
         </p>
-        {error && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
+        {error && <p id="jr-form-err" role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
 
         <div className="flex justify-end">
           <button
@@ -762,14 +778,14 @@ export function TradeJournalView() {
               placeholder={t('jr.exitPrice')}
               value={closing.exitPrice}
               onChange={(ev) => setClosing({ ...closing, exitPrice: ev.target.value, error: null })}
-              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)]"
+              className="bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)]"
             />
             <input
               type="datetime-local"
               aria-label={t('jr.closeExitTime')}
               value={closing.exitTime}
               onChange={(ev) => setClosing({ ...closing, exitTime: ev.target.value, error: null })}
-              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)]"
+              className="bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)]"
             />
             <input
               type="number"
@@ -779,7 +795,7 @@ export function TradeJournalView() {
               placeholder={t('jr.costs')}
               value={closing.tradingCosts}
               onChange={(ev) => setClosing({ ...closing, tradingCosts: ev.target.value, error: null })}
-              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)]"
+              className="bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-1.5 text-xs font-mono text-[var(--text-strong)]"
             />
             <input
               type="text"
@@ -788,7 +804,7 @@ export function TradeJournalView() {
               maxLength={1000}
               value={closing.notes}
               onChange={(ev) => setClosing({ ...closing, notes: ev.target.value })}
-              className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs text-[var(--text-strong)]"
+              className="bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-1.5 text-xs text-[var(--text-strong)]"
             />
           </div>
           <p className="text-xs font-mono text-[var(--text)]/80" aria-live="polite">

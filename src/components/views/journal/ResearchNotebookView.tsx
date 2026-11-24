@@ -6,6 +6,7 @@ import { useTerminal } from '../../../contexts/TerminalContext';
 import { handleFirestoreError, OperationType } from '../../../firebase';
 import { db } from '../../../firestoreDb';
 import { fmtDateTime, useT, type TKey } from '../../../i18n';
+import { fieldErrorProps, noteErrorFieldIds } from '../../common/fieldErrors';
 import {
   EMPTY_DRAFT,
   NOTE_LIMITS,
@@ -27,7 +28,7 @@ import {
 } from './researchNotes';
 
 const COLLECTION = 'researchNotes';
-const inputCls = 'w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs text-[var(--text-strong)]';
+const inputCls = 'w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2.5 py-2 text-xs text-[var(--text-strong)]';
 const labelCls = 'block text-xs text-[var(--text)]/65 mb-1';
 
 /** T18 Research Notebook: owner-only notes per instrument, optionally carrying chart context. */
@@ -50,6 +51,7 @@ export function ResearchNotebookView() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errIds, setErrIds] = useState<string[]>([]);
   const [filter, setFilter] = useState<NoteFilter>({ instrumentId: '', tag: '', text: '' });
 
   const canWrite = !!user && user.emailVerified;
@@ -101,6 +103,7 @@ export function ResearchNotebookView() {
     e.preventDefault();
     if (!user || !user.emailVerified) return;
     const problem = validateDraft(draft);
+    setErrIds(problem ? noteErrorFieldIds(problem) : []);
     if (problem) {
       setError(t(`nb.err.${problem}` as TKey));
       return;
@@ -171,7 +174,7 @@ export function ResearchNotebookView() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label htmlFor="nb-inst" className={labelCls}>{t('nb.instrument')}</label>
-            <select id="nb-inst" value={draft.instrumentId} onChange={(e) => setField('instrumentId', e.target.value)} className={`${inputCls} font-mono`}>
+            <select id="nb-inst" {...fieldErrorProps(!!error && errIds.includes('nb-inst'), 'nb-form-err')} value={draft.instrumentId} onChange={(e) => setField('instrumentId', e.target.value)} className={`${inputCls} font-mono`}>
               <option value="">{t('nb.selectInstrument')}</option>
               {instrumentOptions.map(([id, label]) => (
                 <option key={id} value={id}>{label}</option>
@@ -181,7 +184,7 @@ export function ResearchNotebookView() {
           <div className="sm:col-span-2">
             <label htmlFor="nb-title" className={labelCls}>{t('nb.noteTitle')}</label>
             <input
-              id="nb-title"
+              id="nb-title" {...fieldErrorProps(!!error && errIds.includes('nb-title'), 'nb-form-err')}
               type="text"
               value={draft.title}
               maxLength={NOTE_LIMITS.titleMax}
@@ -194,7 +197,7 @@ export function ResearchNotebookView() {
         <div>
           <label htmlFor="nb-body" className={labelCls}>{t('nb.body')}</label>
           <textarea
-            id="nb-body"
+            id="nb-body" {...fieldErrorProps(!!error && errIds.includes('nb-body'), 'nb-form-err')}
             rows={6}
             value={draft.body}
             maxLength={NOTE_LIMITS.bodyMax}
@@ -206,14 +209,14 @@ export function ResearchNotebookView() {
         </div>
         <div>
           <label htmlFor="nb-tags" className={labelCls}>{t('nb.tags')}</label>
-          <input id="nb-tags" type="text" value={draft.tagsText} placeholder={t('nb.tagsPh')} onChange={(e) => setField('tagsText', e.target.value)} className={inputCls} />
+          <input id="nb-tags" {...fieldErrorProps(!!error && errIds.includes('nb-tags'), 'nb-form-err')} type="text" value={draft.tagsText} placeholder={t('nb.tagsPh')} onChange={(e) => setField('tagsText', e.target.value)} className={inputCls} />
         </div>
         <fieldset className="border border-[var(--border)] rounded-md p-3">
           <legend className="text-xs text-[var(--text)]/65 px-1">{t('nb.chartContext')}</legend>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
               <label htmlFor="nb-tf" className={labelCls}>{t('nb.timeframe')}</label>
-              <select id="nb-tf" value={draft.timeframe} onChange={(e) => setField('timeframe', e.target.value as NoteTimeframe | '')} className={`${inputCls} font-mono`}>
+              <select id="nb-tf" {...fieldErrorProps(!!error && errIds.includes('nb-tf'), 'nb-form-err')} value={draft.timeframe} onChange={(e) => setField('timeframe', e.target.value as NoteTimeframe | '')} className={`${inputCls} font-mono`}>
                 <option value="">{t('nb.none')}</option>
                 {NOTE_TIMEFRAMES.map((tf) => (
                   <option key={tf} value={tf}>{tf}</option>
@@ -222,19 +225,19 @@ export function ResearchNotebookView() {
             </div>
             <div>
               <label htmlFor="nb-contract" className={labelCls}>{t('nb.contract')}</label>
-              <input id="nb-contract" type="text" value={draft.contractCode} maxLength={NOTE_LIMITS.contractCodeMax} placeholder={t('nb.contractPh')} onChange={(e) => setField('contractCode', e.target.value)} className={`${inputCls} font-mono`} />
+              <input id="nb-contract" {...fieldErrorProps(!!error && errIds.includes('nb-contract'), 'nb-form-err')} type="text" value={draft.contractCode} maxLength={NOTE_LIMITS.contractCodeMax} placeholder={t('nb.contractPh')} onChange={(e) => setField('contractCode', e.target.value)} className={`${inputCls} font-mono`} />
             </div>
             <div>
               <label htmlFor="nb-from" className={labelCls}>{t('nb.rangeStart')}</label>
-              <input id="nb-from" type="text" value={draft.rangeStart} maxLength={NOTE_LIMITS.rangeMax} placeholder="YYYY-MM-DD" onChange={(e) => setField('rangeStart', e.target.value)} className={`${inputCls} font-mono`} />
+              <input id="nb-from" {...fieldErrorProps(!!error && errIds.includes('nb-from'), 'nb-form-err')} type="text" value={draft.rangeStart} maxLength={NOTE_LIMITS.rangeMax} placeholder="YYYY-MM-DD" onChange={(e) => setField('rangeStart', e.target.value)} className={`${inputCls} font-mono`} />
             </div>
             <div>
               <label htmlFor="nb-to" className={labelCls}>{t('nb.rangeEnd')}</label>
-              <input id="nb-to" type="text" value={draft.rangeEnd} maxLength={NOTE_LIMITS.rangeMax} placeholder="YYYY-MM-DD" onChange={(e) => setField('rangeEnd', e.target.value)} className={`${inputCls} font-mono`} />
+              <input id="nb-to" {...fieldErrorProps(!!error && errIds.includes('nb-to'), 'nb-form-err')} type="text" value={draft.rangeEnd} maxLength={NOTE_LIMITS.rangeMax} placeholder="YYYY-MM-DD" onChange={(e) => setField('rangeEnd', e.target.value)} className={`${inputCls} font-mono`} />
             </div>
           </div>
         </fieldset>
-        {error && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
+        {error && <p id="nb-form-err" role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
         <div className="flex justify-end gap-2">
           {(editingId || draft !== EMPTY_DRAFT) && (
             <button type="button" onClick={resetForm} className="px-3 py-1.5 border border-[var(--border)] rounded-md text-xs text-[var(--text)]/80">

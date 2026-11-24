@@ -7,6 +7,7 @@ import { formatTimestampInZone } from '../../../shared/utils/time';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { MacroRecordCards } from '../../common/MacroRecordCards';
 import { SourceChip } from '../../common/SourceChip';
+import { providerOf } from '../pulse/provider';
 import { Sparkline } from '../../ui/viz/Sparkline';
 import { FeedHeader } from './FeedHeader';
 import { RecordForm } from './RecordForm';
@@ -70,7 +71,7 @@ function DatapointTile({ d }: { d: MacroDatapoint }) {
       )}
       <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--faint)]">
         {d.asOf && <span className="tabular-nums">{fmtWhen(d.asOf)}</span>}
-        <SourceChip sources={[d.sourceName, d.sourceUrl]}>{d.sourceName.split(/\s*\(|\s+[—-]\s+/)[0].trim() || d.sourceName}</SourceChip>
+        <SourceChip sources={[d.sourceName, d.sourceUrl]}>{providerOf(d.sourceName)}</SourceChip>
       </div>
       <details>
         <summary className={SUMMARY_CLS}>{t('pulse.mc.details')}</summary>

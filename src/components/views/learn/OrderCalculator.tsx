@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { InstrumentDefinition } from '../../../shared/types/instrument';
 import { calcOrder, rRatioBand, type Direction, type OrderField } from '../../../shared/calc/orderCalc';
 import { useT } from '../../../i18n';
+import { fieldErrorProps } from '../../common/fieldErrors';
 
 const fld =
   'w-full bg-[var(--bg)] border rounded-md px-2.5 py-2 text-sm text-[var(--text-strong)] font-mono focus:outline-none focus:border-[var(--accent)]';
@@ -41,11 +42,11 @@ function Field({ id, label, value, onChange, error, hint }: { id: string; label:
         inputMode="decimal"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        aria-invalid={!!error}
+        {...fieldErrorProps(!!error, `${id}-err`, !error && hint ? `${id}-hint` : undefined)}
         className={`${fld} ${error ? 'border-[var(--negative)]' : 'border-[var(--border)]'}`}
       />
-      {error && <p className="text-[11px] text-[var(--negative)]" role="alert">{error}</p>}
-      {!error && hint && <p className="text-[11px] text-[var(--text)]/50">{hint}</p>}
+      {error && <p id={`${id}-err`} className="text-[11px] text-[var(--negative)]">{error}</p>}
+      {!error && hint && <p id={`${id}-hint`} className="text-[11px] text-[var(--text)]/50">{hint}</p>}
     </div>
   );
 }
@@ -131,7 +132,7 @@ export function OrderCalculator({
       <div className="grid sm:grid-cols-2 gap-3">
         <div className="space-y-1 sm:col-span-2">
           <label htmlFor="oc-inst" className="block text-xs text-[var(--text)]/70">{t('oc.instrument')}</label>
-          <select id="oc-inst" value={instId} onChange={(e) => setInstId(e.target.value)} className={`${fld} border-[var(--border)]`}>
+          <select id="oc-inst" {...fieldErrorProps(!r.ok && !!r.errors.spec, 'oc-spec-err')} value={instId} onChange={(e) => setInstId(e.target.value)} className={`${fld} border-[var(--border)]`}>
             {instruments.map((i) => (
               <option key={i.id} value={i.id}>{i.productName} · {i.exchangeSymbol}</option>
             ))}
@@ -139,7 +140,7 @@ export function OrderCalculator({
           {r.ok ? (
             <p className="text-[11px] text-[var(--text)]/50">{t('oc.unitHint', { unit: spec?.quotationUnit ?? '', usd: fmt(r.usdPerUnit, 4) })}</p>
           ) : (
-            r.errors.spec && <p className="text-[11px] text-[var(--warning)]" role="alert">{r.errors.spec}</p>
+            r.errors.spec && <p id="oc-spec-err" className="text-[11px] text-[var(--warning)]" role="alert">{r.errors.spec}</p>
           )}
         </div>
         <div className="sm:col-span-2 space-y-1">

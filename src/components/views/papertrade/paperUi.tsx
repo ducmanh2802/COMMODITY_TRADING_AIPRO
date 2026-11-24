@@ -1,7 +1,7 @@
 import { fmtInt } from '../../../i18n';
 import { EquityChart } from '../../ui/viz/EquityChart';
 
-export const inputCls = 'w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-sm text-[var(--text-strong)]';
+export const inputCls = 'w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2.5 py-2 text-sm text-[var(--text-strong)]';
 export const labelCls = 'block text-xs text-[var(--text)]/65 mb-1';
 export const cardCls = 'bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4';
 export const bigBtn = 'inline-flex items-center justify-center gap-1.5 px-5 py-3 text-sm font-semibold rounded-md disabled:opacity-40';

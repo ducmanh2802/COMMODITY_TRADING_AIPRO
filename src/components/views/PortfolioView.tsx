@@ -13,6 +13,7 @@ import {
 import { Briefcase, LogIn, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
+import { fieldErrorProps } from '../common/fieldErrors';
 import { handleFirestoreError, OperationType } from '../../firebase';
 import { db } from '../../firestoreDb';
 import type { ExchangeCode, ProductCategory } from '../../shared/types/instrument';
@@ -77,6 +78,7 @@ export function PortfolioView() {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [badFields, setBadFields] = useState<string[]>([]);
 
   useEffect(() => {
     if (!authReady || !user || !user.emailVerified) {
@@ -169,6 +171,7 @@ export function PortfolioView() {
     const tp = Number(takeProfit);
     const qty = Math.trunc(Number(contracts));
 
+    setBadFields([!(entry > 0) && 'entry', !(sl > 0) && 'sl', !(tp > 0) && 'tp', !(qty >= 1) && 'qty'].filter((x): x is string => !!x));
     if (!(entry > 0 && sl > 0 && tp > 0 && qty >= 1)) {
       setError(t('pf.invalidInputs'));
       return;
@@ -182,6 +185,7 @@ export function PortfolioView() {
     } else {
       const userMargin = Number(estimatedMargin);
       if (estimatedMargin.trim() === '' || !(userMargin >= 0)) {
+        setBadFields(['margin']);
         setError(t('pf.noVerifiedMargin'));
         return;
       }
@@ -339,7 +343,7 @@ export function PortfolioView() {
               id="pos-inst"
               value={selectedInstId}
               onChange={(e) => setSelectedInstId(e.target.value)}
-              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
             >
               <option value="">{t('pf.selectPh')}</option>
               {instruments.map((i) => (
@@ -357,7 +361,7 @@ export function PortfolioView() {
               id="pos-dir"
               value={direction}
               onChange={(e) => setDirection(e.target.value as 'LONG' | 'SHORT')}
-              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
             >
               <option value="LONG">{t('pf.dir.LONG')}</option>
               <option value="SHORT">{t('pf.dir.SHORT')}</option>
@@ -371,9 +375,10 @@ export function PortfolioView() {
               id="pos-qty"
               type="number"
               min="1"
+              {...fieldErrorProps(!!error && badFields.includes('qty'), 'pf-form-err')}
               value={contracts}
               onChange={(e) => setContracts(e.target.value)}
-              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
             />
           </div>
           <div>
@@ -386,6 +391,7 @@ export function PortfolioView() {
                 type="number"
                 step="any"
                 placeholder={t('pf.entryPh')}
+                {...fieldErrorProps(!!error && badFields.includes('entry'), 'pf-form-err')}
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
                 className="w-1/3 bg-[var(--bg)] border border-[var(--border)] rounded px-1.5 py-2 text-xs font-mono text-[var(--text-strong)]"
@@ -395,6 +401,7 @@ export function PortfolioView() {
                 type="number"
                 step="any"
                 placeholder={t('pf.slPh')}
+                {...fieldErrorProps(!!error && badFields.includes('sl'), 'pf-form-err')}
                 value={stopLoss}
                 onChange={(e) => setStopLoss(e.target.value)}
                 className="w-1/3 bg-[var(--bg)] border border-[var(--border)] rounded px-1.5 py-2 text-xs font-mono text-[var(--text-strong)]"
@@ -404,6 +411,7 @@ export function PortfolioView() {
                 type="number"
                 step="any"
                 placeholder={t('pf.tpPh')}
+                {...fieldErrorProps(!!error && badFields.includes('tp'), 'pf-form-err')}
                 value={takeProfit}
                 onChange={(e) => setTakeProfit(e.target.value)}
                 className="w-1/3 bg-[var(--bg)] border border-[var(--border)] rounded px-1.5 py-2 text-xs font-mono text-[var(--text-strong)]"
@@ -426,9 +434,10 @@ export function PortfolioView() {
                 step="any"
                 placeholder={t('pf.marginPh')}
                 title={t('pf.marginTitle')}
+                {...fieldErrorProps(!!error && badFields.includes('margin'), 'pf-form-err')}
                 value={estimatedMargin}
                 onChange={(e) => setEstimatedMargin(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2.5 py-2 text-xs font-mono text-[var(--text-strong)]"
               />
             )}
           </div>
@@ -448,9 +457,9 @@ export function PortfolioView() {
           placeholder={t('pf.notesPh')}
           aria-label={t('pf.notesPh')}
           maxLength={500}
-          className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs text-[var(--text-strong)]"
+          className="w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-3 py-1.5 text-xs text-[var(--text-strong)]"
         />
-        {error && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
+        {error && <p id="pf-form-err" role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
       </form>
 
       {/* Positions Ledger */}

@@ -9,6 +9,7 @@ import { chartPalette, useThemeKey } from '../../../shared/theme/chartColors';
 import { lwBase } from '../../../shared/theme/chartTheme';
 import { validateSpec } from '../papertrade/paperMath';
 import { Stat, bigBtn, cardCls, inputCls, labelCls } from '../papertrade/paperUi';
+import { fieldErrorProps, replayErrorFields, type ReplayOrderField } from '../../common/fieldErrors';
 import {
   HISTORY_BARS,
   MAX_RISK_PCT,
@@ -136,6 +137,7 @@ export function ReplayView() {
   const [target, setTarget] = useState('');
   const [contracts, setContracts] = useState('1');
   const [error, setError] = useState<string | null>(null);
+  const [errFields, setErrFields] = useState<ReplayOrderField[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(1);
@@ -211,6 +213,7 @@ export function ReplayView() {
     if (!state) return;
     setError(null);
     const res = placeOrder(state, { side, stop: num(stop), target: num(target), contracts: num(contracts) });
+    setErrFields(res.error ? replayErrorFields(res.error) : []);
     if (res.error) {
       setError(t(`rp.err.${res.error}` as TKey));
       return;
@@ -364,15 +367,15 @@ export function ReplayView() {
                   <div className="grid grid-cols-3 gap-2">
                     <div>
                       <label className={labelCls} htmlFor="rp-stop">{t('rp.field.stop')}</label>
-                      <input id="rp-stop" inputMode="decimal" className={inputCls} value={stop} onChange={(e) => setStop(e.target.value)} />
+                      <input id="rp-stop" {...fieldErrorProps(!!error && errFields.includes('stop'), 'rp-order-err')} inputMode="decimal" className={inputCls} value={stop} onChange={(e) => setStop(e.target.value)} />
                     </div>
                     <div>
                       <label className={labelCls} htmlFor="rp-target">{t('rp.field.target')}</label>
-                      <input id="rp-target" inputMode="decimal" className={inputCls} value={target} onChange={(e) => setTarget(e.target.value)} />
+                      <input id="rp-target" {...fieldErrorProps(!!error && errFields.includes('target'), 'rp-order-err')} inputMode="decimal" className={inputCls} value={target} onChange={(e) => setTarget(e.target.value)} />
                     </div>
                     <div>
                       <label className={labelCls} htmlFor="rp-n">{t('rp.field.contracts')}</label>
-                      <input id="rp-n" inputMode="numeric" className={inputCls} value={contracts} onChange={(e) => setContracts(e.target.value)} />
+                      <input id="rp-n" {...fieldErrorProps(!!error && errFields.includes('contracts'), 'rp-order-err')} inputMode="numeric" className={inputCls} value={contracts} onChange={(e) => setContracts(e.target.value)} />
                     </div>
                   </div>
                   {riskUsd > 0 && (
@@ -381,7 +384,7 @@ export function ReplayView() {
                       {riskPct > MAX_RISK_PCT && <span className="block">{t('rp.risk.over')}</span>}
                     </p>
                   )}
-                  {error && <p className="text-xs text-[var(--warning)]" role="alert">{error}</p>}
+                  {error && <p id="rp-order-err" className="text-xs text-[var(--warning)]" role="alert">{error}</p>}
                   <div className="flex flex-wrap gap-2">
                     <button type="button" className={`${bigBtn} bg-[var(--positive)] text-white`} onClick={() => submit('LONG')}>{t('rp.buy')}</button>
                     <button type="button" className={`${bigBtn} bg-[var(--negative)] text-white`} onClick={() => submit('SHORT')}>{t('rp.sell')}</button>

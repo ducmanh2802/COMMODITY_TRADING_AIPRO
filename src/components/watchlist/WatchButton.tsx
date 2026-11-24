@@ -1,8 +1,9 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { useT } from '../../i18n';
 import { MAX_NOTE_LENGTH, type WatchItem, type WatchZone } from '../../shared/watchlist/watchlist';
 import { deleteWatchItem, saveWatchItem, useWatchlist } from './watchlistStore';
 import { useWatchMeta } from './useWatchMeta';
+import { fieldErrorProps } from '../common/fieldErrors';
 
 type ZoneMode = 'none' | 'range' | 'up' | 'down';
 
@@ -21,6 +22,7 @@ export function WatchEditor({ symbol, item, onClose }: { symbol: string; item?: 
   const [high, setHigh] = useState(z?.kind === 'range' ? String(z.high) : '');
   const [level, setLevel] = useState(z?.kind === 'level' ? String(z.level) : '');
   const [error, setError] = useState(false);
+  const errId = `${useId()}-err`;
 
   const num = (s: string): number | null => {
     const n = Number(s.replace(',', '.'));
@@ -41,7 +43,7 @@ export function WatchEditor({ symbol, item, onClose }: { symbol: string; item?: 
     saveWatchItem(symbol, note, zone);
     onClose();
   };
-  const field = 'w-full min-h-[40px] px-2.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-sm text-[var(--text-strong)]';
+  const field = 'w-full min-h-[40px] px-2.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] text-sm text-[var(--text-strong)]';
 
   return (
     <div role="dialog" aria-label={t('wl.editor.title', { name: nameOf(symbol) })} className="bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl p-4 space-y-3 text-sm text-[var(--text)] w-full max-w-sm">
@@ -63,21 +65,21 @@ export function WatchEditor({ symbol, item, onClose }: { symbol: string; item?: 
         <div className="grid grid-cols-2 gap-2">
           <label className="space-y-1">
             <span className="text-xs text-[var(--muted)]">{t('wl.editor.low')}</span>
-            <input className={field} inputMode="decimal" value={low} onChange={(e) => setLow(e.target.value)} />
+            <input className={field} {...fieldErrorProps(error && num(low) === null, errId)} inputMode="decimal" value={low} onChange={(e) => setLow(e.target.value)} />
           </label>
           <label className="space-y-1">
             <span className="text-xs text-[var(--muted)]">{t('wl.editor.high')}</span>
-            <input className={field} inputMode="decimal" value={high} onChange={(e) => setHigh(e.target.value)} />
+            <input className={field} {...fieldErrorProps(error && num(high) === null, errId)} inputMode="decimal" value={high} onChange={(e) => setHigh(e.target.value)} />
           </label>
         </div>
       )}
       {(mode === 'up' || mode === 'down') && (
         <label className="block space-y-1">
           <span className="text-xs text-[var(--muted)]">{t('wl.editor.level')}</span>
-          <input className={field} inputMode="decimal" value={level} onChange={(e) => setLevel(e.target.value)} />
+          <input className={field} {...fieldErrorProps(error && num(level) === null, errId)} inputMode="decimal" value={level} onChange={(e) => setLevel(e.target.value)} />
         </label>
       )}
-      {error && <p role="alert" className="text-xs text-[var(--negative)]">{t('wl.editor.invalid')}</p>}
+      {error && <p id={errId} role="alert" className="text-xs text-[var(--negative)]">{t('wl.editor.invalid')}</p>}
       <p className="text-xs text-[var(--muted)]">{t('wl.editor.hint')}</p>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={submit} className="min-h-[40px] px-4 rounded-lg bg-[var(--accent)] text-white text-sm font-semibold">

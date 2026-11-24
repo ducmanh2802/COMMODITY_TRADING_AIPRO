@@ -129,7 +129,7 @@ hiển thị ở `Sidebar.tsx`, điều phối trang ở `src/App.tsx`, các tab
 | Thị trường | Hôm nay | `today/TodayPanel.tsx` | `/api/market-pulse`, `/api/scorecard` | `services/marketPulse`, `services/scorecard` |
 | Thị trường | Nhịp đập | `pulse/MarketPulsePanel.tsx` | `/api/market-pulse` | `services/marketPulse/service.ts` |
 | Thị trường | Giá (thẻ/bảng) | `CommodityWorldView.tsx`, `MarketWatchView.tsx` | `/api/market/quotes`, `/api/instruments`, `/api/market/fx/usdvnd` | `providers/registry.ts` |
-| Thị trường | Tin tức / Vĩ mô | `FundamentalNewsView.tsx` (+ `common/MacroDataPanel.tsx`) | `/api/macro/overview\|eia\|wasde\|fx`, `/api/fundamental/records` | `server/macro`, `services/fundamentalService.ts` |
+| Thị trường | Tin tức / Vĩ mô | `FundamentalNewsView.tsx` (+ `news/MacroPanel.tsx`) | `/api/macro/overview\|eia\|wasde\|fx`, `/api/fundamental/records` | `server/macro`, `services/fundamentalService.ts` |
 | Phân tích | Scorecard | `scorecard/*` | `/api/scorecard[/:id]`, `POST .../summary` | `services/scorecard/*` (scoring, valuation, narrative) |
 | Phân tích | Chu kỳ | `CycleScannerView.tsx` | `/api/cycle/overview\|scanner\|profile\|verdict` | `engines/cycleEngine.ts`, `bottomDetectionEngine.ts`, `services/cycle*Service.ts` |
 | Phân tích | Báo cáo | `CycleResearchReportView.tsx` | `/api/cycle/report[/generate]` | `services/cycleResearchService.ts` |

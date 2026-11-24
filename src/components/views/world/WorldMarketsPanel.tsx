@@ -144,7 +144,9 @@ const signed = (v: number, d: number, suffix: string): string => `${v > 0 ? '+' 
 function buildTiles(
   fx: { items: MacroDatapoint[] } | null,
   rates: FxResponse | null,
-  pulse: MarketPulse | null
+  pulse: MarketPulse | null,
+  /** Percentage-point unit suffix for rate changes (i18n 'wd.macro.ppUnit'). */
+  ppUnit: string
 ): MacroTile[] {
   const tiles: MacroTile[] = [];
   const sp: MacroTile = {
@@ -213,7 +215,7 @@ function buildTiles(
     value: dgs10?.value ?? null,
     digits: 2,
     suffix: '%',
-    change: dgs10 && dgs10.change1m !== null ? { text: signed(dgs10.change1m, 2, ' điểm %'), sign: dgs10.change1m, periodKey: 'wd.macro.chg1m' } : null,
+    change: dgs10 && dgs10.change1m !== null ? { text: signed(dgs10.change1m, 2, ppUnit), sign: dgs10.change1m, periodKey: 'wd.macro.chg1m' } : null,
     status: dgs10?.value != null ? 'HISTORICAL' : 'UNAVAILABLE',
     source: dgs10?.source ?? null,
     asOf: dgs10?.asOf ?? null,
@@ -339,7 +341,8 @@ function GlobalMacro() {
     return () => ctrl.abort();
   }, []);
 
-  const tiles = useMemo(() => buildTiles(fx, rates, pulse), [fx, rates, pulse]);
+  const ppUnit = t('wd.macro.ppUnit');
+  const tiles = useMemo(() => buildTiles(fx, rates, pulse, ppUnit), [fx, rates, pulse, ppUnit]);
   return (
     <section className="space-y-3">
       <SectionHeader title={t('wd.macro.title')} subtitle={t('wd.macro.subtitle')} />

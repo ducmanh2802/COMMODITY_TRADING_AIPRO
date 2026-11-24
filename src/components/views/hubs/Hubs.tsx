@@ -9,7 +9,7 @@ import { lazyWithRetry } from '../../common/lazyWithRetry';
 import { EmptyState } from '../../ui/EmptyState';
 import { DualViewTabs } from '../DualViewTabs';
 import { LegacyModule } from '../LegacyModule';
-import { LazyPaperTradingView, LazyResearchNotebookView } from '../LazyOwnerViews';
+import { LazyCycleScannerView, LazyPaperTradingView, LazyResearchNotebookView } from '../LazyOwnerViews';
 import { TodayPanel } from '../today/TodayPanel';
 import { WatchlistPanel } from '../../watchlist/WatchlistPanel';
 import { NewsFeed } from '../news/NewsFeed';
@@ -85,7 +85,7 @@ export function TodayHub({ tab }: HubProps) {
               <RadarView />
               <section className="space-y-3">
                 <StackHeading>{t('n2.an.cycle')}</StackHeading>
-                <LegacyModule id="cycle-hunter" />
+                <LazyCycleScannerView embedded />
               </section>
             </div>
           ),

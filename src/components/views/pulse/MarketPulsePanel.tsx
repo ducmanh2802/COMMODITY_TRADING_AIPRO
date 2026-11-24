@@ -11,6 +11,7 @@ import { Skeleton } from '../../ui/Skeleton';
 import { Heatmap } from '../../ui/viz/Heatmap';
 import { SourceChip } from '../../common/SourceChip';
 import { FxPanel } from './FxPanel';
+import { providerOf } from './provider';
 
 const signed = (v: number | null, d = 2, suffix = ''): string => (v === null ? '-' : `${v > 0 ? '+' : ''}${fmtFixed(v, d)}${suffix}`);
 const tone = (v: number | null): string =>
@@ -105,11 +106,6 @@ function MoverList({ title, items }: { title: string; items: PulseMover[] }) {
       )}
     </div>
   );
-}
-
-/** Provider name of a long provenance string ("Yahoo Finance chart API (UNOFFICIAL, …) API sync …" -> "Yahoo Finance chart API"). */
-export function providerOf(src: string): string {
-  return src.split(/\s*\(|\s+API sync|\s+-\s+/)[0].trim() || src;
 }
 
 /** Count/date badges + one SourceChip for the distinct providers; raw per-instrument provenance stays in a collapsed <details>. */
