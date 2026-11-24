@@ -8,14 +8,15 @@ export const LEVEL7: Level = {
   lessons: [
     {
       id: 'l7-swing',
-      figures: ['c-swing-r', 'c-swing-rules'],
+      figures: ['d-margin-hit', 'c-swing-r', 'c-swing-rules'],
+      figureAt: { 'd-margin-hit': 0 },
       videos: [
         { title: 'Trading and Analysis - Trend vs. Anti-Trend', url: 'https://www.youtube.com/watch?v=ccfZkg7hACI', source: 'CME Group', lang: 'en', duration: '2:25', note: 'Video tiếng Anh của CME Group: khác biệt giữa giao dịch theo xu hướng và ngược xu hướng.' },
       ],
       title: 'Lướt sóng: rủi ro trước, rồi khung 7 quy tắc',
       objective: 'Hiểu rủi ro đòn bẩy, khác biệt với lướt ngắn, và có khung quy tắc để kiểm thử.',
       body: [
-        'Rủi ro trước: nếu ký quỹ khoảng 5% đến 10% giá trị hợp đồng (số giả định), giá đi ngược 2% đến 3% tương đương khoảng 20% (2% trên ký quỹ 10%) đến 60% (3% trên ký quỹ 5%) ký quỹ của vị thế. Phần lớn nhà giao dịch ngắn hạn cá nhân thua lỗ và không có cách nào bảo đảm lợi nhuận nhanh.',
+        'Rủi ro trước: với ký quỹ khoảng 5% đến 10% giá trị hợp đồng (số giả định), giá đi ngược 2% đến 3% đã ăn khoảng 20% đến 60% ký quỹ của vị thế (hình dưới). Phần lớn nhà giao dịch ngắn hạn cá nhân thua lỗ và không có cách nào bảo đảm lợi nhuận nhanh.',
         'Khác biệt: lướt sóng giữ vị thế vài ngày đến vài tuần, ít lệnh hơn, ít bị phí/trượt giá bào mòn hơn, nhưng chịu rủi ro qua đêm và qua báo cáo. Scalping/day trading giữ vài phút đến trong ngày, nhiều lệnh, đòi hỏi tốc độ và chi phí thấp, thường bất lợi cho người mới.',
         'Khung 7 quy tắc (để kiểm thử, không phải tín hiệu): (1) chọn mã có xu hướng rõ trong "Đánh giá các mã". (2) Giao dịch thuận xu hướng, ví dụ giá trên MA50 và MA200, chờ nhịp kéo về gần MA. (3) Đặt stop trước khi vào lệnh, khoảng 1,5 đến 2 lần ATR. (4) Rủi ro 1% đến 2% vốn mỗi lệnh bằng máy tính khối lượng. (5) Tránh giữ qua báo cáo lớn mà bạn chưa hiểu (WASDE, EIA, COT). (6) Có kế hoạch chốt lời, ví dụ chốt một phần ở 2R rồi dời stop theo giá. (7) Ghi mọi lệnh vào Sổ ghi chú nghiên cứu.',
         'Ví dụ minh hoạ (số giả định, không phải dữ liệu hiện tại): vào 450 cent, ATR 8, stop 1,5 × ATR. Tính bên dưới bằng công cụ của ứng dụng.',
@@ -36,7 +37,8 @@ export const LEVEL7: Level = {
     },
     {
       id: 'l7-backtest',
-      figures: ['c-backtest-flow', 'c-overfit'],
+      figures: ['c-backtest-flow', 'c-overfit', 'd-bt-dashboard', 'd-bt-flags'],
+      figureAt: { 'd-bt-dashboard': 4, 'd-bt-flags': 5 },
       title: 'Kiểm thử khung này bằng công cụ backtest',
       objective: 'Biết cấu hình và cách đọc kết quả, cùng các dấu hiệu đáng ngờ.',
       body: [
@@ -44,8 +46,8 @@ export const LEVEL7: Level = {
         'Các tham số của chiến lược do công cụ cố định và không chỉnh được trên giao diện; ứng dụng chưa hỗ trợ cấu hình sẵn. Bạn chỉ chọn mã, chiến lược, khung thời gian, vốn, số hợp đồng mỗi lệnh, phí mỗi hợp đồng, số tick trượt giá và chu kỳ roll tuỳ chọn. Công cụ dùng số hợp đồng cố định, nên không kiểm thử trực tiếp quy tắc "rủi ro 1% đến 2% vốn".',
         'Các bước: (1) mở Kiểm thử chiến lược. (2) Chọn mã và chiến lược EMA Pullback. (3) Chọn khung ngày (1D) để dùng lịch sử nhiều năm. (4) Nhập vốn, 1 hợp đồng mỗi lệnh, phí và trượt giá thực tế (hỏi công ty môi giới, đừng để 0). (5) Chạy và đọc kết quả. (6) Lặp lại trên vài mã khác nhau và vài giai đoạn khác nhau.',
         'Lưu ý dữ liệu: lịch sử 10 năm từ Yahoo là chuỗi hợp đồng gần tháng nhất liên tục, không điều chỉnh roll và là nguồn không chính thức. Khi chuyển kỳ hạn giá nhảy (roll gap) và có thể tạo lãi/lỗ giả; kết quả chỉ để học, không phải bằng chứng chiến lược hiệu quả.',
-        'Đọc kết quả: tổng lợi nhuận (đã trừ phí và trượt giá); max drawdown (mức sụt giảm lớn nhất của vốn, hãy tự hỏi bạn có chịu được không); tỷ lệ thắng (một mình nó chưa nói gì: thắng 70% nhưng lỗ lớn vẫn có thể thua); profit factor (tổng lãi chia tổng lỗ, trên 1 là có lãi trước các sai lệch); số lệnh; phí và trượt giá.',
-        'Dấu hiệu đáng ngờ: quá ít lệnh (vài chục lệnh trở xuống thì kết quả không ổn định); kết quả tốt do một vài lệnh lớn; tinh chỉnh tham số cho đẹp trên một mã/giai đoạn (overfitting); kết quả tốt chỉ khi phí/trượt giá bằng 0; kết quả chỉ tốt trên một mã.',
+        'Đọc kết quả: bốn chỉ số chính ở bảng dưới (tổng lợi nhuận, max drawdown, tỷ lệ thắng, profit factor), kèm số lệnh, phí và trượt giá.',
+        'Dấu hiệu đáng ngờ: gặp một trong 5 dấu hiệu ở hình dưới thì chưa tin kết quả backtest.',
       ],
       remember: ['Backtest tốt không bảo đảm tương lai.', 'Chuỗi liên tục chưa điều chỉnh roll: có roll gap, nguồn không chính thức.', 'Luôn nhập phí và trượt giá thực tế.'],
       uncertain: ['Mức phí và trượt giá thực tế: cần kiểm tra lại với MXV/công ty môi giới.'],

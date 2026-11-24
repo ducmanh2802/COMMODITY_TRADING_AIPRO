@@ -43,7 +43,8 @@ export const LEVEL8: Level = {
     },
     {
       id: 'l8-price-action',
-      figures: ['c-pa-zones', 'c-pa-candles'],
+      figures: ['c-pa-zones', 'c-pa-candles', 'd-breakout-vs-false'],
+      figureAt: { 'd-breakout-vs-false': 3 },
       diagram: 'pinbar',
       videos: [
         { title: 'Chart Types: Candlestick, Line and Bar', url: 'https://www.youtube.com/watch?v=DUMPAEL9re8', source: 'CME Group', lang: 'en', duration: '5:21', note: 'Video tiếng Anh của CME Group: đọc biểu đồ nến, đường và thanh giá.' },
@@ -55,7 +56,7 @@ export const LEVEL8: Level = {
         'Price Action là đọc trực tiếp biểu đồ giá (đỉnh, đáy, nến) thay vì dựa vào chỉ báo như RSI hay MACD. Chỉ báo được tính từ giá nên luôn đi sau giá; Price Action giúp bạn thấy chuyện đang xảy ra sớm hơn, nhưng cũng chủ quan hơn.',
         'Cấu trúc thị trường: dùng định nghĩa Dow. Tăng (HH + HL), giảm (LH + LL), hoặc đi ngang (giá dao động giữa một vùng trần và sàn). Trong vùng đi ngang, các mẫu "theo xu hướng" thường thất bại.',
         'Hỗ trợ là vùng giá mà trước đây lực mua đã chặn đà giảm; kháng cự là vùng lực bán đã chặn đà tăng. Vẽ thành VÙNG (vài tick) chứ không phải một đường chính xác. Vùng càng được chạm nhiều lần và trên khung càng lớn thì càng đáng chú ý. Kháng cự bị phá vỡ rõ ràng thường trở thành hỗ trợ (và ngược lại).',
-        'Phá vỡ (breakout) và phá vỡ giả: giá vượt kháng cự rồi đóng cửa trên đó, tốt nhất kèm khối lượng tăng, là phá vỡ đáng tin hơn. Nếu giá vượt lên rồi nhanh chóng quay lại dưới vùng cũ thì đó là phá vỡ giả (false breakout), rất hay gặp và hay "bẫy" người mua đuổi.',
+        'Phá vỡ (breakout) và phá vỡ giả: phá vỡ đáng tin hơn khi giá đóng cửa trên kháng cự, tốt nhất kèm khối lượng tăng; phá vỡ giả (false breakout) vượt lên rồi nhanh chóng quay lại dưới vùng cũ, rất hay "bẫy" người mua đuổi (so sánh ở hình).',
         'Các mẫu nến cơ bản: (a) Nến rút chân (pin bar): thân nhỏ, bóng dài một phía, cho thấy giá bị từ chối mạnh tại vùng đó. (b) Nến nhấn chìm (engulfing): thân nến sau bao trùm thân nến trước, ngược màu. (c) Nến trong (inside bar): toàn bộ nến nằm trong biên độ nến trước, thị trường đang do dự. Một mẫu nến chỉ có ý nghĩa khi xuất hiện TẠI vùng hỗ trợ/kháng cự quan trọng và thuận xu hướng chính.',
         'Cách dùng có kỷ luật: (1) xác định xu hướng chính, (2) đánh dấu vùng hỗ trợ/kháng cự, (3) chờ giá về vùng, (4) chờ một mẫu nến xác nhận, (5) đặt stop ở phía bên kia của vùng/bóng nến, (6) tính khối lượng theo rủi ro 1–2% vốn. Không vào lệnh chỉ vì "thấy một cây nến đẹp".',
       ],
@@ -79,7 +80,8 @@ export const LEVEL8: Level = {
     },
     {
       id: 'l8-volume',
-      figures: ['c-vol-oi'],
+      figures: ['c-vol-oi', 'd-volume-trend'],
+      figureAt: { 'd-volume-trend': 1, 'c-vol-oi': 4 },
       videos: [
         { title: 'What Is Volume?', url: 'https://www.youtube.com/watch?v=9Uv2cc_OwHA', source: 'CME Group', lang: 'en', duration: '3:32', note: 'Video tiếng Anh của CME Group: khối lượng giao dịch là gì và đọc nó thế nào.' },
         { title: 'Open Interest', url: 'https://www.youtube.com/watch?v=SN4cnCij_II', source: 'CME Group', lang: 'en', duration: '3:25', note: 'Video tiếng Anh của CME Group: hợp đồng mở (open interest) khác khối lượng ra sao.' },
@@ -91,7 +93,7 @@ export const LEVEL8: Level = {
         'Nguyên tắc cơ bản: (1) Xu hướng khỏe: khối lượng tăng theo hướng xu hướng, giảm ở nhịp điều chỉnh. (2) Phá vỡ kèm khối lượng lớn hơn trung bình 20 phiên đáng tin hơn. (3) Giá tạo đỉnh mới nhưng khối lượng ngày càng nhỏ: lực đẩy đang yếu đi (phân kỳ). (4) Khối lượng cực lớn sau một đợt chạy dài (climax) có thể báo hiệu kiệt sức, nhưng chưa chắc là đảo chiều.',
         'Đặc thù hợp đồng tương lai: khối lượng chia theo từng tháng đáo hạn. Khi gần đáo hạn, khối lượng chuyển sang hợp đồng kế tiếp (roll), nên khối lượng của hợp đồng cũ giảm dần là chuyện bình thường, không phải tín hiệu. Hãy xem khối lượng của hợp đồng giao dịch nhiều nhất hoặc tổng tất cả các tháng.',
         'Hợp đồng mở (Open Interest, OI) là số hợp đồng đang còn mở chưa đóng. Khác với khối lượng (số lần mua bán), OI cho biết có tiền MỚI vào thị trường hay không. Bạn xem OI theo tuần ở mục COT trong app.',
-        'Bảng kết hợp Giá + OI (kinh điển trong thị trường phái sinh): Giá tăng + OI tăng: tiền mới mua vào, xu hướng tăng khỏe. Giá tăng + OI giảm: chủ yếu phe bán khống đóng lệnh (short covering), đà tăng có thể yếu. Giá giảm + OI tăng: tiền mới bán khống, xu hướng giảm khỏe. Giá giảm + OI giảm: phe mua đóng lệnh/cắt lỗ, áp lực bán có thể sắp cạn.',
+        'Bảng kết hợp Giá + OI (kinh điển trong thị trường phái sinh) ở hình dưới: giá và OI cùng tăng là tiền mới vào; giá tăng + OI giảm có thể chỉ là short covering.',
         'Lưu ý dữ liệu: khối lượng trong app có thể đến từ nguồn không chính thức (Yahoo, trễ) và là chuỗi liên tục; OI từ báo cáo COT của CFTC công bố thứ Sáu, số liệu tính đến thứ Ba. Đừng dùng khối lượng một phiên đơn lẻ để kết luận.',
       ],
       textExample:

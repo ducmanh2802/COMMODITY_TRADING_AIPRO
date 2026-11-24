@@ -125,12 +125,13 @@ export const LEVEL2: Level = {
     },
     {
       id: 'l2-legal',
-      figures: ['a-legal-map'],
+      figures: ['d-decree-timeline'],
+      figureAt: { 'd-decree-timeline': 1 },
       title: 'Pháp lý: những điều có thể kiểm chứng',
       objective: 'Phân biệt các văn bản pháp lý liên quan và biết điều gì cần kiểm tra lại.',
       body: [
         'Nghị định 158/2020/NĐ-CP quy định về chứng khoán phái sinh và thị trường chứng khoán phái sinh (HNX), không phải khung pháp lý riêng của hàng hoá MXV.',
-        'Giao dịch hàng hoá qua Sở Giao dịch Hàng hoá trước đây theo Nghị định 158/2006/NĐ-CP và 51/2018/NĐ-CP. Nghị định 302/2026/NĐ-CP (ban hành 01/08/2026, hiệu lực 15/09/2026) quy định chi tiết Luật Thương mại về mua bán hàng hoá qua Sở Giao dịch Hàng hoá và, theo Điều 40, chấm dứt hiệu lực của NĐ 158/2006 và NĐ 51/2018 (đối chiếu trên LuatVietnam, kiểm tra 20/11/2026). Thông tư 47/2026/TT-BCT hướng dẫn thi hành.',
+        'Giao dịch hàng hoá qua Sở Giao dịch Hàng hoá trước đây theo Nghị định 158/2006/NĐ-CP và 51/2018/NĐ-CP. Nghị định 302/2026/NĐ-CP quy định chi tiết Luật Thương mại về mua bán hàng hoá qua Sở và chấm dứt hiệu lực hai nghị định trên; ngày ban hành, ngày hiệu lực và văn bản hướng dẫn ở dòng thời gian dưới.',
         'Vì văn bản pháp luật thay đổi, đừng dựa vào bài này để kết luận pháp lý: hãy kiểm tra văn bản gốc và hỏi MXV/công ty môi giới.',
         'Cách đọc văn bản pháp luật: xem tên văn bản và cơ quan ban hành, ngày ban hành, ngày có hiệu lực, và điều khoản nói văn bản cũ nào hết hiệu lực. Chỉ khi đối chiếu ba điều này với bản gốc mới nên kết luận.',
       ],

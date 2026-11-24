@@ -101,7 +101,8 @@ export const LEVEL10: Level = {
     },
     {
       id: 'l10-corn',
-      figures: ['c-corn-trade', 'c-order-calc'],
+      figures: ['c-corn-trade', 'c-order-calc', 'd-corn-outcomes', 'd-risk-gauge'],
+      figureAt: { 'c-corn-trade': 2, 'd-corn-outcomes': 5, 'd-risk-gauge': 6 },
       videos: [{ title: "Product: Corn", url: 'https://www.youtube.com/watch?v=aQeyOi7LhLw', source: "CME Group", lang: 'en', note: "Giới thiệu hợp đồng ngô của CME Group: thông số hợp đồng, báo cáo quan trọng và yếu tố cung cầu." }],
       title: 'Ví dụ A–Z: một lệnh MUA ngô',
       objective: 'Theo dõi một lệnh Long từ phân tích, đặt lệnh, quản lý đến đóng lệnh, với số tiền cụ thể.',
@@ -111,8 +112,8 @@ export const LEVEL10: Level = {
         'Bước 2 – Điểm vào và cắt lỗ: nến bật lên đóng cửa 439. Vào 439, cắt lỗ 432 (dưới vùng hỗ trợ) → rủi ro 7 cent × 50 = 350 USD/hợp đồng ≤ 390 USD → được 1 hợp đồng.',
         'Bước 3 – Mục tiêu: đỉnh gần nhất 453 → lãi kỳ vọng 14 cent = 700 USD = 2R. Kế hoạch: chốt toàn bộ ở 453, hoặc nếu giá vượt 446 thì dời cắt lỗ về hòa vốn 439.',
         'Bước 4 – Ký quỹ (giả định 1.700 USD) chỉ chiếm ~4% tài khoản, còn rất nhiều đệm. Ghi kịch bản vào nhật ký trước khi bấm lệnh.',
-        'Kết quả A (đúng kịch bản): 6 phiên sau giá chạm 453. Lãi 14 × 50 = 700 USD, trừ phí giả định 2 chiều 10 USD = 690 USD ≈ 17,7 triệu VNĐ (+1,77% vốn). Kết quả B (sai kịch bản): giá phá 432, lệnh dừng khớp 431,75 (trượt 1 tick) → lỗ 7,25 × 50 + 10 = 372,5 USD ≈ 9,5 triệu (−0,95% vốn). Cả hai đều là lệnh "đúng quy trình".',
-        'Nếu chỉ có 300 triệu (~11.700 USD, 1% = 117 USD): cùng điểm cắt lỗ 7 cent thì 1 hợp đồng rủi ro 350 USD = 3% vốn → vượt quy tắc. Giải pháp: chọn hợp đồng nhỏ hơn (nếu MXV có bản mini), chờ điểm vào có cắt lỗ gần hơn, hoặc chưa giao dịch.',
+        'Kết quả A (đúng kịch bản) và B (sai kịch bản, trượt 1 tick) ở hình dưới. Cả hai đều là lệnh "đúng quy trình".',
+        'Nếu chỉ có 300 triệu (~11.700 USD, 1% = 117 USD): cùng cắt lỗ 7 cent, 1 hợp đồng rủi ro 350 USD = 3% vốn → vượt quy tắc (hình). Giải pháp: hợp đồng nhỏ hơn (nếu MXV có bản mini), chờ điểm vào có cắt lỗ gần hơn, hoặc chưa giao dịch.',
       ],
       example: { caption: 'Ví dụ minh hoạ: vốn 39.000 USD, rủi ro 1%, cắt lỗ cách 7 cent, phí 10 USD', calc: { kind: 'sizing', instrumentId: 'CBOT:ZC', equity: 39000, riskPct: 1, stop: 7, costs: 10 } },
       remember: [
@@ -164,7 +165,8 @@ export const LEVEL10: Level = {
     },
     {
       id: 'l10-costs',
-      figures: ['c-costs-stack', 'c-roll-contango'],
+      figures: ['c-costs-stack', 'c-roll-contango', 'd-fee-r', 'd-expiry-strip'],
+      figureAt: { 'd-fee-r': 1, 'd-expiry-strip': 2, 'c-roll-contango': 3 },
       videos: [
         { title: 'Benefits of Futures: Managing Contract Expiration', url: 'https://www.youtube.com/watch?v=YwqaB1tGY04', source: 'CME Group', lang: 'en', duration: '1:59', note: 'Video tiếng Anh của CME Group: xử lý vị thế khi hợp đồng sắp đáo hạn (đóng hoặc roll).' },
         { title: 'Expiration and Settlement of Futures', url: 'https://www.youtube.com/watch?v=ze-IBwrFOb0', source: 'CME Group', lang: 'en', duration: '1:33', note: 'Video tiếng Anh của CME Group: đáo hạn và thanh toán (giao hàng hoặc tiền mặt) diễn ra thế nào.' },
@@ -173,7 +175,7 @@ export const LEVEL10: Level = {
       objective: 'Biết các khoản làm giảm lợi nhuận và cách tránh rủi ro giao nhận khi đáo hạn.',
       body: [
         'Các khoản chi phí: phí giao dịch (thành viên + sàn, tính mỗi chiều mỗi hợp đồng); trượt giá (khớp kém hơn giá dự tính, nhất là lệnh thị trường và lúc ra tin); chênh lệch tỷ giá khi nộp/rút và thanh toán lãi lỗ USD; thuế theo quy định hiện hành. Hãy hỏi thành viên bảng phí đầy đủ và tính vào mọi kế hoạch.',
-        'Ví dụ ảnh hưởng của phí (giả định): phí 2 chiều 10 USD. Lệnh ngô rủi ro 350 USD → phí ≈ 0,03R, không đáng kể. Nhưng nếu lướt cắt lỗ chỉ 2 cent (100 USD) thì phí ≈ 0,1R mỗi lệnh — 100 lệnh mất 10R chỉ vì phí. Đây là lý do lướt quá ngắn rất khó có lãi.',
+        'Ảnh hưởng của phí (giả định, phí 2 chiều 10 USD): gần như không đáng kể với lệnh ngô rủi ro 350 USD, nhưng rất nặng với lệnh lướt cắt lỗ 2 cent (hình). Đây là lý do lướt quá ngắn rất khó có lãi.',
         'Đáo hạn: mỗi hợp đồng có tháng đáo hạn (ví dụ ngô tháng 3, 5, 7, 9, 12). Nhà đầu tư cá nhân thường phải đóng vị thế trước ngày thông báo/đáo hạn theo quy định của MXV để tránh nghĩa vụ giao nhận. Ghi ngày đó vào lịch ngay khi mở lệnh.',
         'Chuyển kỳ hạn (roll): muốn giữ vị thế lâu hơn thì đóng hợp đồng tháng gần và mở hợp đồng tháng xa. Khi thị trường contango (tháng xa đắt hơn), roll Long tốn chi phí; backwardation thì ngược lại. Xem mục Cấu trúc kỳ hạn trong app trước khi roll.',
       ],

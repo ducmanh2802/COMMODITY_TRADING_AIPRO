@@ -10,11 +10,12 @@ export const LEVEL6: Level = {
   lessons: [
     {
       id: 'l6-data-labels',
-      figures: ['b-data-labels', 'b-delay-gap'],
+      figures: ['d-data-badges', 'b-data-labels', 'b-delay-gap'],
+      figureAt: { 'd-data-badges': 0 },
       title: 'Đọc thẻ giá và nhãn dữ liệu: khi nào KHÔNG nên tin một con số',
       objective: 'Hiểu các nhãn chất lượng dữ liệu và biết khi nào phải dừng phân tích.',
       body: [
-        'Mỗi giá trong ứng dụng đi kèm nhãn nguồn và độ tươi. Nhãn có thể gồm: "Giá trễ ~15 phút" (nguồn miễn phí có độ trễ), "Giá cũ" (dữ liệu quá hạn so với kỳ vọng), "Nguồn không chính thức" (không phải dữ liệu của sàn), và thời điểm "cập nhật X giây trước". Cách ghi cụ thể có thể khác theo màn hình.',
+        'Mỗi giá trong ứng dụng đi kèm nhãn nguồn và độ tươi; các nhãn thường gặp trông như hình dưới. Cách ghi cụ thể có thể khác theo màn hình.',
         'Quy tắc: số liệu trễ vẫn dùng được để học và nghiên cứu xu hướng dài hạn, nhưng không dùng để quyết định mức giá khớp lệnh chính xác. Giá trễ 15 phút có thể cách xa giá thực lúc có báo cáo lớn.',
         'Dừng và kiểm tra lại khi: nhãn "Giá cũ"; thời gian cập nhật lâu bất thường; nguồn không chính thức nhưng bạn định dựa vào một mức giá cụ thể; dữ liệu chuỗi liên tục có khoảng nhảy giá khi chuyển kỳ hạn (roll gap).',
         'Ứng dụng không thay thế bảng giá của công ty môi giới. Khi quyết định có tiền thật, đối chiếu với nền tảng của thành viên MXV.',

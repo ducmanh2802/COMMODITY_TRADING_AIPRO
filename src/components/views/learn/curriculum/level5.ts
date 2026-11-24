@@ -108,7 +108,8 @@ export const LEVEL5: Level = {
     },
     {
       id: 'l5-who-profits',
-      figures: ['b-who-players', 'b-hedge-vs-spec'],
+      figures: ['b-who-players', 'b-hedge-vs-spec', 'd-cot-groups', 'd-cftc-study', 'd-why-lose', 'd-safe-broker'],
+      figureAt: { 'd-cot-groups': 0, 'b-hedge-vs-spec': 1, 'b-who-players': 3, 'd-cftc-study': 4, 'd-why-lose': 5, 'd-safe-broker': 6 },
       videos: [
         { title: 'Creating a Hedge Strategy', url: 'https://www.youtube.com/watch?v=65x02VncVNY', source: 'CME Group', lang: 'en', note: 'Cách doanh nghiệp phòng hộ bằng futures (tiếng Anh).' },
         { title: 'How to Hedge Grain Risk', url: 'https://www.youtube.com/watch?v=PaCpn4RqEMI', source: 'CME Group', lang: 'en', note: 'Phòng hộ rủi ro giá ngũ cốc (tiếng Anh).' },
@@ -116,13 +117,13 @@ export const LEVEL5: Level = {
       title: 'Ai kiếm tiền trên thị trường phái sinh hàng hoá — và vì sao đa số nhà đầu tư cá nhân thua lỗ',
       objective: 'Biết các nhóm người chơi, cách mỗi nhóm kiếm tiền hoặc giảm rủi ro, và vì sao nhà đầu tư cá nhân khó thắng.',
       body: [
-        'Báo cáo COT của CFTC (bản "disaggregated") chia người giữ vị thế lớn thành bốn nhóm: (1) Producer/Merchant/Processor/User — doanh nghiệp sản xuất, thương mại, chế biến, sử dụng hàng thật; (2) Swap Dealer — tổ chức tạo lập giao dịch hoán đổi cho khách; (3) Managed Money — quỹ và nhà quản lý tài sản (gồm CTA, quỹ hedge); (4) Other Reportables — các tổ chức còn lại. Nhà đầu tư nhỏ lẻ nằm trong nhóm vị thế "không báo cáo" (nonreportable).',
+        'Báo cáo COT của CFTC (bản "disaggregated") chia người giữ vị thế lớn thành bốn nhóm (xem hình); nhà đầu tư nhỏ lẻ nằm trong nhóm vị thế "không báo cáo" (nonreportable).',
         'Nhóm doanh nghiệp hàng thật dùng futures để KHOÁ GIÁ, không phải để kiếm lãi từ futures. Nếu giá đi ngược, hợp đồng lỗ nhưng hàng thật bù lại. Thu nhập của họ đến từ kinh doanh hàng thật: chênh lệch cơ sở (basis, giá tại chỗ trừ giá futures), chi phí lưu kho (carry) và chênh lệch địa điểm. Việc này cần kho bãi, vận tải, hợp đồng mua bán — thứ nhà đầu tư cá nhân không có.',
         'Nhà đầu cơ nhận phần rủi ro mà người phòng hộ muốn bỏ đi. Quỹ theo xu hướng (CTA) thường dùng hệ thống quy tắc, vốn lớn, chi phí thấp, phân tán nhiều thị trường. Một số chiến lược người ta dùng: chênh lệch kỳ hạn (calendar spread), chênh lệch chế biến (crush spread ở đậu tương, crack spread ở dầu), mùa vụ, giao dịch quanh sự kiện (WASDE, EIA). Đây là cách người ta thử kiếm lời, không phải lợi nhuận chắc chắn; nhiều người dùng cùng cách vẫn thua.',
         'Còn có "roll yield": khi đường cong dốc xuống (backwardation), việc roll sang hợp đồng xa hơn thường có lợi; khi dốc lên (contango) thì tốn chi phí. Nhà tạo lập thị trường (market maker) kiếm từ chênh lệch mua–bán (bid–ask) với khối lượng rất lớn và hạ tầng công nghệ riêng.',
-        'Thực tế rủi ro: một nghiên cứu của nhân viên Văn phòng Kinh tế trưởng CFTC (Ferko, Mixon, Onur, 02/2024; 36.538 nhà giao dịch cá nhân, 50 thị trường futures Mỹ, 02/2021–11/2022) kết luận nhìn chung nhà giao dịch cá nhân thua lỗ; lỗ trung vị ước tính khoảng 100–200 USD và phân phối lãi lỗ lệch về phía lỗ. Lưu ý: đây là nghiên cứu của nhân viên, không phải quan điểm chính thức của CFTC; lãi lỗ là ước tính từ dữ liệu cuối ngày; mẫu nghiêng về hợp đồng micro chỉ số chứng khoán Mỹ, chưa chắc áp dụng nguyên cho hàng hoá MXV. Tham khảo thêm: SEBI (Ấn Độ) báo cáo 91% nhà giao dịch cá nhân phái sinh cổ phiếu thua lỗ trong FY2024-25 — thị trường khác, chỉ để tham khảo.',
-        'Vì sao dễ thua: đòn bẩy làm biến động giá nhỏ thành lỗ lớn so với vốn; gọi ký quỹ buộc cắt lỗ đúng lúc bất lợi; phí và trượt giá bào mòn vốn; thiếu quy tắc quản lý khối lượng và kỷ luật; thông tin và công cụ thua tổ chức.',
-        'An toàn tại Việt Nam (hướng dẫn thực tế, không phải trích dẫn pháp lý): chỉ giao dịch qua thành viên môi giới có tên trên mxv.com.vn và tự đối chiếu. Cơ sở pháp lý chung của thị trường hàng hoá phái sinh là Nghị định 51/2018/NĐ-CP (sửa đổi Nghị định 158/2006/NĐ-CP). Dấu hiệu cảnh báo: hứa lợi nhuận, "room" copy lệnh, chuyển tiền vào tài khoản cá nhân, sàn CFD/forex nước ngoài, giả mạo MXV.',
+        'Thực tế rủi ro: một nghiên cứu của nhân viên Văn phòng Kinh tế trưởng CFTC (Ferko, Mixon, Onur, 02/2024) kết luận nhìn chung nhà giao dịch cá nhân thua lỗ. Đây là nghiên cứu của nhân viên, không phải quan điểm chính thức của CFTC; quy mô mẫu, lỗ trung vị và các giới hạn ở hình dưới.',
+        'Vì sao dễ thua: đòn bẩy, gọi ký quỹ, phí và trượt giá, thiếu quy tắc, thua tổ chức về thông tin (chi tiết ở hình).',
+        'An toàn tại Việt Nam: kiểm tra môi giới theo 3 bước ở hình dưới. Cơ sở pháp lý chung của thị trường hàng hoá phái sinh là Nghị định 51/2018/NĐ-CP (sửa đổi Nghị định 158/2006/NĐ-CP).',
         'Gợi ý thực hành: tập với Giao dịch thử và Strategy Lab của ứng dụng; đọc tài liệu CME Education và báo cáo COT để hiểu ai đang nắm vị thế.',
       ],
       examples: [

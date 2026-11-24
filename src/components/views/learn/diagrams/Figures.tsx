@@ -1,9 +1,10 @@
 import { FIGURES_A } from './groupA';
 import { FIGURES_B } from './groupB';
 import { FIGURES_C } from './groupC';
+import { FIGURES_D } from './groupD';
 import type { FigureMap } from './kit';
 
-export const ALL_FIGURES: FigureMap = { ...FIGURES_A, ...FIGURES_B, ...FIGURES_C };
+export const ALL_FIGURES: FigureMap = { ...FIGURES_A, ...FIGURES_B, ...FIGURES_C, ...FIGURES_D };
 
 /** Renders a lesson's extra figures in order; unknown ids are skipped (tests guard against them). */
 export function LessonFigures({ ids }: { ids: string[] }) {

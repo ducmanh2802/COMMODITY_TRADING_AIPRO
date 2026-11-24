@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { Bookmark } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Bookmark, Info, Lightbulb } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { useI18n } from '../../../i18n';
 import type { InstrumentDefinition } from '../../../shared/types/instrument';
@@ -7,13 +7,16 @@ import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { estimateLessonReadMinutes, highlightTextSegments } from './academyUtils';
 import { Exercise, RefusalBox, SourceLinks } from './Calculators';
-import type { ExampleCalc, Lesson, QuizQuestion } from './curriculum/types';
+import type { ExampleCalc, Lesson } from './curriculum/types';
 import { LessonDiagram } from './diagrams/Diagrams';
 import { LessonFigures } from './diagrams/Figures';
 import { LessonVideos } from './LessonVideos';
+import { figuresByParagraph } from './lesson/bodyParse';
+import { KeyPoints } from './lesson/KeyPoints';
+import { LessonBody } from './lesson/LessonBody';
+import { LessonQuiz } from './lesson/LessonQuiz';
 import { contractValue, marginCallDistance, marginLeverage, positionSize, rMultiple, rollCost, swingPlan, tickPnl } from './learnMath';
 import type { LessonProgress } from './progress';
-import { recordAnswerStored } from './review';
 
 const fmt = (v: number, digits = 2) => v.toLocaleString('vi-VN', { maximumFractionDigits: digits });
 
@@ -123,77 +126,6 @@ function SpecTable({ ids, instruments }: { ids: string[]; instruments: Instrumen
   );
 }
 
-function Quiz({ lessonId, questions, best, onScore }: { lessonId: string; questions: QuizQuestion[]; best?: number; onScore: (pct: number) => void }) {
-  const [picked, setPicked] = useState<(number | null)[]>(() => questions.map(() => null));
-  const [submitted, setSubmitted] = useState(false);
-  const correct = picked.filter((p, i) => p === questions[i].answer).length;
-  const allAnswered = picked.every((p) => p !== null);
-  const pct = Math.round((correct / questions.length) * 100);
-  return (
-    <div className="space-y-4">
-      {questions.map((qu, qi) => (
-        <fieldset key={qu.q} className="space-y-1.5">
-          <legend className="text-sm text-[var(--text-strong)] font-medium">
-            {qi + 1}. {qu.q}
-          </legend>
-          {qu.options.map((o, oi) => {
-            const isPick = picked[qi] === oi;
-            const show = submitted && (oi === qu.answer || isPick);
-            const tone = show ? (oi === qu.answer ? 'border-[var(--positive)]' : 'border-[var(--negative)]') : isPick ? 'border-[var(--accent)]' : 'border-[var(--border)]';
-            return (
-              <label key={o} className={`flex items-start gap-2 text-xs rounded-md border px-2.5 py-1.5 cursor-pointer ${tone}`}>
-                <input
-                  type="radio"
-                  name={`${qu.q}`}
-                  className="mt-0.5"
-                  checked={isPick}
-                  disabled={submitted}
-                  onChange={() => setPicked((p) => p.map((v, i) => (i === qi ? oi : v)))}
-                />
-                <span>{o}</span>
-              </label>
-            );
-          })}
-          {submitted && <p className="text-xs text-[var(--muted)]">Giải thích: {qu.why}</p>}
-        </fieldset>
-      ))}
-      <div className="flex flex-wrap items-center gap-3">
-        {!submitted ? (
-          <button
-            type="button"
-            disabled={!allAnswered}
-            onClick={() => {
-              setSubmitted(true);
-              questions.forEach((qu, i) => recordAnswerStored(lessonId, qu.q, picked[i] === qu.answer));
-              onScore(pct);
-            }}
-            className="text-xs px-3 py-1.5 rounded-md bg-[var(--accent)] text-white disabled:opacity-40"
-          >
-            Nộp bài
-          </button>
-        ) : (
-          <>
-            <Badge tone={pct >= 60 ? 'positive' : 'warning'}>
-              Điểm: {correct}/{questions.length} ({pct}%)
-            </Badge>
-            <button
-              type="button"
-              onClick={() => {
-                setPicked(questions.map(() => null));
-                setSubmitted(false);
-              }}
-              className="text-xs px-3 py-1.5 rounded-md border border-[var(--border)]"
-            >
-              Làm lại
-            </button>
-          </>
-        )}
-        {best !== undefined && <span className="text-[11px] text-[var(--muted)]">Điểm cao nhất: {best}%</span>}
-      </div>
-    </div>
-  );
-}
-
 function HighlightedSpan({ text, query }: { text: string; query?: string }) {
   if (!query || !query.trim()) return <>{text}</>;
   const segments = highlightTextSegments(text, query);
@@ -255,6 +187,7 @@ export function LessonPage({
   const { t } = useI18n();
   const { instruments, loading, setActiveModule } = useTerminal();
   const readMinutes = estimateLessonReadMinutes(lesson);
+  const restFigures = figuresByParagraph(lesson.figureAt, lesson.figures, lesson.body.length).rest;
   const noteHasMatch =
     !!highlightQuery.trim() &&
     !!note.trim() &&
@@ -298,18 +231,23 @@ export function LessonPage({
           <HighlightedSpan text={lesson.objective} query={highlightQuery} />
         </p>
       </Card>
-      <div className="space-y-3 text-sm leading-relaxed">
-        {lesson.body.map((p) => (
-          <p key={p}>
-            <HighlightedSpan text={p} query={highlightQuery} />
-          </p>
-        ))}
-      </div>
+      <KeyPoints items={lesson.remember} render={(r) => <HighlightedSpan text={r} query={highlightQuery} />} />
+      <LessonBody lessonId={lesson.id} body={lesson.body} figures={lesson.figures} figureAt={lesson.figureAt} query={highlightQuery} />
       {lesson.diagram && <LessonDiagram id={lesson.diagram} />}
-      {lesson.figures && lesson.figures.length > 0 && <LessonFigures ids={lesson.figures} />}
+      {restFigures.length > 0 && <LessonFigures ids={restFigures} />}
       {lesson.videos && lesson.videos.length > 0 && <LessonVideos videos={lesson.videos} />}
       {lesson.example && <ExampleBlock calc={lesson.example.calc} caption={lesson.example.caption} instruments={instruments} />}
-      {lesson.textExample && <p className="text-xs rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3">Ví dụ: {lesson.textExample}</p>}
+      {lesson.textExample && (
+        <div className="rounded-md border border-[var(--accent)]/40 bg-[var(--accent-soft)] p-3">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-[var(--accent-text)] mb-1">
+            <Lightbulb aria-hidden="true" className="w-3.5 h-3.5" />
+            Ví dụ
+          </p>
+          <p className="text-sm leading-relaxed">
+            <HighlightedSpan text={lesson.textExample} query={highlightQuery} />
+          </p>
+        </div>
+      )}
       {lesson.examples?.map((ex) => (
         <div key={ex.title} className="rounded-md border border-[var(--accent)]/40 bg-[var(--accent-soft)] p-3">
           <p className="text-xs font-semibold text-[var(--accent-text)] mb-1">Ví dụ tình huống: {ex.title}</p>
@@ -340,16 +278,6 @@ export function LessonPage({
           </ul>
         </Card>
       )}
-      <Card tone="warning">
-        <p className="text-xs font-semibold mb-1">Ghi nhớ</p>
-        <ul className="list-disc pl-4 text-xs space-y-1">
-          {lesson.remember.map((r) => (
-            <li key={r}>
-              <HighlightedSpan text={r} query={highlightQuery} />
-            </li>
-          ))}
-        </ul>
-      </Card>
       {lesson.uncertain && (
         <Card tone="warning">
           <p className="text-xs font-semibold mb-1">Cần kiểm tra lại với MXV/công ty môi giới</p>
@@ -380,7 +308,7 @@ export function LessonPage({
       )}
       <Card>
         <p className="text-sm font-semibold mb-3">Câu hỏi trắc nghiệm</p>
-        <Quiz lessonId={lesson.id} questions={lesson.quiz} best={progress?.best} onScore={onScore} />
+        <LessonQuiz lessonId={lesson.id} questions={lesson.quiz} best={progress?.best} onScore={onScore} />
       </Card>
       {onChangeNote && (
         <Card className="space-y-2">
@@ -429,7 +357,10 @@ export function LessonPage({
         )}
       </div>
       {footer}
-      <p className="text-[11px] text-[var(--muted)]">Tài liệu giáo dục, không phải tư vấn đầu tư.</p>
+      <p className="flex items-center gap-1.5 text-[11px] text-[var(--muted)] border-t border-[var(--border)] pt-2">
+        <Info aria-hidden="true" className="w-3 h-3 shrink-0" />
+        Tài liệu giáo dục, không phải tư vấn đầu tư.
+      </p>
     </div>
   );
 }

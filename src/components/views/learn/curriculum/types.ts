@@ -51,8 +51,13 @@ export interface Lesson {
   uncertain?: string[];
   /** Curated videos from reputable sources (verified to exist). */
   videos?: LessonVideo[];
-  /** Extra inline SVG figures (keys of diagrams/group{A,B,C}.tsx), shown after the body in order. */
+  /** Extra inline figures (keys of diagrams/group{A,B,C,D}.tsx), shown after the body in order. */
   figures?: string[];
+  /**
+   * Optional placement: figure id → body paragraph index after which it renders inline.
+   * Figures not listed here keep the default position after the body.
+   */
+  figureAt?: Record<string, number>;
   /** Inline SVG diagram shown after the body. */
   diagram?: DiagramId;
 }

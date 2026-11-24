@@ -67,7 +67,8 @@ export const LEVEL9: Level = {
     },
     {
       id: 'l9-money',
-      figures: ['c-drawdown', 'c-sizing-calc'],
+      figures: ['c-drawdown', 'c-sizing-calc', 'd-breakers'],
+      figureAt: { 'c-sizing-calc': 1, 'c-drawdown': 2, 'd-breakers': 3 },
       videos: [
         { title: 'Step 3. Risk Management and Your Trade Plan', url: 'https://www.youtube.com/watch?v=QdbUdYtm9DU', source: 'CME Group', lang: 'en', duration: '1:01', note: 'Video tiếng Anh của CME Group: đặt giới hạn rủi ro trong kế hoạch giao dịch.' },
         { title: 'How Leverage Can Boost Returns (And What Can Go Wrong)', url: 'https://www.youtube.com/watch?v=Ll3TCEz4g1k', source: 'Ben Felix', lang: 'en', duration: '13:35', note: 'Video tiếng Anh của Ben Felix: đòn bẩy khuếch đại cả lãi lẫn lỗ và drawdown.' },
@@ -76,9 +77,9 @@ export const LEVEL9: Level = {
       objective: 'Tính khối lượng chính xác theo rủi ro, hiểu toán học của drawdown và đặt "cầu dao" bảo vệ tài khoản.',
       body: [
         'Công thức khối lượng: Số hợp đồng = (Vốn × % rủi ro) ÷ (Khoảng cách stop × Giá trị mỗi đơn vị giá của 1 hợp đồng). Luôn làm tròn XUỐNG.',
-        'Ví dụ ngô CBOT (giả định): vốn 30.000 USD, rủi ro 1% = 300 USD. Vào 450 cent, stop 438 cent → khoảng cách 12 cent. Mỗi cent của 1 hợp đồng ngô (5.000 giạ) = 50 USD → rủi ro mỗi hợp đồng = 12 × 50 = 600 USD. Số hợp đồng = 300 ÷ 600 = 0,5 → làm tròn xuống 0: lệnh này QUÁ LỚN so với vốn. Giải pháp: dùng hợp đồng mini (nếu có), nới vốn, hoặc bỏ qua lệnh. Bỏ qua là một quyết định tốt.',
-        'Toán học drawdown (không đối xứng): lỗ 10% cần lãi 11% để hồi; lỗ 20% cần 25%; lỗ 30% cần 43%; lỗ 50% cần 100%; lỗ 70% cần 233%. Giữ drawdown nhỏ quan trọng hơn kiếm lãi lớn.',
-        'Ba "cầu dao" nên có: (1) Giới hạn ngày: lỗ 2–3% vốn trong ngày thì dừng giao dịch đến hôm sau. (2) Giới hạn tuần/tháng: lỗ 6% tuần hoặc 10% tháng thì giảm một nửa khối lượng và xem lại nhật ký. (3) Giới hạn vị thế: tổng rủi ro mọi lệnh đang mở không quá 4–5% vốn, và không mở nhiều lệnh cùng chiều trên các mã tương quan cao (ngô + lúa mì + đậu tương cùng mua = gần như một lệnh lớn).',
+        'Ví dụ ngô CBOT (giả định): vốn 30.000 USD, rủi ro 1%, stop 12 cent → 0,5 hợp đồng, làm tròn xuống 0: lệnh QUÁ LỚN so với vốn (từng bước ở hình). Giải pháp: hợp đồng mini (nếu có), nới vốn, hoặc bỏ qua lệnh. Bỏ qua là một quyết định tốt.',
+        'Toán học drawdown không đối xứng: lỗ 50% cần lãi 100% để hồi (bảng đầy đủ ở hình). Giữ drawdown nhỏ quan trọng hơn kiếm lãi lớn.',
+        'Ba "cầu dao" nên có: giới hạn ngày, giới hạn tuần/tháng và giới hạn tổng rủi ro vị thế; ngưỡng cụ thể ở hình dưới.',
         'Ký quỹ không phải rủi ro: ký quỹ là tiền đặt cọc sàn giữ; rủi ro là khoảng cách tới stop. Một lệnh ký quỹ thấp vẫn có thể rủi ro lớn nếu stop xa hoặc giá nhảy qua stop (gap) khi có báo cáo.',
       ],
       example: {
@@ -103,7 +104,8 @@ export const LEVEL9: Level = {
     },
     {
       id: 'l9-setups',
-      figures: ['c-setups-3'],
+      figures: ['d-setup-charts', 'd-setup-tree'],
+      figureAt: { 'd-setup-charts': 0, 'd-setup-tree': 4 },
       videos: [
         { title: 'Support and Resistance Points', url: 'https://www.youtube.com/watch?v=KbA4LPdoxhw', source: 'CME Group', lang: 'en', duration: '1:54', note: 'Video tiếng Anh của CME Group: xác định vùng hỗ trợ/kháng cự cho setup pullback và breakout.' },
         { title: 'Technical Patterns Continuation', url: 'https://www.youtube.com/watch?v=4s4XYddp0tg', source: 'CME Group', lang: 'en', duration: '2:43', note: 'Video tiếng Anh của CME Group: các mô hình tiếp diễn xu hướng.' },
@@ -115,7 +117,7 @@ export const LEVEL9: Level = {
         'Setup 1 – Pullback thuận xu hướng. Điều kiện: khung ngày có HH/HL, giá trên MA50 và MA50 dốc lên. Chờ giá kéo về vùng hỗ trợ (đáy cũ hoặc gần MA20/MA50) với khối lượng giảm. Vào: khi có nến từ chối/nhấn chìm tăng tại vùng. Stop: dưới đáy nhịp điều chỉnh (hoặc 1,5×ATR). Mục tiêu: đỉnh cũ (tối thiểu 2R), phần còn lại dời stop theo đáy mới. Huỷ: giá đóng cửa dưới đáy HL gần nhất.',
         'Setup 2 – Breakout rồi Retest. Điều kiện: giá đi ngang/tích lũy dưới một kháng cự rõ ràng (chạm ≥2–3 lần). Chờ phiên đóng cửa vượt kháng cự với khối lượng > trung bình 20 phiên. KHÔNG mua đuổi — chờ giá quay lại kiểm tra (retest) vùng kháng cự cũ. Vào: khi retest giữ được và xuất hiện nến tăng. Stop: dưới vùng kháng cự cũ. Mục tiêu: chiều cao vùng tích lũy cộng vào điểm phá vỡ. Huỷ: giá đóng cửa trở lại trong vùng tích lũy (phá vỡ giả).',
         'Setup 3 – Giao dịch trong vùng đi ngang (Range). Điều kiện: giá dao động giữa sàn và trần rõ ràng, MA đi ngang, không có báo cáo lớn sắp tới. Vào mua gần sàn khi có nến từ chối, bán gần trần (nếu được phép bán khống). Stop: ngoài vùng một khoảng (0,5–1×ATR). Mục tiêu: giữa vùng hoặc biên đối diện. Huỷ: giá đóng cửa ra ngoài vùng — lúc đó chuyển sang tư duy breakout.',
-        'Chọn setup theo trạng thái thị trường: có xu hướng rõ → Setup 1; tích lũy chặt dưới kháng cự → Setup 2; đi ngang biên rộng → Setup 3. Dùng sai setup cho sai trạng thái là nguyên nhân thua phổ biến.',
+        'Chọn setup theo trạng thái thị trường (cây quyết định ở hình). Dùng sai setup cho sai trạng thái là nguyên nhân thua phổ biến.',
         'Hãy kiểm thử từng setup trên lịch sử (công cụ Kiểm thử chiến lược + xem lại biểu đồ bằng tay), ghi lại ít nhất 30 ví dụ mỗi setup trước khi dùng tiền thật.',
       ],
       textExample:
