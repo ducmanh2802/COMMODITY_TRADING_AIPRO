@@ -38,6 +38,7 @@ import * as news2 from './dict/news2';
 import * as pwa from './dict/pwa';
 import * as replay from './dict/replay';
 import * as uipolish from './dict/uipolish';
+import * as sweep from './dict/sweep';
 import * as learngoal from './dict/learngoal';
 import * as review from './dict/review';
 import * as exam from './dict/exam';
@@ -89,6 +90,7 @@ export const en: Record<TKey, string> = {
   ...pwa.en,
   ...replay.en,
   ...uipolish.en,
+  ...sweep.en,
   ...learngoal.en,
   ...review.en,
   ...exam.en,

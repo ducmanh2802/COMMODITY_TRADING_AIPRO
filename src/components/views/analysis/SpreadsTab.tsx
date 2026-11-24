@@ -6,7 +6,7 @@
  */
 import { useMemo, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { useI18n } from '../../../i18n';
+import { type TKey, useI18n } from '../../../i18n';
 import type { SeriesOption } from '../../../api/analysisApi';
 import { type SeriesPoint, interCommoditySpread, spreadZScore } from '../../../shared/analytics';
 import { CHART_COLORS, type ChartLine, TimeSeriesChart } from './TimeSeriesChart';
@@ -34,9 +34,9 @@ interface LegDraft {
 
 interface Preset {
   id: string;
-  label: string;
+  labelKey: TKey;
   outputUnit: string;
-  note: string;
+  noteKey: TKey;
   legs: { instrumentId: string; coefficient: number; priceUnit: string }[];
 }
 
@@ -47,10 +47,9 @@ interface Preset {
 const PRESETS: Preset[] = [
   {
     id: 'crush',
-    label: 'Soybean crush (example coefficients — verify)',
+    labelKey: 'sweep.spreads.crushLabel',
     outputUnit: 'USD/bu',
-    note:
-      'Assumes meal quoted in USD/short ton (×0.022 ≈ 44 lb meal per bu), oil in US cents/lb (×0.11 ≈ 11 lb oil per bu → USD), beans in US cents/bu (×−0.01 → USD). Yields vary; verify units of your imported data.',
+    noteKey: 'sweep.spreads.crushNote',
     legs: [
       { instrumentId: 'CBOT:ZM', coefficient: 0.022, priceUnit: 'USD/short ton' },
       { instrumentId: 'CBOT:ZL', coefficient: 0.11, priceUnit: 'USc/lb' },
@@ -135,9 +134,9 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
   const spreadLines = useMemo<ChartLine[]>(
     () =>
       spread && spread.status === 'OK'
-        ? [{ name: `Spread (${spread.outputUnit})`, color: CHART_COLORS[0], points: spread.timestamps.map((t, i) => ({ t, v: spread.values[i] })) }]
+        ? [{ name: t('sweep.spreads.lineSpread', { unit: spread.outputUnit }), color: CHART_COLORS[0], points: spread.timestamps.map((t, i) => ({ t, v: spread.values[i] })) }]
         : [],
-    [spread]
+    [spread, t]
   );
   const zLines = useMemo<ChartLine[]>(
     () => (z && z.status === 'OK' ? [{ name: `z-score (${zWindow})`, color: CHART_COLORS[2], points: z.timestamps.map((t, i) => ({ t, v: z.values[i] })) }] : []),
@@ -147,54 +146,54 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
   const unitMismatches = legs
     .map((l) => {
       const o = byKey.get(l.seriesKey);
-      return o && l.priceUnit.trim() && o.priceUnit && l.priceUnit.trim() !== o.priceUnit ? `${o.label}: stated "${l.priceUnit}" but dataset unit is "${o.priceUnit}"` : null;
+      return o && l.priceUnit.trim() && o.priceUnit && l.priceUnit.trim() !== o.priceUnit ? t('sweep.spreads.mismatchItem', { label: o.label, stated: l.priceUnit, unit: o.priceUnit }) : null;
     })
     .filter((x): x is string => x !== null);
 
   return (
     <div className="space-y-4">
       <Panel
-        title="Inter-commodity spread builder"
-        subtitle="spread[t] = Σ coefficient × price on the common timestamps of all legs (no fill). You state every coefficient and unit; nothing is hard-coded."
+        title={t('sweep.spreads.title')}
+        subtitle={t('sweep.spreads.subtitle')}
       >
         <div className="flex flex-wrap items-end gap-4">
           <div>
             <label htmlFor="spread-preset" className={labelClass}>
-              Preset (examples only)
+              {t('sweep.spreads.preset')}
             </label>
             <select id="spread-preset" className={inputClass} value={activePreset?.id ?? ''} onChange={(e) => applyPreset(e.target.value)}>
-              <option value="">— custom —</option>
+              <option value="">{t('sweep.spreads.custom')}</option>
               {PRESETS.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.label}
+                  {t(p.labelKey)}
                 </option>
               ))}
             </select>
           </div>
           <div>
             <label htmlFor="spread-outunit" className={labelClass}>
-              Output unit (required)
+              {t('sweep.spreads.outUnit')}
             </label>
-            <input id="spread-outunit" className={`${inputClass} w-40`} value={outputUnit} placeholder="e.g. USD/bu" onChange={(e) => setOutputUnit(e.target.value)} />
+            <input id="spread-outunit" className={`${inputClass} w-40`} value={outputUnit} placeholder={t('sweep.spreads.outUnitPh')} onChange={(e) => setOutputUnit(e.target.value)} />
           </div>
-          <NumberField id="spread-zwin" label="z-score window" value={zWindow} onChange={setZWindow} min={3} />
+          <NumberField id="spread-zwin" label={t('sweep.spreads.zWindow')} value={zWindow} onChange={setZWindow} min={3} />
         </div>
 
         {activePreset && (
           <Notice tone="warn">
-            <p className="font-semibold">VERIFY: “{activePreset.label}” uses EXAMPLE coefficients, not verified exchange constants.</p>
-            <p>{activePreset.note}</p>
-            {presetMissing.length > 0 && <p>No imported series found for: {presetMissing.join(', ')} — pick a series manually.</p>}
+            <p className="font-semibold">{t('sweep.spreads.verify', { label: t(activePreset.labelKey) })}</p>
+            <p>{t(activePreset.noteKey)}</p>
+            {presetMissing.length > 0 && <p>{t('sweep.spreads.missing', { list: presetMissing.join(', ') })}</p>}
           </Notice>
         )}
 
         <div className="space-y-2">
           {legs.map((l, i) => (
             <div key={l.uid} className="flex flex-wrap items-end gap-3 border border-[var(--border)] rounded-md p-2">
-              <span className="text-[11px] font-mono text-[var(--text)]/50 pb-2">Leg {i + 1}</span>
+              <span className="text-[11px] font-mono text-[var(--text)]/50 pb-2">{t('sweep.spreads.leg', { n: i + 1 })}</span>
               <div>
                 <label htmlFor={`leg-series-${l.uid}`} className={labelClass}>
-                  Series
+                  {t('sweep.spreads.series')}
                 </label>
                 <select
                   id={`leg-series-${l.uid}`}
@@ -205,7 +204,7 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
                     update(l.uid, { seriesKey: e.target.value, priceUnit: l.priceUnit || o?.priceUnit || '' });
                   }}
                 >
-                  <option value="">— select —</option>
+                  <option value="">{t('sweep.spreads.select')}</option>
                   {options.map((o) => (
                     <option key={o.key} value={o.key}>
                       {o.label} ({o.priceUnit})
@@ -215,7 +214,7 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
               </div>
               <div>
                 <label htmlFor={`leg-coef-${l.uid}`} className={labelClass}>
-                  Coefficient
+                  {t('sweep.spreads.coef')}
                 </label>
                 <input
                   id={`leg-coef-${l.uid}`}
@@ -228,7 +227,7 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
               </div>
               <div>
                 <label htmlFor={`leg-unit-${l.uid}`} className={labelClass}>
-                  Leg price unit (required)
+                  {t('sweep.spreads.legUnit')}
                 </label>
                 <input id={`leg-unit-${l.uid}`} className={`${inputClass} w-36`} value={l.priceUnit} onChange={(e) => update(l.uid, { priceUnit: e.target.value })} />
               </div>
@@ -248,13 +247,13 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
             onClick={() => setLegs((ls) => [...ls, { uid: uidCounter++, seriesKey: '', coefficient: 1, priceUnit: '' }])}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-2)] border border-[var(--border)] rounded-md text-xs text-[var(--text-strong)] hover:bg-[var(--surface-2)]/80"
           >
-            <Plus className="w-3.5 h-3.5" aria-hidden="true" /> Add leg
+            <Plus className="w-3.5 h-3.5" aria-hidden="true" /> {t('sweep.spreads.addLeg')}
           </button>
         </div>
 
         {unitMismatches.length > 0 && (
           <Notice tone="warn">
-            <p className="font-semibold">Stated leg unit differs from the dataset's unit:</p>
+            <p className="font-semibold">{t('sweep.spreads.mismatchTitle')}</p>
             <ul className="list-disc pl-4">
               {unitMismatches.map((m) => (
                 <li key={m}>{m}</li>
@@ -262,22 +261,22 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
             </ul>
           </Notice>
         )}
-        {loading && <p className="text-xs text-[var(--text)]/55">Loading candles…</p>}
+        {loading && <p className="text-xs text-[var(--text)]/55">{t('sweep.spreads.loading')}</p>}
         {error && <Notice tone="error">{error}</Notice>}
         {data.map((d) => (
           <SeriesIntegrity key={d.option.key} s={d} returnBased={false} />
         ))}
-        {!ready && <Notice tone="info">Select a series for every leg (at least 2 legs).</Notice>}
+        {!ready && <Notice tone="info">{t('sweep.spreads.needLegs')}</Notice>}
       </Panel>
 
       {spread && (
-        <Panel title="Spread" subtitle={`Output unit: ${spread.outputUnit || '—'}`}>
-          <StatusBlock label="Spread" status={spread.status} reason={spread.reason} warnings={spread.warnings} />
+        <Panel title={t('sweep.spreads.panelSpread')} subtitle={t('sweep.spreads.outputUnit', { unit: spread.outputUnit || '—' })}>
+          <StatusBlock label={t('sweep.spreads.panelSpread')} status={spread.status} reason={spread.reason} warnings={spread.warnings} />
           {spread.status !== 'INVALID_INPUT' && (
             <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs font-mono text-[var(--text)]/80">
-              <span>Common points: {spread.timestamps.length}</span>
+              <span>{t('sweep.spreads.common', { n: spread.timestamps.length })}</span>
               <span>
-                Dropped in alignment:{' '}
+                {t('sweep.spreads.dropped')}{' '}
                 {Object.entries(spread.dropped)
                   .map(([k, n]) => `${k}=${n}`)
                   .join(', ') || '—'}
@@ -288,9 +287,9 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
             <table className="text-xs font-mono min-w-[420px]">
               <thead>
                 <tr className="text-[var(--text)]/60 border-b border-[var(--border)]">
-                  <th className="py-1.5 pr-4 text-left font-medium">Leg (stated assumptions)</th>
-                  <th className="py-1.5 px-3 text-right font-medium">Coefficient</th>
-                  <th className="py-1.5 px-3 text-left font-medium">Price unit</th>
+                  <th className="py-1.5 pr-4 text-left font-medium">{t('sweep.spreads.colLeg')}</th>
+                  <th className="py-1.5 px-3 text-right font-medium">{t('sweep.spreads.coef')}</th>
+                  <th className="py-1.5 px-3 text-left font-medium">{t('sweep.spreads.colUnit')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border)]/70">
@@ -306,20 +305,20 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
           </div>
           {spread.status === 'OK' && (
             <>
-              <LatestRow label="Latest spread" r={latestValue(spread.timestamps, spread.values)} unit={spread.outputUnit} />
-              <TimeSeriesChart lines={spreadLines} ariaLabel="Spread chart" />
+              <LatestRow label={t('sweep.spreads.latestSpread')} r={latestValue(spread.timestamps, spread.values)} unit={spread.outputUnit} />
+              <TimeSeriesChart lines={spreadLines} ariaLabel={t('sweep.spreads.chartAria')} />
             </>
           )}
         </Panel>
       )}
 
       {z && (
-        <Panel title="Spread z-score" subtitle="z = (spread − rolling mean) / rolling sample σ; window includes the current point.">
+        <Panel title={t('sweep.spreads.zTitle')} subtitle={t('sweep.spreads.zSubtitle')}>
           <StatusBlock label="z-score" status={z.status} reason={z.reason} warnings={z.warnings} />
           {z.status === 'OK' && (
             <>
-              <LatestRow label="Latest z" r={latestValue(z.timestamps, z.values)} />
-              <TimeSeriesChart lines={zLines} valueFormatter={zFmt} referenceLines={ZERO_AND_BANDS} height={220} ariaLabel="Spread z-score chart" />
+              <LatestRow label={t('sweep.spreads.latestZ')} r={latestValue(z.timestamps, z.values)} />
+              <TimeSeriesChart lines={zLines} valueFormatter={zFmt} referenceLines={ZERO_AND_BANDS} height={220} ariaLabel={t('sweep.spreads.zChartAria')} />
             </>
           )}
         </Panel>

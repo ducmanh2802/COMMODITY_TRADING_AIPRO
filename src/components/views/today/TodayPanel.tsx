@@ -6,6 +6,7 @@ import type { CycleMarketOverview } from '../../../shared/types/cycle';
 import type { Scorecard, ScorecardListResponse } from '../../../shared/types/scorecard';
 import type { TodayResponse } from '../../../shared/types/today';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
+import { clearTodayCache, readTodayCache, writeTodayCache } from '../../../shared/utils/todayCache';
 import { buildVietnamEconomicCalendar } from '../../../shared/utils/vietnamCalendar';
 import { fmtDateTime } from '../../../i18n';
 import { LazySection } from '../../common/LazySection';
@@ -36,9 +37,11 @@ function trendDir(c: Scorecard): -1 | 0 | 1 {
 export function TodayPanel() {
   const { t, lang } = useI18n();
   const { openInstrumentIn, health, lastHealthUpdatedAt, setActiveModule } = useTerminal();
-  const [score, setScore] = useState<ScorecardListResponse | null>(null);
-  const [cycle, setCycle] = useState<CycleMarketOverview | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Returning users: render the last snapshot (<= 30 min) immediately; the fetch below refreshes it.
+  const [cached] = useState(readTodayCache);
+  const [score, setScore] = useState<ScorecardListResponse | null>(cached?.scorecard ?? null);
+  const [cycle, setCycle] = useState<CycleMarketOverview | null>(cached?.cycle ?? null);
+  const [loading, setLoading] = useState(!cached);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -47,8 +50,15 @@ export function TodayPanel() {
         if (ctrl.signal.aborted) return;
         setScore(r.scorecard);
         setCycle(r.cycle);
+        writeTodayCache(r);
       })
-      .catch(() => undefined)
+      .catch(() => {
+        if (ctrl.signal.aborted) return;
+        // Refresh failed: do not keep showing a cached snapshot as if it were current.
+        clearTodayCache();
+        setScore(null);
+        setCycle(null);
+      })
       .finally(() => {
         if (!ctrl.signal.aborted) setLoading(false);
       });

@@ -111,3 +111,50 @@ Sau khi có URL Cloud Run:
 gcloud run deploy commodity-aipro --source . --region asia-southeast1   # cập nhật
 gcloud run services delete commodity-aipro --region asia-southeast1      # xóa dịch vụ
 ```
+
+## 7. Biến môi trường
+
+Đối chiếu với `.env.example`. Mọi biến dưới đây đọc từ env (không có giá trị bí mật thật trong tài liệu này). "Opt-in?" = có/không; các biến trống nghĩa là tính năng tắt.
+
+| Biến | Mục đích | Mặc định | Opt-in? |
+|---|---|---|---|
+| `GEMINI_API_KEY` | Khóa Google Gemini cho tóm tắt AI phía server (khi `AI_PROVIDER=gemini`) | chưa đặt | Cần khi dùng AI_PROVIDER=gemini |
+| `APP_URL` | URL nơi applet được host (liên kết tự tham chiếu, OAuth callback, endpoint) | chưa đặt | — |
+| `PORT` | Cổng server lắng nghe (Cloud Run tự đặt) | 8080 | — |
+| `TRUST_PROXY` | Tin proxy (Cloud Run đặt `1` để đọc đúng IP) | chưa đặt | Nên đặt `1` trên Cloud Run |
+| `TWELVEDATA_API_KEY` | Twelve Data: giá real-time/intraday OHLCV + FX USD/VND | trống | Có (khóa trả phí) |
+| `FMP_API_KEY` | Financial Modeling Prep: futures/spot + EOD OHLCV | trống | Có (khóa trả phí) |
+| `COMMODITIES_API_KEY` | Commodities-API: spot & futures real-time | trống | Có (khóa trả phí) |
+| `ALPHAVANTAGE_API_KEY` | Alpha Vantage: spot/ref hàng ngày + FX USD/VND | trống | Có (khóa trả phí) |
+| `EIA_API_KEY` | U.S. EIA v2: tồn kho dầu/khí, spot/futures, sản xuất ethanol | trống | Có (khóa miễn phí) |
+| `FAS_API_KEY` | USDA FAS Export Sales (ngô/đậu tương/lúa mì, free key api.data.gov) | trống | Có (khóa miễn phí) |
+| `USDA_API_KEY` | USDA NASS QuickStats (sản lượng & tồn kho nông sản) | trống | Có (khóa miễn phí) |
+| `FRED_API_KEY` | FRED: DXY, Fed Funds, US 10Y, CPI | trống | Có (khóa miễn phí) |
+| `MXV_API_KEY` | Feed thành viên MXV (qua CQG/member webservice) | trống | Có (cần quyền thành viên) |
+| `MXV_API_URL` | Endpoint feed MXV | trống | Có |
+| `CME_DATAMINE_API_KEY` | CME DataMine (dữ liệu chính thức CME) | trống | Có (khóa trả phí) |
+| `ICE_API_KEY` | ICE feed (BRN, Robusta…) | trống | Có (khóa trả phí) |
+| `MARKET_DATA_PROVIDER_URL` | Endpoint nhà cung cấp giá tùy chỉnh | trống | Có |
+| `MARKET_DATA_PROVIDER_KEY` | Khóa cho nhà cung cấp giá tùy chỉnh | trống | Có |
+| `YAHOO_ENABLED` | Bật Yahoo Finance (UNOFFICIAL, cá nhân, không CK/phân phối công khai) | `"false"` | Có (đặt `"true"`) |
+| `ADMIN_API_TOKEN` | Token Bearer cho endpoint ghi (import/xóa, COT/provider sync, backup). Trống = chỉ nhận localhost | trống | Nên đặt (≥16 ký tự) |
+| `MARKET_DB_PATH` | Đường dẫn file SQLite (dữ liệu lịch sử) | `data/market.db` | — |
+| `COT_SOURCE` | Nguồn COT: `auto` \| `socrata` \| `files` | `auto` | — |
+| `COT_CACHE_DIR` | Thư mục cache zip CFTC (kiểm SHA-256 khi tái dùng) | `data/cache/cftc` | — |
+| `SCHEDULER_ENABLED` | Bật đồng bộ định kỳ phía server (COT, FX, WASDE, EIA/FRED) | `"true"` | Có (đặt `"false"` để tắt) |
+| `AI_PROVIDER` | Engine tóm tắt: `rules` \| `gemini` \| `ollama` | `rules` | Có |
+| `OLLAMA_URL` | URL model Ollama cục bộ (khi AI_PROVIDER=ollama) | `http://localhost:11434` | — |
+| `OLLAMA_MODEL` | Tên model Ollama | `llama3.2` | — |
+| `TELEGRAM_BOT_TOKEN` | Token bot Telegram (tạo qua @BotFather) cho cảnh báo | trống | Có (trống = tắt) |
+| `GCS_BACKUP_BUCKET` | Tên bucket GCS sao lưu DB (mục 4a) | trống | Có (trống = tắt) |
+| `GCS_BACKUP_KEEP` | Số bản sao lưu giữ lại | `14` | — |
+| `GCS_BACKUP_INTERVAL_HOURS` | Chu kỳ sao lưu (giờ) | `6` | — |
+| `VAPID_PUBLIC_KEY` | Khóa công khai Web Push (mục 4c) | trống | Có (trống = tắt) |
+| `VAPID_PRIVATE_KEY` | Khóa riêng Web Push | trống | Có |
+| `VAPID_SUBJECT` | Subject VAPID (dạng `mailto:...`) | trống | Có |
+| `SMTP_HOST` | Host SMTP cho email cảnh báo (mục 4c) | trống | Có (cần SMTP_HOST+FROM+APP_BASE_URL) |
+| `SMTP_PORT` | Cổng SMTP | `587` | — |
+| `SMTP_USER` | Tài khoản SMTP | trống | Có |
+| `SMTP_PASS` | Mật khẩu SMTP (dùng Secret Manager) | trống | Có |
+| `SMTP_FROM` | Địa chỉ người gửi email | trống | Có |
+| `APP_BASE_URL` | Origin công khai cho liên kết xác nhận/hủy email (không lấy từ header Host) | trống | Có |

@@ -214,3 +214,26 @@ Ghi chú phạm vi: app **chỉ mô phỏng giao dịch** cho mục đích học
 | T63 | Cuộc đua Giao dịch thử theo mùa: khớp giá phía server, điểm kỷ luật, bảng xếp hạng ẩn danh, rules Firestore + test emulator | Cần T85 (đã có test:rules) |
 | T53 | Lưu trữ bền vững khi deploy: sao lưu/khôi phục SQLite sang Cloud Storage theo lịch (opt-in), hướng dẫn gắn volume Cloud Run | Tránh mất dữ liệu khi container khởi động lại |
 Chặn bởi nguồn trả phí / chưa có nguồn hợp lệ: giá futures cho RC, CT, BRN, TIO, FEF, JRU (cần MXV_API_URL / ICE_API_KEY / CME_DATAMINE_API_KEY hoặc nhập CSV); T99 nguồn tự động giá nội địa (chưa tìm thấy nguồn có cấu trúc được phép — giữ nhập tay có nguồn).
+
+### Wave 13b–13d (24/11/2026) — đã xong
+
+Đợt hoàn thiện sau Wave 13. Những gì đã giao:
+
+- **T53 — Lưu trữ bền vững (sao lưu/khôi phục SQLite → GCS)**: thêm `server/services/backup/sqliteBackup.ts` (+test), `server/routes/backup.ts` (`POST /api/admin/backup`), job `db-backup`. Chạy hoàn toàn opt-in khi đặt `GCS_BACKUP_BUCKET`; khôi phục lúc khởi động + kiểm `PRAGMA integrity_check`, nén gzip, giữ `GCS_BACKUP_KEEP` bản mới nhất. Chưa kiểm chứng với bucket thật.
+- **T101 — Web Push (VAPID) + email (SMTP)**: thêm kênh thông báo trình duyệt và email (double opt-in, ≤20 thư/ngày/địa chỉ); route đăng ký push/email, service worker xử lý push; opt-in qua `VAPID_*` và `SMTP_*` + `APP_BASE_URL`. Dùng giá trễ/giá đóng cửa, chỉ để theo dõi, không phải khuyến nghị.
+- **T63 — Cuộc đua Giao dịch thử theo mùa**: mùa theo tháng (Asia/Ho_Chi_Minh), vốn ảo 500.000.000 VND, khớp giá phía server, điểm kỷ luật 0–100, bảng xếp hạng ẩn danh, huy hiệu; xác thực bằng Firebase ID token (RS256, không thêm firebase-admin). Chưa kiểm tra trình duyệt; chưa fetch cert Google thật.
+- **T72 — Cài đặt cỡ chữ & tương phản**: cỡ chữ to/rất to (`data-text-size`), giao diện sáng/tối, độ tương phản cao (`data-contrast=high`), có script pre-paint trong `index.html`. Đã kiểm Playwright 390/1280 nhiều cấu hình, không tràn ngang.
+- **UI polish**: tách chunk (pdf/charts/auth), lazy-load auth + các hub, gộp i18n vào entry, TopBar gọn + menu tràn (TopBarMore), một `h1` sr-only duy nhất, tab Giao dịch thử cuộn ngang 1 dòng ở 390px, Việt hoá các chuỗi còn sót.
+- **Sửa lỗi bảo mật (Review 13b/13c)**: chống SSRF + timeout cho push (host allowlist); chặn `//host` open-redirect trong service worker; chống timing-enumeration khi gửi email subscribe; backup từ chối upload sau khôi phục lỗi + gộp run đồng thời; contest placeOrder đọc state sau await (chống double-submit); nạp trước firebase/auth (pointerover/focus) để tránh popup-block.
+- **LCP 8.7s → 1.7s**: Express nén brotli/gzip asset tĩnh (cache + ETag + immutable), tự host font (bỏ Google Fonts), shell first-run tĩnh cho LCP, hoãn nạp entry sau first paint; Lighthouse mobile perf 60→99, LCP 1.67s, TBT 58ms, CLS ~0.0002.
+
+**Còn mở (chưa xác minh):**
+
+- Chưa kiểm thử với dịch vụ thật: sao lưu GCS, email SMTP, Web Push VAPID, đăng nhập Google (sign-in).
+- Safari: popup đăng nhập sau khi `await` import auth có thể bị chặn — chưa test trên trình duyệt Safari thật.
+- Mã hợp đồng JRU vs TRU còn chưa chốt.
+- 5 thông số hợp đồng CME/SGX vẫn ở trạng thái UNVERIFIED (chờ nguồn sàn chính thức).
+- Chưa có nguồn dữ liệu trả phí hợp lệ cho RC, CT, BRN, TIO, FEF, JRU (cần MXV_API_URL / ICE_API_KEY / CME_DATAMINE_API_KEY hoặc nhập CSV).
+- Email: vùng giá (zones) cố định lúc đăng ký — muốn đổi phải hủy rồi đăng ký lại.
+
+> Ghi chú trạng thái: T53, T101, T63 (Wave 13 Đợt 2) và T72 (Wave 8) đã hoàn thành — xem các mục ở trên. Các bảng task gốc không có cột trạng thái nên giữ nguyên cấu trúc.

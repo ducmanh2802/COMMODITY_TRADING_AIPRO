@@ -22,6 +22,7 @@ import { registerContestRoutes } from './routes/contest.ts';
 import { MacroService } from './macro/service.ts';
 import { logger, errorSummary } from './lib/logger.ts';
 import { accessLogMiddleware, installProcessHooks, recordError } from './lib/observability.ts';
+import { apiCompress } from './lib/apiCompress.ts';
 import { registerStatusRoutes } from './routes/status.ts';
 import { registerBackupRoutes } from './routes/backup.ts';
 import type { SupplyMacroLike } from './services/supplyDemandOverlay.ts';
@@ -358,6 +359,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
 
   app.use(requestIdMiddleware);
   app.use(accessLogMiddleware());
+  app.use(apiCompress());
   installProcessHooks();
   app.use(securityHeadersMiddleware);
 

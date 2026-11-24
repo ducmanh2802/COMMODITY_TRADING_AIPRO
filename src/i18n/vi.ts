@@ -38,6 +38,7 @@ import * as news2 from './dict/news2';
 import * as pwa from './dict/pwa';
 import * as replay from './dict/replay';
 import * as uipolish from './dict/uipolish';
+import * as sweep from './dict/sweep';
 import * as learngoal from './dict/learngoal';
 import * as review from './dict/review';
 import * as exam from './dict/exam';
@@ -88,6 +89,7 @@ export const vi = {
   ...pwa.vi,
   ...replay.vi,
   ...uipolish.vi,
+  ...sweep.vi,
   ...learngoal.vi,
   ...review.vi,
   ...exam.vi,
