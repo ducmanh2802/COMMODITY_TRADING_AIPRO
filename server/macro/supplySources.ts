@@ -5,22 +5,19 @@
  *   USDA FAS Export Sales Reporting (ESR)     OFFICIAL  apps.fas.usda.gov/OpenData (needs FAS_API_KEY, free via api.data.gov)
  *   USDA ERS Commodity Costs and Returns      OFFICIAL  annual CSV (no key); breakeven = cost per acre / yield per acre
  *
- * CONAB (Brazil) has no stable machine-readable file, so it is NOT fetched (see CONAB_URL link-only rows).
+ * CONAB (Brazil) has no stable machine-readable file, so it is NOT fetched (link-only rows).
  */
 import type { DataQualityStatus } from '../../src/shared/types/market.ts';
 import type { MacroDatapoint, MacroDatapointId } from '../../src/shared/types/macro.ts';
 import { DAY_MS, errMessage, isIsoDate, TIMEOUT_MS, unavailable, type FetchLike } from './sources.ts';
 
 export const ETHANOL_SERIES = 'W_EPOOXE_YOP_NUS_MBBLD';
-export const EIA_ETHANOL_PAGE = 'https://www.eia.gov/petroleum/ethanol/';
 export const EIA_ETHANOL_BASE =
   'https://api.eia.gov/v2/petroleum/sum/sndw/data/?frequency=weekly&data%5B0%5D=value' +
   `&facets%5Bseries%5D%5B%5D=${ETHANOL_SERIES}&sort%5B0%5D%5Bcolumn%5D=period&sort%5B0%5D%5Bdirection%5D=desc&length=2`;
-export const FAS_ESR_PAGE = 'https://apps.fas.usda.gov/export-sales/esrd1.html';
 export const FAS_ESR_BASE = 'https://apps.fas.usda.gov/OpenData/api/esr/exports';
 export const FAS_KEY_URL = 'https://api.data.gov/signup/';
 export const ERS_COSTS_PAGE = 'https://www.ers.usda.gov/data-products/commodity-costs-and-returns';
-export const CONAB_URL = 'https://www.conab.gov.br/info-agro/safras/graos';
 
 const ethBase = (fetchedAt: string) => ({
   id: 'EIA_ETHANOL_PRODUCTION' as const,

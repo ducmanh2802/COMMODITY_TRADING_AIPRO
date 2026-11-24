@@ -59,7 +59,6 @@ export function groupStatus(items: MacroDatapoint[]): DataQualityStatus {
 
 // ───────────────────────────── EIA ─────────────────────────────
 
-export const EIA_WPSR_PAGE = 'https://www.eia.gov/petroleum/supply/weekly/';
 const EIA_WPSR_SCHEDULE = 'https://www.eia.gov/petroleum/supply/weekly/schedule.php';
 
 const EIA_SERIES: ReadonlyArray<{ series: string; id: MacroDatapointId; label: string }> = [

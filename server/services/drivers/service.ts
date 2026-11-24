@@ -44,10 +44,6 @@ export interface DriversDeps {
 
 const t = (vi: string, en: string): DText => ({ vi, en });
 const fredCache = new Map<string, { expiresAt: number; value: DatedValue[] }>();
-export function clearDriversCache(): void {
-  fredCache.clear();
-  resultCache.clear();
-}
 const resultCache = new Map<string, { expiresAt: number; value: DriversResponse }>();
 
 async function fred(fetcher: FredFetcher, id: string, nowMs: number): Promise<DatedValue[]> {

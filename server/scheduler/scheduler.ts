@@ -44,6 +44,12 @@ export interface SchedulerOptions {
   jitterMs?: number;
   /** Delay before startup runs (plus jitter). Default 10 s. */
   startupDelayMs?: number;
+  /** A run exceeding this is abandoned (marked failed) so a hung job cannot block its schedule. Default 30 min. */
+  jobTimeoutMs?: number;
+  /** First retry delay floor after a failed run; doubles per consecutive failure up to maxBackoffMs. Default 60 s. */
+  backoffBaseMs?: number;
+  /** Upper bound of the failure backoff floor. Default 1 h. */
+  maxBackoffMs?: number;
   log?: (message: string) => void;
 }
 
@@ -70,6 +76,14 @@ export function sanitizeError(err: unknown): string {
     .slice(0, 300);
 }
 
+function safeEnabled(job: SchedulerJob): boolean {
+  try {
+    return job.enabled ? job.enabled() : true;
+  } catch {
+    return false;
+  }
+}
+
 interface JobState {
   job: SchedulerJob;
   running: boolean;
@@ -78,6 +92,7 @@ interface JobState {
   lastError: string | null;
   nextRunAt: Date | null;
   timer: unknown;
+  consecutiveFailures: number;
 }
 
 export class Scheduler {
@@ -86,6 +101,9 @@ export class Scheduler {
   private readonly random: () => number;
   private readonly jitterMs: number;
   private readonly startupDelayMs: number;
+  private readonly jobTimeoutMs: number;
+  private readonly backoffBaseMs: number;
+  private readonly maxBackoffMs: number;
   private readonly log: (message: string) => void;
   private readonly states = new Map<string, JobState>();
   private started = false;
@@ -96,6 +114,9 @@ export class Scheduler {
     this.random = options.random ?? Math.random;
     this.jitterMs = options.jitterMs ?? 60_000;
     this.startupDelayMs = options.startupDelayMs ?? 10_000;
+    this.jobTimeoutMs = options.jobTimeoutMs ?? 30 * 60_000;
+    this.backoffBaseMs = options.backoffBaseMs ?? 60_000;
+    this.maxBackoffMs = options.maxBackoffMs ?? 3_600_000;
     this.log = options.log ?? ((m) => logger.warn(m));
     for (const job of jobs) {
       this.states.set(job.id, {
@@ -106,6 +127,7 @@ export class Scheduler {
         lastError: null,
         nextRunAt: null,
         timer: null,
+        consecutiveFailures: 0,
       });
     }
   }
@@ -142,7 +164,7 @@ export class Scheduler {
       jobs: [...this.states.values()].map((st) => ({
         id: st.job.id,
         description: st.job.description,
-        enabled: st.job.enabled ? st.job.enabled() : true,
+        enabled: safeEnabled(st.job),
         running: st.running,
         lastRunAt: iso(st.lastRunAt),
         lastSuccessAt: iso(st.lastSuccessAt),
@@ -163,15 +185,58 @@ export class Scheduler {
         st.lastError = null;
         return;
       }
-      await st.job.run();
+      await this.runWithTimeout(st.job);
       st.lastSuccessAt = this.now();
       st.lastError = null;
+      st.consecutiveFailures = 0;
     } catch (err) {
+      st.consecutiveFailures += 1;
       st.lastError = sanitizeError(err);
-      this.log(`[scheduler] job ${id} failed: ${st.lastError}`);
+      this.safeLog(`[scheduler] job ${id} failed (${st.consecutiveFailures}x): ${st.lastError}`);
     } finally {
       st.running = false;
     }
+  }
+
+  private safeLog(message: string): void {
+    try {
+      this.log(message);
+    } catch {
+      /* a broken logger must never escape */
+    }
+  }
+
+  /** Races the job against a timeout; the abandoned promise gets a no-op catch (no unhandled rejection). */
+  private runWithTimeout(job: SchedulerJob): Promise<void> {
+    let work: Promise<void>;
+    try {
+      work = Promise.resolve(job.run());
+    } catch (err) {
+      return Promise.reject(err);
+    }
+    work.catch(() => {});
+    return new Promise<void>((resolve, reject) => {
+      const handle = this.timers.setTimeout(
+        () => reject(new Error(`job timed out after ${this.jobTimeoutMs} ms`)),
+        Math.min(this.jobTimeoutMs, MAX_TIMEOUT_MS)
+      );
+      work.then(
+        () => {
+          this.timers.clearTimeout(handle);
+          resolve();
+        },
+        (err) => {
+          this.timers.clearTimeout(handle);
+          reject(err);
+        }
+      );
+    });
+  }
+
+  /** Exponential floor on the delay after consecutive failures (a repeatedly failing job never spins). */
+  private backoffFloorMs(st: JobState): number {
+    if (st.consecutiveFailures === 0) return 0;
+    return Math.min(this.backoffBaseMs * 2 ** (st.consecutiveFailures - 1), this.maxBackoffMs);
   }
 
   private armNext(st: JobState): void {
@@ -180,10 +245,11 @@ export class Scheduler {
       at = st.job.next(this.now());
     } catch (err) {
       st.lastError = sanitizeError(err);
-      this.log(`[scheduler] job ${st.job.id} has no next run: ${st.lastError}`);
+      this.safeLog(`[scheduler] job ${st.job.id} has no next run: ${st.lastError}`);
       return;
     }
-    this.arm(st, Math.max(0, at.getTime() - this.now().getTime()) + this.random() * this.jitterMs);
+    const planned = Math.max(0, at.getTime() - this.now().getTime());
+    this.arm(st, Math.max(planned, this.backoffFloorMs(st)) + this.random() * this.jitterMs);
   }
 
   private arm(st: JobState, delayMs: number): void {

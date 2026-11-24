@@ -101,11 +101,6 @@ async function cachedHistory(fetcher: HistoryFetcher, inst: InstrumentDefinition
   return value;
 }
 
-/** Clears the Yahoo history cache (tests). */
-export function clearBriefHistoryCache(): void {
-  historyCache.clear();
-}
-
 interface HistoryInfo {
   candles: MarketCandle[];
   origin: AnalysisBrief['history']['origin'];

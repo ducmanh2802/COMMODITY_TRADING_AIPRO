@@ -26,6 +26,15 @@ const ExecutiveBriefingSchema = z.object({
   actionableChecklist: z.array(z.string()),
 });
 
+/** Hard cap on a Gemini call so a hung upstream cannot hold an Express request open. */
+const GEMINI_TIMEOUT_MS = 45_000;
+
+/** Timeout gets an explicit reason; other errors stay generic (SDK messages may echo request details). */
+function geminiErrorMessage(err: unknown, fallback: string): string {
+  const name = err instanceof Error ? err.name : '';
+  return name === 'TimeoutError' || name === 'AbortError' ? 'Gemini không phản hồi kịp (timeout).' : fallback;
+}
+
 function createGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) return null;
@@ -111,6 +120,7 @@ export async function generateEightQuestionVerdict(
         groundedContext
       )}`,
       config: {
+        abortSignal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
         systemInstruction: [
           'Bạn là Chuyên gia Phân tích Chu kỳ Hàng hóa Phái sinh (COMMODITY TRADING AI PRO - CYCLE HUNTER), tập trung vào MXV Việt Nam và các sàn quốc tế.',
           'Chỉ sử dụng số liệu có trong JSON được cung cấp. Nếu một dữ liệu là null hoặc UNAVAILABLE, hãy nêu rõ là chưa có dữ liệu chứ tuyệt đối không bịa con số.',
@@ -159,7 +169,7 @@ export async function generateEightQuestionVerdict(
       generatedAt: now,
       model: 'gemini-4-hydrogen',
       status: 'AI_ERROR',
-      message: err instanceof Error ? err.message : 'Lỗi gọi Gemini AI Verdict.',
+      message: geminiErrorMessage(err, 'Lỗi gọi Gemini AI Verdict.'),
       answers: null,
     };
   }
@@ -209,6 +219,7 @@ export async function enrichDailyReportWithAi(
         contextPayload
       )}`,
       config: {
+        abortSignal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
         systemInstruction: [
           'Bạn là Trưởng bộ phận Nghiên cứu Hàng hóa tại Việt Nam cho nền tảng COMMODITY TRADING AI PRO.',
           'Không bịa đặt giá cả, tồn kho hay số liệu ngoài JSON đầu vào.',
@@ -249,7 +260,7 @@ export async function enrichDailyReportWithAi(
     return {
       ...baseReport,
       aiStatus: 'AI_ERROR',
-      message: err instanceof Error ? err.message : 'Không thể tạo báo cáo AI lúc này.',
+      message: geminiErrorMessage(err, 'Không thể tạo báo cáo AI lúc này.'),
     };
   }
 }

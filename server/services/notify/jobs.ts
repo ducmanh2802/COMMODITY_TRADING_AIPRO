@@ -5,7 +5,6 @@ import { describeZone, evaluateZone, type WatchZone } from '../../../src/shared/
 import type { Messenger } from './telegram.ts';
 import type { NotifyStore } from './store.ts';
 
-export const DISCLAIMER_ZONE = 'Theo giá trễ/giá đóng cửa, không phải giá thời gian thực. Chỉ để theo dõi, không phải khuyến nghị.';
 export const DISCLAIMER_RADAR = 'Chỉ mô tả dữ liệu giá đã đóng cửa, để nghiên cứu. Không phải khuyến nghị.';
 
 export function zoneText(zone: WatchZone): string {

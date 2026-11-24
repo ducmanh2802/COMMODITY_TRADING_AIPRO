@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { logger } from '../lib/logger.ts';
 import {
   planImport,
   planIsCommittable,
@@ -354,6 +355,26 @@ export class SqliteCandleRepository implements ICandleRepository {
     };
   }
 
+  /**
+   * Idempotent startup cleanup of values that can never be real:
+   *  - candles with any open/high/low/close <= 0 are deleted (a price of 0 is impossible), so the next sync refetches them;
+   *  - volume 0 is set to NULL only for datasets from providers that once turned a null/empty volume into 0
+   *    (Twelve Data, FMP). Volume 0 from every other source (e.g. Yahoo, which preserves null) can be real and is kept.
+   * Open interest and unknown sources are never touched.
+   */
+  purgeImpossibleValues(): { badPriceRowsDeleted: number; zeroVolumeNulled: number } {
+    return this.transaction(() => {
+      const del = this.db.prepare('DELETE FROM candles WHERE open <= 0 OR high <= 0 OR low <= 0 OR close <= 0').run();
+      const upd = this.db
+        .prepare(
+          `UPDATE candles SET volume = NULL WHERE volume = 0 AND dataset_id IN (
+             SELECT id FROM datasets WHERE source_label LIKE 'Twelve Data%' OR source_label LIKE 'Financial Modeling Prep%')`
+        )
+        .run();
+      return { badPriceRowsDeleted: Number(del.changes), zeroVolumeNulled: Number(upd.changes) };
+    });
+  }
+
   close(): void {
     if (this.db.isOpen) this.db.close();
   }
@@ -366,6 +387,14 @@ export function getDefaultCandleRepository(): SqliteCandleRepository {
   if (!defaultRepository) {
     const location = process.env.MARKET_DB_PATH?.trim() || DEFAULT_MARKET_DB_PATH;
     defaultRepository = new SqliteCandleRepository(location);
+    try {
+      const r = defaultRepository.purgeImpossibleValues();
+      if (r.badPriceRowsDeleted > 0 || r.zeroVolumeNulled > 0) {
+        logger.warn(`[startup cleanup] removed ${r.badPriceRowsDeleted} candle rows with price <= 0; nulled ${r.zeroVolumeNulled} fabricated zero volumes`);
+      }
+    } catch (err) {
+      logger.warn(`[startup cleanup] skipped: ${err instanceof Error ? err.message : 'unknown error'}`);
+    }
   }
   return defaultRepository;
 }

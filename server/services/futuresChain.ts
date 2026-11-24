@@ -77,9 +77,6 @@ export function pickBarStats(bars: ChartBars, asOfIso: string, factor: number): 
 }
 
 const cache = new Map<string, { at: number; value: FuturesChainResponse }>();
-export function clearFuturesChainCache(): void {
-  cache.clear();
-}
 
 export async function getFuturesChain(
   instrument: InstrumentDefinition,

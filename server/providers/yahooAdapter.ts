@@ -521,6 +521,10 @@ export class YahooFinanceAdapter implements MarketDataProvider {
     if (okCount > 0) {
       this.lastSyncAt = new Date(this.now()).toISOString();
       this.lastError = null;
+    } else {
+      // Nothing usable (empty/garbled spark, failed chart metadata): back off one TTL instead of
+      // re-fetching spark + every chart on each request during an outage.
+      this.batchFailedUntilMs = this.now() + this.quoteTtlMs;
     }
   }
 

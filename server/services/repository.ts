@@ -17,6 +17,3 @@ export interface IInstrumentRepository {
   findBySymbol(symbol: string): Promise<InstrumentDefinition | null>;
 }
 
-export interface IProviderHealthRepository {
-  getAll(): Promise<ProviderHealth[]>;
-}

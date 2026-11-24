@@ -28,13 +28,6 @@ export interface ScannerResult {
   unavailableInstruments: Array<{ symbol: string; exchange: ExchangeCode; reason: string }>;
 }
 
-export const STYLE_ALLOWED_TIMEFRAMES: Record<TradingStyle, Timeframe[]> = {
-  SCALPING: ['M1', 'M5', 'M15'],
-  INTRADAY: ['M15', 'M30', 'H1'],
-  SWING: ['H1', 'H4', 'D1'],
-  POSITION: ['D1', 'W1'],
-};
-
 /** Candle lookup used by the scanner; defaults to the in-memory store. app.ts passes SQLite-first data. */
 export type ScannerCandleLookup = (
   inst: InstrumentDefinition,

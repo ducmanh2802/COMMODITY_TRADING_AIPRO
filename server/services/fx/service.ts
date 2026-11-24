@@ -29,6 +29,9 @@ const FX_TTL_MS = {
   failure: 60_000,
 } as const;
 
+/** An HTML error page or empty body must count as a failure (short TTL), not as a good payload cached for hours. */
+const looksLikeEcbXml = (v: string): boolean => /<Cube\s+time=["']\d{4}-\d{2}-\d{2}["']/.test(v);
+
 export interface FxServiceOptions {
   fetchFn?: FetchLike;
   now?: () => Date;
@@ -92,16 +95,16 @@ export class FxService {
 
     // Fetch ECB daily + historical once for all ECB-sourced pairs
     const [ecbDailyXml, ecbHistXml] = await Promise.all([
-      this.cached('ecb:daily', FX_TTL_MS.ecb, (v: string) => v.length > 0, () => fetchEcbDaily(this.fetchFn, now)),
-      this.cached('ecb:hist', FX_TTL_MS.ecb, (v: string) => v.length > 0, () => fetchEcbHistorical(this.fetchFn, now)),
+      this.cached('ecb:daily', FX_TTL_MS.ecb, looksLikeEcbXml, () => fetchEcbDaily(this.fetchFn, now).catch(() => '')),
+      this.cached('ecb:hist', FX_TTL_MS.ecb, looksLikeEcbXml, () => fetchEcbHistorical(this.fetchFn, now).catch(() => '')),
     ]);
 
     // Fetch FRED series for each FRED-sourced pair
     const fredSeries = await Promise.all(
       FX_PAIRS.map(async (p) => {
         const key = `fred:${p.fredId}`;
-        const csv = await this.cached(key, FX_TTL_MS.fred, (v: string) => v.length > 0, () =>
-          fetchFredFxCsv(this.fetchFn, p.fredId, now)
+        const csv = await this.cached(key, FX_TTL_MS.fred, (v: string) => parseFredFxCsv(v).length > 0, () =>
+          fetchFredFxCsv(this.fetchFn, p.fredId, now).catch(() => '')
         );
         return { pair: p.id, csv };
       })
@@ -133,7 +136,7 @@ export class FxService {
           quality: 'OFFICIAL',
           sourceUrl: ECB_DAILY_XML_URL,
           fetchedAt,
-          reason: dp?.reason,
+          reason: dp?.reason ?? 'ECB data unavailable (source down or unparseable); no value shown.',
         });
       } else if (pair === 'AUDUSD') {
         // Cross: AUD/USD = EUR/USD / EUR/AUD
@@ -160,7 +163,7 @@ export class FxService {
           quality: 'OFFICIAL',
           sourceUrl: ECB_DAILY_XML_URL,
           fetchedAt,
-          reason: eurUsd?.reason ?? eurAud?.reason,
+          reason: eurUsd?.reason ?? eurAud?.reason ?? 'ECB data unavailable (source down or unparseable); no value shown.',
         });
       } else {
         // USD/XXX from FRED (DEXJPUS, DEXCHUS, DEXBZUS)

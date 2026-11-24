@@ -28,6 +28,17 @@ function envPresent(name: string): boolean {
   return typeof val === 'string' && val.trim().length > 0;
 }
 
+/**
+ * Strict numeric parse for provider payloads: only finite numbers and non-empty numeric strings.
+ * `Number(null)` and `Number('')` are 0 and would silently fabricate a zero value, so they map to null.
+ */
+function strictNum(v: unknown): number | null {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  if (typeof v !== 'string' || v.trim() === '') return null;
+  const n = Number(v.trim());
+  return Number.isFinite(n) ? n : null;
+}
+
 function getEnvTrimmed(name: string): string {
   return (process.env[name] ?? '').trim();
 }
@@ -150,7 +161,7 @@ export class TwelveDataAdapter implements MarketDataProvider {
       }
 
       const rawPrice = Number(data.close ?? data.price);
-      const rawVolume = data.volume !== undefined && data.volume !== null ? Number(data.volume) : null;
+      const rawVolume = strictNum(data.volume);
       const rawTs =
         typeof data.datetime === 'string'
           ? normalizeDateToUtcIso(data.datetime)
@@ -270,7 +281,7 @@ export class TwelveDataAdapter implements MarketDataProvider {
         const high = Number(row.high);
         const low = Number(row.low);
         const close = Number(row.close);
-        const vol = row.volume !== undefined ? Number(row.volume) : null;
+        const vol = strictNum(row.volume);
         if (
           !ts ||
           !Number.isFinite(open) ||
@@ -473,7 +484,7 @@ export class FmpCommoditiesAdapter implements MarketDataProvider {
 
       const row = payload[0] as Record<string, unknown>;
       const price = Number(row.price);
-      const vol = row.volume !== undefined && row.volume !== null ? Number(row.volume) : null;
+      const vol = strictNum(row.volume);
       const ts =
         typeof row.timestamp === 'number' ? new Date(row.timestamp * 1000).toISOString() : null; // merge fix: no "now" fallback
 
@@ -567,7 +578,7 @@ export class FmpCommoditiesAdapter implements MarketDataProvider {
         const high = Number(row.high);
         const low = Number(row.low);
         const close = Number(row.close);
-        const vol = row.volume !== undefined && row.volume !== null ? Number(row.volume) : null;
+        const vol = strictNum(row.volume);
         if (
           !ts ||
           !Number.isFinite(open) ||
@@ -1193,10 +1204,10 @@ export class EiaEnergyAdapter implements MarketDataProvider {
       };
       const rows = crudeJson.response?.data ?? [];
       if (crudeRes.ok && rows.length >= 2) {
-        const curr = Number(rows[0].value);
-        const prev = Number(rows[1].value);
+        const curr = strictNum(rows[0].value);
+        const prev = strictNum(rows[1].value);
         const ts = normalizeDateToUtcIso(rows[0].period ?? ''); // merge fix: skip record without a period
-        if (ts && Number.isFinite(curr) && Number.isFinite(prev)) {
+        if (ts && curr !== null && prev !== null) {
           fundamentalStore.addRecord({
             dataset: `EIA_US_CRUDE_STOCKS (${rows[0].period})`,
             source: 'U.S. EIA Open Data v2 (WCRSTUS1)',
@@ -1226,10 +1237,10 @@ export class EiaEnergyAdapter implements MarketDataProvider {
       };
       const ngRows = ngJson.response?.data ?? [];
       if (ngRes.ok && ngRows.length >= 2) {
-        const curr = Number(ngRows[0].value);
-        const prev = Number(ngRows[1].value);
+        const curr = strictNum(ngRows[0].value);
+        const prev = strictNum(ngRows[1].value);
         const ts = normalizeDateToUtcIso(ngRows[0].period ?? ''); // merge fix: skip record without a period
-        if (ts && Number.isFinite(curr) && Number.isFinite(prev)) {
+        if (ts && curr !== null && prev !== null) {
           fundamentalStore.addRecord({
             dataset: `EIA_US_NATURAL_GAS_STORAGE (${ngRows[0].period})`,
             source: 'U.S. EIA Open Data v2 (Working Gas)',
@@ -1768,8 +1779,8 @@ export class FredMacroAdapter implements MarketDataProvider {
           continue;
         }
         const validObs = payload.observations
-          .map((o) => ({ date: o.date, val: Number(o.value) }))
-          .filter((o) => Boolean(o.date) && Number.isFinite(o.val));
+          .map((o) => ({ date: o.date, val: strictNum(o.value) }))
+          .filter((o): o is { date: string; val: number } => Boolean(o.date) && o.val !== null);
         if (validObs.length === 0) continue;
 
         const latest = validObs[0];

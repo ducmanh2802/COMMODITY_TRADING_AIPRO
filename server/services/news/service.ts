@@ -100,8 +100,13 @@ export class NewsService {
       }
     }
     // Keep the previous cache if every feed failed.
-    if (items.length === 0 && this.cache) return this.cache.items;
-    this.cache = { at: this.now(), items };
+    // An empty result (all feeds down / blocked / HTML) is cached for at most 60 s so recovery is quick.
+    const emptyTtl = Math.min(this.ttl, 60_000);
+    if (items.length === 0 && this.cache) {
+      this.cache = { at: this.now() - (this.ttl - emptyTtl), items: this.cache.items }; // keep last good copy, retry soon
+      return this.cache.items;
+    }
+    this.cache = { at: items.length === 0 ? this.now() - (this.ttl - emptyTtl) : this.now(), items };
     return items;
   }
 
