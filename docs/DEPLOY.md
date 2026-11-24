@@ -105,7 +105,7 @@ Hai job `channel-zones` và `channel-radar` chạy mỗi 5 phút, chỉ khi có 
 Sau khi có URL Cloud Run:
 
 1. Firebase Console, Authentication, Settings, **Authorized domains**: thêm domain `xxxx.a.run.app` (nếu không, đăng nhập Google sẽ bị chặn).
-2. Nếu dùng project riêng, triển khai luật Firestore: `npx firebase-tools deploy --only firestore:rules` (dùng `firestore.rules` và `firebase.json` trong repo).
+2. Nếu dùng project riêng, triển khai luật Firestore: `npx firebase deploy --only firestore` (dùng `firestore.rules` và `firebase.json` trong repo; database có tên nên KHÔNG dùng `firestore:rules`).
 
 ## 6. Cập nhật và dọn dẹp
 

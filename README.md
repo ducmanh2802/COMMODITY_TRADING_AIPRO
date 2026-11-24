@@ -13,7 +13,7 @@ Các mục trong thanh bên và `src/App.tsx`:
 | Mục | Mô tả |
 |---|---|
 | Tổng quan (`overview`) | Bảng điều khiển tổng quan |
-| Học (`learn`) | Lộ trình học cho người mới |
+| Học (`learn`) | Lộ trình học cho người mới: bài học dựng bằng `learn/lesson/*` (KeyPoints, LessonBody, quiz, GlossaryTip), hình minh họa `learn/diagrams/groupA-D.tsx`, video chỉ từ nhà xuất bản uy tín (kiểm tra bằng oEmbed trước khi thêm; YouTube chỉ tải sau khi bấm); Lộ trình 3 tháng (`src/shared/program/threeMonth.ts`, 12 tuần) |
 | Thị trường (`markets`) | Bảng giá / market watch |
 | Khám phá hợp đồng (`explorer`) | Chuỗi hợp đồng, hồ sơ hợp đồng, quy tắc lịch (`/api/instruments/...`) |
 | Biểu đồ (`charts`) | Nến, dữ liệu đã nhập, overlay |
@@ -23,9 +23,10 @@ Các mục trong thanh bên và `src/App.tsx`:
 | Cơ bản / Tin tức (`fundamental`, `news`) | Bản ghi cơ bản (`/api/fundamental/records`) |
 | Sức khỏe dữ liệu (`data-health`) | Trạng thái nguồn dữ liệu (`/api/health`, `/api/providers/health`) |
 | Nhập dữ liệu (`data-import`) | Nhập CSV lịch sử vào SQLite, xem `docs/DATA_IMPORT.md` |
+| Giao dịch giả lập (paper trading, `views/papertrade/`) | Kỷ luật: khóa nghỉ 24h sau 3 lệnh lỗ liên tiếp hoặc lỗ ngày <= -3% vốn (`coolOff.ts`; vẫn được đóng lệnh); thẻ lỗi + thống kê lỗi theo tháng (`mistakeStats.ts`); banner rủi ro sự kiện 24h tới (`src/shared/events/eventRisk.ts`, lịch FOMC/CPI trong `usMacroCalendar.ts`, EIA/USDA/WASDE); review tuần (`weeklyReview.ts`, tóm tắt AI tùy chọn qua `POST /api/paper/weekly-review`, lỗi AI thì giữ nội dung công thức) |
 | Cài đặt (`settings`) | Cài đặt ứng dụng |
 
-Đăng nhập Google bằng Firebase Auth; danh mục/nhật ký có thể lưu trên Firestore (`firestore.rules`).
+Đăng nhập Google bằng Firebase Auth; danh mục/nhật ký có thể lưu trên Firestore (`firestore.rules`). Khách (chưa đăng nhập) không bao giờ tải Firestore SDK: mã chỉ nạp qua `getFirestoreModules()` (lazy, `src/firebase.ts`). Lỗi form có hỗ trợ truy cập (aria-invalid/aria-describedby từng trường) qua `src/components/common/fieldErrors.ts`. Lịch nghỉ lễ có Tết 2027 (MXV đóng cửa dự kiến, số liệu dự phóng, không phải thông báo chính thức).
 
 ## Chạy nhanh
 
@@ -36,6 +37,8 @@ npm install
 cp .env.example .env     # tùy chọn (Windows: copy .env.example .env)
 npm run dev              # http://localhost:3000 (Express + Vite)
 npm test                 # chạy test (tsx --test)
+npm run test:rules       # test firestore.rules bằng emulator (cần Java)
+npm run test:e2e         # Playwright: tests/e2e (smoke, learning, program, keyboard, features13b, discipline)
 npm run typecheck        # kiểm tra kiểu TypeScript
 npm run build            # build frontend ra dist/
 npm start                # chạy production (build trước), cổng PORT hoặc 3000
@@ -49,7 +52,10 @@ Tất cả đều **tùy chọn**. Không bao giờ commit file `.env`. Danh sá
 |---|---|
 | `PORT` | Cổng server (mặc định 3000) |
 | `HOST` | Địa chỉ bind (mặc định dual-stack IPv4+IPv6) |
-| `GEMINI_API_KEY` | Cần cho AI Analyst; không có thì tính năng này báo lỗi cấu hình |
+| `GEMINI_API_KEY` | Cần cho AI Analyst; không có thì tính năng này báo lỗi cấu hình (trừ khi có `OPENROUTER_API_KEY`) |
+| `GEMINI_MODEL` | Tùy chọn: một model hoặc danh sách ngăn cách bằng dấu phẩy. Mặc định chỉ dùng model miễn phí (`server/lib/geminiModels.ts`), tự thử model kế tiếp khi gặp 503/429/404 |
+| `OPENROUTER_API_KEY` | Tùy chọn: fallback cuối cùng bằng model OpenRouter `:free` (và là nhà cung cấp duy nhất nếu thiếu `GEMINI_API_KEY`) |
+| `OPENROUTER_MODEL` | Tùy chọn: danh sách id model OpenRouter; mặc định lấy danh sách model `:free` hiện có |
 | `ADMIN_API_TOKEN` | Token cho endpoint ghi (nhập/xóa dữ liệu, đồng bộ COT/provider), gửi `Authorization: Bearer <token>`. Nếu không đặt, các endpoint này chỉ nhận request trực tiếp từ localhost. Dùng chuỗi ngẫu nhiên >= 16 ký tự |
 | `MARKET_DB_PATH` | File SQLite (mặc định `data/market.db`) |
 | `COT_SOURCE` | `auto` (mặc định) / `socrata` / `files` |
@@ -65,6 +71,16 @@ Tất cả đều **tùy chọn**. Không bao giờ commit file `.env`. Danh sá
 | `OLLAMA_MODEL` | Tên model Ollama (mặc định `llama3.2`) |
 
 Cấu hình Firebase nằm ở `firebase-applet-config.json` (không dùng biến môi trường).
+
+## Triển khai luật Firestore
+
+Database Firestore là database có tên (xem `firebase.json`), nên phải dùng:
+
+```bash
+npx firebase deploy --only firestore
+```
+
+KHÔNG dùng `--only firestore:rules` (không nhắm đúng database có tên). Chi tiết Cloud Run: `docs/DEPLOY.md`.
 
 ## Nhãn chất lượng dữ liệu
 

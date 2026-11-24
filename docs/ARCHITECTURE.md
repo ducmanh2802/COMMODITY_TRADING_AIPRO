@@ -137,7 +137,10 @@ hiển thị ở `Sidebar.tsx`, điều phối trang ở `src/App.tsx`, các tab
 | Mã | Biểu đồ | `ChartsView.tsx`, `charts/*` | `/api/market/candles`, `/api/technical/:symbol` | `engines/technicalEngine.ts` |
 | Mã | COT | `cot/*` | `/api/cot/markets\|health\|:id`, `POST /api/cot/sync` | `server/cot/*` |
 | Mã | Hồ sơ / AI | `CommodityProfileView.tsx`, `AiAnalystView.tsx` | `POST /api/ai/analyze` | `services/aiAnalyst.ts` |
-| Học viện | Bài học, máy tính | `learn/LearnView.tsx`, `Calculators.tsx` | - | - |
+| Học viện | Bài học, máy tính | `learn/LearnView.tsx`, `LessonPage.tsx`, `Calculators.tsx` | - | - |
+| Học viện | Trình dựng bài học | `learn/lesson/*` (`LessonBody`, `KeyPoints`, `LessonQuiz`, `GlossaryTip`, `bodyParse.ts`), `learn/diagrams/groupA-D.tsx` + `Figures.tsx`, `learn/LessonVideos.tsx`, nội dung `learn/curriculum/level1-10.ts` | - | Video: chỉ nhà xuất bản uy tín, kiểm tra oEmbed |
+| Học viện | Lộ trình 3 tháng | `src/shared/program/threeMonth.ts` (12 tuần, 3 giai đoạn, lưu `ctap.program.v1`) | - | - |
+| Của tôi | Giao dịch giả lập (kỷ luật) | `papertrade/PaperTradingView.tsx`, `coolOff.ts`, `mistakeStats.ts`, `weeklyReview.ts`, `EventRiskBanner.tsx`, `paperFirestore.ts` | `POST /api/paper/weekly-review` | `server/routes/paperReview.ts`, `src/shared/events/eventRisk.ts`, `usMacroCalendar.ts` |
 | Của tôi | Sổ nghiên cứu | `journal/ResearchNotebookView.tsx` | Firestore `researchNotes` | - |
 | Của tôi | Nhật ký / Rủi ro | `TradeJournalView.tsx`, `RiskManagementView.tsx` | `POST /api/journal/analytics`, `/api/risk/calculate` | `engines/riskEngine.ts` |
 | Cài đặt | Cài đặt, Sức khỏe dữ liệu, Nhập dữ liệu | `SettingsView.tsx`, `DataHealthView.tsx`, `common/CsvImportPanel.tsx` | `/api/health`, `/api/providers/health`, `/api/data/health-report`, `POST /api/data/import`, `/api/market/candles/import` | `services/dataHealthService.ts`, `csvImporter.ts`, `server/data/*` |
@@ -161,6 +164,10 @@ Id không có trong `MAP` rơi vào: `learn` -> Học viện; `settings`, `data-
 (`SETTINGS_ITEMS`); còn lại (`overview`, `backtest`, `term-structure`, `scanner`, `signals`, `portfolio`, `technical`,
 `explorer`, `analysis`) -> Nâng cao (`ADVANCED_ITEMS`). Trạng thái điều hướng nằm ở `src/contexts/TerminalContext.tsx`.
 
+Luồng kỷ luật paper trading: lệnh đóng -> `coolOff.ts` (khóa lệnh MỚI 24h theo giờ Việt Nam sau 3 lỗ liên tiếp hoặc lỗ ngày <= -3% vốn; đóng lệnh không bị chặn) -> `mistakeStats.ts` (thẻ lỗi, thống kê tháng) -> `weeklyReview.ts` (review tuần thuần công thức; client có thể gọi `POST /api/paper/weekly-review` để lấy đoạn nhận xét ngắn, lỗi/503 thì giữ bản công thức). `eventRisk.ts` (thuần, không mạng) liệt kê báo cáo tác động cao trong 24h tới cho phiếu lệnh.
+
+Chuỗi model AI (`server/lib/geminiModels.ts`): `GEMINI_MODEL` (hoặc danh sách miễn phí mặc định) -> thử model kế khi 503/429/404/500 -> OpenRouter `:free` nếu có `OPENROUTER_API_KEY`. Dùng chung cho AI Analyst (`aiAnalyst.ts`), `cycleAiService.ts`, `lessonRecommender.ts`, tóm tắt tin (`news/summarizer.ts`) và review tuần (`paperReview.ts`).
+
 Scheduler (`server/scheduler/jobs.ts`): job `cot-weekly`, `macro-fx`, `macro-wasde`, `macro-eia`, `fred-macro`,
 `fred-public-macro`. Trạng thái xem `GET /api/scheduler/status`.
 
@@ -174,7 +181,7 @@ Scheduler (`server/scheduler/jobs.ts`): job `cot-weekly`, `macro-fx`, `macro-was
 |---|---|
 | Server | `PORT`, `HOST`, `NODE_ENV`, `TRUST_PROXY`, `MARKET_DB_PATH` |
 | Bảo vệ ghi | `ADMIN_API_TOKEN` |
-| AI | `GEMINI_API_KEY`, `GEMINI_MODEL`, `AI_ANALYST_TIMEOUT_MS` |
+| AI | `GEMINI_API_KEY`, `GEMINI_MODEL`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `AI_ANALYST_TIMEOUT_MS` |
 | Yahoo | `YAHOO_ENABLED`, `YAHOO_HISTORY_WARMUP` |
 | COT | `COT_SOURCE`, `COT_CACHE_DIR`, `CFTC_APP_TOKEN`, `CFTC_*_DATASET_ID` |
 | Nguồn có giấy phép / vĩ mô | `EIA_API_KEY`, `USDA_API_KEY`, `MXV_API_URL/KEY`, `CME_DATAMINE_API_KEY`, `ICE_API_KEY`, `TWELVEDATA_API_KEY`, `FMP_API_KEY`... |
@@ -190,7 +197,9 @@ Nguyên tắc bảo mật:
 - **Firestore** (`firestore.rules`): mặc định chặn tất cả (`allow read, write: if false`); chỉ mở các collection
   `users`, `userSettings`, `positions`, `tradeJournal`, `researchNotes`, `auditLogs` cho **chủ sở hữu đã xác minh**
   (kiểm tra id hợp lệ, schema). `users` không cho `list`; `auditLogs` chỉ thêm (append-only).
-  Kiểm thử: `npm run test:rules` (emulator).
+  Kiểm thử: `npm run test:rules` (emulator, `tests/rules/*.emulator.test.ts`). Database Firestore có tên: triển khai luật bằng
+  `npx firebase deploy --only firestore` (không dùng `firestore:rules`).
+- **Khách không tải Firestore SDK**: `src/firebase.ts` chỉ nạp `firebase/firestore` khi cần qua `getFirestoreModules()` (import động); view lười dùng `src/firestoreDb.ts`.
 - `security_spec.md` mô tả thêm mô hình đe dọa.
 
 Lưu trữ: SQLite `data/market.db` (`server/storage/sqliteCandleRepository.ts`, `node:sqlite`) cho nến và COT; cache RAM
@@ -259,9 +268,9 @@ Mỗi task trong `docs/AUDIT_AND_PLAN.md` nên có:
 | `npm run lint` / `typecheck` | `tsc --noEmit` (hiện hai lệnh giống nhau) |
 | `npm test` | `tsx --test` cho `server/**/*.test.ts`, `src/**/*.test.ts`, `*.test.ts` ở gốc |
 | `npm run test:rules` | Firestore emulator + `tests/rules/*.test.ts` |
-| `npm run test:e2e` | Playwright (`tests/e2e/smoke.spec.ts`, cấu hình `playwright.config.ts`) |
+| `npm run test:e2e` | Playwright, bộ test `tests/e2e/`: `smoke`, `learning`, `program`, `keyboard`, `features13b`, `discipline` (cool-off, thẻ lỗi, review tuần, rủi ro sự kiện); cấu hình `playwright.config.ts` |
 
-Bố cục test: unit test cạnh code (`foo.ts` + `foo.test.ts`), fixture ở `__fixtures__/`, test rules ở `tests/rules/`,
+Hỗ trợ a11y form: `src/components/common/fieldErrors.ts` (`fieldErrorProps` gắn `aria-invalid`/`aria-describedby` theo từng trường). Bố cục test: unit test cạnh code (`foo.ts` + `foo.test.ts`), fixture ở `__fixtures__/`, test rules ở `tests/rules/`,
 `firestore.rules.test.ts` ở gốc, e2e ở `tests/e2e/`.
 
 CI (`.github/workflows/ci.yml`, Node 24): job `build` = `npm ci` -> typecheck -> test -> build -> Playwright e2e;
