@@ -114,12 +114,6 @@ function formatHm(totalMinutes: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-export function classifyVietnamSessionSlot(ictHour: number): VietnamSessionSlot {
-  if (ictHour >= 6 && ictHour < 15) return 'ASIA_VN_DAY';
-  if (ictHour >= 15 && ictHour < 20) return 'EU_ROBUSTA';
-  return 'US_NIGHT';
-}
-
 /**
  * Official 2026–2027 Market Holidays affecting Vietnam MXV & linked international futures exchanges.
  */

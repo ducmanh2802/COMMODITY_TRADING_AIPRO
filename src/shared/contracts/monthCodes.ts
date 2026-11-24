@@ -41,10 +41,6 @@ export function monthToMonthCode(month: number): MonthCode {
   return MONTH_CODES[month - 1];
 }
 
-export function monthName(month: number): string {
-  return MONTH_NAMES[month - 1] ?? '?';
-}
-
 /** Extracts month codes from free text such as `'H K N U Z (Mar, May, Jul, Sep, Dec)'`. */
 export function parseMonthCodeList(text: string): MonthCode[] {
   const head = text.split('(')[0];

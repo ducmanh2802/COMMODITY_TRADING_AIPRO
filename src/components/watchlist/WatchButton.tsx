@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useT } from '../../i18n';
 import { MAX_NOTE_LENGTH, type WatchItem, type WatchZone } from '../../shared/watchlist/watchlist';
 import { deleteWatchItem, saveWatchItem, useWatchlist } from './watchlistStore';
@@ -109,8 +109,15 @@ export function WatchButton({ symbol }: { symbol: string }) {
   const { items } = useWatchlist();
   const item = items.find((i) => i.instrumentId === symbol);
   const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const [shift, setShift] = useState(0);
+  // On phones the popover is viewport-wide, so slide it left until its left edge sits at the 16px gutter.
+  useLayoutEffect(() => {
+    if (!open || !box.current || window.innerWidth >= 640) { setShift(0); return; }
+    setShift(16 - box.current.getBoundingClientRect().left);
+  }, [open]);
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block" ref={box}>
       <button
         type="button"
         aria-pressed={!!item}
@@ -122,7 +129,7 @@ export function WatchButton({ symbol }: { symbol: string }) {
         {t(item ? 'wl.btn.on' : 'wl.btn.add')}
       </button>
       {open && (
-        <div className="absolute z-40 mt-2 left-0 sm:left-auto sm:right-0 w-[min(24rem,calc(100vw-2rem))]">
+        <div className="absolute z-40 mt-2 left-0 sm:left-auto sm:right-0 w-[min(24rem,calc(100vw-2rem))]" style={shift ? { left: shift } : undefined}>
           <WatchEditor symbol={symbol} item={item} onClose={() => setOpen(false)} />
         </div>
       )}

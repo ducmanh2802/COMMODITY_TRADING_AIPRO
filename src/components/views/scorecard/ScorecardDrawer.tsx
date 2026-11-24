@@ -4,6 +4,7 @@ import { fmtDate, useI18n, type TKey } from '../../../i18n';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import type { Scorecard, ScorecardNarrative } from '../../../shared/types/scorecard';
 import { safeReadJson } from '../../../shared/utils/http';
+import { useFocusTrap } from '../../../shared/hooks/useFocusTrap';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { DimBadge, LEVEL_TONE } from './shared';
@@ -25,15 +26,14 @@ export function ScorecardDrawer({ card, onClose }: Props) {
   const { setSelectedSymbol, setActiveModule } = useTerminal();
   const [ai, setAi] = useState<AiState>({ kind: 'idle' });
   const closeRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const name = lang === 'vi' && card.vietnameseName ? card.vietnameseName : card.productName;
 
   useEffect(() => {
     setAi({ kind: 'idle' });
     closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [card.instrumentId, onClose]);
+  }, [card.instrumentId]);
+  useFocusTrap(dialogRef, true, { onEscape: onClose, autoFocus: false });
 
   const reasonText = (code: string) => t(`sc.ai.reason.${code}` as TKey) === `sc.ai.reason.${code}` ? t('sc.ai.reason.UNKNOWN') : t(`sc.ai.reason.${code}` as TKey);
 
@@ -63,7 +63,7 @@ export function ScorecardDrawer({ card, onClose }: Props) {
   const narrative = ai.kind === 'ok' ? ai.narrative : card.narrative;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label={t('sc.detail.title')}>
+    <div ref={dialogRef} className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label={t('sc.detail.title')}>
       <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
       <aside className="relative w-full max-w-xl h-full overflow-y-auto bg-[var(--surface)] border-l border-[var(--border)] p-4 space-y-4">
         <div className="flex items-start justify-between gap-3">

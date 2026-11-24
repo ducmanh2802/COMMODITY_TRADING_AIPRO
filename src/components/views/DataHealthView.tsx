@@ -1,3 +1,4 @@
+import { onTablistKeyDown } from '../../shared/hooks/tablistKeys';
 import { useMemo, useState } from 'react';
 import {
   Activity,
@@ -347,7 +348,7 @@ export function DataHealthView() {
 
       {/* Navigation Tabs */}
       <div
-        role="tablist"
+        role="tablist" onKeyDown={onTablistKeyDown}
         aria-label={t('fr.dh.tabsAria')}
         className="flex flex-wrap items-center gap-1 border-b border-[var(--border)] pb-2"
       >

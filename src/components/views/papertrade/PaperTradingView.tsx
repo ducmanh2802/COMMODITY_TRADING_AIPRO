@@ -1,4 +1,6 @@
+import { onTablistKeyDown } from '../../../shared/hooks/tablistKeys';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { TrapDialog } from '../../common/TrapDialog';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { AlertTriangle, GraduationCap, LogIn } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -448,7 +450,7 @@ export function PaperTradingView() {
       {store.error && <p className="text-xs text-[var(--negative)]" role="alert">{store.error}</p>}
       {message && <p className="text-xs text-[var(--accent-text)]" role="status">{message}</p>}
 
-      <div className="flex gap-2 overflow-x-auto snap-x -mx-1 px-1 pb-1" role="tablist">
+      <div className="flex gap-2 overflow-x-auto snap-x -mx-1 px-1 pb-1" role="tablist" onKeyDown={onTablistKeyDown}>
         {(['trade', 'stats', 'history', 'replay', 'contest'] as const).map((k) => (
           <button
             key={k}
@@ -724,7 +726,7 @@ export function PaperTradingView() {
       )}
 
       {calcOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-start sm:items-center justify-center p-3 overflow-y-auto" role="dialog" aria-modal="true" aria-label={t('oc.title')}>
+        <TrapDialog className="fixed inset-0 z-50 bg-black/70 flex items-start sm:items-center justify-center p-3 overflow-y-auto" label={t('oc.title')} onClose={() => setCalcOpen(false)}>
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 sm:p-5 w-full max-w-2xl space-y-3 my-auto">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-base font-semibold text-[var(--text-strong)]">{t('oc.title')}</h2>
@@ -732,13 +734,13 @@ export function PaperTradingView() {
             </div>
             <OrderCalculator instruments={instruments.filter((i) => i.enabled)} initialInstrumentId={inst?.id} initialEntry={gate && gate.ok ? gate.price : null} />
           </div>
-        </div>
+        </TrapDialog>
       )}
 
       {/* Confirm dialog: shows the money at risk before any order is placed. */}
       {pending && session && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={t('pt.confirm.title')}>
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-5 w-full max-w-md space-y-3">
+        <TrapDialog className="fixed inset-0 z-50 bg-black/70 flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto" label={t('pt.confirm.title')} onClose={() => setPending(null)}>
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-5 w-full max-w-md space-y-3 my-auto">
             <h2 className="text-base font-semibold text-[var(--text-strong)]">{t('pt.confirm.title')}</h2>
             <p className="text-sm text-[var(--text-strong)]">
               <span className={pending.side === 'LONG' ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}>{pending.side === 'LONG' ? t('pt.side.buy') : t('pt.side.sell')}</span>
@@ -773,7 +775,7 @@ export function PaperTradingView() {
               <button type="button" className={`${bigBtn} bg-[var(--positive)] text-[#05210F]`} onClick={() => void confirmOrder()}>{pending.warn > 0 ? t('ck.warn.go') : t('pt.confirm.ok')}</button>
             </div>
           </div>
-        </div>
+        </TrapDialog>
       )}
     </div>
   );

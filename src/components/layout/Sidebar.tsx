@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   CandlestickChart,
   GraduationCap,
@@ -15,6 +15,7 @@ import {
 import type { AppModuleId } from '../../shared/types/risk';
 import { useTerminal } from '../../contexts/TerminalContext';
 import { useT, type TKey } from '../../i18n';
+import { useFocusTrap } from '../../shared/hooks/useFocusTrap';
 import { ADVANCED_ITEMS, sectionOf, type SectionId } from './navMap';
 
 interface SidebarProps {
@@ -77,14 +78,9 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   // Off-canvas drawer: hidden from keyboard and screen readers until opened.
   const drawerHidden = !isDesktop && !mobileOpen;
 
-  useEffect(() => {
-    if (!mobileOpen) return undefined;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCloseMobile();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [mobileOpen, onCloseMobile]);
+  const asideRef = useRef<HTMLElement>(null);
+  const drawerModal = !isDesktop && mobileOpen;
+  useFocusTrap(asideRef, drawerModal, { onEscape: onCloseMobile });
 
   const toggleCollapsed = () => {
     setCollapsed((c) => {
@@ -138,7 +134,9 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
       )}
 
       <aside
+        ref={asideRef}
         inert={drawerHidden}
+        {...(drawerModal ? { role: 'dialog', 'aria-modal': true, 'aria-label': t('nav.ariaLabel') } : {})}
         className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-[var(--surface)] border-r border-[var(--border)] flex flex-col transition-all duration-200 lg:static lg:translate-x-0 lg:max-w-none ${
           rail ? 'lg:w-[72px]' : 'lg:w-64'
         } ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}

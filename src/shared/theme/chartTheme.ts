@@ -38,11 +38,6 @@ export function lwBase(opts: { timeVisible?: boolean; secondsVisible?: boolean }
   };
 }
 
-/** Options for a 2px line series in lightweight-charts. */
-export function lwLine(color: string) {
-  return { color, lineWidth: LINE_WIDTH as 2, crosshairMarkerRadius: 4, priceLineVisible: false, lastValueVisible: true };
-}
-
 /** Resolve 'var(--token)' (or a plain colour) to a concrete colour for canvas libraries. */
 export function resolveColor(c: string): string {
   const m = c.match(/^var\((--[\w-]+)\)$/);

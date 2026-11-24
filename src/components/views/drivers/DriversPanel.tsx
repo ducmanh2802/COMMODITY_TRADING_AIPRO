@@ -1,3 +1,4 @@
+import { onTablistKeyDown } from '../../../shared/hooks/tablistKeys';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { fmtFixed, useI18n } from '../../../i18n';
@@ -55,7 +56,7 @@ function WhyBlock({ data, l }: { data: DriversResponse; l: L }) {
     .join('\n');
   return (
     <Block title={t('drv.why.title')} summary={tx(h.sentence, l)} source={more}>
-      <div className="flex gap-2" role="tablist">
+      <div className="flex gap-2" role="tablist" onKeyDown={onTablistKeyDown}>
         {([1, 5, 20] as const).map((d) => (
           <button
             key={d}
@@ -84,13 +85,14 @@ function ConeRows({ h, l }: { h: ConeHorizon; l: L }) {
   const row = (label: string, b: { lo: number; hi: number; loPct: number; hiPct: number }) => (
     <tr key={label}>
       <td className="pr-3 text-[var(--muted)]">{label}</td>
-      <td className="tabular-nums">{fmtFixed(b.lo, 2)} – {fmtFixed(b.hi, 2)}</td>
-      <td className="pl-3 tabular-nums text-[var(--muted)]">{fmtFixed(b.loPct, 1)}% … +{fmtFixed(b.hiPct, 1)}%</td>
+      <td className="tabular-nums whitespace-nowrap">{fmtFixed(b.lo, 2)} – {fmtFixed(b.hi, 2)}</td>
+      <td className="pl-3 tabular-nums whitespace-nowrap text-[var(--muted)]">{fmtFixed(b.loPct, 1)}% … +{fmtFixed(b.hiPct, 1)}%</td>
     </tr>
   );
   return (
     <div className="space-y-1">
       <p className="text-xs font-medium text-[var(--text)]">{t(h.days === 5 ? 'drv.cone.h5' : 'drv.cone.h21')}</p>
+      <div className="overflow-x-auto">
       <table className="text-xs">
         <tbody>
           {h.parametric && (
@@ -109,6 +111,7 @@ function ConeRows({ h, l }: { h: ConeHorizon; l: L }) {
           )}
         </tbody>
       </table>
+      </div>
       {h.sentence && <p className="sr-only">{tx(h.sentence, l)}</p>}
     </div>
   );

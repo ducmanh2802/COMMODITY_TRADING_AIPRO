@@ -204,7 +204,7 @@ function ContextCard({ light, t }: { light: ContextLight; t: (k: TKey, p?: Recor
           aria-controls={tipId}
           onClick={() => setTip((v) => !v)}
           onBlur={() => setTip(false)}
-          className="shrink-0 w-7 h-7 -m-1 flex items-center justify-center text-[var(--muted)] hover:text-[var(--text-strong)]"
+          className="shrink-0 w-10 h-10 -m-2.5 sm:w-7 sm:h-7 sm:-m-1 flex items-center justify-center text-[var(--muted)] hover:text-[var(--text-strong)]"
         >
           <HelpCircle className="w-4 h-4" aria-hidden="true" />
         </button>

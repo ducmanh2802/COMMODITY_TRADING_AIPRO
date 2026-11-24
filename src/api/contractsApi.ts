@@ -38,10 +38,6 @@ async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
 // Instruments
 // ---------------------------------------------------------------------------------------------
 
-export async function fetchInstruments(signal?: AbortSignal): Promise<InstrumentDefinition[]> {
-  const r = await getJson<{ instruments?: InstrumentDefinition[] }>('/api/instruments', signal);
-  return r.instruments ?? [];
-}
 
 // ---------------------------------------------------------------------------------------------
 // Contract chain & calendar rule

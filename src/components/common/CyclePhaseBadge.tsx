@@ -66,6 +66,7 @@ export function CyclePhaseBadge({ phase, compact = false }: { phase: CyclePhase;
           <span className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
           <span
             role="dialog"
+            aria-label={t(`fr.phase.${key}`)}
             onClick={(e) => e.stopPropagation()}
             className="absolute left-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] whitespace-normal rounded-lg border border-[var(--border,#263244)] bg-[var(--surface,#0F1623)] p-3 text-left text-xs leading-relaxed text-[var(--text)] shadow-xl"
           >

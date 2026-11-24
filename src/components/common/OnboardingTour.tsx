@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useFocusTrap } from '../../shared/hooks/useFocusTrap';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
 import { useTheme } from '../../shared/theme/theme';
@@ -31,8 +32,7 @@ export function OnboardingTour() {
   const [open, setOpen] = useState(() => !isDone());
   const [step, setStep] = useState(1);
 
-  if (!open) return null;
-
+  const dialogRef = useRef<HTMLDivElement>(null);
   const close = () => {
     try {
       window.localStorage.setItem(ONBOARDING_KEY, '1');
@@ -41,13 +41,17 @@ export function OnboardingTour() {
     }
     setOpen(false);
   };
+  useFocusTrap(dialogRef, open, { onEscape: close });
+
+  if (!open) return null;
+
   const next = () => (step >= TOTAL ? close() : setStep(step + 1));
   const target = TARGETS[step];
   const btn = 'px-5 py-3 rounded-xl border text-lg font-semibold min-h-[52px]';
   const k = (s: string) => `ob.s${step}.${s}` as TKey;
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={t(k('title'))} className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 p-4">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t(k('title'))} className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-lg rounded-2xl border border-[var(--accent)] bg-[var(--bg)] p-6 text-[var(--text-strong)] shadow-2xl">
         <div className="text-base text-[var(--accent-text)]">{t('ob.step', { n: step, total: TOTAL })}</div>
         <h2 className="mt-2 text-3xl font-bold">{t(k('title'))}</h2>

@@ -12,6 +12,7 @@ import {
   toggleMute,
   useRadar,
 } from './radarStore';
+import { useFocusTrap } from '../../shared/hooks/useFocusTrap';
 import { afterFirstPaint } from '../../shared/utils/defer';
 import { useT } from '../../i18n';
 
@@ -23,6 +24,8 @@ export function RadarBell() {
   const [open, setOpen] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const box = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  useFocusTrap(panel, open, { onEscape: () => setOpen(false), trap: false, autoFocus: false });
 
   useEffect(() => {
     let stop: (() => void) | undefined;
@@ -56,7 +59,7 @@ export function RadarBell() {
   const { settings } = radar;
 
   return (
-    <div className="relative" ref={box}>
+    <div className="sm:relative" ref={box}>
       <button
         type="button"
         onClick={() => {
@@ -64,7 +67,7 @@ export function RadarBell() {
           markRadarRead();
         }}
         aria-label={radar.unread > 0 ? t('rd.bell.unread', { count: radar.unread }) : t('rd.bell.title')}
-        aria-haspopup="true"
+        aria-haspopup="dialog"
         aria-expanded={open}
         title={t('rd.bell.title')}
         className="relative w-10 h-10 grid place-items-center bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border)] rounded-[10px] text-[var(--text)] transition-colors"
@@ -77,10 +80,10 @@ export function RadarBell() {
         )}
       </button>
       {open && (
-        <div role="region" aria-label={t('rd.bell.panel')} className="absolute right-0 mt-2 w-80 max-w-[90vw] z-40 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl p-3 space-y-2 text-xs text-[var(--text)]">
+        <div ref={panel} role="dialog" aria-modal="false" aria-label={t('rd.bell.panel')} className="absolute left-3 right-3 top-full mt-1 max-h-[calc(100dvh-5rem)] overflow-y-auto sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 sm:max-w-[90vw] z-40 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl p-3 space-y-2 text-xs text-[var(--text)]">
           <div className="flex items-center justify-between">
             <strong>{t('rd.bell.title')}</strong>
-            <button type="button" onClick={goRadar} className="text-[var(--accent-text)] hover:underline">
+            <button type="button" onClick={goRadar} className="text-[var(--accent-text)] hover:underline inline-flex items-center min-h-10 sm:min-h-0">
               {t('rd.bell.open')}
             </button>
           </div>
@@ -106,20 +109,20 @@ export function RadarBell() {
           )}
           <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/10">
             {settings.browserNotify ? (
-              <button type="button" onClick={disableBrowserNotify} className="text-[var(--text)]/80 hover:text-[var(--text-strong)]">
+              <button type="button" onClick={disableBrowserNotify} className="text-[var(--text)]/80 hover:text-[var(--text-strong)] inline-flex items-center min-h-10 sm:min-h-0">
                 {t('rd.bell.browserOff')}
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => void enableBrowserNotify().then((r) => setMsg(r === 'granted' ? t('rd.bell.browserGranted') : r === 'denied' ? t('rd.bell.browserDenied') : t('rd.bell.browserUnsupported')))}
-                className="text-[var(--accent-text)] hover:underline"
+                className="text-[var(--accent-text)] hover:underline inline-flex items-center min-h-10 sm:min-h-0"
               >
                 {t('rd.bell.browserOn')}
               </button>
             )}
             {radar.notes.length > 0 && (
-              <button type="button" onClick={clearRadarNotes} className="ml-auto text-[var(--text)]/60 hover:text-[var(--text-strong)]">
+              <button type="button" onClick={clearRadarNotes} className="ml-auto text-[var(--text)]/60 hover:text-[var(--text-strong)] inline-flex items-center min-h-10 sm:min-h-0">
                 {t('rd.bell.clear')}
               </button>
             )}

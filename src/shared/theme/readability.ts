@@ -8,7 +8,6 @@ export interface Readability {
 
 export const TEXT_SIZE_KEY = 'ctap.textSize';
 export const CONTRAST_KEY = 'ctap.contrast';
-export const TEXT_SIZES: readonly TextSize[] = ['normal', 'lg', 'xl'];
 export const DEFAULT_READABILITY: Readability = { textSize: 'normal', contrast: 'normal' };
 
 export function parseTextSize(raw: unknown): TextSize {

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useFocusTrap } from '../../../shared/hooks/useFocusTrap';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import { formatStoredTimestamp, type DatasetRecord } from '../../../api/dataApi';
 import { fmtInt, useT } from '../../../i18n';
@@ -131,18 +132,16 @@ interface ConfirmDeleteDialogProps {
 export function ConfirmDeleteDialog({ dataset, busy, error, onCancel, onConfirm }: ConfirmDeleteDialogProps) {
   const t = useT();
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     cancelRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !busy) onCancel();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [busy, onCancel]);
+  }, []);
+  useFocusTrap(dialogRef, true, { onEscape: () => { if (!busy) onCancel(); }, autoFocus: false });
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4">
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-delete-title"

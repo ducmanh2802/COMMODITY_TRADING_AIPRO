@@ -3,8 +3,6 @@ import type { ExchangeCode, ProductCategory, Timeframe, TradingStyle } from './i
 
 export type MarketDirection = 'BULLISH' | 'BEARISH' | 'SIDEWAYS' | 'UNCERTAIN';
 
-export type TradeAction = 'STRONG_BUY' | 'BUY' | 'SELL' | 'NO_TRADE';
-
 export type StrategyId =
   | 'TREND_FOLLOWING'
   | 'EMA_PULLBACK'

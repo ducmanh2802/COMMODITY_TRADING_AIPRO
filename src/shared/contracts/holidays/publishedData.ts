@@ -96,7 +96,6 @@ export const UK_BANK_HOLIDAYS_ENGLAND_WALES: readonly (readonly [string, string]
  * (https://data.gov.sg/collections/691/view); third element = dataset id.
  * Includes Saturday/Sunday holidays as published plus the "(Observed)" Monday when published.
  */
-export const SG_PUBLIC_HOLIDAYS_SOURCE_PAGE = 'https://www.mom.gov.sg/employment-practices/public-holidays';
 export const SG_DATASET_URL_PREFIX = 'https://data.gov.sg/datasets/';
 export const SG_PUBLIC_HOLIDAYS: readonly (readonly [string, string, string])[] = [
   ["2020-01-01", "New Year's Day", "d_1840fb46caa92cb59e4f168e70a36bf1"],

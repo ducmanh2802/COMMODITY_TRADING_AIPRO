@@ -234,7 +234,7 @@ export function InstrumentPage({ tab }: HubProps) {
         <button
           type="button"
           onClick={() => setActiveModule('analysis-hub')}
-          className="inline-flex items-center gap-1.5 text-xs text-[var(--muted)] hover:text-[var(--text-strong)]"
+          className="inline-flex items-center min-h-10 sm:min-h-0 gap-1.5 text-xs text-[var(--muted)] hover:text-[var(--text-strong)]"
         >
           <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
           {t('n2.in.back')}
@@ -243,7 +243,7 @@ export function InstrumentPage({ tab }: HubProps) {
           aria-label={t('n2.in.pick')}
           value={selectedSymbol}
           onChange={(e) => setSelectedSymbol(e.target.value)}
-          className="bg-[var(--surface)] border border-[var(--border)] rounded-md px-2 py-1 text-sm text-[var(--text-strong)]"
+          className="w-full sm:w-auto min-w-0 max-w-full min-h-10 sm:min-h-0 bg-[var(--surface)] border border-[var(--border)] rounded-md px-2 py-1 text-sm text-[var(--text-strong)]"
         >
           {options.map((i) => (
             <option key={i.exchangeSymbol} value={i.exchangeSymbol}>

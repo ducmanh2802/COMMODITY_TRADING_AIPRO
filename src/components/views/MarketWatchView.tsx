@@ -138,20 +138,20 @@ export function MarketWatchView() {
       {/* High-Density Market Watch Data Grid */}
       <Card padded={false} className="overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[920px]">
+          <table className="w-full text-left border-collapse md:min-w-[920px]">
             <thead>
               <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]/60 text-xs uppercase tracking-wide text-[var(--muted)]">
                 <th className="py-3 px-4 font-medium">{t('dash.mw.colProduct')}</th>
-                <th className="py-3 px-3 font-medium">{t('dash.mw.colCategory')}</th>
-                <th className="py-3 px-3 font-medium">{t('common.exchange')}</th>
-                <th className="py-3 px-3 font-medium">{t('common.symbol')}</th>
-                <th className="py-3 px-3 font-medium">{t('dash.mw.colMxv')}</th>
-                <th className="py-3 px-3 font-medium">{t('dash.mw.colSpec')}</th>
+                <th className="hidden md:table-cell py-3 px-3 font-medium">{t('dash.mw.colCategory')}</th>
+                <th className="hidden md:table-cell py-3 px-3 font-medium">{t('common.exchange')}</th>
+                <th className="hidden md:table-cell py-3 px-3 font-medium">{t('common.symbol')}</th>
+                <th className="hidden md:table-cell py-3 px-3 font-medium">{t('dash.mw.colMxv')}</th>
+                <th className="hidden md:table-cell py-3 px-3 font-medium">{t('dash.mw.colSpec')}</th>
                 <th className="py-3 px-3 font-medium text-right">{t('common.price')}</th>
-                <th className="py-3 px-3 font-medium text-right">{t('common.volume')}</th>
-                <th className="py-3 px-3 font-medium text-right">{t('term.openInterest')}</th>
-                <th className="py-3 px-3 font-medium">{t('fr.mw.colTime')}</th>
-                <th className="py-3 px-3 font-medium text-right">{t('fr.mw.colStatus')}</th>
+                <th className="hidden md:table-cell py-3 px-3 font-medium text-right">{t('common.volume')}</th>
+                <th className="hidden md:table-cell py-3 px-3 font-medium text-right">{t('term.openInterest')}</th>
+                <th className="hidden md:table-cell py-3 px-3 font-medium">{t('fr.mw.colTime')}</th>
+                <th className="hidden md:table-cell py-3 px-3 font-medium text-right">{t('fr.mw.colStatus')}</th>
                 <th className="py-3 px-4 font-medium text-right">{t('dash.mw.colActions')}</th>
               </tr>
             </thead>
@@ -181,7 +181,7 @@ export function MarketWatchView() {
                   const cycleSummary = summaryById.get(inst.id);
                   return (
                     <tr key={inst.id} className="hover:bg-[var(--surface-2)]/50 transition-colors">
-                      <td className="py-3 px-4 whitespace-nowrap">
+                      <td className="py-3 px-3 sm:px-4 md:whitespace-nowrap">
                         <div className="font-medium text-[var(--text-strong)]">
                           {inst.commodityProfile?.vietnameseName ?? inst.productName}
                         </div>
@@ -194,16 +194,16 @@ export function MarketWatchView() {
                               : ''}
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-[var(--text)]/70 whitespace-nowrap">
+                      <td className="hidden md:table-cell py-2.5 px-3 text-[var(--text)]/70 whitespace-nowrap">
                         {t(`dash.cat.${inst.category}`)}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-[var(--text)] whitespace-nowrap">
+                      <td className="hidden md:table-cell py-2.5 px-3 font-mono text-[var(--text)] whitespace-nowrap">
                         {inst.exchange}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-[var(--text-strong)] whitespace-nowrap">
+                      <td className="hidden md:table-cell py-2.5 px-3 font-mono text-[var(--text-strong)] whitespace-nowrap">
                         {inst.exchangeSymbol}
                       </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap">
+                      <td className="hidden md:table-cell py-2.5 px-3 whitespace-nowrap">
                         {inst.mxvMapping ? (
                           <span className="text-[var(--text)]/85">
                             {inst.mxvMapping.mxvSymbol} ·{' '}
@@ -214,12 +214,12 @@ export function MarketWatchView() {
                         )}
                       </td>
                       <td
-                        className="py-2.5 px-3 text-[var(--warning)]/90 whitespace-nowrap"
+                        className="hidden md:table-cell py-2.5 px-3 text-[var(--warning)]/90 whitespace-nowrap"
                         title={t(`verify.${inst.specification.verificationStatus}.desc`)}
                       >
                         {t(`verify.${inst.specification.verificationStatus}`)}
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums whitespace-nowrap">
+                      <td className="py-2.5 px-2 md:px-3 text-right tabular-nums md:whitespace-nowrap max-w-[9rem] md:max-w-none">
                         {hasPrice(quote) ? (
                           <>
                             <div className="text-sm font-semibold text-[var(--text-strong)]">{fmtPrice(quote.price)}</div>
@@ -231,24 +231,24 @@ export function MarketWatchView() {
                           </span>
                         )}
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums text-[var(--text)]/70 whitespace-nowrap">
+                      <td className="hidden md:table-cell py-2.5 px-3 text-right tabular-nums text-[var(--text)]/70 whitespace-nowrap">
                         {quote?.volume !== null && quote?.volume !== undefined
                           ? fmtNum(quote.volume)
                           : '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums text-[var(--text)]/70 whitespace-nowrap">
+                      <td className="hidden md:table-cell py-2.5 px-3 text-right tabular-nums text-[var(--text)]/70 whitespace-nowrap">
                         {quote?.openInterest !== null && quote?.openInterest !== undefined
                           ? fmtNum(quote.openInterest)
                           : '—'}
                       </td>
-                      <td className="py-2.5 px-3 tabular-nums text-[var(--text)]/60 whitespace-nowrap">
+                      <td className="hidden md:table-cell py-2.5 px-3 tabular-nums text-[var(--text)]/60 whitespace-nowrap">
                         {quote?.kind === 'BENCHMARK' && quote.benchmark
                           ? friendlyQuoteReason(t, quote)
                           : quote?.timestamp
                           ? formatTimestampInZone(quote.timestamp, 'Asia/Ho_Chi_Minh')
                           : t('fr.noTime')}
                       </td>
-                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                      <td className="hidden md:table-cell py-2.5 px-3 text-right whitespace-nowrap">
                         <div className="inline-flex justify-end">
                           <DataStatusBadge
                             status={quote?.status ?? 'UNAVAILABLE'}
@@ -259,19 +259,19 @@ export function MarketWatchView() {
                           />
                         </div>
                       </td>
-                      <td className="py-2.5 px-4 text-right whitespace-nowrap">
-                        <div className="inline-flex items-center gap-2">
+                      <td className="py-2.5 px-2 md:px-4 text-right whitespace-nowrap">
+                        <div className="inline-flex flex-col md:flex-row items-stretch md:items-center gap-2">
                           <button
                             type="button"
                             onClick={() => openInstrumentIn(inst.exchangeSymbol, 'charts')}
-                            className="px-2 py-1 bg-[var(--surface-2)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-medium text-[var(--text)] hover:text-[var(--text-strong)] transition-colors"
+                            className="px-2 py-2.5 md:py-1 bg-[var(--surface-2)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-medium text-[var(--text)] hover:text-[var(--text-strong)] transition-colors"
                           >
                             {t('dash.mw.chart')}
                           </button>
                           <button
                             type="button"
                             onClick={() => openInstrumentIn(inst.exchangeSymbol, 'explorer')}
-                            className="px-2 py-1 bg-[var(--surface-2)] hover:bg-[var(--surface-2)]/80 border border-[var(--border)] rounded text-[11px] font-medium text-[var(--text)]/80 hover:text-[var(--text-strong)] transition-colors"
+                            className="px-2 py-2.5 md:py-1 bg-[var(--surface-2)] hover:bg-[var(--surface-2)]/80 border border-[var(--border)] rounded text-[11px] font-medium text-[var(--text)]/80 hover:text-[var(--text-strong)] transition-colors"
                           >
                             {t('dash.mw.spec')}
                           </button>

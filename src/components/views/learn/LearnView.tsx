@@ -1,3 +1,4 @@
+import { onTablistKeyDown } from '../../../shared/hooks/tablistKeys';
 import { useMemo, useState } from 'react';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
@@ -128,7 +129,7 @@ function Glossary({ onBack }: { onBack: () => void }) {
         ← Về Học viện
       </button>
       <SectionHeader level={1} title="Thuật ngữ" subtitle={tab === 'formal' ? `${GLOSSARY.length} thuật ngữ. Gõ để tìm.` : 'Từ lóng & từ dân đầu tư hay dùng'} />
-      <div role="tablist" className="flex gap-2 flex-wrap">
+      <div role="tablist" onKeyDown={onTablistKeyDown} className="flex gap-2 flex-wrap">
         <button type="button" role="tab" aria-selected={tab === 'formal'} onClick={() => setTab('formal')} className={chipCls(tab === 'formal')}>
           Thuật ngữ chính thức
         </button>

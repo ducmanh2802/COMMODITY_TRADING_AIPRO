@@ -6,9 +6,6 @@ import { cssVar } from './chartColors';
 
 /** Spec: lines are 2px. */
 export const LINE_WIDTH = 2;
-/** Spec: bars <= 24px, 4px rounded data-end. */
-export const BAR_MAX = 24;
-export const BAR_RADIUS = 4;
 
 /** Categorical slots available; past this the tail folds into "Khác" (gray). */
 export const MAX_SERIES = 6;
@@ -21,20 +18,9 @@ export function seriesColor(i: number): string {
   return cssVar(`--series-${i + 1}`, FALLBACK_SERIES[i]);
 }
 
-/** Entity-stable colour: the slot comes from the entity's position in a fixed master list, not its row rank. */
-export function entityColor(id: string, masterOrder: readonly string[]): string {
-  return seriesColor(masterOrder.indexOf(id));
-}
-
 /** CSS-var form (for SVG/HTML, follows the theme automatically). */
 export function seriesVar(i: number): string {
   return i < 0 || i >= MAX_SERIES ? 'var(--series-other)' : `var(--series-${i + 1})`;
-}
-
-/** Sequential (magnitude) scale: t in 0..1 -> one-hue 5-step ramp token. */
-export function seqVar(t: number): string {
-  const k = Math.min(4, Math.max(0, Math.round(t * 4)));
-  return `var(--seq-${k + 1})`;
 }
 
 /**
@@ -47,9 +33,4 @@ export function divergingFill(value: number | null, maxAbs: number): string {
   const pct = Math.round((0.3 + 0.3 * k) * 100);
   const pole = value >= 0 ? 'var(--positive)' : 'var(--negative)';
   return `color-mix(in srgb, ${pole} ${pct}%, var(--div-mid))`;
-}
-
-/** Pole colour by sign (lines / bars). */
-export function polarityVar(value: number): string {
-  return value >= 0 ? 'var(--positive)' : 'var(--negative)';
 }

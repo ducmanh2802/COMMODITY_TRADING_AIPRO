@@ -48,8 +48,6 @@ export interface ScalarResult<T = number> {
   reason?: string;
 }
 
-export class ValidationError extends Error {}
-
 // ---------------------------------------------------------------------------------------------
 // Result constructors
 // ---------------------------------------------------------------------------------------------

@@ -39,7 +39,7 @@ test('push and email cards show the unconfigured state', async ({ page }) => {
 test('TopBar overflow menu opens and theme toggle works', async ({ page }) => {
   await open(page, 1100);
   await page.getByRole('button', { name: 'Thêm tùy chọn' }).click();
-  const region = page.getByRole('region', { name: 'Giao diện và ngôn ngữ' });
+  const region = page.getByRole('dialog', { name: 'Giao diện và ngôn ngữ' });
   await expect(region).toBeVisible();
   await region.getByRole('button', { name: 'Sáng' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
