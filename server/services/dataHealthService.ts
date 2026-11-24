@@ -17,7 +17,7 @@ import { EXCHANGE_LICENSING_MATRIX } from './exchangeLicensing.ts';
 import { buildFundamentalDomainsStatus, fundamentalStore } from './fundamentalService.ts';
 import type { IInstrumentRepository } from './repository.ts';
 
-export type CotHealthLike = Pick<CotService, 'health'>;
+type CotHealthLike = Pick<CotService, 'health'>;
 
 export interface DataHealthDeps {
   instruments: Pick<IInstrumentRepository, 'list'>;

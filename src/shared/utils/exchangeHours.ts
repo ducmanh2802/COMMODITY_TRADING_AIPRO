@@ -6,10 +6,10 @@
  */
 import { VIETNAM_TIMEZONE } from './time';
 
-export type ExchangeId = 'CBOT' | 'NYMEX' | 'COMEX' | 'ICEUS' | 'ICEEU' | 'SGX' | 'LME';
+type ExchangeId = 'CBOT' | 'NYMEX' | 'COMEX' | 'ICEUS' | 'ICEEU' | 'SGX' | 'LME';
 
 /** One recurring weekly window: starts at local weekday `day` (0=Sun..6=Sat) `start` HH:MM, lasts `minutes`. */
-export interface SessionWindow {
+interface SessionWindow {
   day: number;
   start: string;
   minutes: number;
@@ -88,7 +88,7 @@ export function localParts(date: Date, tz: string): LocalParts {
 }
 
 /** Minutes since local Sunday 00:00 in `tz`. */
-export function localWeekMinute(date: Date, tz: string): number {
+function localWeekMinute(date: Date, tz: string): number {
   const p = localParts(date, tz);
   return p.weekday * 1440 + p.hour * 60 + p.minute;
 }
@@ -130,7 +130,7 @@ function offsetMinutes(date: Date, tz: string): number {
 }
 
 /** UTC instant of a wall-clock time in `tz`. */
-export function zonedToUtc(y: number, mo: number, d: number, h: number, mi: number, tz: string): Date {
+function zonedToUtc(y: number, mo: number, d: number, h: number, mi: number, tz: string): Date {
   const guess = Date.UTC(y, mo - 1, d, h, mi);
   let utc = guess - offsetMinutes(new Date(guess), tz) * 60000;
   utc = guess - offsetMinutes(new Date(utc), tz) * 60000;

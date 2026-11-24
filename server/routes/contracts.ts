@@ -33,7 +33,7 @@ export interface ContractRoutesOptions {
 const DISCLAIMER =
   'Research use only. Dates are computed from the exchange rule text with Mon-Fri business days; exchange holidays are not applied. Confirm against the official exchange expiry calendar before relying on any date.';
 
-export function createContractsRouter(options: ContractRoutesOptions = {}): express.Router {
+function createContractsRouter(options: ContractRoutesOptions = {}): express.Router {
   const router = express.Router();
   const instruments = options.instruments ?? defaultInstrumentRepository;
   const now = options.now ?? (() => new Date());

@@ -28,7 +28,7 @@ export const MXV_ESTIMATE_LABEL = 'Ước tính tham chiếu — không phải g
 export const MXV_ESTIMATE_DISCLAIMER =
   'Giá trị danh nghĩa tham chiếu của 1 hợp đồng MXV, tính từ giá sàn quốc tế liên thông × độ lớn hợp đồng MXV × tỷ giá USD/VND. Chỉ dùng cho mục đích học tập/nghiên cứu; không phải giá khớp lệnh hay giá niêm yết của MXV, không dùng để giao dịch.';
 
-export type FxInputStatus = 'CURRENT' | 'DELAYED' | 'HISTORICAL' | 'STALE' | 'UNAVAILABLE' | 'USER_PROVIDED';
+type FxInputStatus = 'CURRENT' | 'DELAYED' | 'HISTORICAL' | 'STALE' | 'UNAVAILABLE' | 'USER_PROVIDED';
 export type EstimateStatus = DataQualityStatus | 'USER_PROVIDED';
 
 /** Worst-first ordering used for "status = worst of inputs". USER_PROVIDED has unknown freshness. */
@@ -89,7 +89,7 @@ export function parseQuotationUnit(unit: string): PriceUnitConversion | null {
   return { usdFactor: m[1].toLowerCase() === 'cents' ? 0.01 : 1, perUnit };
 }
 
-export interface MxvEstimateInputs {
+interface MxvEstimateInputs {
   mxvContract: MxvContractSpec & { mxvSymbol: string; mappingStatus: string };
   internationalPrice: {
     instrumentId: string;

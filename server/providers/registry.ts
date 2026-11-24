@@ -36,7 +36,7 @@ function hasEnv(name: string): boolean {
  * MXV_OFFICIAL and THIRD_PARTY_FEED are backed by the owner's ConfigurableRestFeedAdapter (active only
  * when both URL and KEY env vars are set); the others stay fail-closed until a licensed feed exists.
  */
-export const DEFAULT_PROVIDER_CONFIGS: readonly UnconfiguredProviderConfig[] = [
+const DEFAULT_PROVIDER_CONFIGS: readonly UnconfiguredProviderConfig[] = [
   {
     providerId: 'MXV_OFFICIAL',
     providerName: 'MXV (Mercantile Exchange of Vietnam / CQG Member)',
@@ -98,7 +98,7 @@ export const DEFAULT_PROVIDER_CONFIGS: readonly UnconfiguredProviderConfig[] = [
 ];
 
 /** Explicit exchange → primary quote provider routing. Unknown exchanges are not routed (fail closed). */
-export const DEFAULT_EXCHANGE_ROUTING: Readonly<Record<string, ProviderId>> = {
+const DEFAULT_EXCHANGE_ROUTING: Readonly<Record<string, ProviderId>> = {
   MXV: 'MXV_OFFICIAL',
   CBOT: 'CME_GROUP',
   CME: 'CME_GROUP',

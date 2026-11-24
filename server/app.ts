@@ -99,8 +99,8 @@ const SymbolParamSchema = z.object({
   symbol: z.string().min(1).max(24).regex(/^[a-zA-Z0-9:_-]+$/),
 });
 
-export type InstrumentRepositoryLike = Pick<typeof defaultInstrumentRepository, 'list' | 'findBySymbol'>;
-export type ProviderRegistryLike = Pick<
+type InstrumentRepositoryLike = Pick<typeof defaultInstrumentRepository, 'list' | 'findBySymbol'>;
+type ProviderRegistryLike = Pick<
   ProviderRegistry,
   'getAllHealth' | 'getQuoteForInstrument' | 'syncAll' | 'getUsdVndRate'
 >;

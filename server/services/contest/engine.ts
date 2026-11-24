@@ -30,10 +30,10 @@ import { anonymousName, combinedRanking, computeBadges, disciplineScore, maxDraw
 import { ictDayKey, seasonIdOf, seasonRange } from './season.ts';
 import type { ContestStore, OrderRow, ParticipantRow, PositionRow, ScoreRow } from './store.ts';
 
-export const CONTEST_CAPITAL_VND = 500_000_000;
-export const MAX_OPEN_POSITIONS = 20;
-export const MAX_ORDERS_PER_DAY_HARD = 50;
-export const MAX_CONTRACTS = 100;
+const CONTEST_CAPITAL_VND = 500_000_000;
+const MAX_OPEN_POSITIONS = 20;
+const MAX_ORDERS_PER_DAY_HARD = 50;
+const MAX_CONTRACTS = 100;
 
 export interface ContestQuote extends QuoteLike {
   source?: string;

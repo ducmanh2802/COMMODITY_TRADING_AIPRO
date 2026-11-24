@@ -4,9 +4,9 @@
  */
 export type HedgeRole = 'seller' | 'buyer'; // seller = short hedge, buyer = long hedge
 
-export const KG_PER_LB = 0.45359237;
+const KG_PER_LB = 0.45359237;
 export const KG_PER_BUSHEL_CORN = 25.4012;
-export const KG_PER_BUSHEL_SOY = 27.2155;
+const KG_PER_BUSHEL_SOY = 27.2155;
 
 export type QuoteUnit = 'usd_per_mt' | 'cents_per_lb' | 'cents_per_bushel';
 
@@ -40,7 +40,7 @@ export function quoteToUsdPerKg(price: number, unit: QuoteUnit, kgPerBushel = 1)
   }
 }
 
-export const usdPerKgToVndPerKg = (usdPerKg: number, vndPerUsd: number) => usdPerKg * vndPerUsd;
+const usdPerKgToVndPerKg = (usdPerKg: number, vndPerUsd: number) => usdPerKg * vndPerUsd;
 
 export function quoteToVndPerKg(price: number, crop: CropSpec, vndPerUsd: number): number {
   return usdPerKgToVndPerKg(quoteToUsdPerKg(price, crop.quoteUnit, crop.kgPerBushel), vndPerUsd);
@@ -97,7 +97,7 @@ export interface ScenarioInput {
   basisChangeVndKg?: number;
 }
 
-export const SCENARIO_PCTS = [-20, -10, 0, 10, 20] as const;
+const SCENARIO_PCTS = [-20, -10, 0, 10, 20] as const;
 
 export function buildScenarios(inp: ScenarioInput, pcts: readonly number[] = SCENARIO_PCTS): Scenario[] {
   const bc = inp.basisChangeVndKg ?? 0;

@@ -18,7 +18,7 @@ function decimalsOf(step: number): number {
   return i < 0 ? 0 : s.length - i - 1;
 }
 
-export function roundToStep(v: number, step: number): number {
+function roundToStep(v: number, step: number): number {
   const d = decimalsOf(step);
   return Number((Math.round(v / step) * step).toFixed(d));
 }

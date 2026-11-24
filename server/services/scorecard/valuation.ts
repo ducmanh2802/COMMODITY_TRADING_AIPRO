@@ -11,7 +11,7 @@ import { calculateATR } from '../../engines/technicalEngine.ts';
 const t = (vi: string, en: string): BriefText => ({ vi, en });
 const sgn = (x: number, d = 1) => `${x >= 0 ? '+' : ''}${x.toFixed(d)}`;
 
-export const MIN_VALUATION_BARS = 200;
+const MIN_VALUATION_BARS = 200;
 
 export interface ValuationStats {
   bars: number;

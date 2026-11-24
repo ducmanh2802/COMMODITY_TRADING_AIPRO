@@ -5,7 +5,7 @@ export type CompareWindow = (typeof COMPARE_WINDOWS)[number];
 
 const MONTHS: Record<CompareWindow, number> = { '1M': 1, '3M': 3, '6M': 6, '1Y': 12, '3Y': 36, '5Y': 60 };
 
-export interface ClosePoint {
+interface ClosePoint {
   /** ISO date YYYY-MM-DD. */
   date: string;
   close: number;
@@ -16,7 +16,7 @@ export interface NamedSeries {
   points: ClosePoint[];
 }
 
-export interface NormalizedSeries {
+interface NormalizedSeries {
   id: string;
   /** % change from base, index-aligned to `dates`; null before the series has data. */
   values: (number | null)[];

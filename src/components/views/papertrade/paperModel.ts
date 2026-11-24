@@ -77,7 +77,7 @@ export interface PaperState {
  * Whether `plan` is written to Firestore. firestore.rules (isValidPaperPlan) allows the optional `plan` field on
  * paperPositions / paperOrders. Local (signed-out) storage always keeps it.
  */
-export const PERSIST_PLAN_TO_FIRESTORE = true;
+const PERSIST_PLAN_TO_FIRESTORE = true;
 
 export const EMPTY_STATE: PaperState = { sessions: [], positions: [], trades: [] };
 
@@ -128,7 +128,7 @@ export function newPaperId(prefix: 'ses' | 'pos' | 'ord', now: number = Date.now
 // --------------------------------------------------------------------------- write ops (shared by both backends)
 
 export type SessionPatch = Partial<Pick<PaperSession, 'name' | 'startingCapitalVnd' | 'balanceVnd' | 'settings' | 'status' | 'closedAtMs' | 'finalEquityVnd'>>;
-export type PositionPatch = Partial<Pick<PaperPosition, 'stopLoss' | 'takeProfit' | 'journal' | 'researchNoteId'>>;
+type PositionPatch = Partial<Pick<PaperPosition, 'stopLoss' | 'takeProfit' | 'journal' | 'researchNoteId'>>;
 export type TradePatch = Partial<Pick<PaperTrade, 'journal' | 'researchNoteId'>>;
 
 export type PaperOp =

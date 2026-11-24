@@ -8,7 +8,7 @@
  * Exchange holidays are NOT modelled (a holiday simply yields no bars, never an invented session).
  * Rules are the exchanges' regular hours; early closes / special schedules are not tracked.
  */
-export interface SessionRule {
+interface SessionRule {
   timeZone: string;
   /** Local minutes-of-day from which a bar belongs to the NEXT trading day; null = no prior-evening start. */
   rolloverMinutes: number | null;
@@ -16,7 +16,7 @@ export interface SessionRule {
   closeMinutes: number;
 }
 
-export const SESSION_RULES: Readonly<Record<string, SessionRule>> = {
+const SESSION_RULES: Readonly<Record<string, SessionRule>> = {
   CBOT: { timeZone: 'America/Chicago', rolloverMinutes: 19 * 60, closeMinutes: 13 * 60 + 20 },
   COMEX: { timeZone: 'America/New_York', rolloverMinutes: 18 * 60, closeMinutes: 17 * 60 },
   NYMEX: { timeZone: 'America/New_York', rolloverMinutes: 18 * 60, closeMinutes: 17 * 60 },
@@ -56,7 +56,7 @@ export function localParts(timestampMs: number, timeZone: string): LocalParts {
   return { year: +p.year, month: +p.month, day: +p.day, minutesOfDay: (+p.hour % 24) * 60 + +p.minute };
 }
 
-export function ruleFor(instrument: { exchange: string }): SessionRule | null {
+function ruleFor(instrument: { exchange: string }): SessionRule | null {
   return SESSION_RULES[instrument.exchange] ?? null;
 }
 

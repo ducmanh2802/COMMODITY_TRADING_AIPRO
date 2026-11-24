@@ -55,7 +55,7 @@ export interface CommodityDataHealthRow {
   missingItems: string[];
 }
 
-export interface ExchangeLicensingInfo {
+interface ExchangeLicensingInfo {
   id: string;
   exchangeGroup: string;
   exchanges: ExchangeCode[];
@@ -70,7 +70,7 @@ export interface ExchangeLicensingInfo {
   legalAndComplianceNote: string;
 }
 
-export interface FundamentalDomainHealthItem {
+interface FundamentalDomainHealthItem {
   id: FundamentalDatasetCategory;
   name: string;
   nameVi: string;

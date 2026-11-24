@@ -8,7 +8,7 @@ import { getCalendarSpec, type EncodedDateRule } from '../../src/shared/contract
 import { applyDateRule } from '../../src/shared/contracts/expiry.ts';
 import { toDayNumber, type IsoDate } from '../../src/shared/contracts/dates.ts';
 
-export const MAX_ROLL_BUSINESS_DAYS = 30;
+const MAX_ROLL_BUSINESS_DAYS = 30;
 
 export type RollSchedule =
   | {

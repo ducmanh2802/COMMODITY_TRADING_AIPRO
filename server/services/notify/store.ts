@@ -6,10 +6,10 @@ import { DatabaseSync } from 'node:sqlite';
 import type { WatchZone } from '../../../src/shared/watchlist/watchlist.ts';
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-export const LINK_CODE_LENGTH = 10;
-export const PENDING_TTL_MS = 60 * 60_000;
-export const MAX_PENDING = 500;
-export const LINK_CODE_RE = /^[A-HJ-NP-Z2-9]{10}$/;
+const LINK_CODE_LENGTH = 10;
+const PENDING_TTL_MS = 60 * 60_000;
+const MAX_PENDING = 500;
+const LINK_CODE_RE = /^[A-HJ-NP-Z2-9]{10}$/;
 
 export interface SyncedZone {
   symbol: string;
@@ -21,7 +21,7 @@ export interface ChatPrefs {
   radar: boolean;
 }
 
-export function newLinkCode(): string {
+function newLinkCode(): string {
   let s = '';
   for (let i = 0; i < LINK_CODE_LENGTH; i++) s += ALPHABET[randomInt(ALPHABET.length)];
   return s;

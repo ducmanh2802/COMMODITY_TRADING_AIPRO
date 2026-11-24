@@ -32,7 +32,7 @@ export interface CurvePoint {
   daysToExpiry: number;
 }
 
-export interface CurveSpread {
+interface CurveSpread {
   near: string;
   far: string;
   /** nearPrice - farPrice */

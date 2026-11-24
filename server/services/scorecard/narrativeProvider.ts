@@ -11,9 +11,9 @@ import type { Scorecard, ScorecardNarrative, ScorecardNarrativeProvider } from '
 import { stripRecommendationLanguage } from '../aiAnalyst.ts';
 import { generateRulesNarrative } from './narrative.ts';
 
-export const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
-export const DEFAULT_OLLAMA_MODEL = 'llama3.2';
-export const DEFAULT_OLLAMA_TIMEOUT_MS = 30_000;
+const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
+const DEFAULT_OLLAMA_MODEL = 'llama3.2';
+const DEFAULT_OLLAMA_TIMEOUT_MS = 30_000;
 
 export function resolveAiProvider(env: NodeJS.ProcessEnv = process.env): ScorecardNarrativeProvider {
   const v = env.AI_PROVIDER?.trim().toLowerCase();
@@ -21,7 +21,7 @@ export function resolveAiProvider(env: NodeJS.ProcessEnv = process.env): Scoreca
 }
 
 /** Prompt built only from scorecard facts (labels, numbers, sources, dates). */
-export function buildNarrativePrompt(card: Scorecard, language: AiLanguage): string {
+function buildNarrativePrompt(card: Scorecard, language: AiLanguage): string {
   const lang = language === 'vi' ? 'Vietnamese' : 'English';
   const facts = {
     instrument: card.productName,

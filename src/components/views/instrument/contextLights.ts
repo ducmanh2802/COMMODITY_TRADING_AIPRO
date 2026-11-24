@@ -1,7 +1,7 @@
 // Pure classification for the "Bảng 4 yếu tố" context lights. Colors describe how CLEAR / AGREEING the context is,
 // never a buy/sell signal. No i18n or React here: callers map `msg` to dictionary keys.
 export type LightTone = 'green' | 'yellow' | 'red' | 'grey';
-export type LightId = 'trend' | 'fundamental' | 'seasonal' | 'cot';
+type LightId = 'trend' | 'fundamental' | 'seasonal' | 'cot';
 
 export interface ContextLight {
   id: LightId;
@@ -91,7 +91,7 @@ export interface SeasonalInput {
   source?: string | null;
 }
 
-export const MIN_SEASONAL_YEARS = 5;
+const MIN_SEASONAL_YEARS = 5;
 
 export function seasonalLight(s: SeasonalInput | null | undefined, asOf: string | null = null): ContextLight {
   if (!s || s.status === 'UNAVAILABLE' || s.mean === null || s.month === null || s.years <= 0) return grey('seasonal', asOf, s?.source ?? null);
@@ -110,8 +110,8 @@ export interface CotInput {
   reportDate?: string | null;
 }
 
-export const COT_EXTREME_HIGH = 90;
-export const COT_EXTREME_LOW = 10;
+const COT_EXTREME_HIGH = 90;
+const COT_EXTREME_LOW = 10;
 
 export function cotLight(c: CotInput | null | undefined): ContextLight {
   if (!c || !c.available || c.cotIndex === null || !Number.isFinite(c.cotIndex)) return grey('cot', c?.reportDate ?? null, 'CFTC');

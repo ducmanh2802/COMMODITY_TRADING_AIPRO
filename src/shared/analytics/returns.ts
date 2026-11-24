@@ -46,7 +46,7 @@ export function cumulativeReturn(series: SeriesPoint[]): SeriesResult {
   return { timestamps: v.data.timestamps, values: xs.map((x) => x / xs[0] - 1), status: 'OK', warnings: [] };
 }
 
-export interface MaxDrawdown {
+interface MaxDrawdown {
   /** Most negative drawdown, as a fraction (e.g. −0.25 = −25%). 0 if the series never declines. */
   maxDrawdown: number;
   /** Timestamp of the running peak preceding the max drawdown trough. */

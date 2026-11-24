@@ -1,6 +1,6 @@
 import type { AppModuleId } from '../../shared/types/risk';
 
-export type HubId =
+type HubId =
   | 'today-hub'
   | 'market-hub'
   | 'news-hub'

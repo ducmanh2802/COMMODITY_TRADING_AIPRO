@@ -2,7 +2,7 @@
 export type PulseQuality = 'OFFICIAL' | 'LICENSED_VENDOR' | 'UNOFFICIAL' | 'USER_PROVIDED';
 export type PulseText = { vi: string; en: string };
 
-export interface PulseSparkPoint {
+interface PulseSparkPoint {
   date: string;
   value: number;
 }
@@ -51,7 +51,7 @@ export interface PulseMover {
   asOf: string;
 }
 
-export interface PulseBreadth {
+interface PulseBreadth {
   instrumentsWithData: number;
   up1d: number;
   down1d: number;

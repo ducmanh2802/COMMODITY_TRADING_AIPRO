@@ -36,7 +36,7 @@ export function toDayNumber(date: IsoDate): number {
   return Math.round(Date.UTC(y, m - 1, d) / MS_PER_DAY);
 }
 
-export function fromDayNumber(day: number): IsoDate {
+function fromDayNumber(day: number): IsoDate {
   return new Date(day * MS_PER_DAY).toISOString().slice(0, 10);
 }
 

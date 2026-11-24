@@ -31,11 +31,11 @@ const INTRADAY_MINUTES: Partial<Record<Timeframe, number>> = {
   H4: 240,
 };
 
-export function isDateBasedTimeframe(timeframe: string): boolean {
+function isDateBasedTimeframe(timeframe: string): boolean {
   return timeframe === 'D1' || timeframe === 'W1';
 }
 
-export type CsvField = 'date' | 'time' | 'open' | 'high' | 'low' | 'close' | 'volume' | 'openInterest';
+type CsvField = 'date' | 'time' | 'open' | 'high' | 'low' | 'close' | 'volume' | 'openInterest';
 
 /** Normalized header (lower-case, alphanumerics only) → field. */
 const HEADER_ALIASES: Record<string, CsvField> = {
@@ -83,7 +83,7 @@ export interface CsvImportIssue {
   message: string;
 }
 
-export type CsvWarningCode =
+type CsvWarningCode =
   | 'PREAMBLE_SKIPPED'
   | 'FOOTER_SKIPPED'
   | 'IGNORED_COLUMNS'
@@ -125,7 +125,7 @@ export interface ParseOhlcvOptions {
   now?: Date;
 }
 
-export interface ParsedBar extends CandleRow {
+interface ParsedBar extends CandleRow {
   line: number;
 }
 

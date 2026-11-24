@@ -13,12 +13,12 @@ export const CALLER_HOLIDAY_WARNING =
   'Holidays applied from a caller-supplied list; its completeness against the official exchange calendar is not verified.';
 export const PROJECTED_HOLIDAY_WARNING =
   "Holidays applied from a PROJECTED calendar (generated from the standing holiday rules, not checked against the exchange's published schedule; unscheduled closures are excluded) - confirm on the exchange expiry calendar.";
-export const PUBLISHED_HOLIDAY_NOTE =
+const PUBLISHED_HOLIDAY_NOTE =
   'Holidays applied from bundled PUBLISHED holiday lists (see holidaysInWindow[].sourceUrl).';
 export const UNCOVERED_YEAR_WARNING =
   'The bundled holiday calendar does not cover this year; holidays were NOT applied (Mon-Fri only).';
 
-export type HolidaySource = 'BUNDLED' | 'CALLER' | 'NONE';
+type HolidaySource = 'BUNDLED' | 'CALLER' | 'NONE';
 
 export type ContractDateResult =
   | {

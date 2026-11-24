@@ -7,7 +7,7 @@
 import { parseRss, type RssItem } from './rss.ts';
 import { tagNews, type NewsImpact } from './tagger.ts';
 
-export interface NewsItem {
+interface NewsItem {
   id: string;
   title: string;
   snippet: string;

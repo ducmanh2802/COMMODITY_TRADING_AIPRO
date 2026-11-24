@@ -73,7 +73,6 @@ export const vi = {
   'hd.s5.learn': 'Mở Học viện',
   'hd.s5.paper': 'Thử giao dịch giả lập',
   'hd.restart': 'Làm lại từ đầu',
-  'hd.sum': 'Tóm tắt',
   'hd.dong': 'đ',
   'hd.status.none': 'chưa có',
 } as const;
@@ -152,7 +151,6 @@ export const en: Record<keyof typeof vi, string> = {
   'hd.s5.learn': 'Open Academy',
   'hd.s5.paper': 'Try paper trading',
   'hd.restart': 'Start over',
-  'hd.sum': 'Summary',
   'hd.dong': 'VND',
   'hd.status.none': 'none',
 };

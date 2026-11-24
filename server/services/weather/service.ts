@@ -23,7 +23,7 @@ export interface WeatherStore {
   set(key: string, value: string, at: number): void;
 }
 
-export class SqliteWeatherStore implements WeatherStore {
+class SqliteWeatherStore implements WeatherStore {
   private readonly db: DatabaseSync;
   constructor(location: string = process.env.MARKET_DB_PATH?.trim() || path.join('data', 'market.db')) {
     if (location !== ':memory:') mkdirSync(path.dirname(path.resolve(location)), { recursive: true });
@@ -61,10 +61,10 @@ const defaultFetch: JsonFetcher = async (url) => {
   }
 };
 
-export const FORECAST_TTL_MS = 3 * 3_600_000;
-export const BASELINE_TTL_MS = 180 * 86_400_000;
-export const BASELINE_FROM = '2015-01-01';
-export const BASELINE_TO = '2024-12-31';
+const FORECAST_TTL_MS = 3 * 3_600_000;
+const BASELINE_TTL_MS = 180 * 86_400_000;
+const BASELINE_FROM = '2015-01-01';
+const BASELINE_TO = '2024-12-31';
 const DAILY = 'precipitation_sum,temperature_2m_max,temperature_2m_min';
 
 interface Options {

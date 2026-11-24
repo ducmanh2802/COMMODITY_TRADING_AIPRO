@@ -21,7 +21,7 @@ export interface FredBenchmarkDef {
 }
 
 /** 1 metric ton = 1000 / 0.45359237 lb (exact, international pound) => cents/lb x 22.0462262185 = USD/MT. */
-export const CENTS_PER_LB_TO_USD_PER_MT = 1000 / 0.45359237 / 100;
+const CENTS_PER_LB_TO_USD_PER_MT = 1000 / 0.45359237 / 100;
 
 export const FRED_BENCHMARK_DEFS: FredBenchmarkDef[] = [
   {

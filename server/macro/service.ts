@@ -24,7 +24,7 @@ import {
   type FasCommodity,
 } from './supplySources.ts';
 
-export const MACRO_TTL_MS = {
+const MACRO_TTL_MS = {
   eia: 60 * 60_000,
   wasde: 6 * 60 * 60_000,
   // Vietcombank feed asks for at most one request per 5 minutes.

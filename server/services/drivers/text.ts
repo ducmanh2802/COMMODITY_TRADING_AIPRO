@@ -7,7 +7,7 @@ export const DRIVERS_DISCLAIMER: DText = {
 };
 
 export const fmtVi = (n: number, d = 1): string => n.toFixed(d).replace('.', ',');
-export const fmtEn = (n: number, d = 1): string => n.toFixed(d);
+const fmtEn = (n: number, d = 1): string => n.toFixed(d);
 const both = (n: number, d: number) => ({ vi: fmtVi(n, d), en: fmtEn(n, d) });
 
 const GROUP_LABEL: Record<string, DText> = {

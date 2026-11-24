@@ -55,19 +55,19 @@ export interface ImportRequest {
   dryRun?: boolean;
 }
 
-export interface ImportIssue {
+interface ImportIssue {
   line: number | null;
   field?: string;
   message: string;
 }
 
-export interface ImportWarning {
+interface ImportWarning {
   code: string;
   line?: number | null;
   message: string;
 }
 
-export interface OhlcvSnapshot {
+interface OhlcvSnapshot {
   open: number;
   high: number;
   low: number;

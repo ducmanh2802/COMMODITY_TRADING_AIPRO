@@ -1,6 +1,6 @@
 /** Equirectangular projection cropped to the band that holds the growing regions. */
-export const MAP_BOUNDS = { lonMin: -125, lonMax: 145, latMin: -40, latMax: 55 } as const;
-export const MAP_SCALE = 4; // viewBox units per degree
+const MAP_BOUNDS = { lonMin: -125, lonMax: 145, latMin: -40, latMax: 55 } as const;
+const MAP_SCALE = 4; // viewBox units per degree
 export const MAP_W = (MAP_BOUNDS.lonMax - MAP_BOUNDS.lonMin) * MAP_SCALE;
 export const MAP_H = (MAP_BOUNDS.latMax - MAP_BOUNDS.latMin) * MAP_SCALE;
 

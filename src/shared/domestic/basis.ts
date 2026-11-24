@@ -5,9 +5,9 @@
 
 export const DOMESTIC_COMMODITIES = ['coffee', 'pepper', 'rubber', 'corn', 'soymeal'] as const;
 export type DomesticCommodity = (typeof DOMESTIC_COMMODITIES)[number];
-export const DOMESTIC_QUALITIES = ['OFFICIAL', 'UNOFFICIAL', 'MANUAL'] as const;
-export type DomesticQuality = (typeof DOMESTIC_QUALITIES)[number];
-export const DOMESTIC_UNITS = ['VND/kg', 'USD/t'] as const;
+const DOMESTIC_QUALITIES = ['OFFICIAL', 'UNOFFICIAL', 'MANUAL'] as const;
+type DomesticQuality = (typeof DOMESTIC_QUALITIES)[number];
+const DOMESTIC_UNITS = ['VND/kg', 'USD/t'] as const;
 
 export interface DomesticPricePoint {
   commodity: DomesticCommodity;
@@ -35,7 +35,7 @@ const KG_PER_BUSHEL_CORN = 25.4012;
 const KG_PER_SHORT_TON = 907.18474;
 
 /** International futures quote -> USD per kg. */
-export function intlToUsdPerKg(value: number, unit: IntlUnit): number {
+function intlToUsdPerKg(value: number, unit: IntlUnit): number {
   if (unit === 'USD/t') return value / 1000;
   if (unit === 'USc/bu') return value / 100 / KG_PER_BUSHEL_CORN;
   return value / KG_PER_SHORT_TON;

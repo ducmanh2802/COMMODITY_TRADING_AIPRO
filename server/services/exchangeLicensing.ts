@@ -1,6 +1,6 @@
 import type { ExchangeCode } from '../../src/shared/types/instrument.ts';
 
-export type AccessTier =
+type AccessTier =
   | 'FREE_PUBLIC'
   | 'FREE_API_KEY'
   | 'MEMBER_ONLY'

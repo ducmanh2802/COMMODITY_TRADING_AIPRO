@@ -3,7 +3,7 @@
  * learning progress, learn goal, review schedule) plus a CSV export of closed paper trades. Pure: storage is injected.
  */
 
-export const BACKUP_VERSION = 1;
+const BACKUP_VERSION = 1;
 
 /** localStorage keys. Keep in sync with the owning modules (paperModel LOCAL_KEY, watchlist, drawings, learn/*). */
 export const BACKUP_KEYS = {
@@ -16,9 +16,9 @@ export const BACKUP_KEYS = {
 } as const;
 
 export type BackupSection = keyof typeof BACKUP_KEYS;
-export const BACKUP_SECTIONS = Object.keys(BACKUP_KEYS) as BackupSection[];
+const BACKUP_SECTIONS = Object.keys(BACKUP_KEYS) as BackupSection[];
 
-export type BackupData = Record<BackupSection, unknown>;
+type BackupData = Record<BackupSection, unknown>;
 
 export interface Backup {
   version: number;
@@ -109,7 +109,7 @@ function itemKey(x: unknown): string {
 }
 
 /** Merge: arrays are united by `id` (existing wins), objects merged recursively, scalars keep the existing value. */
-export function mergeValues(existing: unknown, incoming: unknown): unknown {
+function mergeValues(existing: unknown, incoming: unknown): unknown {
   if (existing === null || existing === undefined) return incoming;
   if (incoming === null || incoming === undefined) return existing;
   if (Array.isArray(existing) && Array.isArray(incoming)) {
@@ -166,9 +166,9 @@ export interface CsvTrade {
   plan?: { onPlan: boolean };
 }
 
-export const CSV_HEADER = ['Ngày mở', 'Ngày đóng', 'Mã', 'Chiều', 'Số HĐ', 'Giá vào', 'Giá ra', 'Lãi/lỗ (VND)', 'R', 'Theo kế hoạch'];
+const CSV_HEADER = ['Ngày mở', 'Ngày đóng', 'Mã', 'Chiều', 'Số HĐ', 'Giá vào', 'Giá ra', 'Lãi/lỗ (VND)', 'R', 'Theo kế hoạch'];
 
-export function csvCell(v: string | number): string {
+function csvCell(v: string | number): string {
   const s = String(v);
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }

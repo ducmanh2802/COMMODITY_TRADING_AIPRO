@@ -20,13 +20,13 @@ import { getParamSchema, validateStrategyParams, type StrategyParams } from './s
 import type { MarketCandle } from '../../src/shared/types/market.ts';
 
 export const MAX_GRID_COMBOS = 50;
-export const MAX_VALUES_PER_PARAM = 7;
-export const MAX_WALK_FORWARD_BARS = 4000;
-export const MIN_OOS_BARS = 10;
+const MAX_VALUES_PER_PARAM = 7;
+const MAX_WALK_FORWARD_BARS = 4000;
+const MIN_OOS_BARS = 10;
 export const MC_MAX_RUNS = 2000;
-export const MC_DEFAULT_RUNS = 1000;
-export const MC_MAX_TRADES = 2000;
-export const MC_MIN_TRADES = 5;
+const MC_DEFAULT_RUNS = 1000;
+const MC_MAX_TRADES = 2000;
+const MC_MIN_TRADES = 5;
 
 // ---------------------------------------------------------------------------------------------
 // Grid + fold planning
@@ -79,7 +79,7 @@ export function expandParamGrid(
   return { ok: true, combos: out };
 }
 
-export interface FoldPlan {
+interface FoldPlan {
   fold: number;
   isStart: number;
   isEnd: number;
@@ -145,7 +145,7 @@ export interface FoldMetrics {
   expectancy: number;
 }
 
-export interface WalkForwardFold {
+interface WalkForwardFold {
   fold: number;
   isRange: { from: string; to: string; bars: number };
   oosRange: { from: string; to: string; bars: number };
@@ -155,9 +155,9 @@ export interface WalkForwardFold {
   outOfSample: FoldMetrics;
 }
 
-export type OverfitLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'INSUFFICIENT' | 'NO_EDGE';
+type OverfitLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'INSUFFICIENT' | 'NO_EDGE';
 
-export interface OverfitAssessment {
+interface OverfitAssessment {
   level: OverfitLevel;
   /** Mean IS return per fold, rescaled to the OOS window length so the two are comparable. */
   isReturnPctPerOosWindow: number;
@@ -208,7 +208,7 @@ function foldMetrics(
   };
 }
 
-export function assessOverfit(folds: WalkForwardFold[]): OverfitAssessment {
+function assessOverfit(folds: WalkForwardFold[]): OverfitAssessment {
   const n = folds.length;
   const isScaled = folds.map((f) => f.inSample.returnPct * (f.oosRange.bars / Math.max(1, f.isRange.bars)));
   const isMean = n > 0 ? isScaled.reduce((a, b) => a + b, 0) / n : 0;

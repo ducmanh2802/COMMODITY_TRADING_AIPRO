@@ -29,13 +29,13 @@ export function nextFxRefresh(now: Date): Date {
   return new Date(day.getTime() - ICT_OFFSET_MS);
 }
 
-export interface CotSchedulerService {
+interface CotSchedulerService {
   listMappings(): ReadonlyArray<{ instrumentId: string; status: string; cftcContractMarketCode?: string | null }>;
   sync(instrumentId: string): Promise<{ status: 'SUCCESS' | 'PARTIAL' | 'FAILED' }>;
   health(): { markets: Array<{ reports: Array<{ lastSuccessfulSyncAt: string | null }> }> };
 }
 
-export interface MacroSchedulerService {
+interface MacroSchedulerService {
   getEia(): Promise<unknown>;
   getWasde(): Promise<unknown>;
   getFx(): Promise<unknown>;

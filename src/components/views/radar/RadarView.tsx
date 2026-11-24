@@ -92,7 +92,7 @@ function ItemCard({ item, rank, muted, onOpen }: { item: RadarItem; rank: number
             onClick={() => toggleMute(item.id)}
             aria-pressed={muted}
             title={muted ? t('rd.unmute') : t('rd.mute')}
-            className={`shrink-0 inline-flex items-center gap-1 text-xs ${muted ? 'text-[var(--warning)]' : 'text-[var(--text)]/60 hover:text-[var(--text-strong)]'}`}
+            className={`shrink-0 inline-flex items-center gap-1 min-h-10 sm:min-h-0 text-xs ${muted ? 'text-[var(--warning)]' : 'text-[var(--text)]/60 hover:text-[var(--text-strong)]'}`}
           >
             <BellOff className="w-3.5 h-3.5" aria-hidden="true" />
             {muted ? t('rd.muted') : t('rd.mute')}

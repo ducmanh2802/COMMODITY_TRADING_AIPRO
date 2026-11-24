@@ -7,7 +7,7 @@ import {
 } from '../storage/candleRepository.ts';
 import { VENDOR_CONTRACT_PREFIX } from '../providers/syncPersistence.ts';
 
-export type HistoricalTimeframeAggregate = 'D1' | 'W1' | 'MN';
+type HistoricalTimeframeAggregate = 'D1' | 'W1' | 'MN';
 
 export interface MonthlyOrWeeklyCandle {
   symbol: string;

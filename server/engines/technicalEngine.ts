@@ -423,7 +423,7 @@ export function calculatePivotPoints(prevHigh: number, prevLow: number, prevClos
   return { pivot, r1, r2, r3, s1, s2, s3 };
 }
 
-export function calculateFibonacciRetracement(
+function calculateFibonacciRetracement(
   swingHigh: number,
   swingLow: number,
   trend: 'UP' | 'DOWN'

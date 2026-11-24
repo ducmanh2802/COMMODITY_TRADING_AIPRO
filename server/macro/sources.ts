@@ -60,16 +60,16 @@ export function groupStatus(items: MacroDatapoint[]): DataQualityStatus {
 // ───────────────────────────── EIA ─────────────────────────────
 
 export const EIA_WPSR_PAGE = 'https://www.eia.gov/petroleum/supply/weekly/';
-export const EIA_WPSR_SCHEDULE = 'https://www.eia.gov/petroleum/supply/weekly/schedule.php';
+const EIA_WPSR_SCHEDULE = 'https://www.eia.gov/petroleum/supply/weekly/schedule.php';
 
-export const EIA_SERIES: ReadonlyArray<{ series: string; id: MacroDatapointId; label: string }> = [
+const EIA_SERIES: ReadonlyArray<{ series: string; id: MacroDatapointId; label: string }> = [
   { series: 'WCESTUS1', id: 'EIA_CRUDE_EX_SPR', label: 'U.S. crude oil stocks excl. SPR' },
   { series: 'WGTSTUS1', id: 'EIA_GASOLINE', label: 'U.S. total motor gasoline stocks' },
   { series: 'WDISTUS1', id: 'EIA_DISTILLATE', label: 'U.S. distillate fuel oil stocks' },
 ];
 
 /** Public (key-less) form of the EIA v2 query; the key is appended only for the outgoing request. */
-export function eiaQueryUrl(): string {
+function eiaQueryUrl(): string {
   const facets = EIA_SERIES.map((s) => `facets%5Bseries%5D%5B%5D=${s.series}`).join('&');
   return (
     'https://api.eia.gov/v2/petroleum/stoc/wstk/data/?frequency=weekly&data%5B0%5D=value&' +
@@ -85,11 +85,11 @@ interface EiaRow {
 }
 
 /** Weekly stocks: week-ending date older than 16 days means at least one weekly release was missed. */
-export function eiaStatus(period: string, now: Date): DataQualityStatus {
+function eiaStatus(period: string, now: Date): DataQualityStatus {
   return now.getTime() - Date.parse(`${period}T00:00:00Z`) > 16 * DAY_MS ? 'STALE' : 'HISTORICAL';
 }
 
-export function parseEiaWeeklyStocks(json: unknown, now: Date, fetchedAt: string): MacroDatapoint[] {
+function parseEiaWeeklyStocks(json: unknown, now: Date, fetchedAt: string): MacroDatapoint[] {
   const rows: EiaRow[] = Array.isArray((json as { response?: { data?: unknown } })?.response?.data)
     ? ((json as { response: { data: EiaRow[] } }).response.data)
     : [];
@@ -173,7 +173,7 @@ export async function fetchEiaWeeklyStocks(
 
 export const ESMIS_WASDE_RELEASES_URL = 'https://esmis.nal.usda.gov/api/v1/release/findByIdentifier/wasde';
 export const ESMIS_WASDE_PUBLICATION_URL = 'https://esmis.nal.usda.gov/api/v1/publication/findByIdentifier/wasde';
-export const USDA_WASDE_PAGE = 'https://www.usda.gov/oce/commodity/wasde';
+const USDA_WASDE_PAGE = 'https://www.usda.gov/oce/commodity/wasde';
 
 /**
  * ESMIS `release_datetime` (e.g. "2026-11-10T12:00:00+0000") is labelled +0000 although its wall clock
@@ -193,7 +193,7 @@ function releaseFromRaw(raw: unknown, title: unknown, files: unknown): WasdeRele
   };
 }
 
-export function parseEsmisReleases(json: unknown): WasdeRelease[] {
+function parseEsmisReleases(json: unknown): WasdeRelease[] {
   const results = (json as { results?: unknown })?.results;
   if (!Array.isArray(results)) return [];
   return results
@@ -227,7 +227,7 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-export const WASDE_TARGETS: ReadonlyArray<{
+const WASDE_TARGETS: ReadonlyArray<{
   id: MacroDatapointId;
   label: string;
   title: RegExp;
@@ -408,7 +408,7 @@ export async function fetchWasde(fetchFn: FetchLike, now: Date): Promise<WasdeRe
 export const YAHOO_DXY_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?range=5d&interval=1d';
 const YAHOO_UA = 'Mozilla/5.0 (compatible; market-data-client/1.0)';
 
-export function parseYahooDxy(json: unknown, now: Date, fetchedAt: string): MacroDatapoint {
+function parseYahooDxy(json: unknown, now: Date, fetchedAt: string): MacroDatapoint {
   const base = {
     id: 'DXY' as const,
     label: 'ICE U.S. Dollar Index (DXY)',
@@ -467,7 +467,7 @@ function parseYahooDxyDisabled(fetchedAt: string): MacroDatapoint {
   };
 }
 
-export const SBV_URL = 'https://www.sbv.gov.vn/';
+const SBV_URL = 'https://www.sbv.gov.vn/';
 
 export function sbvCentralRateUnavailable(fetchedAt: string): MacroDatapoint {
   return unavailable(
@@ -506,7 +506,7 @@ export function parseVcbDateTime(s: string): string | null {
   return Number.isNaN(ms) ? null : new Date(ms).toISOString();
 }
 
-export function parseVcbXml(xml: string, now: Date, fetchedAt: string): MacroDatapoint {
+function parseVcbXml(xml: string, now: Date, fetchedAt: string): MacroDatapoint {
   const base = {
     id: 'USDVND_VCB' as const,
     label: 'USD/VND Vietcombank posted rate (transfer)',

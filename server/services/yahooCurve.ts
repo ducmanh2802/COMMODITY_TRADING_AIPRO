@@ -25,7 +25,7 @@ import {
 export const YAHOO_CURVE_TTL_MS = 15 * 60_000;
 export const YAHOO_CURVE_LABEL = 'Yahoo Finance (UNOFFICIAL, delayed, not an exchange settlement)';
 
-export interface YahooCurveContract {
+interface YahooCurveContract {
   contract: string;
   yahooSymbol: string;
   price: number;

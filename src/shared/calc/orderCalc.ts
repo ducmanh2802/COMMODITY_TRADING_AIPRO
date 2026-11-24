@@ -25,7 +25,7 @@ export interface OrderCalcInput {
 
 export type OrderField = 'capital' | 'fx' | 'risk' | 'entry' | 'stop' | 'target' | 'cost' | 'margin' | 'spec';
 
-export interface OrderCalcOk {
+interface OrderCalcOk {
   ok: true;
   /** USD value of a 1.0 move in the quotation unit, per contract. */
   usdPerUnit: number;

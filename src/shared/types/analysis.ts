@@ -31,7 +31,7 @@ export interface StrategyDefinition {
 export type AiDataInputId = 'SPEC' | 'QUOTE' | 'TECHNICAL' | 'COT';
 
 /** Market-data quality label, or the verification status for reference data (contract spec). */
-export type AiInputQuality = DataQualityStatus | 'VERIFIED' | 'UNVERIFIED';
+type AiInputQuality = DataQualityStatus | 'VERIFIED' | 'UNVERIFIED';
 
 /** One block of server-held data handed to the model, with its quality label and as-of time. */
 export interface AiDataInput {

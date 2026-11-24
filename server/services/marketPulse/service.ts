@@ -31,7 +31,7 @@ import { FOMC_CALENDAR_URL, FOMC_NOTE, PULSE_DISCLAIMER, PULSE_EXPLANATIONS, bui
 
 export type FredFetcher = (seriesId: string) => Promise<DatedValue[]>;
 
-export interface PulseHistory {
+interface PulseHistory {
   candles: MarketCandle[];
   source: string | null;
   quality: string | null;
@@ -104,7 +104,7 @@ const GROUPS: { group: PulseGroupStats['group']; label: { vi: string; en: string
   { group: 'ENERGY', label: t('Năng lượng', 'Energy') },
 ];
 
-export function groupOf(cat: InstrumentDefinition['category']): PulseGroupStats['group'] {
+function groupOf(cat: InstrumentDefinition['category']): PulseGroupStats['group'] {
   return cat === 'METALS' ? 'METALS' : cat === 'ENERGY' ? 'ENERGY' : 'AGRI';
 }
 

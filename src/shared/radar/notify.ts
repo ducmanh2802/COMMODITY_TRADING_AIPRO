@@ -1,9 +1,9 @@
 /** Pure notification diffing for the radar (T64): what is NEW since the previous poll. */
 import type { RadarBreakoutKind, RadarItem, RadarResponse } from '../types/radar';
 
-export const RADAR_TOP_N = 5;
+const RADAR_TOP_N = 5;
 /** An instrument must reach this score to count as "in the top list". */
-export const RADAR_MIN_TOP_SCORE = 30;
+const RADAR_MIN_TOP_SCORE = 30;
 
 export interface RadarSnapshot {
   top: string[];
@@ -19,14 +19,14 @@ export interface RadarNote {
   at: string;
 }
 
-export const BREAKOUT_TEXT: Record<RadarBreakoutKind, string> = {
+const BREAKOUT_TEXT: Record<RadarBreakoutKind, string> = {
   high55: 'Giá vượt đỉnh 55 phiên',
   low55: 'Giá thủng đáy 55 phiên',
   high20: 'Giá vượt đỉnh 20 phiên',
   low20: 'Giá thủng đáy 20 phiên',
 };
 
-export function topIds(items: RadarItem[]): string[] {
+function topIds(items: RadarItem[]): string[] {
   return [...items]
     .sort((a, b) => b.score - a.score)
     .filter((i) => i.score >= RADAR_MIN_TOP_SCORE)

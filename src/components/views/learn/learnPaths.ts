@@ -18,7 +18,7 @@ export const LEARN_PATHS: Record<LearnGoal, string[]> = {
   ],
 };
 
-export function isLearnGoal(v: unknown): v is LearnGoal {
+function isLearnGoal(v: unknown): v is LearnGoal {
   return v === 'understand' || v === 'hedge' || v === 'swing';
 }
 

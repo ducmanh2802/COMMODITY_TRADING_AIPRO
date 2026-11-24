@@ -2,8 +2,8 @@
 import { createHash } from 'node:crypto';
 import { ictDayKey } from './season.ts';
 
-export const MAX_RISK_PCT_PER_TRADE = 2;
-export const MAX_ORDERS_PER_DAY = 6;
+const MAX_RISK_PCT_PER_TRADE = 2;
+const MAX_ORDERS_PER_DAY = 6;
 
 export interface ScoredOrder {
   hasStop: boolean;

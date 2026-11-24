@@ -32,7 +32,6 @@ export const vi = {
   'dm.legend.intl': 'Quốc tế quy đổi',
   'dm.chartLabel': 'Biểu đồ giá trong nước và quốc tế quy đổi {name}',
   'dm.unitVndKg': 'đ/kg',
-  'dm.loading': 'Đang tải giá trong nước…',
   'dm.error': 'Không tải được giá trong nước: {msg}',
   'dm.empty.title': 'Chưa có dữ liệu giá trong nước',
   'dm.empty.desc':
@@ -89,7 +88,6 @@ export const en: Record<keyof typeof vi, string> = {
   'dm.legend.intl': 'International converted',
   'dm.chartLabel': 'Chart of domestic and converted international price for {name}',
   'dm.unitVndKg': 'VND/kg',
-  'dm.loading': 'Loading domestic prices…',
   'dm.error': 'Could not load domestic prices: {msg}',
   'dm.empty.title': 'No domestic price data yet',
   'dm.empty.desc':

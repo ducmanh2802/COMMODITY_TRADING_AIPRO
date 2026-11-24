@@ -22,10 +22,10 @@ export interface Bar {
   c: number;
 }
 
-export const START_EQUITY_USD = 10_000;
+const START_EQUITY_USD = 10_000;
 export const MAX_RISK_PCT = 2;
 export const HISTORY_BARS = 100;
-export const MIN_FUTURE_BARS = 120;
+const MIN_FUTURE_BARS = 120;
 
 export interface OrderRequest {
   side: Side;
@@ -61,7 +61,7 @@ export interface ClosedTrade {
   disciplined: boolean;
 }
 
-export type ReplayEvent =
+type ReplayEvent =
   | { type: 'FILLED'; idx: number; side: Side; price: number }
   | { type: 'CANCELLED'; idx: number; reason: 'GAP_INVALID' | 'NO_NEXT_BAR' }
   | { type: 'CLOSED'; idx: number; trade: ClosedTrade };
@@ -123,7 +123,7 @@ export function createReplay(bars: Bar[], cursor: number, pointValueUsd: number,
   return { bars, cursor, startCursor: cursor, pointValueUsd, startEquityUsd, pending: null, position: null, closed: [], finished: false, events: [] };
 }
 
-export function validateOrder(o: OrderRequest, ref: number): string | null {
+function validateOrder(o: OrderRequest, ref: number): string | null {
   if (!isNum(o.stop) || !isNum(o.target) || !(o.stop > 0) || !(o.target > 0)) return 'STOP_TARGET_REQUIRED';
   if (!Number.isInteger(o.contracts) || o.contracts < 1) return 'BAD_CONTRACTS';
   if (o.side === 'LONG' ? !(o.stop < ref && ref < o.target) : !(o.target < ref && ref < o.stop)) return 'BAD_LEVELS';
@@ -144,7 +144,7 @@ export function cancelOrder(s: ReplayState): ReplayState {
   return s.pending ? { ...s, pending: null } : s;
 }
 
-export function pnlOf(side: Side, entry: number, exit: number, contracts: number, pointValueUsd: number): number {
+function pnlOf(side: Side, entry: number, exit: number, contracts: number, pointValueUsd: number): number {
   return (side === 'LONG' ? exit - entry : entry - exit) * pointValueUsd * contracts;
 }
 
@@ -239,7 +239,7 @@ export function unrealisedUsd(s: ReplayState): number {
   return p ? pnlOf(p.side, p.entry, s.bars[s.cursor].c, p.contracts, s.pointValueUsd) : 0;
 }
 
-export function realisedUsd(s: ReplayState): number {
+function realisedUsd(s: ReplayState): number {
   return s.closed.reduce((a, t) => a + t.pnlUsd, 0);
 }
 

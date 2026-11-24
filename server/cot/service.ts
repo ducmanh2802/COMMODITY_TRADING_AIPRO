@@ -20,7 +20,7 @@ import { COT_MARKET_MAPPINGS, getCotMapping, type CotMarketMapping } from './map
 import { parseCotRecord, type CotReportRecord } from './parser.ts';
 import { SqliteCotRepository, type CotRepositoryLike, type StoredCotReport } from './repository.ts';
 
-export const COT_TIMING_NOTICE =
+const COT_TIMING_NOTICE =
   'reportDate is the CFTC "as of" date (positions at Tuesday close) stored exactly as CFTC publishes it. ' +
   'CFTC normally releases it the following Friday at 15:30 US Eastern (later in holiday weeks / shutdowns). ' +
   'expectedReleaseDate is that TYPICAL Friday, an estimate — not the actual release. Lag any analysis to ' +
@@ -45,7 +45,7 @@ export class CotServiceError extends Error {
 /** `COT_SOURCE`: auto = Socrata first, CFTC historical files on failure; socrata / files = only that one. */
 export type CotSourceMode = 'auto' | 'socrata' | 'files';
 
-export function resolveCotSourceMode(value: string | undefined = process.env.COT_SOURCE): CotSourceMode {
+function resolveCotSourceMode(value: string | undefined = process.env.COT_SOURCE): CotSourceMode {
   const v = (value ?? '').trim().toLowerCase();
   if (v === '' || v === 'auto') return 'auto';
   if (v === 'socrata' || v === 'files') return v;
@@ -53,7 +53,7 @@ export function resolveCotSourceMode(value: string | undefined = process.env.COT
 }
 
 /** Classify a stored source URL (for query provenance). */
-export function dataSourceOfUrl(url: string): CotDataSource | 'unknown' {
+function dataSourceOfUrl(url: string): CotDataSource | 'unknown' {
   try {
     const u = new URL(url);
     if (u.hostname === 'publicreporting.cftc.gov' || u.pathname.startsWith('/resource/')) return 'socrata';

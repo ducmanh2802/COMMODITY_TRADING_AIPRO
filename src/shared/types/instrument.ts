@@ -17,9 +17,9 @@ export type Timeframe = 'M1' | 'M5' | 'M15' | 'M30' | 'H1' | 'H4' | 'D1' | 'W1';
 
 export type TradingStyle = 'SCALPING' | 'INTRADAY' | 'SWING' | 'POSITION';
 
-export type SpecificationStatus = 'VERIFIED' | 'UNVERIFIED' | 'UNAVAILABLE';
+type SpecificationStatus = 'VERIFIED' | 'UNVERIFIED' | 'UNAVAILABLE';
 
-export type MvxMappingStatus = 'VERIFIED' | 'UNVERIFIED' | 'UNAVAILABLE';
+type MvxMappingStatus = 'VERIFIED' | 'UNVERIFIED' | 'UNAVAILABLE';
 
 export interface ContractSpecification {
   contractSize: number | null;
@@ -59,7 +59,7 @@ export interface MxvContractSpec {
   checkedOn: string;
 }
 
-export interface MvxInstrumentMapping {
+interface MvxInstrumentMapping {
   mxvSymbol: string | null;
   internationalSymbol: string;
   internationalExchange: ExchangeCode;

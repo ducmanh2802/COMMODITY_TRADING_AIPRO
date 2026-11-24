@@ -27,7 +27,7 @@ export interface AdminAuthOptions {
 const LOOPBACK_ADDRESSES = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
 const PROXY_HEADERS = ['x-forwarded-for', 'forwarded', 'x-real-ip'];
 
-export const ADMIN_TOKEN_ENV = 'ADMIN_API_TOKEN';
+const ADMIN_TOKEN_ENV = 'ADMIN_API_TOKEN';
 
 function normalizeToken(value: string | null | undefined): string | null {
   if (value === undefined || value === null) return null;
@@ -36,7 +36,7 @@ function normalizeToken(value: string | null | undefined): string | null {
 }
 
 /** The configured admin token (trimmed), or null when unset/empty. */
-export function resolveAdminToken(token?: string | null): string | null {
+function resolveAdminToken(token?: string | null): string | null {
   return token === undefined ? normalizeToken(process.env[ADMIN_TOKEN_ENV]) : normalizeToken(token);
 }
 

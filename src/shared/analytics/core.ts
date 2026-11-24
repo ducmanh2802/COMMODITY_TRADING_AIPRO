@@ -86,7 +86,7 @@ export function isFiniteNumber(x: unknown): x is number {
 }
 
 /** Parses timestamps and checks strictly ascending, unique order. Returns epoch-ms array or a reason. */
-export function validateTimestamps(ts: unknown[]): { ok: true; ms: number[] } | { ok: false; reason: string } {
+function validateTimestamps(ts: unknown[]): { ok: true; ms: number[] } | { ok: false; reason: string } {
   const ms: number[] = [];
   for (let i = 0; i < ts.length; i++) {
     const t = ts[i];

@@ -16,9 +16,9 @@
  */
 import type { CotReportType } from '../../src/shared/cot/analytics.ts';
 
-export const CFTC_BASE_URL = 'https://publicreporting.cftc.gov';
+const CFTC_BASE_URL = 'https://publicreporting.cftc.gov';
 
-export const CFTC_DATASET_IDS: Record<CotReportType, string> = {
+const CFTC_DATASET_IDS: Record<CotReportType, string> = {
   DISAGGREGATED: '72hh-3qpy',
   LEGACY: '6dca-aqww',
 };

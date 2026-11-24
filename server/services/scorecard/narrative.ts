@@ -39,7 +39,7 @@ function hash(s: string): number {
 
 type Pair = [string, string];
 
-export function buildRulesSentences(card: Scorecard, inst: Pick<InstrumentDefinition, 'specification'> | null): Pair[] {
+function buildRulesSentences(card: Scorecard, inst: Pick<InstrumentDefinition, 'specification'> | null): Pair[] {
   const seed = hash(`${card.instrumentId}|${card.price.asOf ?? card.generatedAt.slice(0, 10)}`);
   const pick = (k: number, opts: Pair[]): Pair => opts[(seed + k) % opts.length];
   const out: Pair[] = [];

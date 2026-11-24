@@ -18,7 +18,7 @@ export type BottomClassification =
   | 'NO_BOTTOM_SIGNAL'
   | 'DATA_UNAVAILABLE';
 
-export type SetupDirection = 'LONG_ACCUMULATE' | 'LONG_BREAKOUT' | 'WAIT_CONFIRMATION' | 'AVOID_OR_SHORT' | 'UNAVAILABLE';
+type SetupDirection = 'LONG_ACCUMULATE' | 'LONG_BREAKOUT' | 'WAIT_CONFIRMATION' | 'AVOID_OR_SHORT' | 'UNAVAILABLE';
 
 export type SupplyDemandBias = 'TIGHTENING' | 'BALANCED' | 'LOOSENING' | 'SURPLUS_PRESSURE' | 'DATA_UNAVAILABLE';
 

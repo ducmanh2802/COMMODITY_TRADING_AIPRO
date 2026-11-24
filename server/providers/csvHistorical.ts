@@ -10,7 +10,7 @@ import { createUnavailableQuote } from '../../src/shared/utils/validation.ts';
 import type { ICandleRepository, StoredCandleRow } from '../storage/candleRepository.ts';
 import type { UnconfiguredProviderConfig } from './base.ts';
 
-export const CSV_SERIES_SYMBOL_SEPARATOR = '@';
+const CSV_SERIES_SYMBOL_SEPARATOR = '@';
 
 /**
  * Historical CSV provider backed by the candle repository.

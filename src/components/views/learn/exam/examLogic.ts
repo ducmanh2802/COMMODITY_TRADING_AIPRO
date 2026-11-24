@@ -1,9 +1,9 @@
 /** End-of-level exam logic: deterministic drawing, scoring, unlock rule, storage, verification code. Pure + guarded localStorage. */
 import type { Level, QuizQuestion } from '../curriculum/types';
 
-export const EXAMS_KEY = 'ctap.exams.v1';
+const EXAMS_KEY = 'ctap.exams.v1';
 export const EXAM_PASS_PCT = 80;
-export const EXAM_UNLOCK_RATIO = 0.8;
+const EXAM_UNLOCK_RATIO = 0.8;
 export const LEVEL_EXAM_SIZE = 15;
 export const FINAL_EXAM_SIZE = 40;
 export const EXAM_MINUTES = 20;
@@ -27,7 +27,7 @@ export function rng(seed: number): () => number {
   };
 }
 
-export function seedFrom(text: string, attempt: number): number {
+function seedFrom(text: string, attempt: number): number {
   let h = 2166136261;
   for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619) >>> 0;
   return (h ^ Math.imul(attempt + 1, 0x9e3779b1)) >>> 0;

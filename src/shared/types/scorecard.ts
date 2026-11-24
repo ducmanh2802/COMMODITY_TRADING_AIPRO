@@ -23,7 +23,7 @@ export type ScorecardLevel =
   // valuation context (position vs own history; descriptive only)
   | 'RANGE_HIGH' | 'RANGE_MID' | 'RANGE_LOW';
 
-export interface ScorecardMetric {
+interface ScorecardMetric {
   key: string;
   value: number | string | null;
   unit?: string | null;

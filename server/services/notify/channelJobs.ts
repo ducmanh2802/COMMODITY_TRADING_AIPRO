@@ -17,9 +17,9 @@ export interface ChannelJobDeps {
   log?: (line: string) => void;
 }
 
-export const PUSH_TITLE = 'Commodity Trading AI Pro';
+const PUSH_TITLE = 'Commodity Trading AI Pro';
 
-export function emailFooter(baseUrl: string, unsubToken: string): string {
+function emailFooter(baseUrl: string, unsubToken: string): string {
   return `\n\n--\nHủy nhận email: ${baseUrl}/api/notify/email/unsubscribe?token=${unsubToken}`;
 }
 

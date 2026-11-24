@@ -25,7 +25,7 @@ function shiftDays(date: string, days: number): string {
 }
 
 /** Value at the last observation on/before `date`. */
-export function valueOnOrBefore(series: DatedValue[], date: string): DatedValue | null {
+function valueOnOrBefore(series: DatedValue[], date: string): DatedValue | null {
   let best: DatedValue | null = null;
   for (const p of series) {
     if (p.date <= date) best = p;

@@ -19,7 +19,6 @@ export const vi = {
   'lab.params.title': 'Tham số chiến lược',
   'lab.params.hint': 'Giá trị mặc định giữ nguyên cách chạy cũ. Đổi để thử nghiệm; kết quả vẫn chỉ là mô phỏng quá khứ.',
   'lab.params.reset': 'Về mặc định',
-  'lab.params.optimize': 'Dò',
   'lab.params.range': 'Từ {min} đến {max}',
   'lab.params.invalid': 'Giá trị phải nằm trong khoảng {min} đến {max}.',
 
@@ -118,7 +117,6 @@ export const en: Record<keyof typeof vi, string> = {
   'lab.params.title': 'Strategy parameters',
   'lab.params.hint': 'Defaults keep the old behaviour. Change values to experiment; results are still a historical simulation.',
   'lab.params.reset': 'Reset to defaults',
-  'lab.params.optimize': 'Scan',
   'lab.params.range': 'From {min} to {max}',
   'lab.params.invalid': 'Value must be between {min} and {max}.',
 

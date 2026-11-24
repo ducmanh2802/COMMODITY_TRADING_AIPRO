@@ -55,7 +55,7 @@ export interface RiskInput {
   limitPct: number;
 }
 
-export type RiskLevel = 'ok' | 'lowR' | 'overLimit';
+type RiskLevel = 'ok' | 'lowR' | 'overLimit';
 
 export interface RiskResult {
   riskVnd: number;

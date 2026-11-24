@@ -2,7 +2,7 @@
  * Error thrown when an upstream reverse proxy or restarting backend returns HTML
  * (or a 502/503/504 gateway page) where JSON was expected.
  */
-export class TransientProxyError extends Error {
+class TransientProxyError extends Error {
   readonly status: number;
 
   constructor(message: string, status: number) {

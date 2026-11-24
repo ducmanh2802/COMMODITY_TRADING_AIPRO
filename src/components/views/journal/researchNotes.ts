@@ -20,7 +20,7 @@ export const NOTE_TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'
 export type NoteTimeframe = (typeof NOTE_TIMEFRAMES)[number];
 
 /** Optional chart context captured when a note is written from a chart. Empty string = not set. */
-export interface NoteChartContext {
+interface NoteChartContext {
   timeframe: NoteTimeframe | '';
   contractCode: string;
   rangeStart: string;
@@ -116,7 +116,7 @@ export function validateDraft(d: NoteDraft): NoteValidationError | null {
 }
 
 /** Chart context to persist, or null when every field is empty. */
-export function draftChartContext(d: NoteDraft): NoteChartContext | null {
+function draftChartContext(d: NoteDraft): NoteChartContext | null {
   const ctx: NoteChartContext = {
     timeframe: d.timeframe,
     contractCode: d.contractCode.trim(),
@@ -127,7 +127,7 @@ export function draftChartContext(d: NoteDraft): NoteChartContext | null {
 }
 
 /** Fields that an update may change (mirrors the rules' affectedKeys allowlist). */
-export function buildNoteContent(d: NoteDraft) {
+function buildNoteContent(d: NoteDraft) {
   return {
     instrumentId: d.instrumentId.trim(),
     title: d.title.trim(),

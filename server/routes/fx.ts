@@ -8,7 +8,7 @@
 import type { Express, NextFunction, Request, Response } from 'express';
 import { FxService } from '../services/fx/service.ts';
 
-export type FxServiceLike = Pick<FxService, 'getAllRates'>;
+type FxServiceLike = Pick<FxService, 'getAllRates'>;
 
 export interface FxRouteDeps {
   service?: FxServiceLike;

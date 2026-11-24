@@ -7,9 +7,9 @@ import { buildContractChain } from '../../../shared/contracts/chain';
 import { calendarDaysBetween, isIsoDate } from '../../../shared/contracts/dates';
 
 export const CALENDAR_WINDOW_DAYS = 45;
-export const REMINDER_WINDOW_DAYS = 10;
+const REMINDER_WINDOW_DAYS = 10;
 
-export type ExpiryKind = 'FND' | 'LTD';
+type ExpiryKind = 'FND' | 'LTD';
 
 export interface ExpiryEvent {
   instrumentId: string;

@@ -120,7 +120,7 @@ export interface BuiltSection {
   headline: BriefText | null;
 }
 
-export const SECTION_TITLES: Record<BriefSectionId, BriefText> = {
+const SECTION_TITLES: Record<BriefSectionId, BriefText> = {
   price: txt('Giá & biến động hôm nay', 'Price & today’s move'),
   trend: txt('Xu hướng', 'Trend'),
   momentum: txt('Động lượng', 'Momentum'),
@@ -132,7 +132,7 @@ export const SECTION_TITLES: Record<BriefSectionId, BriefText> = {
   missing: txt('Dữ liệu còn thiếu', 'Missing data'),
 };
 
-export const WHAT_IT_MEANS: Record<BriefSectionId, BriefText> = {
+const WHAT_IT_MEANS: Record<BriefSectionId, BriefText> = {
   price: txt(
     'Giá hiện tại được so với giá đóng cửa của phiên trước. Nguồn miễn phí thường bị trễ 10–30 phút. Để biết mức thay đổi hôm nay là lớn hay nhỏ, ta so nó với biên độ dao động trung bình một ngày (ATR).',
     'The current price is compared with the previous session’s close. Free sources are usually delayed 10–30 minutes. To judge whether today’s move is large or small, it is compared with the average daily range (ATR).'
@@ -303,7 +303,7 @@ export function classifyTrend(close: number, sma50: number, sma200: number | nul
   return 'MIXED';
 }
 
-export function classifySlope(now: number, before: number): 'RISING' | 'FALLING' | 'FLAT' {
+function classifySlope(now: number, before: number): 'RISING' | 'FALLING' | 'FLAT' {
   const chg = now / before - 1;
   if (chg > 0.005) return 'RISING';
   if (chg < -0.005) return 'FALLING';

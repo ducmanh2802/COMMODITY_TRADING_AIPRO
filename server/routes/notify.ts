@@ -11,8 +11,8 @@ import { NotifyStore } from '../services/notify/store.ts';
 import { registerChannelRoutes } from './notifyChannels.ts';
 import { clampText, getBotToken, isValidChatId, TelegramClient, type Messenger, type TelegramUpdate } from '../services/notify/telegram.ts';
 
-export const MAX_SYNC_ITEMS = 60;
-export const MAX_ALERT_TEXT = 500;
+const MAX_SYNC_ITEMS = 60;
+const MAX_ALERT_TEXT = 500;
 const SYMBOL_RE = /^[A-Za-z0-9._=\-]{1,20}$/;
 
 export interface NotifyService {
@@ -32,7 +32,7 @@ export interface NotifyRouteOptions {
   channels?: Channels | null;
 }
 
-export function createNotifyService(env: Record<string, string | undefined> = process.env): NotifyService | null {
+function createNotifyService(env: Record<string, string | undefined> = process.env): NotifyService | null {
   const token = getBotToken(env);
   if (!token) return null;
   const client = new TelegramClient({ token });

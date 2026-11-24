@@ -25,7 +25,7 @@ export const MERGED_INSTRUMENTS: InstrumentDefinition[] = [
   ...OWNER_ADDED_INSTRUMENTS.filter((added) => !INITIAL_INSTRUMENTS.some((inst) => inst.id === added.id)),
 ];
 
-export class InMemoryInstrumentRepository implements IInstrumentRepository {
+class InMemoryInstrumentRepository implements IInstrumentRepository {
   private readonly instruments: InstrumentDefinition[];
 
   constructor(seed: InstrumentDefinition[] = MERGED_INSTRUMENTS) {

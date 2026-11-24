@@ -24,10 +24,10 @@ import { CftcFetchError, type CftcClientLike, type CftcFetchRequest, type CftcFe
 import { normalizeKey, parseCftcCsv } from './parser.ts';
 import { DEFAULT_MAX_UNCOMPRESSED_BYTES, extractZipEntry, listZipEntries, ZipError } from './zip.ts';
 
-export const CFTC_FILES_BASE_URL = 'https://www.cftc.gov/files/dea/history';
-export const DEFAULT_COT_CACHE_DIR = path.join('data', 'cache', 'cftc');
+const CFTC_FILES_BASE_URL = 'https://www.cftc.gov/files/dea/history';
+const DEFAULT_COT_CACHE_DIR = path.join('data', 'cache', 'cftc');
 
-export const CFTC_HISTORY_FILES: Record<CotReportType, { zipName: (year: number) => string; entryName: string }> = {
+const CFTC_HISTORY_FILES: Record<CotReportType, { zipName: (year: number) => string; entryName: string }> = {
   DISAGGREGATED: { zipName: (y) => `fut_disagg_txt_${y}.zip`, entryName: 'f_year.txt' },
   LEGACY: { zipName: (y) => `deacot${y}.zip`, entryName: 'annual.txt' },
 };

@@ -2,11 +2,11 @@
 import type { DatedValue } from '../marketPulse/math.ts';
 import type { ConeBand, DriverEventFlag, DriverPartId } from '../../../src/shared/types/drivers.ts';
 
-export const Z50 = 0.6744897501960817;
+const Z50 = 0.6744897501960817;
 export const Z80 = 1.2815515655446004;
 
 /** Solves A x = b (Gaussian elimination, partial pivoting). Null when singular. */
-export function solveLinear(A: number[][], b: number[]): number[] | null {
+function solveLinear(A: number[][], b: number[]): number[] | null {
   const n = b.length;
   const M = A.map((r, i) => [...r, b[i]]);
   for (let c = 0; c < n; c++) {
@@ -56,7 +56,7 @@ export function ols(X: number[][], y: number[]): { coef: number[]; r2: number } 
 }
 
 /** Forward-filled value of `series` at each of `dates` (null before first obs or when older than maxAgeDays). */
-export function ffillTo(dates: string[], series: DatedValue[], maxAgeDays = 10): (number | null)[] {
+function ffillTo(dates: string[], series: DatedValue[], maxAgeDays = 10): (number | null)[] {
   const out: (number | null)[] = [];
   let j = -1;
   for (const d of dates) {
@@ -77,7 +77,7 @@ export interface DecomposeInput {
   usd: DatedValue[] | null;
   y10: DatedValue[] | null;
 }
-export interface DecomposeHorizon {
+interface DecomposeHorizon {
   days: 1 | 5 | 20;
   startDate: string;
   endDate: string;

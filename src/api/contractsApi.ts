@@ -88,7 +88,7 @@ export function fetchContractChain(
   return getJson(`/api/contracts/${encodeURIComponent(instrumentId)}/chain${qs ? `?${qs}` : ''}`, signal);
 }
 
-export interface CalendarRule {
+interface CalendarRule {
   listedMonths: string;
   lastTradingDayRule: string;
   sourceUrl: string;

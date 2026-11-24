@@ -73,7 +73,7 @@ export function TaggedNewsPanel() {
                   {n.source} · {newsTime(n.publishedAt)}
                 </span>
                 {n.link && (
-                  <a href={n.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[var(--accent)] hover:underline">
+                  <a href={n.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 min-h-10 sm:min-h-0 text-[var(--accent)] hover:underline">
                     {t('nw.read')}
                     <ExternalLink className="w-3 h-3" aria-hidden="true" />
                   </a>

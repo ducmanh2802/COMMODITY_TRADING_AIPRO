@@ -28,9 +28,9 @@ import { getCotMapping } from '../cot/mapping.ts';
 import { CotServiceError, type CotService } from '../cot/service.ts';
 
 /** Default model; override with GEMINI_MODEL. */
-export const DEFAULT_GEMINI_MODEL = 'gemini-4-hydrogen';
+const DEFAULT_GEMINI_MODEL = 'gemini-4-hydrogen';
 /** Default model-call timeout; override with AI_ANALYST_TIMEOUT_MS. */
-export const DEFAULT_AI_TIMEOUT_MS = 20_000;
+const DEFAULT_AI_TIMEOUT_MS = 20_000;
 
 const MAX_TEXT = 1200;
 
@@ -50,12 +50,12 @@ export interface AiModelClient {
   generate(req: AiModelRequest): Promise<string>;
 }
 
-export function resolveGeminiModel(): string {
+function resolveGeminiModel(): string {
   const m = process.env.GEMINI_MODEL?.trim();
   return m && m.length > 0 ? m : DEFAULT_GEMINI_MODEL;
 }
 
-export function resolveAiTimeoutMs(): number {
+function resolveAiTimeoutMs(): number {
   const n = Number(process.env.AI_ANALYST_TIMEOUT_MS);
   return Number.isFinite(n) && n >= 1000 && n <= 120_000 ? Math.floor(n) : DEFAULT_AI_TIMEOUT_MS;
 }
@@ -180,7 +180,7 @@ function unavailable(id: AiDataInputId, source: string, note: string): AiDataInp
   return { id, quality: 'UNAVAILABLE', sourceQuality: null, source, asOf: null, note, data: null };
 }
 
-export function buildSpecInput(instrument: InstrumentDefinition): AiDataInput {
+function buildSpecInput(instrument: InstrumentDefinition): AiDataInput {
   const s = instrument.specification;
   if (s.verificationStatus === 'UNAVAILABLE') {
     return unavailable('SPEC', s.dataSource || 'instrument registry', 'Contract specification not available.');
@@ -213,7 +213,7 @@ export function buildSpecInput(instrument: InstrumentDefinition): AiDataInput {
   };
 }
 
-export function buildQuoteInput(quote: MarketQuote | null): AiDataInput {
+function buildQuoteInput(quote: MarketQuote | null): AiDataInput {
   if (!quote) return unavailable('QUOTE', 'provider registry', 'No quote could be obtained.');
   if (!isUsableMarketStatus(quote.status) || quote.price === null) {
     return {
@@ -243,7 +243,7 @@ export function buildQuoteInput(quote: MarketQuote | null): AiDataInput {
   };
 }
 
-export function buildTechnicalInput(snapshot: TechnicalSnapshot, candleSource: string | null): AiDataInput {
+function buildTechnicalInput(snapshot: TechnicalSnapshot, candleSource: string | null): AiDataInput {
   const source = `technicalEngine over ${candleSource ?? 'stored candles'}`;
   if (!isUsableMarketStatus(snapshot.status) || snapshot.lastClose === null) {
     return {
@@ -289,7 +289,7 @@ function shiftIsoDays(isoDate: string, days: number): string {
   return new Date(Date.parse(`${isoDate.slice(0, 10)}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 }
 
-export function buildCotInput(cot: AiCotData | null, now: Date): AiDataInput {
+function buildCotInput(cot: AiCotData | null, now: Date): AiDataInput {
   if (!cot) return unavailable('COT', 'CFTC COT', 'COT data not looked up.');
   const latest = cot.analytics?.latest ?? null;
   if (cot.status !== 'OK' || !latest) {

@@ -96,7 +96,7 @@ export function detectBreakouts(bars: Pick<BarSeries, 'high' | 'low' | 'close'>)
 }
 
 /** |close - previous close| in units of ATR(14) measured up to the previous bar. */
-export function atrMoveToday(bars: Pick<BarSeries, 'close' | 'candles'>): { atr: number | null; moves: number | null } {
+function atrMoveToday(bars: Pick<BarSeries, 'close' | 'candles'>): { atr: number | null; moves: number | null } {
   const n = bars.close.length;
   if (n < 16) return { atr: null, moves: null };
   const atrs = calculateATR(bars.candles, 14);

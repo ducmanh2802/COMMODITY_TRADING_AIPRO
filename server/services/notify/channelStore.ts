@@ -6,11 +6,11 @@ import { DatabaseSync } from 'node:sqlite';
 import type { WatchZone } from '../../../src/shared/watchlist/watchlist.ts';
 import type { SyncedZone } from './store.ts';
 
-export const EMAIL_PENDING_TTL_MS = 48 * 3600_000;
-export const EMAIL_RESEND_GAP_MS = 10 * 60_000;
+const EMAIL_PENDING_TTL_MS = 48 * 3600_000;
+const EMAIL_RESEND_GAP_MS = 10 * 60_000;
 export const MAX_EMAILS_PER_DAY = 20;
-export const MAX_PUSH_SUBS = 5000;
-export const MAX_EMAIL_SUBS = 5000;
+const MAX_PUSH_SUBS = 5000;
+const MAX_EMAIL_SUBS = 5000;
 const EMAIL_RE = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/;
 const TOKEN_RE = /^[0-9a-f]{48}$/;
 
@@ -20,7 +20,7 @@ export interface PushSubscriptionJson {
 }
 /** Known browser push services. The server POSTs to the endpoint, so arbitrary hosts would be an SSRF vector. */
 const PUSH_HOST_SUFFIXES = ['.googleapis.com', '.push.services.mozilla.com', '.notify.windows.com', '.push.apple.com', '.push.microsoft.com'];
-export function isAllowedPushEndpoint(endpoint: string): boolean {
+function isAllowedPushEndpoint(endpoint: string): boolean {
   let u: URL;
   try {
     u = new URL(endpoint);
@@ -50,7 +50,7 @@ export function maskEmail(e: string): string {
   const dot = d.lastIndexOf('.');
   return `${l.slice(0, 1)}***@${d.slice(0, 1)}***${dot >= 0 ? d.slice(dot) : ''}`;
 }
-export const newToken = (): string => randomBytes(24).toString('hex');
+const newToken = (): string => randomBytes(24).toString('hex');
 export const isToken = (v: unknown): v is string => typeof v === 'string' && TOKEN_RE.test(v);
 const dayKey = (now: number): string => new Date(now).toISOString().slice(0, 10);
 

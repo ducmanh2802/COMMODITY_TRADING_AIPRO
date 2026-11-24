@@ -82,7 +82,7 @@ export function loadReview(): ReviewState {
   }
 }
 
-export function saveReview(state: ReviewState): void {
+function saveReview(state: ReviewState): void {
   try {
     window.localStorage.setItem(REVIEW_KEY, JSON.stringify({ version: 1, items: state }));
   } catch {

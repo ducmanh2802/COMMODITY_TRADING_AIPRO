@@ -3,7 +3,7 @@
  * `instrumentId` holds the exchange symbol (e.g. "RC"), the same key used by TerminalContext.quotesBySymbol.
  * Research aid only: a zone is a reminder, never a buy/sell signal.
  */
-export type WatchDirection = 'up' | 'down';
+type WatchDirection = 'up' | 'down';
 export type WatchZone =
   | { kind: 'range'; low: number; high: number }
   | { kind: 'level'; level: number; direction: WatchDirection };
@@ -19,12 +19,12 @@ export interface WatchItem {
 }
 
 export const WATCHLIST_STORAGE_KEY = 'ctap.watchlist';
-export const WATCHLIST_VERSION = 1;
+const WATCHLIST_VERSION = 1;
 export const MAX_NOTE_LENGTH = 140;
 /** Price must leave the zone by this percentage of the boundary before it can re-trigger. */
-export const DEFAULT_HYSTERESIS_PCT = 0.2;
+const DEFAULT_HYSTERESIS_PCT = 0.2;
 
-export function zoneBounds(zone: WatchZone): { low: number; high: number } {
+function zoneBounds(zone: WatchZone): { low: number; high: number } {
   if (zone.kind === 'range') return { low: Math.min(zone.low, zone.high), high: Math.max(zone.low, zone.high) };
   return zone.direction === 'up' ? { low: zone.level, high: Infinity } : { low: -Infinity, high: zone.level };
 }

@@ -19,7 +19,7 @@ const DAY_MS = 86_400_000;
 const backfillAttempted = new Set<string>();
 
 /** Smallest Yahoo range covering the gap since the last stored bar (plus margin); 10y when no history. */
-export function pickYahooRange(
+function pickYahooRange(
   lastTimestampMs: number | null,
   nowMs: number,
   /** Earliest stored bar; when it is newer than ~9y and 10y was not yet attempted, backfill 10y. */
@@ -43,7 +43,7 @@ export function pickYahooRange(
 }
 
 /** Range for intraday (H1) history sync: 3mo initial backfill (Yahoo max ~730d / ~1800+ H1 bars cleanly via 3mo), 1mo incremental. */
-export function pickYahooIntradayRange(lastTimestampMs: number | null, nowMs: number): YahooHistoryRange {
+function pickYahooIntradayRange(lastTimestampMs: number | null, nowMs: number): YahooHistoryRange {
   if (lastTimestampMs === null) return '3mo';
   const gapDays = (nowMs - lastTimestampMs) / DAY_MS;
   return gapDays <= 25 ? '1mo' : '3mo';

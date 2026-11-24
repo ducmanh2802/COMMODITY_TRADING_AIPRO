@@ -35,14 +35,14 @@ export const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/cha
 /** Batch endpoint: one request returns 1m closes for many symbols (no crumb needed; no exchange metadata). */
 export const YAHOO_SPARK_BASE = 'https://query1.finance.yahoo.com/v8/finance/spark';
 /** Max |spark last - chart regularMarketPrice| / chart before a quote is refused as INVALID. */
-export const YAHOO_CROSSCHECK_MAX_DEVIATION = 0.02;
+const YAHOO_CROSSCHECK_MAX_DEVIATION = 0.02;
 /** Generic client identification; contains no personal or project information. */
 export const YAHOO_USER_AGENT = 'Mozilla/5.0 (compatible; market-data-client/1.0)';
 /** Margin added on top of the exchange delay before a quote is considered STALE. */
-export const YAHOO_DELAY_MARGIN_MINUTES = 15;
+const YAHOO_DELAY_MARGIN_MINUTES = 15;
 
 /** Yahoo `meta.currency`: USX = US cents, USD = US dollars. */
-export type YahooCurrency = 'USX' | 'USD';
+type YahooCurrency = 'USX' | 'USD';
 
 export interface YahooSymbolMapping {
   yahooSymbol: string;
@@ -82,7 +82,7 @@ export const YAHOO_SYMBOL_MAP: Readonly<Record<string, YahooSymbolMapping>> = {
 };
 
 /** Instruments explicitly not served by this adapter, with the reason shown to the user. */
-export const YAHOO_UNSUPPORTED: Readonly<Record<string, string>> = {
+const YAHOO_UNSUPPORTED: Readonly<Record<string, string>> = {
   RC: 'ICE Europe Robusta is not on Yahoo: RC=F returned HTTP 404 "No data found" (verified 2026-11-17).',
   BRN: 'ICE Europe Brent is not on Yahoo: BZ=F is the NYMEX Brent contract (exchangeName NYM), not ICE BRN.',
   TIO: 'CME Iron Ore (TIO) has no verified Yahoo continuous symbol.',
@@ -270,14 +270,14 @@ type FetchResult = { ok: true; result: YahooChartResult } | { ok: false; error: 
 
 export type YahooHistoryRange = '5d' | '1mo' | '3mo' | '6mo' | '1y' | '2y' | '5y' | '10y' | 'max';
 
-export interface YahooTimeframeConfig {
+interface YahooTimeframeConfig {
   interval: '1m' | '5m' | '15m' | '1h' | '1d' | '1wk';
   defaultRange: YahooHistoryRange;
   intervalSec: number;
   resampleFrom?: 'H1' | 'M15';
 }
 
-export const YAHOO_TIMEFRAME_CONFIG: Readonly<Record<Timeframe, YahooTimeframeConfig>> = {
+const YAHOO_TIMEFRAME_CONFIG: Readonly<Record<Timeframe, YahooTimeframeConfig>> = {
   M1: { interval: '1m', defaultRange: '5d', intervalSec: 60 },
   M5: { interval: '5m', defaultRange: '1mo', intervalSec: 5 * 60 },
   M15: { interval: '15m', defaultRange: '1mo', intervalSec: 15 * 60 },

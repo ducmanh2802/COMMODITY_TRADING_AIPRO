@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 /** App colour theme. Dark is the default; the choice is remembered per browser. */
 export type Theme = 'dark' | 'light';
-export const THEME_KEY = 'ctap.theme';
+const THEME_KEY = 'ctap.theme';
 
 const listeners = new Set<() => void>();
 

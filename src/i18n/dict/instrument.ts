@@ -2,7 +2,6 @@
 export const vi = {
   'ins.loading': 'Đang tải trang chi tiết…',
   'ins.error': 'Không tải được dữ liệu: {msg}',
-  'ins.retry': 'Thử lại',
   'ins.exchangeLine': '{exchange} · mã {code}',
   'ins.mxvLine': 'trên MXV là {code}',
   'ins.contractLine': '1 hợp đồng = {size} {unit}',
@@ -129,13 +128,11 @@ export const vi = {
   'ins.ctx.event': 'Còn {n} ngày tới báo cáo {kind}',
   'ins.ctx.eventToday': 'Hôm nay có báo cáo {kind}',
   'ins.ctx.eventTip': '{label} · {d}',
-  'ins.disclaimer': 'Công cụ nghiên cứu và học tập, không phải lời khuyên mua bán.',
 } as const;
 
 export const en: Record<keyof typeof vi, string> = {
   'ins.loading': 'Loading instrument page…',
   'ins.error': 'Could not load data: {msg}',
-  'ins.retry': 'Retry',
   'ins.exchangeLine': '{exchange} · code {code}',
   'ins.mxvLine': 'on MXV it is {code}',
   'ins.contractLine': '1 contract = {size} {unit}',
@@ -262,5 +259,4 @@ export const en: Record<keyof typeof vi, string> = {
   'ins.ctx.event': '{n} days until the {kind} report',
   'ins.ctx.eventToday': '{kind} report is today',
   'ins.ctx.eventTip': '{label} · {d}',
-  'ins.disclaimer': 'A research and learning tool, not buy/sell advice.',
 };

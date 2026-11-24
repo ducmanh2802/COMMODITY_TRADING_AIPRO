@@ -22,7 +22,7 @@ export type DateAnchor =
   | { type: 'FIRST_BUSINESS_DAY'; monthOffset: number }
   | { type: 'NTH_BUSINESS_DAY'; monthOffset: number; n: number };
 
-export type PostAdjustment =
+type PostAdjustment =
   /** ICE Brent: if the date is the business day preceding Christmas Day or New Year's Day, use the next preceding business day. */
   'BRENT_CHRISTMAS_NEW_YEAR';
 

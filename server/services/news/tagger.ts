@@ -6,7 +6,7 @@
 export type NewsImpact = 'CAO' | 'TRUNG BÌNH' | 'THẤP';
 
 /** Aliases per instrument id (all lowercase; accents are stripped before matching). */
-export const INSTRUMENT_ALIASES: Readonly<Record<string, readonly string[]>> = {
+const INSTRUMENT_ALIASES: Readonly<Record<string, readonly string[]>> = {
   'CBOT:ZS': ['soybean', 'soybeans', 'soy', 'đậu tương', 'đậu nành'],
   'CBOT:ZM': ['soybean meal', 'soymeal', 'khô đậu tương', 'khô đậu nành', 'bột đậu tương'],
   'CBOT:ZL': ['soybean oil', 'soyoil', 'dầu đậu tương', 'dầu đậu nành'],
@@ -41,7 +41,7 @@ const MEDIUM_RULES: readonly string[] = [
   'nguồn cung', 'nhu cầu',
 ];
 
-export function normalizeText(s: string): string {
+function normalizeText(s: string): string {
   return s
     .toLowerCase()
     .replace(/đ/g, 'd')

@@ -10,7 +10,7 @@ export type TokenVerifier = (idToken: string) => Promise<{ uid: string } | null>
 
 const CERTS_URL = 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
 
-export function resolveFirebaseProjectId(env: Record<string, string | undefined> = process.env): string | null {
+function resolveFirebaseProjectId(env: Record<string, string | undefined> = process.env): string | null {
   const fromEnv = (env.FIREBASE_PROJECT_ID ?? env.GOOGLE_CLOUD_PROJECT ?? '').trim();
   if (fromEnv) return fromEnv;
   try {

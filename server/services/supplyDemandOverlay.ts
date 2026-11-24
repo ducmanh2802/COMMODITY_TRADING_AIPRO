@@ -12,7 +12,7 @@ import { FAS_KEY_URL } from '../macro/supplySources.ts';
 
 export type SupplyMacroLike = Pick<MacroService, 'getWasde' | 'getEia' | 'getEthanol' | 'getExportSales' | 'getErsCosts'>;
 
-export type SdCommodity = 'CORN' | 'SOYBEAN' | 'WHEAT';
+type SdCommodity = 'CORN' | 'SOYBEAN' | 'WHEAT';
 
 export interface CotLike {
   available: boolean;
@@ -22,7 +22,7 @@ export interface CotLike {
   cotIndex: number | null;
 }
 
-export function sdCommodityOf(instrumentId: string): SdCommodity | null {
+function sdCommodityOf(instrumentId: string): SdCommodity | null {
   const root = instrumentId.trim().toUpperCase().split(':').pop() ?? '';
   if (root === 'ZC') return 'CORN';
   if (root === 'ZS' || root === 'ZM' || root === 'ZL') return 'SOYBEAN';
@@ -35,7 +35,7 @@ export function fmtNum(n: number, maxFrac = 0): string {
 }
 
 /** Spells the source's English unit out in Vietnamese words. */
-export function viUnit(unit: string): string {
+function viUnit(unit: string): string {
   const u = unit.toLowerCase();
   const scale = u.includes('million') ? 'triệu ' : u.includes('thousand') ? 'nghìn ' : '';
   if (u.includes('bushel') && u.includes('per')) return 'USD/giạ (bushel)';

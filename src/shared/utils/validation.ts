@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { DataQualityStatus, MarketCandle, MarketQuote } from '../types/market';
 
-export const DataQualityStatusSchema = z.enum([
+const DataQualityStatusSchema = z.enum([
   'CURRENT',
   'DELAYED',
   'HISTORICAL',
@@ -10,7 +10,7 @@ export const DataQualityStatusSchema = z.enum([
   'INVALID',
 ]);
 
-export const MarketQuoteSchema = z.object({
+const MarketQuoteSchema = z.object({
   symbol: z.string().min(1),
   exchange: z.string().min(1),
   contractMonth: z.string().nullable(),
@@ -28,7 +28,7 @@ export const MarketQuoteSchema = z.object({
   statusReason: z.string().optional(),
 });
 
-export const MarketCandleSchema = z.object({
+const MarketCandleSchema = z.object({
   symbol: z.string().min(1),
   exchange: z.string().min(1),
   timeframe: z.string().min(1),
@@ -50,7 +50,7 @@ export const MarketCandleSchema = z.object({
  * Real-world valid data needs this: WTI CL settled at −37.63 on 2020-04-20, and back-adjusted
  * continuous series or spread series can legitimately be ≤ 0. Volume/OI must still be ≥ 0.
  */
-export const MarketCandleAnyPriceSchema = MarketCandleSchema.extend({
+const MarketCandleAnyPriceSchema = MarketCandleSchema.extend({
   open: z.number(),
   high: z.number(),
   low: z.number(),

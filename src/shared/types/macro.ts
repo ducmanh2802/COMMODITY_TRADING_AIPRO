@@ -1,7 +1,7 @@
 import type { DataQualityStatus } from './market';
 
 /** OFFICIAL = published by the issuing agency itself (EIA, USDA, SBV). Everything else is UNOFFICIAL. */
-export type MacroSourceQuality = 'OFFICIAL' | 'UNOFFICIAL';
+type MacroSourceQuality = 'OFFICIAL' | 'UNOFFICIAL';
 
 export type MacroDatapointId =
   | 'EIA_CRUDE_EX_SPR'

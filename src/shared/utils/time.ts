@@ -40,7 +40,7 @@ export interface FreshnessThresholds {
   delayedMaxAgeMs: number;
 }
 
-export const DEFAULT_FRESHNESS_THRESHOLDS: FreshnessThresholds = {
+const DEFAULT_FRESHNESS_THRESHOLDS: FreshnessThresholds = {
   currentMaxAgeMs: 60_000, // 1 minute
   delayedMaxAgeMs: 15 * 60_000, // 15 minutes
 };

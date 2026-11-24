@@ -19,7 +19,7 @@ import {
 import { COT_MARKET_MAPPINGS } from '../cot/mapping.ts';
 import { CotService, CotServiceError } from '../cot/service.ts';
 
-export type CotServiceLike = Pick<CotService, 'sync' | 'query' | 'health'>;
+type CotServiceLike = Pick<CotService, 'sync' | 'query' | 'health'>;
 
 export interface CotRouteDeps {
   /** Service instance or factory. Default: lazily created on first request (opens MARKET_DB_PATH). */

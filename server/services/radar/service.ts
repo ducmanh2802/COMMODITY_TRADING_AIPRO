@@ -13,12 +13,12 @@ import { rateInstrument } from './rating.ts';
 import { detectSetup, scoreInstrument, setupDescription, setupRisks, toBars } from './scoring.ts';
 
 export const RADAR_TTL_MS = 5 * 60_000;
-export const RADAR_DISCLAIMER =
+const RADAR_DISCLAIMER =
   'Radar chỉ mô tả mức độ sôi động và các điều kiện kỹ thuật đo được từ dữ liệu giá, phục vụ nghiên cứu. Đây không phải lời khuyên đầu tư và không hứa hẹn lợi nhuận.';
 const STALE_BAR_DAYS = 7;
 const SPARK_BARS = 30;
 
-export interface RadarHistory {
+interface RadarHistory {
   candles: MarketCandle[];
   source: string | null;
   quality: string | null;

@@ -29,8 +29,6 @@ export const vi = {
   'vp.va': 'Vùng giá trị 70%: {low} – {high}',
   'vp.bars': 'Dùng {used} nến ngày, bỏ qua {skipped} nến không có khối lượng.',
   'vp.aria': 'Biểu đồ khối lượng theo mức giá',
-  'vp.legend.poc': 'POC',
-  'vp.legend.va': 'Vùng giá trị',
   'vp.source': 'Nguồn: {source}',
 };
 
@@ -64,7 +62,5 @@ export const en: Record<keyof typeof vi, string> = {
   'vp.va': '70% value area: {low} – {high}',
   'vp.bars': 'Used {used} daily bars, skipped {skipped} without volume.',
   'vp.aria': 'Volume by price level chart',
-  'vp.legend.poc': 'POC',
-  'vp.legend.va': 'Value area',
   'vp.source': 'Source: {source}',
 };

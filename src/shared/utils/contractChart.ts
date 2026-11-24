@@ -11,7 +11,7 @@ export interface ContractSeriesInput<T> {
   reason?: string;
 }
 
-export type ChartSeriesNote = null | 'unavailable' | 'intraday';
+type ChartSeriesNote = null | 'unavailable' | 'intraday';
 
 export interface ResolvedChartSeries<T> {
   source: 'CONTRACT' | 'CONTINUOUS';
@@ -65,7 +65,7 @@ export function dayChangePct(candles: ReadonlyArray<{ close: number }>): number 
   return prev !== 0 ? ((last - prev) / prev) * 100 : null;
 }
 
-export const ROLL_WARN_PCT = 1.5;
+const ROLL_WARN_PCT = 1.5;
 
 /** Warn only when chart and quote may be different contracts: never for the contract series, nor while it loads. */
 export function shouldWarnRollMismatch(args: {

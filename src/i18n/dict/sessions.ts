@@ -19,7 +19,6 @@ export const vi = {
   'ses.inProgress': 'Phiên đang diễn ra',
   'ses.gap': 'Thiếu {n} ngày làm việc trước phiên này (ngày lễ của sàn hoặc thiếu dữ liệu)',
   'ses.rangeVsAtr': 'bằng {x} lần ATR',
-  'ses.bars': '{n} nến',
   'ses.source': 'Nguồn: {src}. Dữ liệu không chính thức, có độ trễ.',
 };
 
@@ -43,6 +42,5 @@ export const en: Record<keyof typeof vi, string> = {
   'ses.inProgress': 'Session in progress',
   'ses.gap': '{n} weekday(s) missing before this session (exchange holiday or missing data)',
   'ses.rangeVsAtr': '{x}x ATR',
-  'ses.bars': '{n} bars',
   'ses.source': 'Source: {src}. Unofficial, delayed data.',
 };

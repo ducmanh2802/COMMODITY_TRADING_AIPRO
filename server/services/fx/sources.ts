@@ -18,7 +18,7 @@ import { DAY_MS, errMessage, isIsoDate, TIMEOUT_MS, unavailable, type FetchLike 
 
 export type { FetchLike };
 export const ECB_DAILY_XML_URL = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml';
-export const ECB_HISTORICAL_XML_URL = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml';
+const ECB_HISTORICAL_XML_URL = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml';
 
 /** FX pairs we expose, with their commodity relevance notes (vi/en). */
 export const FX_PAIRS = [

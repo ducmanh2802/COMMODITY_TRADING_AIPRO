@@ -28,15 +28,15 @@ import { parseContractCode } from './monthCodes.ts';
  *   Volume and open interest are never adjusted.
  */
 
-export type RollRule =
+type RollRule =
   | { type: 'DAYS_BEFORE_EXPIRY'; days: number }
   | { type: 'DAYS_BEFORE_FND'; days: number }
   | { type: 'VOLUME_CROSSOVER' }
   | { type: 'OPEN_INTEREST_CROSSOVER' };
 
-export type AdjustmentMethod = 'NONE' | 'BACK_ADJUSTED' | 'RATIO_ADJUSTED';
+type AdjustmentMethod = 'NONE' | 'BACK_ADJUSTED' | 'RATIO_ADJUSTED';
 
-export interface ContractDates {
+interface ContractDates {
   lastTradingDay?: IsoDate | null;
   firstNoticeDay?: IsoDate | null;
 }
@@ -54,7 +54,7 @@ export interface ContinuousSeriesInput {
   label?: string;
 }
 
-export interface RollEvent {
+interface RollEvent {
   date: IsoDate;
   from: string;
   to: string;
@@ -66,7 +66,7 @@ export interface RollEvent {
   priceRatio: number | null;
 }
 
-export interface ContinuousBar {
+interface ContinuousBar {
   date: IsoDate;
   timestamp: string;
   contract: string;

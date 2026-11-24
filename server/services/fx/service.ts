@@ -23,7 +23,7 @@ import {
 
 const DAY_MS = 86_400_000;
 
-export const FX_TTL_MS = {
+const FX_TTL_MS = {
   ecb: 60 * 60_000,
   fred: 6 * 60 * 60_000,
   failure: 60_000,

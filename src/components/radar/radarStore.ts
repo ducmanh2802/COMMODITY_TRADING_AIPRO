@@ -7,11 +7,11 @@ import { fetchJsonWithRetry } from '../../shared/utils/http';
 import { diffRadar, type RadarNote, type RadarSnapshot } from '../../shared/radar/notify';
 import type { RadarResponse } from '../../shared/types/radar';
 
-export const RADAR_POLL_MS = 5 * 60_000;
+const RADAR_POLL_MS = 5 * 60_000;
 const SETTINGS_KEY = 'radar.settings.v1';
 const MAX_NOTES = 30;
 
-export interface RadarSettings {
+interface RadarSettings {
   muted: string[];
   browserNotify: boolean;
 }

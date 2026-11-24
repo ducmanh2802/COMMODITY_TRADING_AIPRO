@@ -14,7 +14,7 @@ export interface Drawing {
   text?: string;
 }
 
-export const FIB_RATIOS = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1] as const;
+const FIB_RATIOS = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1] as const;
 
 export const TOOL_POINT_COUNT: Record<DrawingTool, number> = { hline: 1, trend: 2, zone: 2, fib: 2, text: 1 };
 
@@ -30,7 +30,7 @@ export function fibLevels(p1: number, p2: number): FibLevel[] {
 
 export const DRAWINGS_STORAGE_KEY = 'ctap.drawings.v1';
 
-export function drawingsBucketKey(symbol: string, timeframe: string): string {
+function drawingsBucketKey(symbol: string, timeframe: string): string {
   return `${symbol}|${timeframe}`;
 }
 

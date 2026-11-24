@@ -43,7 +43,7 @@ import {
   type TermStructureInput,
 } from './templates.ts';
 
-export type HistoryFetcher = (
+type HistoryFetcher = (
   instrument: InstrumentDefinition
 ) => Promise<{ candles: MarketCandle[]; status: DataQualityStatus; reason?: string } | null>;
 

@@ -14,7 +14,7 @@ export type PatternKind =
   | 'insideBar'
   | 'doji';
 
-export type PatternDirection = 'bullish' | 'bearish' | 'neutral';
+type PatternDirection = 'bullish' | 'bearish' | 'neutral';
 
 export interface DetectedPattern {
   index: number;
@@ -22,7 +22,7 @@ export interface DetectedPattern {
   direction: PatternDirection;
 }
 
-export const PATTERN_DIRECTION: Record<PatternKind, PatternDirection> = {
+const PATTERN_DIRECTION: Record<PatternKind, PatternDirection> = {
   hammer: 'bullish',
   shootingStar: 'bearish',
   bullishEngulfing: 'bullish',

@@ -24,9 +24,9 @@ import { evaluateStrategy, STRATEGY_CATALOG } from './strategyEngine.ts';
 import { validateStrategyParams, type StrategyParams } from './strategyParams.ts';
 import { computeRollSchedule } from './rollSchedule.ts';
 
-export const BACKTEST_ENGINE_VERSION = '2.1.0';
+const BACKTEST_ENGINE_VERSION = '2.1.0';
 
-export interface BacktestDataProvenance {
+interface BacktestDataProvenance {
   origin: 'SQLITE' | 'MEMORY' | 'NONE' | 'TEST';
   source: string | null;
   warnings: string[];
@@ -53,7 +53,7 @@ export interface BacktestConfig {
   dataProvenance?: BacktestDataProvenance;
 }
 
-export interface BacktestTrade {
+interface BacktestTrade {
   tradeNumber: number;
   direction: 'LONG' | 'SHORT';
   /** Bar whose close produced the signal. */
@@ -79,7 +79,7 @@ export interface BacktestEquityPoint {
   drawdownPct: number;
 }
 
-export interface BacktestMetricDefinition {
+interface BacktestMetricDefinition {
   name: string;
   formula: string;
 }
@@ -168,7 +168,7 @@ export const PERIODS_PER_YEAR: Record<Timeframe, number> = {
   W1: 52,
 };
 
-export const METRIC_DEFINITIONS: BacktestMetricDefinition[] = [
+const METRIC_DEFINITIONS: BacktestMetricDefinition[] = [
   { name: 'netProfit', formula: 'finalEquity - initialEquity (after commission, slippage and roll costs)' },
   { name: 'grossProfit / grossLoss', formula: 'sum of netPnl of winning trades / |sum of netPnl of losing trades|' },
   { name: 'winRatePct', formula: '100 * (#trades with netPnl > 0) / #trades' },
@@ -197,7 +197,7 @@ interface OpenPosition {
   commission: number;
 }
 
-export interface RollPlan {
+interface RollPlan {
   /** What the caller asked for. */
   requested: 'NONE' | 'INTERVAL' | 'CALENDAR';
   /** What is actually applied (CALENDAR falls back to INTERVAL when the instrument has no calendar rule). */
@@ -210,8 +210,8 @@ export interface RollPlan {
   note: string | null;
 }
 
-export const DEFAULT_ROLL_BUSINESS_DAYS = 5;
-export const FALLBACK_ROLL_INTERVAL_BARS = 20;
+const DEFAULT_ROLL_BUSINESS_DAYS = 5;
+const FALLBACK_ROLL_INTERVAL_BARS = 20;
 
 export interface BacktestContext {
   config: BacktestConfig;
@@ -571,7 +571,7 @@ export function runHistoricalBacktest(rawCandles: MarketCandle[], config: Backte
   return runBacktestWithContext(ctx);
 }
 
-export function runBacktestWithContext(ctx: BacktestContext): BacktestResult {
+function runBacktestWithContext(ctx: BacktestContext): BacktestResult {
   const { config } = ctx;
   const sim = simulateRange(ctx, ctx.params, ctx.warmup, ctx.candles.length - 1);
   const periodsPerYear = PERIODS_PER_YEAR[config.timeframe] ?? 252;

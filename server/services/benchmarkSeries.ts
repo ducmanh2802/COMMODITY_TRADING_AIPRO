@@ -5,7 +5,7 @@ import { FRED_BENCHMARK_DEFS, parseFredCsv, type FredBenchmarkDef, type FredObs 
  * A benchmark is a published spot/average price (FRED/IMF/EIA), NOT a contract price.
  * Nothing is invented: when the upstream CSV cannot be read the series comes back empty with a reason.
  */
-export interface BenchmarkPoint {
+interface BenchmarkPoint {
   date: string;
   value: number;
 }
@@ -51,7 +51,7 @@ const PUBLISHER_NAME: Record<FredBenchmarkDef['publisher'], string> = {
   EIA: 'EIA (qua FRED)',
 };
 
-export function resolveBenchmarkInstrumentId(instrumentId: string): string | null {
+function resolveBenchmarkInstrumentId(instrumentId: string): string | null {
   const key = instrumentId.trim().toUpperCase();
   if (!key) return null;
   if (BENCHMARK_INSTRUMENTS[key]) return key;
@@ -68,7 +68,7 @@ export function benchmarkDefForInstrument(instrumentId: string): FredBenchmarkDe
   return seriesId ? (FRED_BENCHMARK_DEFS.find((d) => d.seriesId === seriesId) ?? null) : null;
 }
 
-export function listBenchmarkInstruments(): BenchmarkListItem[] {
+function listBenchmarkInstruments(): BenchmarkListItem[] {
   const out: BenchmarkListItem[] = [];
   for (const [instrumentId, seriesId] of Object.entries(BENCHMARK_INSTRUMENTS)) {
     const def = FRED_BENCHMARK_DEFS.find((d) => d.seriesId === seriesId);

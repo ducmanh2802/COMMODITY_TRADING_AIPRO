@@ -11,7 +11,7 @@ export interface ProfileBar {
   volume: number | null;
 }
 
-export interface ProfileBucket {
+interface ProfileBucket {
   low: number;
   high: number;
   volume: number;

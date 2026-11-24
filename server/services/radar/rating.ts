@@ -44,7 +44,7 @@ export function weeklyCloses(bars: Pick<BarSeries, 'dates' | 'close'>): number[]
 }
 
 /** Daily trend vote in [-1, 1] (price vs EMA20/50/200, EMA stacking, EMA50 slope); null if < 50 bars. */
-export function dailyTrendScore(close: number[]): { score: number; votes: number } | null {
+function dailyTrendScore(close: number[]): { score: number; votes: number } | null {
   const n = close.length;
   if (n < 50) return null;
   const e20 = lastOf(calculateEMA(close, 20));
@@ -60,7 +60,7 @@ export function dailyTrendScore(close: number[]): { score: number; votes: number
   return { score: mean(v), votes: v.length };
 }
 /** Weekly trend vote in [-1, 1]; null if < 20 weekly closes. */
-export function weeklyTrendScore(wc: number[]): number | null {
+function weeklyTrendScore(wc: number[]): number | null {
   if (wc.length < 20) return null;
   const e10a = calculateEMA(wc, 10);
   const e10 = lastOf(e10a);
@@ -72,7 +72,7 @@ export function weeklyTrendScore(wc: number[]): number | null {
   return mean(v);
 }
 /** +1 higher highs and higher lows (last 20 vs previous 20 bars), -1 lower both, +-0.5 / 0 otherwise. */
-export function structureScore(bars: Pick<BarSeries, 'high' | 'low'>): number | null {
+function structureScore(bars: Pick<BarSeries, 'high' | 'low'>): number | null {
   const n = bars.high.length;
   if (n < 40) return null;
   const hi1 = Math.max(...bars.high.slice(n - 20));

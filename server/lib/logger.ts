@@ -48,7 +48,7 @@ export function redact(value: unknown, depth = 0): unknown {
   return out;
 }
 
-export interface LogRecord {
+interface LogRecord {
   ts: string;
   level: LogLevel;
   msg: string;

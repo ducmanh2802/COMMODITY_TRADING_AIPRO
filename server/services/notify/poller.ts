@@ -4,7 +4,7 @@ import type { NotifyStore } from './store.ts';
 
 export const MSG_LINKED = 'Đã liên kết. Bạn sẽ nhận thông báo vùng giá bạn đặt và sự kiện Radar. Chỉ để theo dõi, không phải khuyến nghị. Gửi /stop để hủy liên kết.';
 export const MSG_BAD_CODE = 'Mã liên kết không hợp lệ hoặc đã hết hạn. Hãy lấy mã mới trong ứng dụng (mục Danh sách theo dõi) rồi gửi: /start <mã>.';
-export const MSG_UNLINKED = 'Đã hủy liên kết và xóa dữ liệu đồng bộ.';
+const MSG_UNLINKED = 'Đã hủy liên kết và xóa dữ liệu đồng bộ.';
 
 /** Handles one update; returns true when it was a recognised command. Pure apart from store/messenger. */
 export async function handleUpdate(u: TelegramUpdate, store: NotifyStore, messenger: Messenger, now: number): Promise<boolean> {

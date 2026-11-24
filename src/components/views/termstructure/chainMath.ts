@@ -7,7 +7,7 @@ export interface ChainInputRow {
   openInterest: number | null;
 }
 
-export interface ChainDerivedRow {
+interface ChainDerivedRow {
   /** Price minus the nearest month's price; null for the nearest month itself. */
   spreadVsNear: number | null;
   /** Share (0..1) of the summed volume across rows that report volume; null if volume missing. */

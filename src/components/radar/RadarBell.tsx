@@ -96,7 +96,7 @@ export function RadarBell() {
                     onClick={() => toggleMute(n.instrumentId)}
                     title={settings.muted.includes(n.instrumentId) ? t('rd.unmute') : t('rd.mute')}
                     aria-label={settings.muted.includes(n.instrumentId) ? t('rd.unmute').replace('mã này', n.name) : t('rd.mute').replace('mã này', n.name)}
-                    className="shrink-0 text-[var(--text)]/60 hover:text-[var(--text-strong)]"
+                    className="shrink-0 grid place-items-center min-w-10 min-h-10 sm:min-w-0 sm:min-h-0 text-[var(--text)]/60 hover:text-[var(--text-strong)]"
                   >
                     <BellOff className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>

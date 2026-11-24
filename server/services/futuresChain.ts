@@ -15,7 +15,7 @@ import {
 } from '../providers/yahooAdapter.ts';
 import { getYahooCurve, YAHOO_CURVE_LABEL, YAHOO_CURVE_TTL_MS, type YahooCurveDeps } from './yahooCurve.ts';
 
-export interface FuturesChainRow {
+interface FuturesChainRow {
   contract: string;
   yahooSymbol: string;
   lastTradingDay: string;

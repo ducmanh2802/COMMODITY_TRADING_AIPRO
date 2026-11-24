@@ -66,7 +66,7 @@ const round = (v: number, d: number) => {
   return Math.round(v * f) / f;
 };
 
-export function groupStats(key: string, rows: StatTrade[]): GroupStats {
+function groupStats(key: string, rows: StatTrade[]): GroupStats {
   const rs = rows.map((r) => r.rMultiple).filter((r): r is number => r !== null && Number.isFinite(r));
   const wins = rows.filter((r) => r.pnlVnd > 0).length;
   return {

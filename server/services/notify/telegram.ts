@@ -3,12 +3,12 @@
  * Opt-in via TELEGRAM_BOT_TOKEN. The token is only used to build Bot API URLs and is never logged or put in errors.
  * Network and clock are injectable so tests never touch the network.
  */
-export const TELEGRAM_MAX_LENGTH = 4000; // Bot API hard limit is 4096; keep headroom.
-export const MIN_GAP_MS = 1000; // <= 1 message/second per chat
-export const MAX_PER_WINDOW = 20; // <= 20 messages/minute per chat
-export const WINDOW_MS = 60_000;
-export const MAX_RETRIES = 2;
-export const MAX_RETRY_AFTER_S = 60;
+const TELEGRAM_MAX_LENGTH = 4000; // Bot API hard limit is 4096; keep headroom.
+const MIN_GAP_MS = 1000; // <= 1 message/second per chat
+const MAX_PER_WINDOW = 20; // <= 20 messages/minute per chat
+const WINDOW_MS = 60_000;
+const MAX_RETRIES = 2;
+const MAX_RETRY_AFTER_S = 60;
 
 const CHAT_ID_RE = /^\d{1,15}$/; // private chats only (positive ids); groups/channels are refused
 

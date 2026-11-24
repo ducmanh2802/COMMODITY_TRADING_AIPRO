@@ -16,8 +16,8 @@ import { YAHOO_HISTORY_CONTRACT_CODE } from './yahooHistory.ts';
 import { MIN_RETAINED_SESSIONS, retentionCutoffMs } from './sessions/sessionOf.ts';
 
 /** Calendar retention per intraday timeframe (never below MIN_RETAINED_SESSIONS distinct sessions). */
-export const INTRADAY_RETENTION_DAYS: Readonly<Record<YahooIntradayTimeframe, number>> = { M15: 30, H1: 120 };
-export const YAHOO_INTRADAY_TIMEFRAMES: readonly YahooIntradayTimeframe[] = ['M15', 'H1'];
+const INTRADAY_RETENTION_DAYS: Readonly<Record<YahooIntradayTimeframe, number>> = { M15: 30, H1: 120 };
+const YAHOO_INTRADAY_TIMEFRAMES: readonly YahooIntradayTimeframe[] = ['M15', 'H1'];
 
 export interface YahooIntradayAdapterLike {
   supports(instrument: InstrumentDefinition): boolean;

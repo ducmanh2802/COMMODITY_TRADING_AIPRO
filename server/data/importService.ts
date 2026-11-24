@@ -53,7 +53,7 @@ export type ImportStatus =
   | 'REJECTED_CONFLICTS'
   | 'REJECTED_SERIES_MISMATCH';
 
-export interface ImportConflictReport {
+interface ImportConflictReport {
   timestamp: string;
   stored: ImportConflict['stored'];
   incoming: ImportConflict['incoming'];
@@ -99,7 +99,7 @@ const MAX_REPORTED_CONFLICTS = 200;
 /** Units that mean "not known" in the Instrument Master; such instruments require an explicit priceUnit. */
 const UNKNOWN_UNITS = new Set(['', 'UNSPECIFIED', 'UNKNOWN', 'N/A']);
 
-export function sha256Hex(text: string): string {
+function sha256Hex(text: string): string {
   return createHash('sha256').update(text, 'utf8').digest('hex');
 }
 

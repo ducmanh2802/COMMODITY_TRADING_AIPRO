@@ -12,7 +12,7 @@ import { CONTINUOUS_CONTRACT_CODE, type ICandleRepository } from '../storage/can
 import { YAHOO_HISTORY_CONTRACT_CODE } from './yahooHistory.ts';
 import { getContractD1, type ContractD1Result } from './yahooContractHistory.ts';
 
-export const ROLL_MISMATCH_PCT = 1.5;
+const ROLL_MISMATCH_PCT = 1.5;
 export const ROLL_MISMATCH_FLAG = 'ROLL_MISMATCH';
 
 export interface LastDailyClose {
@@ -38,7 +38,7 @@ export function applyRollCheck(quote: MarketQuote, last: LastDailyClose | null):
   };
 }
 
-export async function lastDailyClose(repo: ICandleRepository | null, inst: InstrumentDefinition): Promise<LastDailyClose | null> {
+async function lastDailyClose(repo: ICandleRepository | null, inst: InstrumentDefinition): Promise<LastDailyClose | null> {
   if (!repo) return null;
   for (const contractCode of [CONTINUOUS_CONTRACT_CODE, YAHOO_HISTORY_CONTRACT_CODE]) {
     const { rows } = await repo.queryCandles({ instrumentId: inst.id, contractCode, timeframe: 'D1' }, { limit: 1 });

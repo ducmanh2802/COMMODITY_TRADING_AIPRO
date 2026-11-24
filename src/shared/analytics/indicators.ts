@@ -23,7 +23,7 @@ import {
 // ---------------------------------------------------------------------------------------------
 
 /** SMA kernel: out[i] = mean(xs[i-p+1..i]) for i >= p-1. Uses fresh summation (no drift). */
-export function smaKernel(xs: number[], p: number): (number | null)[] {
+function smaKernel(xs: number[], p: number): (number | null)[] {
   const out: (number | null)[] = xs.map(() => null);
   for (let i = p - 1; i < xs.length; i++) {
     let s = 0;
@@ -37,7 +37,7 @@ export function smaKernel(xs: number[], p: number): (number | null)[] {
  * EMA kernel over xs starting at `start` (values before `start` are ignored).
  * Seed: out[start+p-1] = SMA(xs[start..start+p-1]); then out[i] = α·xs[i] + (1−α)·out[i−1], α = 2/(p+1).
  */
-export function emaKernel(xs: number[], p: number, start = 0): (number | null)[] {
+function emaKernel(xs: number[], p: number, start = 0): (number | null)[] {
   const out: (number | null)[] = xs.map(() => null);
   const seedIdx = start + p - 1;
   if (seedIdx >= xs.length) return out;

@@ -21,14 +21,14 @@ import { fetchFredCsv, fredSeriesUrl, type FredFetcher } from '../marketPulse/se
 import { addDays, decompose, empiricalCone, flagEventDays, parametricCone, realizedSigma, weekdayDates } from './math.ts';
 import { DRIVERS_DISCLAIMER, attributionSentence, coneSentence, seasonalityHitText } from './text.ts';
 
-export const DRIVERS_TTL_MS = 10 * 60_000;
+const DRIVERS_TTL_MS = 10 * 60_000;
 const FRED_TTL_MS = 6 * 3_600_000;
 const FRED_FAIL_TTL_MS = 5 * 60_000;
 const MAX_PEERS = 8;
 const MIN_PEER_BARS = 260;
 const VOL_WINDOW = 60;
 
-export interface DriversHistory {
+interface DriversHistory {
   candles: MarketCandle[];
   source: string | null;
   quality: string | null;

@@ -26,11 +26,11 @@
  *     Default N = 156 weeks (3 years). 0 = net at the low of the window, 100 = at the high.
  */
 
-export type CotAnalyticsStatus = 'OK' | 'INSUFFICIENT_DATA' | 'INVALID_INPUT';
+type CotAnalyticsStatus = 'OK' | 'INSUFFICIENT_DATA' | 'INVALID_INPUT';
 
 export type CotReportType = 'DISAGGREGATED' | 'LEGACY';
 
-export const DISAGGREGATED_CATEGORIES = [
+const DISAGGREGATED_CATEGORIES = [
   'producerMerchant',
   'swapDealers',
   'managedMoney',
@@ -38,10 +38,10 @@ export const DISAGGREGATED_CATEGORIES = [
   'nonReportables',
 ] as const;
 
-export const LEGACY_CATEGORIES = ['nonCommercial', 'commercial', 'nonReportables'] as const;
+const LEGACY_CATEGORIES = ['nonCommercial', 'commercial', 'nonReportables'] as const;
 
-export type DisaggregatedCategory = (typeof DISAGGREGATED_CATEGORIES)[number];
-export type LegacyCategory = (typeof LEGACY_CATEGORIES)[number];
+type DisaggregatedCategory = (typeof DISAGGREGATED_CATEGORIES)[number];
+type LegacyCategory = (typeof LEGACY_CATEGORIES)[number];
 export type CotCategory = DisaggregatedCategory | LegacyCategory;
 
 export function categoriesFor(reportType: CotReportType): readonly CotCategory[] {
@@ -74,14 +74,14 @@ export interface CotWeeklyGap {
   kind: 'MISSING_WEEKS' | 'IRREGULAR_INTERVAL';
 }
 
-export interface CotCategoryAnalytics extends CotCategoryPositions {
+interface CotCategoryAnalytics extends CotCategoryPositions {
   net: number;
   netPctOi: number | null;
   netChangeWoW: number | null;
   cotIndex: number | null;
 }
 
-export interface CotAnalyticsRow {
+interface CotAnalyticsRow {
   reportDate: string;
   expectedReleaseDate: string;
   openInterest: number;
@@ -112,7 +112,7 @@ export const DEFAULT_COT_LOOKBACK_WEEKS = 156;
 export const MIN_COT_LOOKBACK_WEEKS = 4;
 export const MAX_COT_LOOKBACK_WEEKS = 1040;
 
-export const COT_FORMULAS = {
+const COT_FORMULAS = {
   net: 'long - short (spreading excluded)',
   netPctOi: 'net / openInterest * 100',
   netChangeWoW: 'net(t) - net(t - 7 days); null if the previous report is not exactly 7 days earlier',

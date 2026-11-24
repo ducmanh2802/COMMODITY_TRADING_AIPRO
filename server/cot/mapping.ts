@@ -25,7 +25,7 @@
  * different, cash-settled NYMEX contract — not ICE Brent).
  */
 
-export type CotMappingStatus = 'REPORTED' | 'NOT_REPORTED';
+type CotMappingStatus = 'REPORTED' | 'NOT_REPORTED';
 
 export interface CotMarketEvidence {
   /** `Market_and_Exchange_Names` exactly as returned by CFTC (trailing padding trimmed). */

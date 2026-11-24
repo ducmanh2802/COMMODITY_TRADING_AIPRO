@@ -22,7 +22,7 @@ export type MonthCode = (typeof MONTH_CODES)[number];
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export function isMonthCode(value: string): value is MonthCode {
+function isMonthCode(value: string): value is MonthCode {
   return (MONTH_CODES as readonly string[]).includes(value);
 }
 
@@ -73,7 +73,7 @@ export interface ParseContractCodeOptions {
 
 const CONTRACT_CODE_RE = /^([A-Z0-9]*[A-Z])([FGHJKMNQUVXZ])(\d{1}|\d{2}|\d{4})$/;
 
-export function resolveYear(digits: string, referenceYear: number): number {
+function resolveYear(digits: string, referenceYear: number): number {
   if (digits.length === 4) return Number(digits);
   if (digits.length === 2) {
     const yy = Number(digits);

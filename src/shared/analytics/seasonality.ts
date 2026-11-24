@@ -23,7 +23,7 @@
  */
 import { type AnalyticsStatus, type SeriesPoint, checkPeriod, mean, median, validateSeries } from './core';
 
-export interface MonthStats {
+interface MonthStats {
   /** 1..12 */
   month: number;
   /** Number of yearly samples (monthly returns) for this month. */
@@ -49,7 +49,7 @@ export interface PathPoint {
   count: number;
 }
 
-export interface YearCoverage {
+interface YearCoverage {
   year: number;
   observations: number;
   monthlyReturns: number;

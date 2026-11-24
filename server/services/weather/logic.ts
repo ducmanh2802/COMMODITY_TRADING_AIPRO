@@ -1,7 +1,7 @@
 /** Pure anomaly / flag logic for the regional weather panel (T90). No network, no I/O. */
 import type { WeatherDaily, WeatherFlag } from '../../../src/shared/types/weather.ts';
 
-export interface ClimateDay {
+interface ClimateDay {
   p: number; // mean daily precipitation, mm
   tx: number; // mean tmax, C
   tn: number; // mean tmin, C
@@ -22,7 +22,7 @@ function mean(xs: number[]): number {
   return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN;
 }
 
-export const round1 = (x: number) => Math.round(x * 10) / 10;
+const round1 = (x: number) => Math.round(x * 10) / 10;
 
 /** Build a smoothed (+-3 day window) day-of-year climatology from multi-year daily archive data. */
 export function buildClimatology(raw: RawDaily): Climatology {
@@ -113,7 +113,7 @@ export function computeNext14d(daily: WeatherDaily[], baselines: Climatology[]):
   };
 }
 
-export const FLAG_THRESHOLDS = {
+const FLAG_THRESHOLDS = {
   dryPct: -40,
   wetPct: 50,
   minNormalMm: 20,

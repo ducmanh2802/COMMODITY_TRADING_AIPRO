@@ -91,11 +91,11 @@ function getIsoWeekKey(iso: string): string {
   return `${utc.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
-export function resampleDailyToWeekly(dailyCandles: MarketCandle[]): MarketCandle[] {
+function resampleDailyToWeekly(dailyCandles: MarketCandle[]): MarketCandle[] {
   return aggregateCandlesByBucket(dailyCandles, getIsoWeekKey, 'W1');
 }
 
-export function resampleDailyToMonthly(dailyCandles: MarketCandle[]): MarketCandle[] {
+function resampleDailyToMonthly(dailyCandles: MarketCandle[]): MarketCandle[] {
   return aggregateCandlesByBucket(dailyCandles, (iso) => iso.slice(0, 7), 'MN');
 }
 
@@ -183,7 +183,7 @@ export function classifyCyclePhase(input: CycleClassificationInputs): CyclePhase
   return lastClose >= ema20 ? 'PHASE_3_MARKUP' : 'PHASE_1_ACCUMULATION';
 }
 
-export function analyzeTimeframeCycle(
+function analyzeTimeframeCycle(
   timeframe: CycleTimeframeKey,
   rawCandles: MarketCandle[]
 ): MultiTimeframeCycleState {
@@ -347,7 +347,7 @@ const MONTH_LABELS_VI = [
   'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
 ];
 
-export function computeMonthlySeasonality(dailyCandles: MarketCandle[]): MonthlySeasonalityStat[] {
+function computeMonthlySeasonality(dailyCandles: MarketCandle[]): MonthlySeasonalityStat[] {
   const monthly = resampleDailyToMonthly(dailyCandles);
   const statsByMonth = new Map<number, number[]>();
   for (let m = 1; m <= 12; m++) statsByMonth.set(m, []);

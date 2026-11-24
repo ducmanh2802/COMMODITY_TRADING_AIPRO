@@ -37,7 +37,7 @@ export interface DatasetRecord {
   importMode: string;
 }
 
-export interface DatasetProvenance {
+interface DatasetProvenance {
   datasetId: string;
   sourceLabel: string;
   sourceQuality: SourceQuality;

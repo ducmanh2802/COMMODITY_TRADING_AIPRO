@@ -195,7 +195,7 @@ const ERS_FILES: Record<ErsCommodity, { file: string; id: MacroDatapointId; labe
 };
 
 /** Minimal RFC-4180 CSV parser (quoted fields with commas). */
-export function parseCsv(text: string): string[][] {
+function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = '';

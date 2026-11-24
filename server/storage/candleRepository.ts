@@ -92,7 +92,7 @@ export interface CandleQueryResult {
   truncated: boolean;
 }
 
-export interface OhlcValues {
+interface OhlcValues {
   open: number;
   high: number;
   low: number;
@@ -258,7 +258,7 @@ export function planIsCommittable(plan: ImportPlan): boolean {
   return plan.rowsToWrite.length > 0;
 }
 
-export function seriesKeyString(key: SeriesKey): string {
+function seriesKeyString(key: SeriesKey): string {
   return `${key.instrumentId}\u0000${key.contractCode}\u0000${key.timeframe}`;
 }
 
@@ -270,7 +270,7 @@ function compareDatasets(a: DatasetRecord, b: DatasetRecord): number {
   return a.importedAt === b.importedAt ? a.id.localeCompare(b.id) : a.importedAt < b.importedAt ? 1 : -1;
 }
 
-export function applyQueryWindow(sortedRows: StoredCandleRow[], query: CandleQuery = {}): CandleQueryResult {
+function applyQueryWindow(sortedRows: StoredCandleRow[], query: CandleQuery = {}): CandleQueryResult {
   const inRange = sortedRows.filter(
     (r) =>
       (query.fromMs === undefined || r.timestampMs >= query.fromMs) &&

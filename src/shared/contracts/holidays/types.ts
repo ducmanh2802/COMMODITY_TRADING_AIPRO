@@ -5,7 +5,7 @@ import type { IsoDate } from '../dates.ts';
  * PROJECTED: generated from the documented recurrence rules of the calendar; not checked against an
  *            exchange publication for that year (special/unscheduled closures are never projected).
  */
-export type HolidayStatus = 'PUBLISHED' | 'PROJECTED';
+type HolidayStatus = 'PUBLISHED' | 'PROJECTED';
 
 export interface HolidayEntry {
   date: IsoDate;

@@ -16,9 +16,9 @@ import {
 import type { ICandleRepository } from '../storage/candleRepository.ts';
 import type { DomesticRepositoryLike } from './repository.ts';
 
-export const DOMESTIC_HISTORY_DAYS = 90;
+const DOMESTIC_HISTORY_DAYS = 90;
 
-export interface FxInfo {
+interface FxInfo {
   usdVnd: number;
   asOf: string | null;
   source: string;
@@ -26,7 +26,7 @@ export interface FxInfo {
   status: string;
 }
 
-export interface DomesticOverviewItem {
+interface DomesticOverviewItem {
   commodity: DomesticCommodity;
   latest: DomesticPricePoint | null;
   latestVndPerKg: number | null;

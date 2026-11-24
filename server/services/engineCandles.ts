@@ -24,7 +24,7 @@ export interface EngineCandleResult {
 }
 
 /** Most recent bars handed to the engines (indicator warm-up needs at most a few hundred). */
-export const ENGINE_CANDLE_LIMIT = 5000;
+const ENGINE_CANDLE_LIMIT = 5000;
 
 const RESAMPLE_SOURCES: Partial<Record<Timeframe, Timeframe[]>> = {
   W1: ['D1', 'H4', 'H1', 'M30', 'M15', 'M5'],

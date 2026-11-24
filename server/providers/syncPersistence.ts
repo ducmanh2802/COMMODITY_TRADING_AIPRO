@@ -15,7 +15,7 @@ import type { MarketCandle, ProviderId } from '../../src/shared/types/market.ts'
 import type { CandleRow, DatasetRecord, ICandleRepository, SourceQuality } from '../storage/candleRepository.ts';
 
 /** Source quality per provider (see docs/DATA_IMPORT.md §4). */
-export const PROVIDER_SOURCE_QUALITY: Partial<Record<ProviderId, SourceQuality>> = {
+const PROVIDER_SOURCE_QUALITY: Partial<Record<ProviderId, SourceQuality>> = {
   MXV_OFFICIAL: 'LICENSED_VENDOR', // authorized MXV member feed
   THIRD_PARTY_FEED: 'LICENSED_VENDOR', // operator-configured authorized brokerage feed
   TWELVE_DATA: 'UNOFFICIAL', // aggregator; spot/proxy symbols, not exchange-licensed futures data
@@ -32,7 +32,7 @@ export const PROVIDER_CONTRACT_CODE: Partial<Record<ProviderId, string>> = {
   YAHOO_UNOFFICIAL: `${VENDOR_CONTRACT_PREFIX}YAHOO`,
 };
 /** Extra honesty label appended to the dataset source label (what the series is NOT). */
-export const PROVIDER_SERIES_NOTE: Partial<Record<ProviderId, string>> = {
+const PROVIDER_SERIES_NOTE: Partial<Record<ProviderId, string>> = {
   YAHOO_UNOFFICIAL: 'continuous front-month, NOT roll-adjusted, not a specific contract month, UNOFFICIAL',
 };
 export const UNVERIFIED_PROVIDER_UNIT = 'UNVERIFIED_PROVIDER_UNIT';

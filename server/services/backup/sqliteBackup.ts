@@ -6,7 +6,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import { logger } from '../../lib/logger.ts';
 
-export const LATEST_POINTER = 'latest';
+const LATEST_POINTER = 'latest';
 const NAME_RE = /^market-\d{8}-\d{4}\.db\.gz$/;
 
 /** Minimal storage surface (GCS in production, in-memory mock in tests). */
@@ -157,7 +157,7 @@ export async function restoreIfMissing(opts: { storage: BackupStorage; dbFile: s
 }
 
 /** GCS-backed storage. Credentials come from ADC / GOOGLE_APPLICATION_CREDENTIALS (never read here). */
-export async function createGcsStorage(bucketName: string): Promise<BackupStorage> {
+async function createGcsStorage(bucketName: string): Promise<BackupStorage> {
   const { Storage } = await import('@google-cloud/storage');
   const bucket = new Storage().bucket(bucketName);
   return {

@@ -64,13 +64,11 @@ export const vi = {
   'wd.macro.usdbrl.hint': 'Tăng = real yếu → nông dân Brazil bán nhiều hơn, thường gây áp lực lên cà phê, đường, đậu tương.',
   'wd.perf.title': 'Hiệu suất theo sàn',
   'wd.perf.subtitle': 'Biến động giá hôm nay của các mã, nhóm theo sàn liên kết. Bấm vào ô để mở chi tiết.',
-  'wd.perf.loading': 'Đang tải biến động giá…',
   'wd.perf.empty': 'Chưa có mã nào đủ dữ liệu biến động trong ngày.',
   'wd.perf.avg': 'Trung bình {v}',
   'wd.perf.count': '{n} mã',
   'wd.perf.legend': 'Xanh = tăng, đỏ = giảm; màu càng đậm biến động càng lớn.',
   'wd.perf.asOf': 'Biến động tính từ giá đóng cửa gần nhất; trạng thái dữ liệu từng mã xem ở trang chi tiết.',
-  'wd.disclaimer': 'Chỉ để theo dõi và học hỏi, không phải khuyến nghị mua hay bán.',
 };
 
 export const en: Record<keyof typeof vi, string> = {
@@ -138,11 +136,9 @@ export const en: Record<keyof typeof vi, string> = {
   'wd.macro.usdbrl.hint': 'Rising = weaker real -> Brazilian farmers sell more, often pressuring coffee, sugar, soybeans.',
   'wd.perf.title': 'Performance by exchange',
   'wd.perf.subtitle': "Today's price move of each instrument, grouped by linked exchange. Click a tile to open its detail.",
-  'wd.perf.loading': 'Loading price moves...',
   'wd.perf.empty': 'No instrument has enough intraday move data yet.',
   'wd.perf.avg': 'Average {v}',
   'wd.perf.count': '{n} instruments',
   'wd.perf.legend': 'Green = up, red = down; darker means a bigger move.',
   'wd.perf.asOf': "Moves are measured from the latest close; each instrument's data status is on its detail page.",
-  'wd.disclaimer': 'For monitoring and learning only, not a buy or sell recommendation.',
 };

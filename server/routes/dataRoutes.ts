@@ -122,7 +122,7 @@ function datasetProvenance(d: DatasetRecord) {
   };
 }
 
-export const TIMESTAMP_CONVENTION =
+const TIMESTAMP_CONVENTION =
   'D1/W1: trading-session date as written in the source, at 00:00:00Z. Intraday: source wall-clock time converted from the declared timezone to UTC.';
 
 /**

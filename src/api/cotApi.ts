@@ -29,7 +29,7 @@ export interface CotMarketMapping {
   notes: string | null;
 }
 
-export interface CotHealthReport {
+interface CotHealthReport {
   reportType: CotReportType;
   rowCount: number;
   firstReportDate: string | null;
@@ -58,7 +58,7 @@ export interface CotHealthResponse {
   }>;
 }
 
-export interface CotStoredRow {
+interface CotStoredRow {
   reportType: CotReportType;
   cftcContractMarketCode: string;
   reportDate: string;

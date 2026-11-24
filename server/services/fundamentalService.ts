@@ -5,7 +5,7 @@ import type {
 } from '../../src/shared/types/analysis.ts';
 import type { DataQualityStatus } from '../../src/shared/types/market.ts';
 
-export type MacroDatasetType =
+type MacroDatasetType =
   | 'USDA_REPORT'
   | 'EIA_REPORT'
   | 'CROP_PRODUCTION'
@@ -66,7 +66,7 @@ export function sanitizeExternalText(raw: string): string {
     .slice(0, 600);
 }
 
-export function inferFundamentalCategory(
+function inferFundamentalCategory(
   dataset: string,
   source: string,
   explicit?: FundamentalDatasetCategory
@@ -94,7 +94,7 @@ export function inferFundamentalCategory(
   return 'MACRO';
 }
 
-export function deriveObservationDate(dataPeriod: string, publicationTimestamp: string): string {
+function deriveObservationDate(dataPeriod: string, publicationTimestamp: string): string {
   const isoMatch = dataPeriod.match(/(\d{4}-\d{2}-\d{2})/);
   if (isoMatch) return isoMatch[1];
   const ymMatch = dataPeriod.match(/^(\d{4})-(\d{2})$/);
@@ -117,7 +117,7 @@ const CATEGORY_MAX_AGE_DAYS: Record<FundamentalDatasetCategory, number> = {
   MACRO: 65,
 };
 
-export function evaluateFundamentalFreshness(
+function evaluateFundamentalFreshness(
   publicationTimestamp: string,
   category: FundamentalDatasetCategory,
   nowMs: number = Date.now()
@@ -132,7 +132,7 @@ export function evaluateFundamentalFreshness(
   return 'HISTORICAL';
 }
 
-export function computeReleaseLagDays(observationDate: string, publicationTimestamp: string): number {
+function computeReleaseLagDays(observationDate: string, publicationTimestamp: string): number {
   const obsMs = Date.parse(`${observationDate.slice(0, 10)}T00:00:00.000Z`);
   const pubDate = publicationTimestamp.slice(0, 10);
   const pubMs = Date.parse(`${pubDate}T00:00:00.000Z`);
@@ -140,7 +140,7 @@ export function computeReleaseLagDays(observationDate: string, publicationTimest
   return Math.max(0, Math.round((pubMs - obsMs) / 86_400_000));
 }
 
-export type FundamentalStoreChangeKind = 'RECORD' | 'NEWS' | 'CLEAR';
+type FundamentalStoreChangeKind = 'RECORD' | 'NEWS' | 'CLEAR';
 
 export interface FundamentalStoreChangeEvent {
   kind: FundamentalStoreChangeKind;

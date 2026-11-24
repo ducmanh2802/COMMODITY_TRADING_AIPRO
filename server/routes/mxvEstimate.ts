@@ -46,7 +46,7 @@ export interface MxvEstimateRoutesOptions {
   now?: () => Date;
 }
 
-export function createMxvEstimateRouter(options: MxvEstimateRoutesOptions): express.Router {
+function createMxvEstimateRouter(options: MxvEstimateRoutesOptions): express.Router {
   const router = express.Router();
   const instruments = options.instruments ?? defaultInstrumentRepository;
   const now = options.now ?? (() => new Date());

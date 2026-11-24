@@ -11,7 +11,7 @@ import { createEmailSender, createPushSender, getSmtp, getVapid, type Channels, 
 const MAX_ITEMS = 60;
 const SYMBOL_RE = /^[A-Za-z0-9._=-]{1,20}$/;
 
-export function createChannels(env: Env = process.env): Channels | null {
+function createChannels(env: Env = process.env): Channels | null {
   const vapid = getVapid(env);
   const smtp = getSmtp(env);
   if (!vapid && !smtp) return null;
