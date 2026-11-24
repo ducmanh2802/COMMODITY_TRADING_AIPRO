@@ -1,16 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { collection, doc, onSnapshot, query, serverTimestamp, Timestamp, where, writeBatch, type WriteBatch } from 'firebase/firestore';
 import { useAuth } from '../../../contexts/AuthContext';
-import { handleFirestoreError, OperationType } from '../../../firebase';
-import { db } from '../../../firestoreDb';
+import { getFirestoreModules, handleFirestoreError, OperationType } from '../../../firebase';
 import {
   EMPTY_STATE,
   LOCAL_KEY,
   applyOps,
-  buildPositionCreate,
-  buildSessionCreate,
-  buildSessionUpdate,
-  buildTradeCreate,
   deserializeState,
   importOps,
   parsePositionDoc,
@@ -23,9 +17,10 @@ import {
   type PaperState,
   type PaperTrade,
 } from './paperModel';
+import { BATCH_MAX, COL, addOpToBatch, cachedLoader } from './paperFirestore';
 
-const COL = { sessions: 'paperSessions', positions: 'paperPositions', trades: 'paperOrders' } as const;
-const BATCH_MAX = 400;
+// Firestore SDK is fetched only when a signed-in, verified user needs cloud sync (never on guest paths).
+const loadFirestore = cachedLoader(getFirestoreModules);
 
 function loadLocal(): PaperState {
   try {
@@ -51,39 +46,6 @@ function clearLocal(): void {
   }
 }
 
-function addOpToBatch(batch: WriteBatch, uid: string, op: PaperOp, preserveDates: boolean): void {
-  const f = { now: serverTimestamp() as unknown, ts: (ms: number) => Timestamp.fromMillis(ms) as unknown };
-  switch (op.t) {
-    case 'sessionCreate':
-      batch.set(doc(db, COL.sessions, op.session.id), buildSessionCreate(uid, op.session, f, preserveDates));
-      break;
-    case 'sessionUpdate':
-      batch.update(doc(db, COL.sessions, op.id), buildSessionUpdate(op.patch, f));
-      break;
-    case 'sessionDelete':
-      batch.delete(doc(db, COL.sessions, op.id));
-      break;
-    case 'positionCreate':
-      batch.set(doc(db, COL.positions, op.position.id), buildPositionCreate(uid, op.position, f, preserveDates));
-      break;
-    case 'positionUpdate':
-      batch.update(doc(db, COL.positions, op.id), { ...op.patch });
-      break;
-    case 'positionDelete':
-      batch.delete(doc(db, COL.positions, op.id));
-      break;
-    case 'tradeCreate':
-      batch.set(doc(db, COL.trades, op.trade.id), buildTradeCreate(uid, op.trade, f, preserveDates));
-      break;
-    case 'tradeUpdate':
-      batch.update(doc(db, COL.trades, op.id), { ...op.patch });
-      break;
-    case 'tradeDelete':
-      batch.delete(doc(db, COL.trades, op.id));
-      break;
-  }
-}
-
 export interface PaperStore {
   /** Firestore (signed in + verified) or localStorage. */
   mode: 'cloud' | 'local';
@@ -103,6 +65,9 @@ export function usePaperStore(): PaperStore {
   const { user, authReady } = useAuth();
   const uid = user?.uid ?? null;
   const cloud = !!user && user.emailVerified;
+  // Latest signed-in uid, read after async gaps so a write never commits under a switched account.
+  const uidRef = useRef(uid);
+  uidRef.current = uid;
   const [local, setLocal] = useState<PaperState>(loadLocal);
   const localRef = useRef(local);
   localRef.current = local;
@@ -120,21 +85,34 @@ export function usePaperStore(): PaperStore {
       setLoaded({ s: false, p: false, t: false });
       return;
     }
-    const subs = (['sessions', 'positions', 'trades'] as const).map((k) => {
-      const q = query(collection(db, COL[k]), where('userId', '==', uid));
-      return onSnapshot(
-        q,
-        (snap) => {
-          setError(null);
-          if (k === 'sessions') setSessions(snap.docs.map((d) => parseSessionDoc(d.id, d.data())));
-          else if (k === 'positions') setPositions(snap.docs.map((d) => parsePositionDoc(d.id, d.data())));
-          else setTrades(snap.docs.map((d) => parseTradeDoc(d.id, d.data())));
-          setLoaded((l) => ({ ...l, [k[0]]: true }));
-        },
-        (err) => setError(handleFirestoreError(err, OperationType.LIST, COL[k]).userMessage || String(err))
-      );
-    });
-    return () => subs.forEach((u) => u());
+    // The SDK loads asynchronously: if auth changes or the component unmounts meanwhile, do not subscribe.
+    let disposed = false;
+    let subs: (() => void)[] = [];
+    void loadFirestore()
+      .then(({ db, collection, onSnapshot, query, where }) => {
+        if (disposed) return;
+        subs = (['sessions', 'positions', 'trades'] as const).map((k) => {
+          const q = query(collection(db, COL[k]), where('userId', '==', uid));
+          return onSnapshot(
+            q,
+            (snap) => {
+              setError(null);
+              if (k === 'sessions') setSessions(snap.docs.map((d) => parseSessionDoc(d.id, d.data())));
+              else if (k === 'positions') setPositions(snap.docs.map((d) => parsePositionDoc(d.id, d.data())));
+              else setTrades(snap.docs.map((d) => parseTradeDoc(d.id, d.data())));
+              setLoaded((l) => ({ ...l, [k[0]]: true }));
+            },
+            (err) => setError(handleFirestoreError(err, OperationType.LIST, COL[k]).userMessage || String(err))
+          );
+        });
+      })
+      .catch((err: unknown) => {
+        if (!disposed) setError(handleFirestoreError(err, OperationType.LIST, 'paper*').userMessage || String(err));
+      });
+    return () => {
+      disposed = true;
+      subs.forEach((u) => u());
+    };
   }, [authReady, uid, cloud]);
 
   const remote = useMemo<PaperState>(() => ({ sessions, positions, trades }), [sessions, positions, trades]);
@@ -150,9 +128,15 @@ export function usePaperStore(): PaperStore {
         return null;
       }
       try {
+        const fs = await loadFirestore();
+        if (uidRef.current !== uid) {
+          const msg = 'Tài khoản vừa thay đổi — thao tác chưa được lưu, vui lòng thử lại.';
+          setError(msg);
+          return msg;
+        }
         for (let i = 0; i < ops.length; i += BATCH_MAX) {
-          const batch = writeBatch(db);
-          for (const op of ops.slice(i, i + BATCH_MAX)) addOpToBatch(batch, uid, op, preserveDates);
+          const batch = fs.writeBatch(fs.db);
+          for (const op of ops.slice(i, i + BATCH_MAX)) addOpToBatch(fs, batch, uid, op, preserveDates);
           await batch.commit();
         }
         return null;

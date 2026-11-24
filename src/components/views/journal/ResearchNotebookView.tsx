@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { collection, deleteDoc, doc, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import { LogIn, NotebookPen, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTerminal } from '../../../contexts/TerminalContext';
-import { handleFirestoreError, OperationType } from '../../../firebase';
-import { db } from '../../../firestoreDb';
+import { getFirestoreModules, handleFirestoreError, OperationType } from '../../../firebase';
 import { fmtDateTime, useT, type TKey } from '../../../i18n';
 import { fieldErrorProps, noteErrorFieldIds } from '../../common/fieldErrors';
 import {
@@ -61,18 +59,33 @@ export function ResearchNotebookView() {
       setNotes([]);
       return;
     }
-    const q = query(collection(db, COLLECTION), where('userId', '==', user.uid));
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        setLoadError(null);
-        setNotes(snap.docs.map((d) => parseNoteDoc(d.id, d.data())));
-      },
-      (err) => {
-        setLoadError(handleFirestoreError(err, OperationType.LIST, COLLECTION).userMessage || t('nb.loadFailed'));
-      }
-    );
-    return () => unsub();
+    // Firestore SDK is loaded only for signed-in owners; guests never fetch it.
+    let disposed = false;
+    let unsub: (() => void) | null = null;
+    const uid = user.uid;
+    const onError = (err: unknown) => {
+      setLoadError(handleFirestoreError(err, OperationType.LIST, COLLECTION).userMessage || t('nb.loadFailed'));
+    };
+    void getFirestoreModules()
+      .then(({ db, collection, onSnapshot, query, where }) => {
+        if (disposed) return;
+        const q = query(collection(db, COLLECTION), where('userId', '==', uid));
+        unsub = onSnapshot(
+          q,
+          (snap) => {
+            setLoadError(null);
+            setNotes(snap.docs.map((d) => parseNoteDoc(d.id, d.data())));
+          },
+          onError
+        );
+      })
+      .catch((err: unknown) => {
+        if (!disposed) onError(err);
+      });
+    return () => {
+      disposed = true;
+      unsub?.();
+    };
   }, [authReady, user]);
 
   const facets = useMemo(() => collectFacets(notes), [notes]);
@@ -113,6 +126,7 @@ export function ResearchNotebookView() {
     const id = editingId ?? newNoteId();
     const path = `${COLLECTION}/${id}`;
     try {
+      const { db, doc, serverTimestamp, setDoc, updateDoc } = await getFirestoreModules();
       if (editingId) await updateDoc(doc(db, COLLECTION, id), buildUpdatePayload(draft, serverTimestamp()));
       else await setDoc(doc(db, COLLECTION, id), buildCreatePayload(user.uid, draft, serverTimestamp()));
       resetForm();
@@ -127,6 +141,7 @@ export function ResearchNotebookView() {
   const handleDelete = async (n: ResearchNote) => {
     if (!window.confirm(t('nb.confirmDelete', { title: n.title }))) return;
     try {
+      const { db, doc, deleteDoc } = await getFirestoreModules();
       await deleteDoc(doc(db, COLLECTION, n.id));
       if (editingId === n.id) resetForm();
     } catch (err) {

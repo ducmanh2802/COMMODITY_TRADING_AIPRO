@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { AlertCircle, ArrowRight, Bookmark, Briefcase, CheckCircle2, Loader2, RefreshCw, Search, Sparkles } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTerminal } from '../../../contexts/TerminalContext';
-import { db } from '../../../firestoreDb';
+import { getFirestoreModules } from '../../../firebase';
 import { useI18n, type TKey } from '../../../i18n';
 import type { ProductCategory } from '../../../shared/types/instrument';
 import type { LessonRecommendationResult } from '../../../shared/types/lessonRecommendation';
@@ -69,28 +68,43 @@ export function AiLessonRecommendations({
       setManualPositions([]);
       return;
     }
-    const q = query(collection(db, 'positions'), where('userId', '==', user.uid));
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        const list: ManualOpenPositionInput[] = snap.docs.map((d) => {
-          const data = d.data();
-          return {
-            instrumentId: String(data.instrumentId ?? ''),
-            productName: typeof data.productName === 'string' ? data.productName : undefined,
-            category: (data.category as ProductCategory | undefined) ?? null,
-            direction: data.direction === 'SHORT' ? 'SHORT' : 'LONG',
-            contracts: Number(data.contracts) || 0,
-            status: data.status === 'CLOSED' ? 'CLOSED' : 'OPEN',
-          };
-        });
-        setManualPositions(list);
-      },
-      () => {
-        setManualPositions([]);
-      }
-    );
-    return () => unsub();
+    // Firestore SDK is loaded only here (signed-in + verified); guests never fetch it.
+    let disposed = false;
+    let unsub: (() => void) | null = null;
+    const uid = user.uid;
+    void getFirestoreModules()
+      .then(({ db, collection, onSnapshot, query, where }) => {
+        if (disposed) return;
+          const q = query(collection(db, 'positions'), where('userId', '==', uid));
+          unsub = onSnapshot(
+            q,
+            (snap) => {
+              const list: ManualOpenPositionInput[] = snap.docs.map((d) => {
+                const data = d.data();
+                return {
+                  instrumentId: String(data.instrumentId ?? ''),
+                  productName: typeof data.productName === 'string' ? data.productName : undefined,
+                  category: (data.category as ProductCategory | undefined) ?? null,
+                  direction: data.direction === 'SHORT' ? 'SHORT' : 'LONG',
+                  contracts: Number(data.contracts) || 0,
+                  status: data.status === 'CLOSED' ? 'CLOSED' : 'OPEN',
+                };
+              });
+              setManualPositions(list);
+            },
+            () => {
+              setManualPositions([]);
+            }
+          );
+      })
+      .catch((err) => {
+        console.error('[AiLessonRecommendations] Firestore load failed', err);
+        if (!disposed) setManualPositions([]);
+      });
+    return () => {
+      disposed = true;
+      unsub?.();
+    };
   }, [authReady, user]);
 
   const topSearched = useMemo(

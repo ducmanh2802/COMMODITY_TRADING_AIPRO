@@ -1,11 +1,10 @@
 import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TrapDialog } from '../../common/TrapDialog';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { AlertTriangle, GraduationCap, LogIn } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTerminal } from '../../../contexts/TerminalContext';
-import { db } from '../../../firestoreDb';
+import { getFirestoreModules } from '../../../firebase';
 import { fmtDateTime, fmtFixed, fmtInt, useT, type TKey } from '../../../i18n';
 import {
   DEFAULT_CAPITAL_VND,
@@ -113,11 +112,26 @@ function useNoteOptions(enabled: boolean, uid: string | null): NoteOption[] {
       setNotes([]);
       return;
     }
-    return onSnapshot(
-      query(collection(db, 'researchNotes'), where('userId', '==', uid)),
-      (snap) => setNotes(snap.docs.map((d) => ({ id: d.id, title: String(d.data().title ?? d.id), instrumentId: String(d.data().instrumentId ?? '') }))),
-      () => setNotes([])
-    );
+    // Firestore SDK is loaded only for signed-in owners; guests never fetch it.
+    let disposed = false;
+    let unsub: (() => void) | null = null;
+    void getFirestoreModules()
+      .then(({ db, collection, onSnapshot, query, where }) => {
+        if (disposed) return;
+        unsub = onSnapshot(
+          query(collection(db, 'researchNotes'), where('userId', '==', uid)),
+          (snap) => setNotes(snap.docs.map((d) => ({ id: d.id, title: String(d.data().title ?? d.id), instrumentId: String(d.data().instrumentId ?? '') }))),
+          () => setNotes([])
+        );
+      })
+      .catch((err) => {
+        console.error('[useNoteOptions] Firestore load failed', err);
+        if (!disposed) setNotes([]);
+      });
+    return () => {
+      disposed = true;
+      unsub?.();
+    };
   }, [enabled, uid]);
   return notes;
 }

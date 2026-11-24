@@ -1,21 +1,9 @@
 import { useEffect, useState } from 'react';
-import {
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
 import { BookOpen, Info, LogIn, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
 import { fieldErrorProps } from '../common/fieldErrors';
-import { handleFirestoreError, OperationType } from '../../firebase';
-import { db } from '../../firestoreDb';
+import { getFirestoreModules, handleFirestoreError, OperationType } from '../../firebase';
 import type { ExchangeCode, InstrumentDefinition, Timeframe } from '../../shared/types/instrument';
 import { computeJournalExit, localDateTimeToIso, type JournalExitResult } from './journal/journalMath';
 import { fmtFixed, fmtNum, useT } from '../../i18n';
@@ -162,42 +150,56 @@ export function TradeJournalView() {
       return;
     }
 
-    const q = query(collection(db, 'tradeJournal'), where('userId', '==', user.uid));
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        const list: JournalDoc[] = snap.docs.map((d) => {
-          const data = d.data();
-          return {
-            id: d.id,
-            userId: String(data.userId),
-            instrument: String(data.instrument),
-            exchange: data.exchange as ExchangeCode,
-            direction: data.direction === 'SHORT' ? 'SHORT' : 'LONG',
-            strategy: String(data.strategy),
-            timeframe: data.timeframe as Timeframe,
-            entryPrice: Number(data.entryPrice),
-            stopLoss: Number(data.stopLoss),
-            takeProfit: Number(data.takeProfit),
-            positionSize: Number(data.positionSize),
-            entryTimestamp: String(data.entryTimestamp),
-            exitTimestamp: String(data.exitTimestamp ?? ''),
-            exitPrice: Number(data.exitPrice ?? 0),
-            realizedPnl: Number(data.realizedPnl ?? 0),
-            tradingCosts: Number(data.tradingCosts ?? 0),
-            resultInR: Number(data.resultInR ?? 0),
-            rationale: String(data.rationale ?? ''),
-            notes: String(data.notes ?? ''),
-            status: data.status === 'CLOSED' ? 'CLOSED' : 'OPEN',
-          };
-        });
-        setEntries(list);
-      },
-      (err) => {
-        handleFirestoreError(err, OperationType.LIST, 'tradeJournal');
-      }
-    );
-    return () => unsub();
+    // Firestore SDK is loaded only for signed-in owners; guests never fetch it.
+    let disposed = false;
+    let unsub: (() => void) | null = null;
+    const uid = user.uid;
+    void getFirestoreModules()
+      .then(({ db, collection, onSnapshot, query, where }) => {
+        if (disposed) return;
+        const q = query(collection(db, 'tradeJournal'), where('userId', '==', uid));
+        unsub = onSnapshot(
+          q,
+          (snap) => {
+            const list: JournalDoc[] = snap.docs.map((d) => {
+              const data = d.data();
+              return {
+                id: d.id,
+                userId: String(data.userId),
+                instrument: String(data.instrument),
+                exchange: data.exchange as ExchangeCode,
+                direction: data.direction === 'SHORT' ? 'SHORT' : 'LONG',
+                strategy: String(data.strategy),
+                timeframe: data.timeframe as Timeframe,
+                entryPrice: Number(data.entryPrice),
+                stopLoss: Number(data.stopLoss),
+                takeProfit: Number(data.takeProfit),
+                positionSize: Number(data.positionSize),
+                entryTimestamp: String(data.entryTimestamp),
+                exitTimestamp: String(data.exitTimestamp ?? ''),
+                exitPrice: Number(data.exitPrice ?? 0),
+                realizedPnl: Number(data.realizedPnl ?? 0),
+                tradingCosts: Number(data.tradingCosts ?? 0),
+                resultInR: Number(data.resultInR ?? 0),
+                rationale: String(data.rationale ?? ''),
+                notes: String(data.notes ?? ''),
+                status: data.status === 'CLOSED' ? 'CLOSED' : 'OPEN',
+              };
+            });
+            setEntries(list);
+          },
+          (err) => {
+            handleFirestoreError(err, OperationType.LIST, 'tradeJournal');
+          }
+        );
+      })
+      .catch((err: unknown) => {
+        if (!disposed) handleFirestoreError(err, OperationType.LIST, 'tradeJournal');
+      });
+    return () => {
+      disposed = true;
+      unsub?.();
+    };
   }, [authReady, user]);
 
   useEffect(() => {
@@ -291,6 +293,7 @@ export function TradeJournalView() {
     const docPath = `tradeJournal/${docId}`;
 
     try {
+      const { db, doc, serverTimestamp, setDoc } = await getFirestoreModules();
       await setDoc(doc(db, 'tradeJournal', docId), {
         userId: user.uid,
         instrument: inst.exchangeSymbol,
@@ -362,6 +365,7 @@ export function TradeJournalView() {
     const docPath = `tradeJournal/${closingEntry.id}`;
     setClosing({ ...closing, busy: true, error: null });
     try {
+      const { db, doc, serverTimestamp, updateDoc } = await getFirestoreModules();
       await updateDoc(doc(db, 'tradeJournal', closingEntry.id), {
         status: 'CLOSED',
         exitTimestamp: exitIso,
@@ -385,6 +389,7 @@ export function TradeJournalView() {
   const handleDelete = async (entry: JournalDoc) => {
     const docPath = `tradeJournal/${entry.id}`;
     try {
+      const { db, doc, deleteDoc } = await getFirestoreModules();
       await deleteDoc(doc(db, 'tradeJournal', entry.id));
     } catch (err) {
       handleFirestoreError(err, OperationType.DELETE, docPath);
