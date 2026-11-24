@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Award, Bookmark, BookOpen, Calculator, CheckCircle2, ChevronDown, ChevronRight, FileText, GraduationCap, Search, X } from 'lucide-react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { AlertTriangle, Award, Bookmark, BookOpen, Calculator, CheckCircle2, ChevronDown, ChevronRight, FileText, GraduationCap, Lock, Search, X } from 'lucide-react';
 import { useI18n, type TKey } from '../../../i18n';
 import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
 import { Card } from '../../ui/Card';
@@ -17,13 +17,13 @@ import {
 import { AiLessonRecommendations } from './AiLessonRecommendations';
 import { SourceLinks } from './Calculators';
 import { CURRICULUM } from './curriculum';
-import type { Lesson } from './curriculum/types';
+import type { Lesson, Level } from './curriculum/types';
 import { ExamCard, ExamRunner, type ExamTarget } from './exam/ExamView';
-import { loadExams } from './exam/examLogic';
+import { EXAM_PASS_PCT, examUnlocked, LEVEL_EXAM_SIZE, loadExams, type ExamStore } from './exam/examLogic';
 import { FlashcardDeck } from './FlashcardDeck';
 import { GLOSSARY } from './glossary';
 import { filterSlang, SLANG, SLANG_TAGS, type SlangTag } from './glossarySlang';
-import { MONEY_WAYS, RISK_WARNINGS } from './learnContent';
+import { MONEY_WAYS, RISK_WARNINGS, type MoneyWay, type RiskStat } from './learnContent';
 import { LearnGoalCard } from './LearnGoalCard';
 import { loadGoal, type LearnGoal } from './learnPaths';
 import { LessonPage } from './LessonPage';
@@ -211,6 +211,226 @@ function GlossarySection() {
   );
 }
 
+type ExamState = 'locked' | 'ready' | 'passed';
+
+function levelExamState(level: Level, doneCount: number, exams: ExamStore): ExamState {
+  if (exams[level.id]?.passed) return 'passed';
+  return examUnlocked(doneCount, level.lessons.length) ? 'ready' : 'locked';
+}
+
+/** Short level name without the "Cấp N —" prefix (the number is shown separately). */
+function shortLevelTitle(title: string): string {
+  return title.replace(/^Cấp\s*\d+\s*[—–:·.-]\s*/i, '');
+}
+
+/** Small SVG progress ring; the centre carries a number or icon. Colour never stands alone (count is in the label). */
+function ProgressRing({ pct, size = 40, stroke = 3.5, tone = 'var(--accent)', children }: { pct: number; size?: number; stroke?: number; tone?: string; children?: ReactNode }) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const p = Math.max(0, Math.min(100, pct));
+  return (
+    <span className="relative inline-flex shrink-0 items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke} />
+        {p > 0 && (
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={tone} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${(p / 100) * c} ${c}`} />
+        )}
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold font-mono tabular-nums text-[var(--text-strong)]">{children}</span>
+    </span>
+  );
+}
+
+const EXAM_BADGE: Record<ExamState, { Icon: typeof Lock; cls: string; key: TKey }> = {
+  locked: { Icon: Lock, cls: 'text-[var(--muted)] border-[var(--border)] bg-[var(--surface-2)]', key: 'ac.exam.badge.locked' },
+  ready: { Icon: Award, cls: 'text-[var(--accent-text)] border-[var(--accent)]/40 bg-[var(--accent-soft)]', key: 'ac.exam.badge.ready' },
+  passed: { Icon: CheckCircle2, cls: 'text-[var(--positive)] border-[var(--positive)]/40 bg-[var(--positive)]/10', key: 'ac.exam.badge.passed' },
+};
+
+/** Exam state as a lock / award / check pill (icon + text, never colour alone). */
+function ExamBadge({ state }: { state: ExamState }) {
+  const { t } = useI18n();
+  const { Icon, cls, key } = EXAM_BADGE[state];
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ${cls}`}>
+      <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+      {t(key)}
+    </span>
+  );
+}
+
+/**
+ * Level stepper: one progress ring per level (from saved lesson progress) plus exam state. Clicking a step opens
+ * that level and scrolls to it. Not a tablist (the academy tabs above are the page's tablist).
+ */
+function LevelStepper({
+  progress,
+  exams,
+  currentLevelId,
+  onPick,
+}: {
+  progress: LearnProgress;
+  exams: ExamStore;
+  currentLevelId: string | null;
+  onPick: (levelId: string) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <nav aria-label={t('ac.levels.stepperAria')} data-testid="academy-level-stepper">
+      <ol className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+        {CURRICULUM.map((lvl) => {
+          const done = lvl.lessons.filter((l) => progress.lessons[l.id]?.done).length;
+          const total = lvl.lessons.length;
+          const pct = total ? Math.round((done / total) * 100) : 0;
+          const state = levelExamState(lvl, done, exams);
+          const current = lvl.id === currentLevelId;
+          const complete = total > 0 && done === total;
+          const StateIcon = EXAM_BADGE[state].Icon;
+          return (
+            <li key={lvl.id} className="min-w-0">
+              <button
+                type="button"
+                onClick={() => onPick(lvl.id)}
+                aria-current={current ? 'step' : undefined}
+                aria-label={`${t('ac.levels.stepLabel', { n: lvl.number, title: shortLevelTitle(lvl.title), d: done, t: total })}, ${t(EXAM_BADGE[state].key)}${current ? `, ${t('ac.levels.stepCurrent')}` : ''}`}
+                title={lvl.title}
+                className={`w-full flex flex-col items-center gap-1 rounded-lg border px-1 py-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
+                  current ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-transparent hover:bg-[var(--surface-2)]'
+                }`}
+              >
+                <ProgressRing pct={pct} size={36} tone={complete ? 'var(--positive)' : 'var(--accent)'}>
+                  {complete ? <CheckCircle2 className="w-4 h-4 text-[var(--positive)]" aria-hidden="true" /> : lvl.number}
+                </ProgressRing>
+                <span className="flex items-center gap-0.5 text-[10px] font-mono tabular-nums text-[var(--muted)]">
+                  <StateIcon
+                    className={`w-3 h-3 ${state === 'passed' ? 'text-[var(--positive)]' : state === 'ready' ? 'text-[var(--accent-text)]' : ''}`}
+                    aria-hidden="true"
+                  />
+                  {done}/{total}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+/** Compact one-line exam row at the end of an open level (passed levels keep the full card: certificate download). */
+function LevelExamRow({ level, doneCount, exams, onStart }: { level: Level; doneCount: number; exams: ExamStore; onStart: () => void }) {
+  const { t } = useI18n();
+  const state = levelExamState(level, doneCount, exams);
+  if (state === 'passed') {
+    return <ExamCard target={{ kind: 'level', levelId: level.id }} doneLessons={doneCount} totalLessons={level.lessons.length} onStart={onStart} />;
+  }
+  const rec = exams[level.id];
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-[var(--border)] px-3 py-2">
+      {state === 'locked' ? (
+        <>
+          <Lock className="w-4 h-4 shrink-0 text-[var(--muted)]" aria-hidden="true" />
+          <p className="text-xs text-[var(--muted)] flex-1 min-w-0">{t('exam.card.locked', { d: doneCount, t: level.lessons.length })}</p>
+        </>
+      ) : (
+        <>
+          <Award className="w-4 h-4 shrink-0 text-[var(--accent-text)]" aria-hidden="true" />
+          <p className="text-xs text-[var(--text)] flex-1 min-w-0">
+            {t('ac.exam.ready', { n: LEVEL_EXAM_SIZE, p: EXAM_PASS_PCT })}
+            {rec && <span className="text-[var(--muted)]"> · {t('exam.card.best', { pct: rec.best, a: rec.attempts })}</span>}
+          </p>
+          <button type="button" onClick={onStart} className="min-h-8 text-xs px-3 py-1.5 rounded-md bg-[var(--accent)] text-white hover:brightness-110 shrink-0">
+            {rec ? t('exam.card.retry') : t('exam.card.start')}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Loss share reads as apricot (negative); the retail-share number is a caution, so gold. */
+const statTone = (stat: RiskStat) => (stat.id === 'esma' ? 'var(--negative)' : 'var(--warning)');
+
+/** Donut for a percentage already stated in the content; a range draws `low` solid and low→high as a lighter band. */
+function StatDonut({ stat, size = 72 }: { stat: RiskStat; size?: number }) {
+  const stroke = 9;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const lo = (stat.low / 100) * c;
+  const hi = stat.high !== undefined ? (stat.high / 100) * c : lo;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" className="-rotate-90 shrink-0">
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke} />
+      {hi > lo && <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={statTone(stat)} strokeOpacity={0.4} strokeWidth={stroke} strokeDasharray={`${hi} ${c}`} />}
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={statTone(stat)} strokeWidth={stroke} strokeDasharray={`${lo} ${c}`} />
+    </svg>
+  );
+}
+
+function fmtPct(n: number, lang: string) {
+  return n.toLocaleString(lang === 'en' ? 'en-US' : 'vi-VN', { maximumFractionDigits: 1 });
+}
+
+/** Headline-number tile for a warning; the full warning text + sources stay one click away. */
+function RiskStatTile({ stat, text, sources }: { stat: RiskStat; text: string; sources?: { label: string; url: string }[] }) {
+  const { t, lang } = useI18n();
+  const value =
+    stat.high !== undefined ? `${fmtPct(stat.low, lang)}–${fmtPct(stat.high, lang)}%` : `${stat.id === 'mxvRetail' ? '~' : ''}${fmtPct(stat.low, lang)}%`;
+  return (
+    <Card className="!p-3 space-y-2" data-testid={`risk-stat-${stat.id}`}>
+      <div className="flex items-center gap-3">
+        <StatDonut stat={stat} />
+        <div className="min-w-0">
+          <p className="text-2xl font-semibold tabular-nums leading-tight" style={{ color: statTone(stat) }}>{value}</p>
+          <p className="text-xs text-[var(--text-strong)]">{t(`ac.risk.stat.${stat.id}` as TKey)}</p>
+          <p className="text-[11px] text-[var(--muted)]">{t(`ac.risk.stat.${stat.id}Note` as TKey)}</p>
+        </div>
+      </div>
+      <details className="text-xs">
+        <summary className="cursor-pointer select-none text-[var(--accent-text)]">{t('ac.risk.details')}</summary>
+        <p className="mt-1.5 text-[var(--text)] leading-relaxed">{text}</p>
+        {sources && <SourceLinks sources={sources} />}
+      </details>
+    </Card>
+  );
+}
+
+function RiskMeter({ level }: { level: MoneyWay['riskLevel'] }) {
+  const { t } = useI18n();
+  const tone = level >= 4 ? 'var(--negative)' : level === 3 ? 'var(--warning)' : 'var(--accent)';
+  const label = t('ac.risk.meter', { n: level });
+  return (
+    <span role="img" aria-label={label} title={label} className="inline-flex items-center gap-1 shrink-0 pt-1">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span key={i} className="h-2 w-2 rounded-full" style={{ background: i <= level ? tone : 'var(--border)' }} />
+      ))}
+    </span>
+  );
+}
+
+function MoneyWayCard({ way }: { way: MoneyWay }) {
+  const { t } = useI18n();
+  return (
+    <Card className="!p-3 space-y-1.5">
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="text-sm font-semibold text-[var(--text-strong)] min-w-0">{way.name}</h3>
+        <RiskMeter level={way.riskLevel} />
+      </div>
+      <p className="text-xs text-[var(--text)]">{way.description}</p>
+      <dl className="text-[11px] leading-relaxed space-y-0.5">
+        <div>
+          <dt className="inline font-semibold text-[var(--muted)]">{t('ac.risk.fit')}: </dt>
+          <dd className="inline text-[var(--text)]">{way.fit}</dd>
+        </div>
+        <div>
+          <dt className="inline font-semibold text-[var(--muted)]">{t('ac.risk.caution')}: </dt>
+          <dd className="inline text-[var(--text)]">{way.risk}</dd>
+        </div>
+      </dl>
+    </Card>
+  );
+}
+
 function ExamsAndRiskSection({
   progress,
   onStartExam,
@@ -221,6 +441,11 @@ function ExamsAndRiskSection({
   const { t } = useI18n();
   const allLessons = useMemo(() => CURRICULUM.flatMap((l) => l.lessons), []);
   const doneAll = allLessons.filter((l) => progress.lessons[l.id]?.done).length;
+  const exams = useMemo(() => loadExams(), []);
+  const [picked, setPicked] = useState<string | null>(null);
+  const pickedLevel = CURRICULUM.find((l) => l.id === picked);
+  const statWarnings = RISK_WARNINGS.filter((w) => w.stat);
+  const otherWarnings = RISK_WARNINGS.filter((w) => !w.stat);
 
   return (
     <div className="space-y-6" data-testid="academy-exams-risk">
@@ -232,53 +457,74 @@ function ExamsAndRiskSection({
           totalLessons={allLessons.length}
           onStart={() => onStartExam({ kind: 'final' })}
         />
-        <div className="grid gap-3 md:grid-cols-2">
+        <ul aria-label={t('ac.examsHub.gridAria')} className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {CURRICULUM.map((lvl) => {
             const done = lvl.lessons.filter((l) => progress.lessons[l.id]?.done).length;
+            const state = levelExamState(lvl, done, exams);
+            const { Icon, cls, key } = EXAM_BADGE[state];
+            const active = picked === lvl.id;
             return (
-              <div key={lvl.id} className="space-y-1.5">
-                <p className="text-xs font-semibold text-[var(--text-strong)]">{lvl.title}</p>
-                <ExamCard
-                  target={{ kind: 'level', levelId: lvl.id }}
-                  doneLessons={done}
-                  totalLessons={lvl.lessons.length}
-                  onStart={() => onStartExam({ kind: 'level', levelId: lvl.id })}
-                />
-              </div>
+              <li key={lvl.id} className="min-w-0">
+                <button
+                  type="button"
+                  aria-expanded={active}
+                  aria-controls="academy-exam-detail"
+                  aria-label={t('ac.examsHub.tileLabel', { n: lvl.number, title: shortLevelTitle(lvl.title), d: done, t: lvl.lessons.length, status: t(key) })}
+                  data-testid={`exam-tile-${lvl.id}`}
+                  onClick={() => setPicked(active ? null : lvl.id)}
+                  className={`w-full h-full text-left rounded-lg border p-2.5 space-y-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
+                    active ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)]'
+                  }`}
+                >
+                  <span className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold text-[var(--text-strong)]">{t('ac.lesson.levelTag', { n: lvl.number })}</span>
+                    <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full border ${cls}`}>
+                      <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                    </span>
+                  </span>
+                  <span className="block text-[11px] text-[var(--muted)] truncate">{shortLevelTitle(lvl.title)}</span>
+                  <span className="block text-[10px] font-mono tabular-nums text-[var(--muted)]">{t('ac.levels.count', { d: done, t: lvl.lessons.length })}</span>
+                </button>
+              </li>
             );
           })}
+        </ul>
+        <div id="academy-exam-detail">
+          {pickedLevel ? (
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-[var(--text-strong)]">{pickedLevel.title}</p>
+              <ExamCard
+                key={pickedLevel.id}
+                target={{ kind: 'level', levelId: pickedLevel.id }}
+                doneLessons={pickedLevel.lessons.filter((l) => progress.lessons[l.id]?.done).length}
+                totalLessons={pickedLevel.lessons.length}
+                onStart={() => onStartExam({ kind: 'level', levelId: pickedLevel.id })}
+              />
+            </div>
+          ) : (
+            <p className="text-xs text-[var(--muted)]">{t('ac.examsHub.pick')}</p>
+          )}
         </div>
       </section>
 
       <section className="space-y-3">
-        <SectionHeader title="Các cách kiếm tiền và cảnh báo rủi ro" />
-        <div className="overflow-x-auto rounded-lg border border-[var(--border)]" tabIndex={0}>
-          <table className="w-full text-xs bg-[var(--surface)]">
-            <thead className="bg-[var(--surface-2)] text-[var(--muted)]">
-              <tr>
-                {['Cách', 'Mô tả', 'Phù hợp', 'Rủi ro / lưu ý'].map((h) => (
-                  <th key={h} className="text-left p-2.5 font-medium">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {MONEY_WAYS.map((w) => (
-                <tr key={w.name} className="border-t border-[var(--border)] align-top">
-                  <td className="p-2.5 font-medium text-[var(--text-strong)]">{w.name}</td>
-                  <td className="p-2.5">{w.description}</td>
-                  <td className="p-2.5">{w.fit}</td>
-                  <td className="p-2.5">{w.risk}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <SectionHeader title={t('ac.risk.title')} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {statWarnings.map((w) => w.stat && <RiskStatTile key={w.stat.id} stat={w.stat} text={w.text} sources={w.sources} />)}
         </div>
-        <Card tone="warning">
-          <h2 className="text-sm font-semibold mb-2">Rủi ro, đọc trước khi giao dịch</h2>
-          <ul className="list-disc pl-4 space-y-2 text-xs">
-            {RISK_WARNINGS.map((w) => (
+        <div className="grid gap-2 sm:grid-cols-2" data-testid="money-ways">
+          {MONEY_WAYS.map((w) => (
+            <MoneyWayCard key={w.name} way={w} />
+          ))}
+        </div>
+        <p className="text-[11px] text-[var(--muted)]">{t('ac.risk.meterNote')}</p>
+        <Card tone="warning" className="!p-3">
+          <h2 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+            <AlertTriangle className="w-4 h-4" aria-hidden="true" />
+            {t('ac.risk.warnTitle')}
+          </h2>
+          <ul className="list-disc pl-4 space-y-1.5 text-xs">
+            {otherWarnings.map((w) => (
               <li key={w.text}>
                 {w.text}
                 {w.sources && <SourceLinks sources={w.sources} />}
@@ -351,7 +597,7 @@ function LessonCard({
             </span>
           )}
         </span>
-        <span className="block text-xs text-[var(--muted)] mt-1">
+        <span title={trimmedQuery ? undefined : lesson.objective} className={`text-xs text-[var(--muted)] mt-1 ${trimmedQuery ? 'block' : 'line-clamp-1'}`}>
           {trimmedQuery ? renderHighlightedSegments(highlightTextSegments(lesson.objective, trimmedQuery)) : lesson.objective}
         </span>
         {noteMatch?.hasMatch && (
@@ -399,7 +645,9 @@ export default function LearnView() {
   const [bookmarkQuery, setBookmarkQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<LessonStatusFilter>('ALL');
   const [goalOnly, setGoalOnly] = useState(false);
-  const [collapsedLevels, setCollapsedLevels] = useState<Set<string>>(new Set());
+  // Per-level open/closed overrides; without one, only the current level starts open.
+  const [levelOpen, setLevelOpen] = useState<Record<string, boolean>>({});
+  const [goalOpen, setGoalOpen] = useState<Set<string>>(new Set());
 
   const exams = useMemo(() => loadExams(), [page]);
 
@@ -444,13 +692,24 @@ export default function LearnView() {
     window.scrollTo?.({ top: 0 });
   };
 
-  const toggleLevel = (id: string) =>
-    setCollapsedLevels((prev) => {
+  // Current level = first level whose lessons are not all done or whose exam is not passed yet.
+  const currentLevelId =
+    CURRICULUM.find((lvl) => !(lvl.lessons.every((l) => progress.lessons[l.id]?.done) && exams[lvl.id]?.passed))?.id ?? null;
+  const isLevelOpen = (id: string) => levelOpen[id] ?? id === currentLevelId;
+
+  const toggleLevel = (id: string) => setLevelOpen((prev) => ({ ...prev, [id]: !(prev[id] ?? id === currentLevelId) }));
+  const setAllLevels = (open: boolean) => setLevelOpen(Object.fromEntries(CURRICULUM.map((l) => [l.id, open])));
+  const toggleGoal = (id: string) =>
+    setGoalOpen((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
+  const jumpToLevel = (id: string) => {
+    setLevelOpen((prev) => ({ ...prev, [id]: true }));
+    requestAnimationFrame(() => document.getElementById(`lvl-${id}`)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }));
+  };
 
   if (page.kind === 'exam') return <ExamRunner target={page.target} onExit={() => go({ kind: 'home' })} />;
   if (page.kind === 'lesson') {
@@ -724,14 +983,14 @@ export default function LearnView() {
                   <>
                     <button
                       type="button"
-                      onClick={() => setCollapsedLevels(new Set())}
+                      onClick={() => setAllLevels(true)}
                       className={filterBtn(false)}
                     >
                       {t('ac.levels.expandAll')}
                     </button>
                     <button
                       type="button"
-                      onClick={() => setCollapsedLevels(new Set(CURRICULUM.map((l) => l.id)))}
+                      onClick={() => setAllLevels(false)}
                       className={filterBtn(false)}
                     >
                       {t('ac.levels.collapseAll')}
@@ -779,6 +1038,10 @@ export default function LearnView() {
               )}
             </div>
           </div>
+
+          {!hasActiveFilters && (
+            <LevelStepper progress={progress} exams={exams} currentLevelId={currentLevelId} onPick={jumpToLevel} />
+          )}
 
           {!query.trim() && (
             <>
@@ -834,47 +1097,69 @@ export default function LearnView() {
               </button>
             </Card>
           ) : (
-            filteredLevels.map(({ level, lessons, doneCount }) => {
-              const complete = doneCount === level.lessons.length;
-              const examPassed = !!exams[level.id]?.passed;
-              const isCollapsed = !hasActiveFilters && collapsedLevels.has(level.id);
+            <div className="space-y-2" data-testid="academy-levels">
+            {filteredLevels.map(({ level, lessons, doneCount }) => {
+              const total = level.lessons.length;
+              const complete = doneCount === total;
+              const examState = levelExamState(level, doneCount, exams);
+              const isOpen = hasActiveFilters || isLevelOpen(level.id);
+              const goalExpanded = goalOpen.has(level.id);
+              const bodyId = `lvl-body-${level.id}`;
+              const goalId = `lvl-goal-${level.id}`;
 
               return (
-                <section key={level.id} className="space-y-3" aria-labelledby={`h-${level.id}`}>
-                  <div className="flex flex-wrap items-start justify-between gap-2">
+                <section
+                  key={level.id}
+                  id={`lvl-${level.id}`}
+                  className={`scroll-mt-20 rounded-lg border px-3 py-2 space-y-2.5 ${
+                    level.id === currentLevelId && !hasActiveFilters ? 'border-[var(--accent)]/40 bg-[var(--surface)]' : 'border-[var(--border)]/70'
+                  }`}
+                  aria-labelledby={`h-${level.id}`}
+                >
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      aria-expanded={!isCollapsed}
+                      aria-expanded={isOpen}
+                      aria-controls={bodyId}
                       onClick={() => toggleLevel(level.id)}
-                      className="min-w-0 flex-1 text-left flex items-start gap-2 group"
+                      className="min-w-0 flex-1 text-left flex items-center gap-2.5 group rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                     >
-                      {isCollapsed ? (
-                        <ChevronRight className="w-4 h-4 mt-1 shrink-0 text-[var(--muted)] group-hover:text-[var(--accent-text)]" aria-hidden="true" />
+                      {isOpen ? (
+                        <ChevronDown className="w-4 h-4 shrink-0 text-[var(--muted)] group-hover:text-[var(--accent-text)]" aria-hidden="true" />
                       ) : (
-                        <ChevronDown className="w-4 h-4 mt-1 shrink-0 text-[var(--muted)] group-hover:text-[var(--accent-text)]" aria-hidden="true" />
+                        <ChevronRight className="w-4 h-4 shrink-0 text-[var(--muted)] group-hover:text-[var(--accent-text)]" aria-hidden="true" />
                       )}
+                      <ProgressRing pct={total ? (doneCount / total) * 100 : 0} size={34} tone={complete ? 'var(--positive)' : 'var(--accent)'}>
+                        {complete ? <CheckCircle2 className="w-4 h-4 text-[var(--positive)]" aria-hidden="true" /> : level.number}
+                      </ProgressRing>
                       <span className="min-w-0">
-                        <h2 id={`h-${level.id}`} className="text-base font-semibold text-[var(--text-strong)] group-hover:text-[var(--accent-text)] transition-colors">
+                        <h2 id={`h-${level.id}`} className="text-sm sm:text-base font-semibold text-[var(--text-strong)] group-hover:text-[var(--accent-text)] transition-colors">
                           {level.title}
                         </h2>
-                        <p className="text-xs text-[var(--muted)] max-w-2xl">{level.goal}</p>
+                        <span className={`block text-xs font-mono tabular-nums ${complete ? 'text-[var(--positive)] font-semibold' : 'text-[var(--muted)]'}`}>
+                          {t('ac.levels.count', { d: doneCount, t: total })}
+                        </span>
                       </span>
                     </button>
-                    <div className="text-xs font-mono tabular-nums text-[var(--muted)] shrink-0 whitespace-nowrap pt-0.5">
-                      <span className={complete ? 'text-[var(--positive)] font-semibold' : ''}>
-                        {doneCount}/{level.lessons.length} bài
-                      </span>
-                      {examPassed && (
-                        <>
-                          <span aria-hidden="true"> · </span>
-                          <span className="text-[var(--positive)]">Đạt thi</span>
-                        </>
-                      )}
-                    </div>
+                    <ExamBadge state={examState} />
                   </div>
 
-                  {!isCollapsed && (
-                    <>
+                  {isOpen && (
+                    <div id={bodyId} className="space-y-2.5">
+                      <div className="flex items-start gap-1.5 text-xs text-[var(--muted)]">
+                        <p id={goalId} className={`min-w-0 flex-1 max-w-2xl ${goalExpanded ? '' : 'line-clamp-1'}`}>
+                          {level.goal}
+                        </p>
+                        <button
+                          type="button"
+                          aria-expanded={goalExpanded}
+                          aria-controls={goalId}
+                          onClick={() => toggleGoal(level.id)}
+                          className="shrink-0 text-[var(--accent-text)] hover:underline whitespace-nowrap"
+                        >
+                          {goalExpanded ? t('ac.levels.less') : t('ac.levels.more')}
+                        </button>
+                      </div>
                       <div className="grid gap-2 sm:grid-cols-2">
                         {lessons.map((l) => (
                           <LessonCard
@@ -890,18 +1175,19 @@ export default function LearnView() {
                         ))}
                       </div>
                       {!hasActiveFilters && (
-                        <ExamCard
-                          target={{ kind: 'level', levelId: level.id }}
-                          doneLessons={doneCount}
-                          totalLessons={level.lessons.length}
+                        <LevelExamRow
+                          level={level}
+                          doneCount={doneCount}
+                          exams={exams}
                           onStart={() => go({ kind: 'exam', target: { kind: 'level', levelId: level.id } })}
                         />
                       )}
-                    </>
+                    </div>
                   )}
                 </section>
               );
-            })
+            })}
+            </div>
           )}
 
           {!hasActiveFilters && (

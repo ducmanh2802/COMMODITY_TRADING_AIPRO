@@ -311,7 +311,7 @@ export function MineHub({ tab }: HubProps) {
           ),
         },
         { id: 'hedge', label: t('hd.tab'), note: '', render: () => <HedgeWizard /> },
-        { id: 'paper', label: t('n2.me.paper'), note: t('pt.disclaimer'), render: () => <LazyPaperTradingView /> },
+        { id: 'paper', label: t('n2.me.paper'), note: '', render: () => <LazyPaperTradingView /> },
       ]}
     />
   );

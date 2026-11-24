@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTerminal } from '../../../contexts/TerminalContext';
+import { Info } from 'lucide-react';
 import { useT, fmtInt } from '../../../i18n';
 import { fetchContractChain } from '../../../api/contractsApi';
 import {
@@ -11,6 +12,38 @@ import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { RangeBar } from '../../ui/viz/RangeBar';
 import { ChartLegend } from '../../ui/viz/ChartLegend';
+
+/** One-line subtitle + (i) button revealing the full text (popover pattern copied from InstrumentOverview ContextCard). */
+function OneLineSubtitle({ id, text, helpLabel }: { id: string; text: string; helpLabel: string }) {
+  const [open, setOpen] = useState(false);
+  const tipId = `${id}-tip`;
+  return (
+    <div className="relative mt-1 max-w-3xl">
+      <div className="flex items-center gap-1 min-w-0">
+        <p className="text-sm text-[var(--text)]/65 truncate min-w-0">{text}</p>
+        <button
+          type="button"
+          aria-label={helpLabel}
+          aria-expanded={open}
+          aria-controls={tipId}
+          onClick={() => setOpen((v) => !v)}
+          onBlur={() => setOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setOpen(false);
+          }}
+          className="shrink-0 w-10 h-10 -my-3 sm:w-7 sm:h-7 sm:-my-1 flex items-center justify-center text-[var(--muted)] hover:text-[var(--text-strong)]"
+        >
+          <Info className="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
+      {open && (
+        <div id={tipId} role="tooltip" className="mt-1.5 text-xs leading-relaxed text-[var(--text)] bg-[var(--surface-2)] border border-[var(--border)] rounded-lg p-2.5">
+          {text}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const USABLE = new Set(['CURRENT', 'DELAYED', 'HISTORICAL', 'STALE']);
 
@@ -103,16 +136,18 @@ export function HedgeWizard() {
 
   return (
     <div className="space-y-5 max-w-3xl">
-      <SectionHeader
-        level={2}
-        title={t('hd.title')}
-        subtitle={t('hd.intro')}
-        actions={
-          <button type="button" className="text-xs underline text-[var(--accent-text)]" onClick={applyPreset}>
-            {t('hd.preset')}
-          </button>
-        }
-      />
+      <div>
+        <SectionHeader
+          level={2}
+          title={t('hd.title')}
+          actions={
+            <button type="button" className="text-xs underline text-[var(--accent-text)]" onClick={applyPreset}>
+              {t('hd.preset')}
+            </button>
+          }
+        />
+        <OneLineSubtitle id="hd-intro" text={t('hd.intro')} helpLabel={t('pt.infoTip')} />
+      </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-xs text-[var(--muted)]">{t('hd.step', { n: step })}</span>

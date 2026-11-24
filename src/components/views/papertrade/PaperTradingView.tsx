@@ -145,6 +145,43 @@ interface PendingOrder {
 }
 
 /** T58 "Giao dịch thử": paper trading with virtual money in practice sessions. LEARNING ONLY — no broker. */
+/**
+ * Compact gold "virtual money" badge; the full learning-only disclaimer opens in a popover (pattern copied from
+ * InstrumentOverview ContextCard). Shown once here instead of a tab note + banner.
+ */
+function VirtualMoneyBadge({ label, aria, text }: { label: string; aria: string; text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-flex" role="note">
+      <button
+        type="button"
+        aria-label={`${label}. ${aria}`}
+        aria-expanded={open}
+        aria-controls="pt-disclaimer-tip"
+        onClick={() => setOpen((v) => !v)}
+        onBlur={() => setOpen(false)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') setOpen(false);
+        }}
+        data-testid="pt-virtual-badge"
+        className="inline-flex items-center gap-1 min-h-8 px-2.5 py-1 rounded-full border border-[var(--warning)]/40 bg-[var(--warning)]/10 text-[11px] font-medium text-[var(--warning)] whitespace-nowrap hover:bg-[var(--warning)]/20"
+      >
+        <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
+        {label}
+      </button>
+      {open && (
+        <span
+          id="pt-disclaimer-tip"
+          role="tooltip"
+          className="absolute left-0 top-full z-20 mt-1.5 w-[min(20rem,calc(100vw-2rem))] text-xs leading-relaxed text-[var(--text)] bg-[var(--surface-2)] border border-[var(--border)] rounded-lg p-2.5 shadow-lg"
+        >
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function PaperTradingView() {
   const t = useT();
   const { user, signInWithGoogle } = useAuth();
@@ -411,16 +448,16 @@ export function PaperTradingView() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight flex items-center gap-2">
-          <GraduationCap className="w-5 h-5 text-[var(--accent)]" aria-hidden="true" />
-          {t('pt.title')}
-        </h2>
-        <p className="text-sm text-[var(--text)]/70 mt-1">{t('pt.subtitle')}</p>
-      </div>
-
-      <div role="note" className="flex gap-2 items-start bg-[var(--warning)]/10 border border-[var(--warning)]/40 rounded-lg p-3 text-xs text-[var(--warning)]">
-        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
-        <p>{t('pt.disclaimer')}</p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-[var(--accent)]" aria-hidden="true" />
+            {t('pt.title')}
+          </h2>
+          <VirtualMoneyBadge label={t('pt.badge')} aria={t('pt.badgeAria')} text={t('pt.disclaimer')} />
+        </div>
+        <p className="text-sm text-[var(--text)]/70 mt-1 truncate" title={t('pt.subtitle')}>
+          {t('pt.subtitle')}
+        </p>
       </div>
 
       {/* Sign-in / storage mode */}

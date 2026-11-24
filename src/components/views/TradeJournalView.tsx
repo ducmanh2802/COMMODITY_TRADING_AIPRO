@@ -10,7 +10,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
-import { BookOpen, LogIn, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, Info, LogIn, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
 import { handleFirestoreError, OperationType } from '../../firebase';
@@ -18,6 +18,38 @@ import { db } from '../../firestoreDb';
 import type { ExchangeCode, InstrumentDefinition, Timeframe } from '../../shared/types/instrument';
 import { computeJournalExit, localDateTimeToIso, type JournalExitResult } from './journal/journalMath';
 import { fmtFixed, fmtNum, useT } from '../../i18n';
+
+/** One-line subtitle + (i) button revealing the full text (popover pattern copied from InstrumentOverview ContextCard). */
+function OneLineSubtitle({ id, text, helpLabel }: { id: string; text: string; helpLabel: string }) {
+  const [open, setOpen] = useState(false);
+  const tipId = `${id}-tip`;
+  return (
+    <div className="relative mt-1 max-w-3xl">
+      <div className="flex items-center gap-1 min-w-0">
+        <p className="text-sm text-[var(--text)]/65 truncate min-w-0">{text}</p>
+        <button
+          type="button"
+          aria-label={helpLabel}
+          aria-expanded={open}
+          aria-controls={tipId}
+          onClick={() => setOpen((v) => !v)}
+          onBlur={() => setOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setOpen(false);
+          }}
+          className="shrink-0 w-10 h-10 -my-3 sm:w-7 sm:h-7 sm:-my-1 flex items-center justify-center text-[var(--muted)] hover:text-[var(--text-strong)]"
+        >
+          <Info className="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
+      {open && (
+        <div id={tipId} role="tooltip" className="mt-1.5 text-xs leading-relaxed text-[var(--text)] bg-[var(--surface-2)] border border-[var(--border)] rounded-lg p-2.5">
+          {text}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface JournalDoc {
   id: string;
@@ -356,9 +388,7 @@ export function TradeJournalView() {
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('jr.titleGuest')}</h2>
-          <p className="text-sm text-[var(--text)]/65 mt-1">
-            {t('jr.subtitleGuest')}
-          </p>
+          <OneLineSubtitle id="jr-subtitle-guest" text={t('jr.subtitleGuest')} helpLabel={t('pt.infoTip')} />
         </div>
 
         <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-8 text-center space-y-3">
@@ -384,9 +414,7 @@ export function TradeJournalView() {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('jr.title')}</h2>
-        <p className="text-sm text-[var(--text)]/65 mt-1">
-          {t('jr.subtitle')}
-        </p>
+        <OneLineSubtitle id="jr-subtitle" text={t('jr.subtitle')} helpLabel={t('pt.infoTip')} />
       </div>
 
       {/* Analytics Strip */}
