@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { z } from 'zod';
+import { generateContentWithFallback, primaryGeminiModel } from '../lib/geminiModels.ts';
 import type {
   CommodityProfileDossier,
   DailyResearchReportPayload,
@@ -62,7 +63,7 @@ export async function generateEightQuestionVerdict(
     return {
       symbol: summary.instrument.id,
       generatedAt: now,
-      model: 'gemini-4-hydrogen',
+      model: primaryGeminiModel(),
       status: 'DATA_UNAVAILABLE',
       message:
         'DATA_UNAVAILABLE — Cần tối thiểu dữ liệu giá hoặc >= 30 nến D1 trước khi AI Verdict phân tích 8 câu hỏi chu kỳ.',
@@ -75,7 +76,7 @@ export async function generateEightQuestionVerdict(
     return {
       symbol: summary.instrument.id,
       generatedAt: now,
-      model: 'gemini-4-hydrogen',
+      model: primaryGeminiModel(),
       status: 'AI_UNCONFIGURED',
       message:
         'Chưa có khoá Gemini nên AI Verdict tạm tắt. Lấy khoá miễn phí tại aistudio.google.com/apikey, thêm dòng GEMINI_API_KEY=... vào file .env rồi khởi động lại server. Bảng "Đánh giá các mã" vẫn có nhận xét miễn phí theo công thức.',
@@ -114,8 +115,7 @@ export async function generateEightQuestionVerdict(
   };
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-4-hydrogen',
+    const { response } = await generateContentWithFallback(ai, {
       contents: `Trả lời đúng 8 câu hỏi nghiên cứu chu kỳ hàng hóa bằng tiếng Việt chuyên nghiệp dựa CHỈ trên JSON định lượng sau đây (không bịa số liệu):\n${JSON.stringify(
         groundedContext
       )}`,
@@ -159,7 +159,7 @@ export async function generateEightQuestionVerdict(
     return {
       symbol: summary.instrument.id,
       generatedAt: now,
-      model: 'gemini-4-hydrogen',
+      model: primaryGeminiModel(),
       status: 'OK',
       answers: validated,
     };
@@ -167,7 +167,7 @@ export async function generateEightQuestionVerdict(
     return {
       symbol: summary.instrument.id,
       generatedAt: now,
-      model: 'gemini-4-hydrogen',
+      model: primaryGeminiModel(),
       status: 'AI_ERROR',
       message: geminiErrorMessage(err, 'Lỗi gọi Gemini AI Verdict.'),
       answers: null,
@@ -213,8 +213,7 @@ export async function enrichDailyReportWithAi(
   };
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-4-hydrogen',
+    const { response } = await generateContentWithFallback(ai, {
       contents: `Tổng hợp Báo cáo Nghiên cứu Chu kỳ Hàng hóa (ưu tiên góc nhìn thị trường Việt Nam & MXV) bằng tiếng Việt từ JSON dữ liệu đã kiểm định sau:\n${JSON.stringify(
         contextPayload
       )}`,
@@ -253,7 +252,7 @@ export async function enrichDailyReportWithAi(
     return {
       ...baseReport,
       aiStatus: 'OK',
-      model: 'gemini-4-hydrogen',
+      model: primaryGeminiModel(),
       aiExecutiveBriefing: validated,
     };
   } catch (err) {

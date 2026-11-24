@@ -63,6 +63,10 @@ export const LEVEL3: Level = {
     group({
       id: 'l3-coffee',
       figures: ['a-coffee-compare'],
+      videos: [
+        { title: 'Why a Vietnam drought may spike global espresso prices | REUTERS', url: 'https://www.youtube.com/watch?v=oKI6I7DpqMo', source: 'Reuters', lang: 'en', duration: '2:41', note: 'Video tiếng Anh của Reuters: hạn hán ở Việt Nam ảnh hưởng giá robusta toàn cầu ra sao.' },
+        { title: 'GIÁ CÀ PHÊ TĂNG MẠNH: ĐIỀU CHỈNH NGẮN HẠN HAY MẶT BẰNG GIÁ MỚI CHO VIỆT NAM?', url: 'https://www.youtube.com/watch?v=ybHoydUtDtY', source: 'MXV (Sở Giao dịch Hàng hóa Việt Nam)', lang: 'vi', duration: '7:58', note: 'Video tiếng Việt từ kênh chính thức của MXV: các yếu tố đẩy giá cà phê. Chỉ để tham khảo, không phải khuyến nghị.' },
+      ],
       title: 'Nông sản: cà phê arabica và robusta',
       objective: 'Phân biệt arabica (KC) và robusta (RC), hiểu mùa vụ và rủi ro thời tiết.',
       body: [
@@ -84,6 +88,9 @@ export const LEVEL3: Level = {
     group({
       id: 'l3-softs',
       figures: ['a-softs-cards'],
+      videos: [
+        { title: 'Why is chocolate set to get more expensive?', url: 'https://www.youtube.com/watch?v=QWBqgPTdBLw', source: 'Reuters', lang: 'en', duration: '1:29', note: 'Video tiếng Anh của Reuters: thời tiết và nguồn cung ở Tây Phi đẩy giá ca cao lên thế nào.' },
+      ],
       title: 'Nông sản: đường, ca cao, bông, cao su',
       objective: 'Biết yếu tố riêng của bốn mặt hàng này.',
       body: [

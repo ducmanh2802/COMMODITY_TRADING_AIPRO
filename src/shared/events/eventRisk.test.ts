@@ -82,3 +82,42 @@ test('bad input is safe', () => {
   assert.deepEqual(upcomingEventRisk({ symbol: 'CL', nowMs: Number.NaN }), []);
   assert.deepEqual(upcomingEventRisk({ symbol: '', nowMs: Date.now() }), []);
 });
+
+test('FOMC/CPI apply to every instrument, from the official lists only', () => {
+  // FOMC Dec 8-9, 2026: statement Wed 2026-12-09 14:00 EST = 19:00Z = 02:00 10/12 Vietnam
+  const g = upcomingEventRisk({ symbol: 'GC', nowMs: at('2026-12-09T00:00:00Z') });
+  assert.equal(g.length, 1);
+  assert.equal(g[0].kind, 'FOMC');
+  assert.equal(g[0].scope, 'macro');
+  assert.equal(g[0].status, 'official');
+  assert.equal(g[0].atIso, '2026-12-09T19:00:00.000Z');
+  assert.equal(vietnamTimeLabel(g[0].atMs), '02:00 10/12');
+  // RC has no instrument-specific report but still gets the macro warning
+  assert.deepEqual(upcomingEventRisk({ symbol: 'RC', nowMs: at('2026-12-09T00:00:00Z') }).map((x) => x.kind), ['FOMC']);
+  // Day after the published lists end -> nothing invented (no Dec 2027 FOMC printed; CPI list ends 2027-12-10)
+  assert.equal(upcomingEventRisk({ symbol: 'GC', nowMs: at('2027-12-14T12:00:00Z'), horizonHours: 24 * 30 }).length, 0);
+});
+
+test('macro releases rank after instrument-specific reports', () => {
+  // 2026-12-09 20:00Z: CPI Thu 12-10 08:30 EST (13:30Z, same time as Export Sales) is earlier than WASDE 12:00 EST
+  // (17:00Z) but listed after both instrument-specific reports
+  const r = upcomingEventRisk({ symbol: 'ZS', nowMs: at('2026-12-09T20:00:00Z'), wasdeOfficialDates: ['2026-12-10'] });
+  assert.deepEqual(r.map((x) => x.kind), ['USDA_EXPORT_SALES', 'WASDE', 'US_CPI']);
+  assert.equal(r[2].atIso, '2026-12-10T13:30:00.000Z');
+  assert.equal(r[0].scope, 'instrument');
+});
+
+test('FOMC/CPI Vietnam time follows US DST (March and November 2027)', () => {
+  const one = (iso: string, kind: string) => upcomingEventRisk({ symbol: 'GC', nowMs: at(iso) }).find((x) => x.kind === kind)!;
+  // CPI Wed 2027-03-10 is before DST (starts Sun 03-14): 08:30 EST = 13:30Z = 20:30 VN
+  assert.equal(vietnamTimeLabel(one('2027-03-10T00:00:00Z', 'US_CPI').atMs), '20:30 10/03');
+  // FOMC Wed 2027-03-17 is after DST start: 14:00 EDT = 18:00Z = 01:00 18/03 VN
+  assert.equal(one('2027-03-17T00:00:00Z', 'FOMC').atIso, '2027-03-17T18:00:00.000Z');
+  assert.equal(vietnamTimeLabel(one('2027-03-17T00:00:00Z', 'FOMC').atMs), '01:00 18/03');
+  // CPI Thu 2027-10-14 in EDT: 12:30Z = 19:30 VN; CPI Wed 2027-11-10 after DST ends (Sun 11-07): 13:30Z = 20:30 VN
+  assert.equal(vietnamTimeLabel(one('2027-10-14T00:00:00Z', 'US_CPI').atMs), '19:30 14/10');
+  assert.equal(one('2027-11-10T00:00:00Z', 'US_CPI').atIso, '2027-11-10T13:30:00.000Z');
+  assert.equal(vietnamTimeLabel(one('2027-11-10T00:00:00Z', 'US_CPI').atMs), '20:30 10/11');
+  // FOMC Wed 2027-11-17 (EST): 19:00Z
+  assert.equal(one('2027-11-17T00:00:00Z', 'FOMC').atIso, '2027-11-17T19:00:00.000Z');
+});

@@ -35,6 +35,7 @@ export function EventRiskBanner({ symbol, upcoming }: { symbol: string | null | 
         {items.map((it) => (
           <li key={`${it.kind}-${it.atMs}`} className="min-w-0">
             <span className="font-semibold">{t(`er.kind.${it.kind}` as TKey)}</span>
+            {it.scope === 'macro' && <span className="text-[var(--text)]/70"> · {t('er.scope.macro')}</span>}
             <span className="block text-[var(--text)]/80">
               {t('er.when', { time: vietnamTimeLabel(it.atMs), h: fmtFixed(it.hoursUntil, 1) })}
               {' · '}

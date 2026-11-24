@@ -9,6 +9,10 @@ export const LEVEL10: Level = {
     {
       id: 'l10-account',
       figures: ['c-long-short', 'c-order-types'],
+      videos: [
+        { title: 'Submitting a Futures Order', url: 'https://www.youtube.com/watch?v=z5pafPJM-yg', source: 'CME Group', lang: 'en', duration: '3:01', note: 'Video tiếng Anh của CME Group: các thông tin cần có khi đặt một lệnh futures.' },
+        { title: 'What happens when you submit an order', url: 'https://www.youtube.com/watch?v=gM4ZTXcgsRg', source: 'CME Group', lang: 'en', duration: '3:27', note: 'Video tiếng Anh của CME Group: hành trình của một lệnh từ lúc gửi đến khi khớp và bù trừ.' },
+      ],
       title: 'Đặt lệnh: Long, Short và các loại lệnh',
       objective: 'Biết cách mở/đóng vị thế và dùng đúng lệnh giới hạn, lệnh thị trường, lệnh dừng.',
       body: [
@@ -35,6 +39,9 @@ export const LEVEL10: Level = {
     {
       id: 'l10-contract',
       figures: ['c-contract-specs'],
+      videos: [
+        { title: 'How to Calculate Profit or Loss on Futures Contracts', url: 'https://www.youtube.com/watch?v=13WxmRt75Y8', source: 'CME Group', lang: 'en', duration: '2:25', note: 'Video tiếng Anh của CME Group: ôn lại cách tính lãi lỗ từ thông số hợp đồng.' },
+      ],
       title: 'Đọc thông số hợp đồng và tính tiền lãi lỗ',
       objective: 'Từ khối lượng hợp đồng và bước giá, tính được 1 cent / 1 USD thay đổi giá bằng bao nhiêu tiền.',
       body: [
@@ -64,6 +71,9 @@ export const LEVEL10: Level = {
     {
       id: 'l10-margin',
       figures: ['c-leverage', 'c-margin-ladder'],
+      videos: [
+        { title: 'Benefits of Futures: Margins', url: 'https://www.youtube.com/watch?v=t9LQ3RTi1zM', source: 'CME Group', lang: 'en', duration: '2:24', note: 'Video tiếng Anh của CME Group: ký quỹ ban đầu, ký quỹ duy trì và khi nào phải nộp thêm tiền.' },
+      ],
       title: 'Ký quỹ, đòn bẩy và margin call',
       objective: 'Hiểu ký quỹ ban đầu, ký quỹ duy trì, cách tính đòn bẩy và khi nào bị gọi ký quỹ.',
       body: [
@@ -155,6 +165,10 @@ export const LEVEL10: Level = {
     {
       id: 'l10-costs',
       figures: ['c-costs-stack', 'c-roll-contango'],
+      videos: [
+        { title: 'Benefits of Futures: Managing Contract Expiration', url: 'https://www.youtube.com/watch?v=YwqaB1tGY04', source: 'CME Group', lang: 'en', duration: '1:59', note: 'Video tiếng Anh của CME Group: xử lý vị thế khi hợp đồng sắp đáo hạn (đóng hoặc roll).' },
+        { title: 'Expiration and Settlement of Futures', url: 'https://www.youtube.com/watch?v=ze-IBwrFOb0', source: 'CME Group', lang: 'en', duration: '1:33', note: 'Video tiếng Anh của CME Group: đáo hạn và thanh toán (giao hàng hoặc tiền mặt) diễn ra thế nào.' },
+      ],
       title: 'Chi phí, tỷ giá, đáo hạn và chuyển kỳ hạn (roll)',
       objective: 'Biết các khoản làm giảm lợi nhuận và cách tránh rủi ro giao nhận khi đáo hạn.',
       body: [
@@ -212,6 +226,9 @@ export const LEVEL10: Level = {
     {
       id: 'l10-ready',
       figures: ['c-ready-gate'],
+      videos: [
+        { title: 'The Truth About Day Trading', url: 'https://www.youtube.com/watch?v=qhHOmZVAqBE', source: 'Ben Felix', lang: 'en', duration: '14:09', note: 'Video tiếng Anh của Ben Felix: dữ liệu nghiên cứu về tỷ lệ người giao dịch ngắn hạn thua lỗ, nên xem trước khi dùng tiền thật.' },
+      ],
       title: 'Trước khi dùng tiền thật: checklist cuối',
       objective: 'Tự kiểm tra mình đã sẵn sàng chưa và bắt đầu tiền thật đúng cách.',
       body: [

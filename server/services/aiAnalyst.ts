@@ -13,6 +13,7 @@
  */
 import { GoogleGenAI, Type } from '@google/genai';
 import { z } from 'zod';
+import { generateContentWithFallback, geminiModelChain, primaryGeminiModel } from '../lib/geminiModels.ts';
 import type {
   AiDataInput,
   AiDataInputId,
@@ -28,7 +29,6 @@ import { getCotMapping } from '../cot/mapping.ts';
 import { CotServiceError, type CotService } from '../cot/service.ts';
 
 /** Default model; override with GEMINI_MODEL. */
-const DEFAULT_GEMINI_MODEL = 'gemini-4-hydrogen';
 /** Default model-call timeout; override with AI_ANALYST_TIMEOUT_MS. */
 const DEFAULT_AI_TIMEOUT_MS = 20_000;
 
@@ -51,8 +51,7 @@ export interface AiModelClient {
 }
 
 function resolveGeminiModel(): string {
-  const m = process.env.GEMINI_MODEL?.trim();
-  return m && m.length > 0 ? m : DEFAULT_GEMINI_MODEL;
+  return primaryGeminiModel();
 }
 
 function resolveAiTimeoutMs(): number {
@@ -65,8 +64,7 @@ export function createGeminiModelClient(apiKey: string, model: string = resolveG
   return {
     model,
     async generate({ systemInstruction, prompt, signal }) {
-      const response = await ai.models.generateContent({
-        model,
+      const { response } = await generateContentWithFallback(ai, {
         contents: prompt,
         config: {
           systemInstruction,
@@ -97,7 +95,7 @@ export function createGeminiModelClient(apiKey: string, model: string = resolveG
             required: ['summary', 'keyFacts', 'risks', 'dataGaps'],
           },
         },
-      });
+      }, [model, ...geminiModelChain().filter((m) => m !== model)]);
       return response.text ?? '';
     },
   };

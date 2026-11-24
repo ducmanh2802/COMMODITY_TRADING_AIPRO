@@ -8,13 +8,13 @@
  */
 import { GoogleGenAI, Type } from '@google/genai';
 import { z } from 'zod';
+import { generateContentWithFallback, geminiModelChain, primaryGeminiModel } from '../lib/geminiModels.ts';
 import type {
   LessonRecommendationRequest,
   LessonRecommendationResult,
   LessonRecommendationUnavailableReason,
 } from '../../src/shared/types/lessonRecommendation.ts';
 
-const DEFAULT_GEMINI_MODEL = 'gemini-4-hydrogen';
 const DEFAULT_TIMEOUT_MS = 20_000;
 
 export interface RecommenderModelRequest {
@@ -39,8 +39,7 @@ export interface LessonRecommenderDeps {
 }
 
 function resolveGeminiModel(): string {
-  const m = process.env.GEMINI_MODEL?.trim();
-  return m && m.length > 0 ? m : DEFAULT_GEMINI_MODEL;
+  return primaryGeminiModel();
 }
 
 export function createLessonRecommenderClient(
@@ -55,8 +54,7 @@ export function createLessonRecommenderClient(
   return {
     model,
     async generate({ systemInstruction, prompt, signal }) {
-      const response = await ai.models.generateContent({
-        model,
+      const { response } = await generateContentWithFallback(ai, {
         contents: prompt,
         config: {
           systemInstruction,
@@ -86,7 +84,7 @@ export function createLessonRecommenderClient(
             required: ['headline', 'recommendations'],
           },
         },
-      });
+      }, [model, ...geminiModelChain().filter((m) => m !== model)]);
       return response.text ?? '';
     },
   };

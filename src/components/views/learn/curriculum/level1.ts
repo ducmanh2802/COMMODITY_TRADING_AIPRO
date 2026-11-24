@@ -9,6 +9,9 @@ export const LEVEL1: Level = {
     {
       id: 'l1-commodity',
       figures: ['a-commodity-groups', 'a-supply-demand'],
+      videos: [
+        { title: 'How Commodity Markets Work | WSJ', url: 'https://www.youtube.com/watch?v=EtqVmE2U4Xo', source: 'The Wall Street Journal', lang: 'en', duration: '4:24', note: 'Video tiếng Anh của WSJ: thị trường hàng hoá vận hành thế nào, ai mua bán và vì sao giá biến động.' },
+      ],
       title: 'Hàng hoá là gì?',
       objective: 'Phân biệt các nhóm hàng hoá và hiểu vì sao giá của chúng dao động.',
       body: [
@@ -81,6 +84,10 @@ export const LEVEL1: Level = {
       id: 'l1-margin',
       figures: ['a-leverage-bars', 'a-margin-steps'],
       diagram: 'margin',
+      videos: [
+        { title: 'Margin', url: 'https://www.youtube.com/watch?v=F2bh4MDxIyU', source: 'CME Group', lang: 'en', duration: '2:37', note: 'Video tiếng Anh của CME Group: ký quỹ futures là khoản đặt cọc bảo đảm, không phải trả trước.' },
+        { title: 'Futures margin mechanics | Finance & Capital Markets | Khan Academy', url: 'https://www.youtube.com/watch?v=1t42z5U2uoc', source: 'Khan Academy', lang: 'en', duration: '3:39', note: 'Bài giảng tiếng Anh của Khan Academy: ký quỹ ban đầu, ký quỹ duy trì và tài khoản thay đổi mỗi ngày ra sao.' },
+      ],
       title: 'Ký quỹ ban đầu, duy trì và đòn bẩy',
       objective: 'Hiểu ký quỹ, gọi ký quỹ và vì sao đòn bẩy khuếch đại cả lãi lẫn lỗ.',
       body: [
@@ -104,6 +111,10 @@ export const LEVEL1: Level = {
     {
       id: 'l1-pnl',
       figures: ['a-long-short', 'a-pnl-worked'],
+      videos: [
+        { title: 'Calculating Futures Contract Profit or Loss', url: 'https://www.youtube.com/watch?v=MIjOFHHPYmg', source: 'CME Group', lang: 'en', duration: '2:25', note: 'Video tiếng Anh của CME Group: cách tính lãi lỗ một hợp đồng futures từ chênh lệch giá và giá trị tick.' },
+        { title: 'Mark to Market', url: 'https://www.youtube.com/watch?v=l_ZeWxWdqYk', source: 'CME Group', lang: 'en', duration: '2:15', note: 'Video tiếng Anh của CME Group: lãi lỗ được ghi nhận hằng ngày theo giá thanh toán (mark-to-market).' },
+      ],
       title: 'Lãi lỗ được tính thế nào',
       objective: 'Tính lãi/lỗ theo số tick và số hợp đồng; biết lãi lỗ chưa gồm phí.',
       body: [

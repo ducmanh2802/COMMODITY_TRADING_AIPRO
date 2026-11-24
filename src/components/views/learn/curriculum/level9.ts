@@ -68,6 +68,10 @@ export const LEVEL9: Level = {
     {
       id: 'l9-money',
       figures: ['c-drawdown', 'c-sizing-calc'],
+      videos: [
+        { title: 'Step 3. Risk Management and Your Trade Plan', url: 'https://www.youtube.com/watch?v=QdbUdYtm9DU', source: 'CME Group', lang: 'en', duration: '1:01', note: 'Video tiếng Anh của CME Group: đặt giới hạn rủi ro trong kế hoạch giao dịch.' },
+        { title: 'How Leverage Can Boost Returns (And What Can Go Wrong)', url: 'https://www.youtube.com/watch?v=Ll3TCEz4g1k', source: 'Ben Felix', lang: 'en', duration: '13:35', note: 'Video tiếng Anh của Ben Felix: đòn bẩy khuếch đại cả lãi lẫn lỗ và drawdown.' },
+      ],
       title: 'Quản lý vốn: khối lượng, drawdown và giới hạn ngày',
       objective: 'Tính khối lượng chính xác theo rủi ro, hiểu toán học của drawdown và đặt "cầu dao" bảo vệ tài khoản.',
       body: [
@@ -100,6 +104,10 @@ export const LEVEL9: Level = {
     {
       id: 'l9-setups',
       figures: ['c-setups-3'],
+      videos: [
+        { title: 'Support and Resistance Points', url: 'https://www.youtube.com/watch?v=KbA4LPdoxhw', source: 'CME Group', lang: 'en', duration: '1:54', note: 'Video tiếng Anh của CME Group: xác định vùng hỗ trợ/kháng cự cho setup pullback và breakout.' },
+        { title: 'Technical Patterns Continuation', url: 'https://www.youtube.com/watch?v=4s4XYddp0tg', source: 'CME Group', lang: 'en', duration: '2:43', note: 'Video tiếng Anh của CME Group: các mô hình tiếp diễn xu hướng.' },
+      ],
       title: '3 setup cụ thể: Pullback, Breakout–Retest, Range',
       objective: 'Có 3 mẫu giao dịch rõ ràng với điều kiện vào, stop, mục tiêu và điều kiện huỷ.',
       body: [
@@ -156,6 +164,10 @@ export const LEVEL9: Level = {
     {
       id: 'l9-psychology',
       figures: ['c-psy-traps'],
+      videos: [
+        { title: 'Understanding Emotional Intelligence', url: 'https://www.youtube.com/watch?v=C_X1len1IM4', source: 'CME Group', lang: 'en', duration: '1:38', note: 'Video tiếng Anh của CME Group: nhận biết và quản lý cảm xúc khi giao dịch.' },
+        { title: 'Behavioral Finance | Investor Irrationality', url: 'https://www.youtube.com/watch?v=utLIlOAwLeU', source: 'The Plain Bagel', lang: 'en', duration: '8:07', note: 'Video tiếng Anh của The Plain Bagel: các thiên kiến hành vi khiến nhà đầu tư ra quyết định sai.' },
+      ],
       title: 'Tâm lý giao dịch: 6 cái bẫy và cách thoát',
       objective: 'Nhận ra những sai lầm cảm xúc phổ biến và có quy tắc cụ thể để chặn chúng.',
       body: [
@@ -186,6 +198,10 @@ export const LEVEL9: Level = {
     {
       id: 'l9-plan',
       figures: ['c-plan-card', 'c-daily-loop'],
+      videos: [
+        { title: 'Building a Trade Plan', url: 'https://www.youtube.com/watch?v=wX6g0nskDRc', source: 'CME Group', lang: 'en', duration: '1:11', note: 'Video tiếng Anh của CME Group: các phần chính của một kế hoạch giao dịch.' },
+        { title: 'Step 1. Your Trade Plan Objective', url: 'https://www.youtube.com/watch?v=mu5xaeauP-Y', source: 'CME Group', lang: 'en', duration: '1:21', note: 'Video tiếng Anh của CME Group: đặt mục tiêu rõ ràng cho kế hoạch giao dịch.' },
+      ],
       title: 'Kế hoạch giao dịch (Trading Plan) và thói quen hằng ngày',
       objective: 'Viết được một kế hoạch giao dịch hoàn chỉnh và một quy trình trước/trong/sau phiên.',
       body: [
@@ -220,6 +236,9 @@ export const LEVEL9: Level = {
     {
       id: 'l9-review',
       figures: ['c-journal-loop', 'c-metrics-card'],
+      videos: [
+        { title: 'Step 5. Keep a Trade Log', url: 'https://www.youtube.com/watch?v=raNCUgK8jdI', source: 'CME Group', lang: 'en', duration: '1:43', note: 'Video tiếng Anh của CME Group: nhật ký là dữ liệu đầu vào cho việc tự đánh giá định kỳ.' },
+      ],
       title: 'Tự đánh giá: đọc nhật ký như một nhà quản lý quỹ',
       objective: 'Biết các chỉ số cần tính từ nhật ký và cách quyết định khi nào sẵn sàng tăng vốn.',
       body: [

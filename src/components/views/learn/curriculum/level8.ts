@@ -10,6 +10,9 @@ export const LEVEL8: Level = {
       id: 'l8-dow',
       figures: ['c-dow-hhhl', 'c-dow-phases'],
       diagram: 'dow',
+      videos: [
+        { title: 'Ralph Acampora on Dow Theory', url: 'https://www.youtube.com/watch?v=EdIhqrBNiwk', source: 'Investopedia', lang: 'en', duration: '7:23', note: 'Video tiếng Anh của Investopedia: chuyên gia phân tích kỹ thuật Ralph Acampora giải thích Lý thuyết Dow.' },
+      ],
       title: 'Lý thuyết Dow: nền móng của phân tích xu hướng',
       objective: 'Nắm 6 nguyên lý Dow và cách nhận biết một xu hướng còn hay đã kết thúc.',
       body: [
@@ -42,6 +45,10 @@ export const LEVEL8: Level = {
       id: 'l8-price-action',
       figures: ['c-pa-zones', 'c-pa-candles'],
       diagram: 'pinbar',
+      videos: [
+        { title: 'Chart Types: Candlestick, Line and Bar', url: 'https://www.youtube.com/watch?v=DUMPAEL9re8', source: 'CME Group', lang: 'en', duration: '5:21', note: 'Video tiếng Anh của CME Group: đọc biểu đồ nến, đường và thanh giá.' },
+        { title: 'Support and Resistance', url: 'https://www.youtube.com/watch?v=7XlqsrvXPLQ', source: 'CME Group', lang: 'en', duration: '4:43', note: 'Video tiếng Anh của CME Group: hỗ trợ và kháng cự, nền tảng của đọc hành vi giá.' },
+      ],
       title: 'Price Action: đọc hành vi giá không cần chỉ báo',
       objective: 'Biết vẽ hỗ trợ/kháng cự, nhận diện cấu trúc thị trường và vài mẫu nến cơ bản.',
       body: [
@@ -73,6 +80,10 @@ export const LEVEL8: Level = {
     {
       id: 'l8-volume',
       figures: ['c-vol-oi'],
+      videos: [
+        { title: 'What Is Volume?', url: 'https://www.youtube.com/watch?v=9Uv2cc_OwHA', source: 'CME Group', lang: 'en', duration: '3:32', note: 'Video tiếng Anh của CME Group: khối lượng giao dịch là gì và đọc nó thế nào.' },
+        { title: 'Open Interest', url: 'https://www.youtube.com/watch?v=SN4cnCij_II', source: 'CME Group', lang: 'en', duration: '3:25', note: 'Video tiếng Anh của CME Group: hợp đồng mở (open interest) khác khối lượng ra sao.' },
+      ],
       title: 'Khối lượng (Volume) và Hợp đồng mở (Open Interest)',
       objective: 'Dùng khối lượng và hợp đồng mở để đánh giá sức mạnh của một nhịp giá.',
       body: [
@@ -105,6 +116,9 @@ export const LEVEL8: Level = {
       id: 'l8-combine',
       figures: ['c-five-steps'],
       diagram: 'srflip',
+      videos: [
+        { title: 'Trading and Analysis - Technical Analysis', url: 'https://www.youtube.com/watch?v=DxTp1UCw3eY', source: 'CME Group', lang: 'en', duration: '2:38', note: 'Video tiếng Anh của CME Group: tổng quan phân tích kỹ thuật để ghép các bước đọc biểu đồ.' },
+      ],
       title: 'Kết hợp: quy trình đọc biểu đồ 5 bước',
       objective: 'Ghép Dow, Price Action và Khối lượng thành một quy trình kiểm tra trước khi ra quyết định giả lập.',
       body: [

@@ -9,6 +9,9 @@ export const LEVEL7: Level = {
     {
       id: 'l7-swing',
       figures: ['c-swing-r', 'c-swing-rules'],
+      videos: [
+        { title: 'Trading and Analysis - Trend vs. Anti-Trend', url: 'https://www.youtube.com/watch?v=ccfZkg7hACI', source: 'CME Group', lang: 'en', duration: '2:25', note: 'Video tiếng Anh của CME Group: khác biệt giữa giao dịch theo xu hướng và ngược xu hướng.' },
+      ],
       title: 'Lướt sóng: rủi ro trước, rồi khung 7 quy tắc',
       objective: 'Hiểu rủi ro đòn bẩy, khác biệt với lướt ngắn, và có khung quy tắc để kiểm thử.',
       body: [

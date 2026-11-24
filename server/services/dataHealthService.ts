@@ -16,6 +16,7 @@ import { loadEngineCandles } from './engineCandles.ts';
 import { EXCHANGE_LICENSING_MATRIX } from './exchangeLicensing.ts';
 import { buildFundamentalDomainsStatus, fundamentalStore } from './fundamentalService.ts';
 import type { IInstrumentRepository } from './repository.ts';
+import { primaryGeminiModel } from '../lib/geminiModels.ts';
 
 type CotHealthLike = Pick<CotService, 'health'>;
 
@@ -359,7 +360,7 @@ export async function buildFullDataHealthReport(deps: DataHealthDeps): Promise<F
       readyInstruments: geminiReady ? readyD1Count : 0,
       totalInstruments: commodities.length,
       notes: geminiReady
-        ? 'GEMINI_API_KEY hoạt động phía server (gemini-4-hydrogen); AI chỉ diễn giải số liệu đã xác thực.'
+        ? 'GEMINI_API_KEY hoạt động phía server (' + primaryGeminiModel() + '); AI chỉ diễn giải số liệu đã xác thực.'
         : 'GEMINI_API_KEY chưa được thiết lập trên server; báo cáo AI bị khóa an toàn (fail-closed).',
     },
   ];

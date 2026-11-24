@@ -89,6 +89,9 @@ export const LEVEL4: Level = {
     {
       id: 'l4-cot',
       figures: ['b-cot-groups', 'b-cot-timeline'],
+      videos: [
+        { title: 'Presentation on Commitments of Traders (COT) Report, July 29 Agricultural Advisory Committee Meeting', url: 'https://www.youtube.com/watch?v=TNhXJXbifFY', source: 'CFTC', lang: 'en', duration: '6:39', note: 'Trình bày tiếng Anh của CFTC (cơ quan phát hành báo cáo COT): báo cáo COT gồm những gì và cách phân nhóm trader.' },
+      ],
       title: 'COT: vị thế của các nhóm lớn',
       objective: 'Hiểu báo cáo COT của CFTC và giới hạn của nó.',
       body: [

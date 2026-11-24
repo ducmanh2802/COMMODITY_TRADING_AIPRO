@@ -9,6 +9,9 @@ export const LEVEL2: Level = {
     {
       id: 'l2-mxv',
       figures: ['a-mxv-ecosystem', 'a-mxv-vs-hnx'],
+      videos: [
+        { title: 'Sở Giao dịch Hàng hóa Việt Nam hoạt động như thế nào?', url: 'https://www.youtube.com/watch?v=FaDSlxcrcnw', source: 'MXV (Sở Giao dịch Hàng hóa Việt Nam)', lang: 'vi', duration: '13:45', note: 'Video tiếng Việt từ kênh YouTube chính thức của MXV: Sở Giao dịch Hàng hoá Việt Nam vận hành thế nào.' },
+      ],
       title: 'MXV là gì?',
       objective: 'Biết MXV, loại hợp đồng giao dịch và mối liên thông với sàn quốc tế.',
       body: [
@@ -30,6 +33,9 @@ export const LEVEL2: Level = {
     {
       id: 'l2-brokers',
       figures: ['a-broker-check', 'a-broker-flags'],
+      videos: [
+        { title: 'VTV1: Nâng cao chất lượng và chuyên nghiệp hóa đối với các thành viên trên thị trường hàng hóa I MXV', url: 'https://www.youtube.com/watch?v=FzIhioc_Z9g', source: 'MXV (Sở Giao dịch Hàng hóa Việt Nam)', lang: 'vi', duration: '2:04', note: 'Phóng sự VTV1 đăng trên kênh chính thức của MXV: vai trò và yêu cầu đối với thành viên kinh doanh của MXV.' },
+      ],
       title: 'Thành viên môi giới của MXV',
       objective: 'Biết vì sao phải giao dịch qua thành viên được cấp phép và cách kiểm tra.',
       body: [
@@ -50,6 +56,9 @@ export const LEVEL2: Level = {
     {
       id: 'l2-hours',
       figures: ['a-time-shift'],
+      videos: [
+        { title: 'VTV1: Sở Giao dịch Hàng hóa Việt Nam và sức hấp dẫn khi liên thông với thế giới I MXV', url: 'https://www.youtube.com/watch?v=nQcbSIxxB94', source: 'MXV (Sở Giao dịch Hàng hóa Việt Nam)', lang: 'vi', duration: '3:07', note: 'Phóng sự VTV1 trên kênh chính thức của MXV: MXV liên thông với sàn quốc tế, nên giờ giao dịch đi theo giờ sàn nước ngoài.' },
+      ],
       title: 'Giờ giao dịch liên thông',
       objective: 'Hiểu vì sao phần lớn hoạt động diễn ra chiều tối đến rạng sáng giờ Việt Nam.',
       body: [
@@ -93,6 +102,9 @@ export const LEVEL2: Level = {
     {
       id: 'l2-account',
       figures: ['a-account-steps'],
+      videos: [
+        { title: 'Getting Started with your Broker', url: 'https://www.youtube.com/watch?v=Wsx7V2ncxko', source: 'CME Group', lang: 'en', duration: '3:46', note: 'Video tiếng Anh của CME Group: điều cần hỏi và chuẩn bị khi mở tài khoản với công ty môi giới (bối cảnh Mỹ, nguyên tắc tương tự).' },
+      ],
       title: 'Quy trình mở tài khoản',
       objective: 'Nắm các bước điển hình và điều cần đọc kỹ trước khi nộp tiền.',
       body: [

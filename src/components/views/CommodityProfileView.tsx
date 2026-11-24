@@ -156,7 +156,7 @@ export function CommodityProfileView() {
       setVerdict({
         symbol: selectedSymbol,
         generatedAt: new Date().toISOString(),
-        model: 'gemini-4-hydrogen',
+        model: 'Gemini',
         status: 'AI_ERROR',
         message: err instanceof Error ? err.message : 'Lỗi kết nối AI Verdict.',
         answers: null,

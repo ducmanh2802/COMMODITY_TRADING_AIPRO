@@ -96,7 +96,7 @@ export function CycleResearchReportView() {
         <section className="bg-[var(--surface)] border border-[var(--accent)]/40 rounded-lg p-5 space-y-4">
           <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] pb-3">
             <h2 className="text-base font-semibold text-[var(--text-strong)]">{report.aiExecutiveBriefing.headline}</h2>
-            <span className="text-xs font-mono text-[var(--accent)]">{report.model ?? 'gemini-4-hydrogen'}</span>
+            <span className="text-xs font-mono text-[var(--accent)]">{report.model ?? 'Gemini'}</span>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
             <div className="bg-[var(--bg)] border border-[var(--border)] rounded p-3.5 space-y-1.5">

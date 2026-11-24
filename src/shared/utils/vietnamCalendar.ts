@@ -29,6 +29,12 @@ export interface MarketHolidayEntry {
   mxvImpact: 'MXV_CLOSED' | 'PARTIAL_CLOSE' | 'BANKING_FX_DELAY';
   impactDescriptionVi: string;
   affectedSymbols: string[];
+  /**
+   * PROJECTED = the closure is inferred (e.g. from the official public-holiday schedule) and the exchange's own
+   * notice was not found; never presented as confirmed. Absent = entry as originally curated.
+   */
+  status?: 'OFFICIAL' | 'PROJECTED';
+  sourceUrl?: string;
 }
 
 export interface EconomicCalendarEvent {
@@ -114,6 +120,35 @@ function formatHm(totalMinutes: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
+const TET_2027_SOURCE = 'https://hatinh.gov.vn/vi/bai-viet/tet-nguyen-dan-2027-cong-chuc-vien-chuc-duoc-nghi-7-ngay-lien-tuc';
+
+/** Tết 2027 rest days (04/02–10/02/2027, Thông báo 11483/TB-BNV). Weekend days are kept for display only. */
+function tetMxvClosure2027(): MarketHolidayEntry[] {
+  const days: Array<[string, string]> = [
+    ['2027-02-04', '28 Tết'],
+    ['2027-02-05', '29 Tết (Giao thừa)'],
+    ['2027-02-06', 'Mùng 1 Tết'],
+    ['2027-02-07', 'Mùng 2 Tết'],
+    ['2027-02-08', 'Mùng 3 Tết'],
+    ['2027-02-09', 'Mùng 4 Tết (nghỉ bù)'],
+    ['2027-02-10', 'Mùng 5 Tết (nghỉ bù)'],
+  ];
+  return days.map(([dateIso, label]) => ({
+    id: `hol-${dateIso}-tet`,
+    dateIso,
+    nameVi: `Tết Nguyên Đán Đinh Mùi 2027 — ${label} (dự kiến MXV nghỉ)`,
+    nameEn: 'Vietnam Lunar New Year 2027 (MXV closure projected)',
+    region: 'VIETNAM',
+    affectedExchanges: ['MXV'],
+    mxvImpact: 'MXV_CLOSED',
+    impactDescriptionVi:
+      'Lịch nghỉ Tết chính thức của cán bộ, công chức: 04/02–10/02/2027 (Thông báo 11483/TB-BNV). MXV chưa công bố lịch nghỉ giao dịch Tết 2027 — ngày nghỉ MXV là DỰ KIẾN, hãy kiểm tra thông báo chính thức của Sở MXV. Ngân hàng nghỉ nên nạp/rút ký quỹ VND gián đoạn.',
+    affectedSymbols: ['RC', 'KC', 'JRU', 'ZS', 'ZC', 'CL', 'SI'],
+    status: 'PROJECTED',
+    sourceUrl: TET_2027_SOURCE,
+  }));
+}
+
 /**
  * Official 2026–2027 Market Holidays affecting Vietnam MXV & linked international futures exchanges.
  */
@@ -191,30 +226,13 @@ export const MARKET_HOLIDAYS: MarketHolidayEntry[] = [
       'Nông sản CBOT & ICE US đóng cửa; Kim loại/Năng lượng CME/NYMEX dừng sớm. Cà phê Robusta (LRC) và Cao su RSS3 (JRU) mở bình thường.',
     affectedSymbols: ['ZS', 'ZC', 'ZW', 'KC', 'SB', 'CT', 'CL', 'NG', 'SI'],
   },
-  {
-    id: 'hol-2027-02-05-tet',
-    dateIso: '2027-02-05',
-    nameVi: 'Tết Nguyên Đán Đinh Mùi 2027 (29 Tết — Nghỉ MXV)',
-    nameEn: 'Vietnam Lunar New Year (Tet Holiday)',
-    region: 'VIETNAM',
-    affectedExchanges: ['MXV'],
-    mxvImpact: 'BANKING_FX_DELAY',
-    impactDescriptionVi:
-      'Hệ thống ngân hàng nội địa Việt Nam nghỉ Tết; nạp/rút ký quỹ VND tại MXV gián đoạn đến hết kỳ nghỉ. Các sàn quốc tế vẫn chạy theo giờ quốc tế.',
-    affectedSymbols: ['RC', 'KC', 'JRU', 'ZS', 'CL', 'SI'],
-  },
-  {
-    id: 'hol-2027-02-06-tet',
-    dateIso: '2027-02-06',
-    nameVi: 'Mùng 1 Tết Nguyên Đán Đinh Mùi 2027',
-    nameEn: 'Lunar New Year Day 1 (Vietnam)',
-    region: 'VIETNAM',
-    affectedExchanges: ['MXV'],
-    mxvImpact: 'MXV_CLOSED',
-    impactDescriptionVi:
-      'Nghỉ Tết cổ truyền Việt Nam — kiểm tra thông báo lịch nghỉ khớp lệnh & thanh toán bù trừ chính thức của Sở MXV.',
-    affectedSymbols: ['RC', 'KC', 'JRU', 'ZS', 'ZC', 'CL', 'SI'],
-  },
+  // Tết Nguyên Đán Đinh Mùi 2027 (Mùng 1 = Saturday 2027-02-06).
+  // Public-holiday basis (OFFICIAL): Bộ Nội vụ Thông báo số 11483/TB-BNV ngày 09/10/2026 — civil servants rest
+  // 7 consecutive days Thu 04/02/2027 .. Wed 10/02/2027 (5 Tết days per Bộ luật Lao động 2019 Art. 112 + 2 compensatory
+  // days for the weekend). Reported e.g. at https://hatinh.gov.vn/vi/bai-viet/tet-nguyen-dan-2027-cong-chuc-vien-chuc-duoc-nghi-7-ngay-lien-tuc
+  // (retrieved 2026-11-24). MXV CLOSURE on these weekdays is PROJECTED: MXV's own Tết 2027 trading-holiday notice was
+  // not found on 2026-11-24; MXV has historically followed the official public-holiday schedule. Confirm on mxv.com.vn.
+  ...tetMxvClosure2027(),
   {
     id: 'hol-2027-02-15-us',
     dateIso: '2027-02-15',

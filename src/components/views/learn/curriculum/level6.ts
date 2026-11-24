@@ -96,6 +96,10 @@ export const LEVEL6: Level = {
     {
       id: 'l6-example',
       figures: ['b-zc-indicators', 'b-zc-risk'],
+      videos: [
+        { title: 'Fundamentals and Agricultural Futures', url: 'https://www.youtube.com/watch?v=IhAHOlnnl1g', source: 'CME Group', lang: 'en', duration: '3:29', note: 'Video tiếng Anh của CME Group: các yếu tố cơ bản (cung, cầu, báo cáo USDA) tác động giá nông sản.' },
+        { title: 'Trader\'s Edge: Navigating the Volatility in Corn Futures', url: 'https://www.youtube.com/watch?v=qNC4egjGAQc', source: 'CME Group', lang: 'en', duration: '5:03', note: 'Video tiếng Anh của CME Group: biến động của ngô và cách đọc bối cảnh thị trường ngô.' },
+      ],
       title: 'Ví dụ hoàn chỉnh: nghiên cứu ngô (ZC)',
       objective: 'Đi qua 7 bước với số liệu giả định, để thấy cách ghép các chỉ số.',
       body: [

@@ -171,13 +171,16 @@ test('Christmas 2026-12-25 + weekend combo for ICE US softs', () => {
   assert.equal(d1Row('ICE:BRN', last, now).status, 'STALE'); // Brent: no sourced calendar -> weekend-only
 });
 
-test('Tet 2027: MXV_CLOSED day from holiday data (2027-02-06, Saturday) is a holiday, banking-only 2027-02-05 is not', () => {
-  const last = Date.UTC(2027, 1, 5);
-  const now = Date.UTC(2027, 1, 8, 12);
+test('Tet 2027: projected MXV closure 2027-02-04..10 (Thông báo 11483/TB-BNV) skips the five weekdays', () => {
+  const last = Date.UTC(2027, 1, 3); // Wed 03/02, last trading day before Tết
+  const now = Date.UTC(2027, 1, 11, 12); // Thu 11/02 noon, first day back
   const h = holidaysFor('MXV:ZSE', last, now);
-  assert.ok(h.has('2027-02-06'));
-  assert.ok(!h.has('2027-02-05'));
-  assert.equal(d1Row('MXV:ZSE', last, now).effectiveAgeMs, 1.5 * D); // Fri..Mon12h = 3.5d - weekend 2d
+  for (const d of ['2027-02-04', '2027-02-05', '2027-02-08', '2027-02-09', '2027-02-10']) assert.ok(h.has(d), d);
+  assert.ok(!h.has('2027-02-03'));
+  assert.ok(!h.has('2027-02-11'));
+  // 8.5d elapsed - weekend 2d - 5 holiday weekdays = 1.5d
+  assert.equal(d1Row('MXV:ZSE', last, now).effectiveAgeMs, 1.5 * D);
+  assert.equal(d1Row('XYZ:ZSE', last, now).effectiveAgeMs, 6.5 * D);
 });
 
 test('MXV weekday closure 2027-05-31 is skipped for MXV ids', () => {

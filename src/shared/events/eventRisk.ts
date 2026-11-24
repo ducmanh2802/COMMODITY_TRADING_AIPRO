@@ -14,12 +14,28 @@
  *                                        shown as 'estimated' (never presented as a confirmed date).
  * Federal holidays: the repo's projected US exchange holidays (minus Good Friday, not a federal holiday) plus
  * Columbus Day (2nd Mon Oct) and Veterans Day (Nov 11, observed) from the fixed federal rules.
- * Not included: FOMC / CPI / USDA Crop Progress — no machine-readable schedule is wired into the repo.
+ *   FOMC statement / US CPI              Explicit official date lists in usMacroCalendar.ts (federalreserve.gov,
+ *                                        bls.gov) at 14:00 / 08:30 ET -> 'official'. They move USD, rates and risk, so
+ *                                        they apply to EVERY instrument (scope 'macro'), listed after the
+ *                                        instrument-specific reports. Dates beyond the published lists are absent.
+ * Not included: USDA Crop Progress — no machine-readable schedule is wired into the repo.
  */
 import { addCalendarDays, makeDate, weekday, type IsoDate } from '../contracts/dates.ts';
 import { projectUsExchangeHolidays } from '../contracts/holidays/usExchange.ts';
+import {
+  FOMC_HOUR_ET,
+  FOMC_MINUTE_ET,
+  FOMC_SOURCE,
+  FOMC_STATEMENT_DATES,
+  US_CPI_HOUR_ET,
+  US_CPI_MINUTE_ET,
+  US_CPI_RELEASE_DATES,
+  US_CPI_SOURCE,
+} from './usMacroCalendar.ts';
 
-export type EventRiskKind = 'EIA_PETROLEUM' | 'EIA_NATGAS' | 'USDA_EXPORT_SALES' | 'WASDE';
+export type EventRiskKind = 'EIA_PETROLEUM' | 'EIA_NATGAS' | 'USDA_EXPORT_SALES' | 'WASDE' | 'FOMC' | 'US_CPI';
+/** instrument = report specific to this market; macro = US-wide release that affects every instrument. */
+export type EventRiskScope = 'instrument' | 'macro';
 /** official = date from the agency's published list; rule = fixed weekly rule; estimated = may differ. */
 export type EventRiskStatus = 'official' | 'rule' | 'estimated';
 
@@ -32,6 +48,7 @@ export interface EventRiskItem {
   etDate: IsoDate;
   hoursUntil: number;
   status: EventRiskStatus;
+  scope: EventRiskScope;
   source: string;
 }
 
@@ -40,7 +57,11 @@ export const EVENT_RISK_SOURCES: Record<EventRiskKind, string> = {
   EIA_NATGAS: 'https://ir.eia.gov/ngs/schedule.html',
   USDA_EXPORT_SALES: 'https://apps.fas.usda.gov/export-sales/esrd1.html',
   WASDE: 'https://www.usda.gov/oce/commodity/wasde',
+  FOMC: FOMC_SOURCE,
+  US_CPI: US_CPI_SOURCE,
 };
+
+const MACRO_KINDS: ReadonlySet<EventRiskKind> = new Set(['FOMC', 'US_CPI']);
 
 const WASDE_SYMBOLS = new Set(['ZS', 'ZM', 'ZL', 'ZC', 'ZW', 'ZR', 'KE', 'CT', 'SB']);
 const EXPORT_SALES_SYMBOLS = new Set(['ZS', 'ZM', 'ZL', 'ZC', 'ZW', 'KE', 'CT']);
@@ -156,16 +177,21 @@ export interface EventRiskInput {
   horizonHours?: number;
 }
 
-/** Upcoming high-impact reports for `symbol` within (now, now + horizon], sorted by time. */
+/**
+ * Upcoming high-impact reports for `symbol` within (now, now + horizon]: instrument-specific reports first, then
+ * the US macro releases (FOMC/CPI, any non-empty symbol); each group sorted by time.
+ */
 export function upcomingEventRisk(input: EventRiskInput): EventRiskItem[] {
   const { nowMs } = input;
   if (!Number.isFinite(nowMs)) return [];
   const horizonMs = (input.horizonHours ?? 24) * 3_600_000;
+  if (!input.symbol.trim()) return [];
   const kinds = new Set(relevantKinds(input.symbol));
-  if (kinds.size === 0) return [];
 
   const start = nyDate(nowMs);
   const cands: Candidate[] = [];
+  for (const d of FOMC_STATEMENT_DATES) cands.push({ kind: 'FOMC', etDate: d, hour: FOMC_HOUR_ET, minute: FOMC_MINUTE_ET, status: 'official' });
+  for (const d of US_CPI_RELEASE_DATES) cands.push({ kind: 'US_CPI', etDate: d, hour: US_CPI_HOUR_ET, minute: US_CPI_MINUTE_ET, status: 'official' });
   // Scan a few ET days around the window so holiday shifts (+/-1 day) are caught.
   for (let i = -2; i <= 3; i++) cands.push(...weeklyCandidates(addCalendarDays(start, i), kinds));
 
@@ -204,10 +230,12 @@ export function upcomingEventRisk(input: EventRiskInput): EventRiskItem[] {
       etDate: c.etDate,
       hoursUntil: Math.round(((atMs - nowMs) / 3_600_000) * 10) / 10,
       status: c.status,
+      scope: MACRO_KINDS.has(c.kind) ? 'macro' : 'instrument',
       source: EVENT_RISK_SOURCES[c.kind],
     });
   }
-  return out.sort((a, b) => a.atMs - b.atMs);
+  const rank = (x: EventRiskItem) => (x.scope === 'instrument' ? 0 : 1);
+  return out.sort((a, b) => rank(a) - rank(b) || a.atMs - b.atMs);
 }
 
 /** "HH:mm dd/MM" in Asia/Ho_Chi_Minh. */

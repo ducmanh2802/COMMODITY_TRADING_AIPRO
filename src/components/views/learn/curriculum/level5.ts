@@ -61,6 +61,9 @@ export const LEVEL5: Level = {
     {
       id: 'l5-journal',
       figures: ['b-journal-r', 'b-journal-loop'],
+      videos: [
+        { title: 'Step 5. Keep a Trade Log', url: 'https://www.youtube.com/watch?v=raNCUgK8jdI', source: 'CME Group', lang: 'en', duration: '1:43', note: 'Video tiếng Anh của CME Group: vì sao cần và nên ghi gì trong nhật ký giao dịch.' },
+      ],
       title: 'Nhật ký giao dịch',
       objective: 'Ghi lại quyết định để học từ chính mình.',
       body: [
