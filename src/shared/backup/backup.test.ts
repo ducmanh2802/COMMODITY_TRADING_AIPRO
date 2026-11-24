@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BACKUP_KEYS, buildBackup, restoreBackup, tradesToCsv, validateBackup, type StorageLike } from './backup';
+import { BACKUP_KEYS, buildBackup, csvCell, restoreBackup, tradesToCsv, validateBackup, type StorageLike } from './backup';
 
 function mem(init: Record<string, string> = {}): StorageLike & { m: Map<string, string> } {
   const m = new Map(Object.entries(init));
@@ -65,4 +65,20 @@ test('csv exports mistake tags (Vietnamese labels joined by "; ") and the mistak
   const lines = csv.slice(1).trim().split('\r\n');
   assert.deepEqual(lines[0].split(',').slice(-2), ['Lỗi đã gắn', 'Ghi chú lỗi']);
   assert.equal(lines[1], '1970-01-01 00:00,1970-01-01 00:00,X,Bán,1,1,2,-5,,,"Không đặt cắt lỗ; Lệnh ""gỡ"" (trả thù)","vội, ""gỡ"""');
+});
+
+test('csv neutralises formula injection in text cells but keeps numbers (incl. negatives) as numbers', () => {
+  assert.equal(csvCell('=HYPERLINK("http://x")'), `"'=HYPERLINK(""http://x"")"`);
+  assert.equal(csvCell('+1+2'), "'+1+2");
+  assert.equal(csvCell('-2+3'), "'-2+3");
+  assert.equal(csvCell('@SUM(A1)'), "'@SUM(A1)");
+  assert.equal(csvCell('safe text'), 'safe text');
+  assert.equal(csvCell(-5), '-5');
+  assert.equal(csvCell(-1.25), '-1.25');
+  assert.equal(csvCell('-5'), '-5');
+  const csv = tradesToCsv([
+    { openedAtMs: 0, closedAtMs: 0, instrumentId: '=cmd', side: 'LONG', contracts: 1, entryPrice: 1, exitPrice: 2, pnlVnd: -7, rMultiple: -0.5, mistakeNote: '@evil' },
+  ]);
+  const line = csv.slice(1).trim().split('\r\n')[1];
+  assert.equal(line, "1970-01-01 00:00,1970-01-01 00:00,'=cmd,Mua,1,1,2,-7,-0.5,,,'@evil");
 });

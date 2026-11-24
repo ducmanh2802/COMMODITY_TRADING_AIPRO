@@ -22,6 +22,7 @@ import { registerContestRoutes } from './routes/contest.ts';
 import { registerPaperReviewRoutes } from './routes/paperReview.ts';
 import { MacroService } from './macro/service.ts';
 import { logger, errorSummary } from './lib/logger.ts';
+import { isAiConfigured } from './lib/geminiModels.ts';
 import { accessLogMiddleware, installProcessHooks, recordError } from './lib/observability.ts';
 import { apiCompress } from './lib/apiCompress.ts';
 import { registerStatusRoutes } from './routes/status.ts';
@@ -489,9 +490,8 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
           environment: process.env.NODE_ENV ?? 'development',
         },
         capabilities: {
-          geminiServerKeyConfigured: Boolean(
-            process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 0
-          ),
+          // Name kept for client compatibility: true when any AI key is set (GEMINI_API_KEY or OPENROUTER_API_KEY).
+          geminiServerKeyConfigured: isAiConfigured(),
           firebaseConfigured: true,
           marketDataProvidersTotal: providers.length,
           marketDataProvidersConnected: summary.connected,
@@ -910,7 +910,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   (app.locals.warmers as { name: string; refresh: () => Promise<void> }[]).push({ name: 'radar', refresh: () => radarCache.refresh() });
   // T67: optional Telegram notifications (off without TELEGRAM_BOT_TOKEN); server.ts starts the poller + jobs from these.
   registerNotifyRoutes(app);
-  // Paper trading weekly review: optional AI narrative from summary numbers only (503 without GEMINI_API_KEY).
+  // Paper trading weekly review: optional AI narrative from summary numbers only (503 without GEMINI_API_KEY / OPENROUTER_API_KEY).
   registerPaperReviewRoutes(app);
   // T63: monthly paper-trading contest (server-side fills on latest server quotes; SQLite; Firebase ID token for join/orders).
   {
@@ -1215,9 +1215,10 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
 
       const result = await generateLessonRecommendations(parsed.data, {
         ...(options.lessonRecommender ?? {}),
+        // The route answers 200 with status UNAVAILABLE, so this is not a 5xx: warn-log only, no error metric.
         logError: (msg, err) => {
-          (options.lessonRecommender?.logError ?? logError)(msg, err);
-          recordError(req, res, err, 502);
+          if (options.lessonRecommender?.logError) options.lessonRecommender.logError(msg, err);
+          else logger.warn(msg, { error: errorSummary(err) });
         },
       });
 

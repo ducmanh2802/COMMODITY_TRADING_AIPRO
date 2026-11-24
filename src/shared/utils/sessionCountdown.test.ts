@@ -108,3 +108,11 @@ test('holiday awareness attaches matching market holiday entry when Vietnam date
   assert.equal(cbot?.holidayToday?.id, 'hol-2026-11-26-us');
   assert.equal(lme?.holidayToday, null);
 });
+
+test('MXV-only holidays (Tet) do not appear on foreign exchange cards', () => {
+  const tet = new Date('2027-02-08T03:00:00Z'); // Monday in Vietnam, MXV-only Tet entry
+  const overview = buildAllSessionCountdowns(tet, 'ALL');
+  for (const s of overview.sessions) {
+    assert.ok(!s.holidayToday?.affectedExchanges.every((ex) => ex === 'MXV'), `${s.id} shows an MXV-only holiday`);
+  }
+});

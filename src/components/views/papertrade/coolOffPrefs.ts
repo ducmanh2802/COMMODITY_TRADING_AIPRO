@@ -42,13 +42,28 @@ export function setCoolOffEnabled(on: boolean): void {
   listeners.forEach((l) => l());
 }
 
-function subscribe(l: () => void): () => void {
+/** Exported for tests. */
+export function subscribeCoolOffPrefs(l: () => void): () => void {
   listeners.add(l);
   return () => listeners.delete(l);
 }
 
+/**
+ * Another tab changed the prefs (or cleared storage): drop the module cache and notify subscribers so this tab
+ * re-reads localStorage. Exported for tests.
+ */
+export function handlePaperPrefsStorageEvent(e: { key: string | null }): void {
+  if (e.key !== null && e.key !== PAPER_PREFS_KEY) return;
+  cache = null;
+  listeners.forEach((l) => l());
+}
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', handlePaperPrefsStorageEvent);
+}
+
 export function useCoolOffEnabled(): boolean {
-  return useSyncExternalStore(subscribe, getCoolOffEnabled, () => DEFAULT_PREFS.coolOff);
+  return useSyncExternalStore(subscribeCoolOffPrefs, getCoolOffEnabled, () => DEFAULT_PREFS.coolOff);
 }
 
 type StateLike = Parameters<typeof coolOffTradesFromState>[0];

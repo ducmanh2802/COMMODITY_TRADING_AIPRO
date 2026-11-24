@@ -23,6 +23,7 @@ export default defineConfig({
       YAHOO_ENABLED: '',
       SCHEDULER_ENABLED: 'false',
       GEMINI_API_KEY: '',
+      OPENROUTER_API_KEY: '',
       NODE_ENV: 'production',
     },
   },

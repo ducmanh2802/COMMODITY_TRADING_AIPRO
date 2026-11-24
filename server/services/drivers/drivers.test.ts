@@ -3,7 +3,7 @@ import test from 'node:test';
 import type { DatedValue } from '../marketPulse/math.ts';
 import { addDays, decompose, empiricalCone, flagEventDays, ols, parametricCone, quantile, realizedSigma, Z80 } from './math.ts';
 import { FORBIDDEN_WORDS, DRIVERS_DISCLAIMER, attributionSentence, coneSentence, roundShare } from './text.ts';
-import { computeDrivers, computeSeasonality } from './service.ts';
+import { computeDrivers, computeSeasonality, isWasdeInstrument } from './service.ts';
 
 // Deterministic pseudo-random (LCG) so tests are offline and stable.
 function rng(seed: number) {
@@ -181,6 +181,7 @@ test('computeDrivers end-to-end offline: all sections, no forbidden words in gen
   assert.equal(out.scenarios.path.length, 22);
   assert.ok(out.events.upcoming.some((e) => e.kind === 'WASDE' && e.scheduled === 'official'));
   assert.ok(out.events.upcoming.some((e) => e.kind === 'COT'));
+  assert.equal(out.events.wasdeKnown, true);
   assert.ok(out.seasonality.status === 'OK' || out.seasonality.status === 'UNAVAILABLE');
   const texts = [
     ...out.attribution.horizons.map((h) => h.sentence),
@@ -197,4 +198,26 @@ test('computeDrivers end-to-end offline: all sections, no forbidden words in gen
   assert.equal(thin.attribution.status, 'UNAVAILABLE');
   assert.equal(thin.scenarios.status, 'UNAVAILABLE');
   assert.equal(thin.seasonality.status, 'UNAVAILABLE');
+  assert.equal(thin.events.wasdeKnown, false);
+});
+
+test('WASDE events: CT/SB softs included, coffee excluded; failed ESMIS fetch -> wasdeKnown false', () => {
+  assert.equal(isWasdeInstrument({ category: 'AGRICULTURE', exchangeSymbol: 'ZC' }), true);
+  assert.equal(isWasdeInstrument({ category: 'SOFT_COMMODITIES', exchangeSymbol: 'CT' }), true);
+  assert.equal(isWasdeInstrument({ category: 'SOFT_COMMODITIES', exchangeSymbol: 'SB' }), true);
+  assert.equal(isWasdeInstrument({ category: 'SOFT_COMMODITIES', exchangeSymbol: 'KC' }), false);
+  assert.equal(isWasdeInstrument({ category: 'ENERGY', exchangeSymbol: 'CL' }), false);
+  const day = '2026-11-25';
+  const wasde = { status: 'OFFICIAL', releases: [], upcoming: [{ releasedAtRaw: 'x', releasedAt: `${addDays(day, 2)}T12:00:00Z`, title: 'WASDE', files: [] }], keyNumbers: [], calendarSourceUrl: '', fetchedAt: '' } as never;
+  const base = { series: [], source: null, peers: [], usd: null, y10: null, now: new Date(`${day}T08:00:00Z`) };
+  const ct = computeDrivers({ ...base, inst: { id: 'CT', exchangeSymbol: 'CT', productName: 'Bông', category: 'SOFT_COMMODITIES', exchange: 'ICE' }, wasde });
+  assert.ok(ct.events.upcoming.some((e) => e.kind === 'WASDE'));
+  assert.equal(ct.events.wasdeKnown, true);
+  const kc = computeDrivers({ ...base, inst: { id: 'KC', exchangeSymbol: 'KC', productName: 'Cà phê', category: 'SOFT_COMMODITIES', exchange: 'ICE' }, wasde });
+  assert.ok(!kc.events.upcoming.some((e) => e.kind === 'WASDE'));
+  // ESMIS unavailable: status OK, upcoming has no WASDE rows, but wasdeKnown false so clients estimate.
+  const sb = computeDrivers({ ...base, inst: { id: 'SB', exchangeSymbol: 'SB', productName: 'Đường', category: 'SOFT_COMMODITIES', exchange: 'ICE' }, wasde: null });
+  assert.equal(sb.events.status, 'OK');
+  assert.equal(sb.events.wasdeKnown, false);
+  assert.ok(!sb.events.upcoming.some((e) => e.kind === 'WASDE'));
 });

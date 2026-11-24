@@ -1117,12 +1117,14 @@ export default function LearnView() {
                   aria-labelledby={`h-${level.id}`}
                 >
                   <div className="flex items-center gap-2">
+                    {/* Heading wraps the toggle button (a heading inside a button is invalid and hides it from heading navigation). */}
+                    <h2 className="min-w-0 flex-1">
                     <button
                       type="button"
                       aria-expanded={isOpen}
                       aria-controls={bodyId}
                       onClick={() => toggleLevel(level.id)}
-                      className="min-w-0 flex-1 text-left flex items-center gap-2.5 group rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                      className="w-full min-w-0 text-left flex items-center gap-2.5 group rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                     >
                       {isOpen ? (
                         <ChevronDown className="w-4 h-4 shrink-0 text-[var(--muted)] group-hover:text-[var(--accent-text)]" aria-hidden="true" />
@@ -1133,14 +1135,15 @@ export default function LearnView() {
                         {complete ? <CheckCircle2 className="w-4 h-4 text-[var(--positive)]" aria-hidden="true" /> : level.number}
                       </ProgressRing>
                       <span className="min-w-0">
-                        <h2 id={`h-${level.id}`} className="text-sm sm:text-base font-semibold text-[var(--text-strong)] group-hover:text-[var(--accent-text)] transition-colors">
+                        <span id={`h-${level.id}`} className="block text-sm sm:text-base font-semibold text-[var(--text-strong)] group-hover:text-[var(--accent-text)] transition-colors">
                           {level.title}
-                        </h2>
-                        <span className={`block text-xs font-mono tabular-nums ${complete ? 'text-[var(--positive)] font-semibold' : 'text-[var(--muted)]'}`}>
+                        </span>
+                        <span className={`block text-xs font-mono tabular-nums ${complete ? 'text-[var(--positive)] font-semibold' : 'text-[var(--muted)] font-normal'}`}>
                           {t('ac.levels.count', { d: doneCount, t: total })}
                         </span>
                       </span>
                     </button>
+                    </h2>
                     <ExamBadge state={examState} />
                   </div>
 

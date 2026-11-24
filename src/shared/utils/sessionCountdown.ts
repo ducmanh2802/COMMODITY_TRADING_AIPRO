@@ -20,13 +20,14 @@ export interface ExchangeMeta {
   holidayExchanges: readonly ExchangeCode[];
 }
 
+// Each card matches only its own exchange's holidays: MXV-only closures (e.g. Tết) are not foreign-exchange holidays.
 export const EXCHANGE_META: Record<ExchangeId, ExchangeMeta> = {
-  CBOT: { symbols: ['ZC', 'ZS', 'ZW', 'ZM', 'ZL'], primarySymbol: 'ZC', holidayExchanges: ['CBOT', 'MXV'] },
-  NYMEX: { symbols: ['CL', 'NG'], primarySymbol: 'CL', holidayExchanges: ['NYMEX', 'MXV'] },
-  COMEX: { symbols: ['GC', 'SI', 'HG'], primarySymbol: 'GC', holidayExchanges: ['COMEX', 'MXV'] },
-  ICEUS: { symbols: ['KC', 'SB', 'CT', 'CC'], primarySymbol: 'KC', holidayExchanges: ['ICE', 'MXV'] },
-  ICEEU: { symbols: ['BRN', 'RC'], primarySymbol: 'RC', holidayExchanges: ['ICE', 'MXV'] },
-  SGX: { symbols: ['FEF'], primarySymbol: 'FEF', holidayExchanges: ['SGX', 'MXV'] },
+  CBOT: { symbols: ['ZC', 'ZS', 'ZW', 'ZM', 'ZL'], primarySymbol: 'ZC', holidayExchanges: ['CBOT'] },
+  NYMEX: { symbols: ['CL', 'NG'], primarySymbol: 'CL', holidayExchanges: ['NYMEX'] },
+  COMEX: { symbols: ['GC', 'SI', 'HG'], primarySymbol: 'GC', holidayExchanges: ['COMEX'] },
+  ICEUS: { symbols: ['KC', 'SB', 'CT', 'CC'], primarySymbol: 'KC', holidayExchanges: ['ICE'] },
+  ICEEU: { symbols: ['BRN', 'RC'], primarySymbol: 'RC', holidayExchanges: ['ICE'] },
+  SGX: { symbols: ['FEF'], primarySymbol: 'FEF', holidayExchanges: ['SGX'] },
   LME: { symbols: [], primarySymbol: null, holidayExchanges: [] },
 };
 

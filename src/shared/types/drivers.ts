@@ -91,7 +91,11 @@ export interface DriversResponse {
   asOf: string | null;
   attribution: DriverAttribution;
   scenarios: DriverScenarios;
-  events: { status: DriverStatus; upcoming: DriverUpcomingEvent[]; notes: DText[] };
+  /**
+   * wasdeKnown: true only when official ESMIS upcoming WASDE dates were actually fetched; false means the
+   * WASDE rows (if any) are not authoritative and clients should fall back to an estimated window.
+   */
+  events: { status: DriverStatus; upcoming: DriverUpcomingEvent[]; notes: DText[]; wasdeKnown: boolean };
   seasonality: DriverSeasonality;
   disclaimer: DText;
 }

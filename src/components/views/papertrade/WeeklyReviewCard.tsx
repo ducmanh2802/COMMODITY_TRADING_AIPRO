@@ -37,7 +37,12 @@ const fmtDay = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 export function WeeklyReviewCard({ trades, startingCapitalVnd, instrumentName }: { trades: readonly WeeklyTrade[]; startingCapitalVnd: number; instrumentName?: (id: string) => string }) {
   const t = useT();
   const [offset, setOffset] = useState<0 | -1>(0);
-  const [now] = useState(() => Date.now());
+  // 60s tick so the week window rolls over (e.g. Monday 00:00 Vietnam) without a remount.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
   const r = useMemo(() => computeWeeklyReview(trades, startingCapitalVnd, now, offset), [trades, startingCapitalVnd, now, offset]);
   const ai = useAiNarrative(r.trades > 0 ? reviewSummaryForAi(r) : null);
   // Mistake tags are codes (mistakeStats.ts); show their translated label when one exists.

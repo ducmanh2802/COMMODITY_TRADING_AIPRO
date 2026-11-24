@@ -16,7 +16,7 @@ import { loadEngineCandles } from './engineCandles.ts';
 import { EXCHANGE_LICENSING_MATRIX } from './exchangeLicensing.ts';
 import { buildFundamentalDomainsStatus, fundamentalStore } from './fundamentalService.ts';
 import type { IInstrumentRepository } from './repository.ts';
-import { primaryGeminiModel } from '../lib/geminiModels.ts';
+import { isAiConfigured, primaryGeminiModel } from '../lib/geminiModels.ts';
 
 type CotHealthLike = Pick<CotService, 'health'>;
 
@@ -317,7 +317,8 @@ export async function buildFullDataHealthReport(deps: DataHealthDeps): Promise<F
 
   const readyD1Count = commodities.filter((c) => c.dailyBars >= 30).length;
   const readyLongCount = commodities.filter((c) => c.dailyBars >= 120).length;
-  const geminiReady = Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 0);
+  const geminiReady = isAiConfigured();
+  const hasGeminiKey = Boolean(process.env.GEMINI_API_KEY?.trim());
 
   const engineReadiness: EngineReadinessItem[] = [
     {
@@ -360,8 +361,11 @@ export async function buildFullDataHealthReport(deps: DataHealthDeps): Promise<F
       readyInstruments: geminiReady ? readyD1Count : 0,
       totalInstruments: commodities.length,
       notes: geminiReady
-        ? 'GEMINI_API_KEY hoạt động phía server (' + primaryGeminiModel() + '); AI chỉ diễn giải số liệu đã xác thực.'
-        : 'GEMINI_API_KEY chưa được thiết lập trên server; báo cáo AI bị khóa an toàn (fail-closed).',
+        ? (hasGeminiKey
+            ? 'GEMINI_API_KEY hoạt động phía server (' + primaryGeminiModel() + ')'
+            : 'OPENROUTER_API_KEY hoạt động phía server (chỉ OpenRouter, không có GEMINI_API_KEY)') +
+          '; AI chỉ diễn giải số liệu đã xác thực.'
+        : 'Chưa thiết lập GEMINI_API_KEY hoặc OPENROUTER_API_KEY trên server; báo cáo AI bị khóa an toàn (fail-closed).',
     },
   ];
 

@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { z } from 'zod';
-import { generateContentWithFallback, primaryGeminiModel } from '../lib/geminiModels.ts';
+import { generateContentWithFallback, isAiConfigured, primaryGeminiModel } from '../lib/geminiModels.ts';
 import type {
   CommodityProfileDossier,
   DailyResearchReportPayload,
@@ -36,7 +36,12 @@ function geminiErrorMessage(err: unknown, fallback: string): string {
   return name === 'TimeoutError' || name === 'AbortError' ? 'Gemini không phản hồi kịp (timeout).' : fallback;
 }
 
-function createGeminiClient(): GoogleGenAI | null {
+/**
+ * undefined = no AI configured (neither GEMINI_API_KEY nor OPENROUTER_API_KEY);
+ * null = OpenRouter only (no Gemini key, so no GoogleGenAI is created).
+ */
+function createGeminiClient(): GoogleGenAI | null | undefined {
+  if (!isAiConfigured()) return undefined;
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) return null;
   return new GoogleGenAI({
@@ -72,14 +77,14 @@ export async function generateEightQuestionVerdict(
   }
 
   const ai = createGeminiClient();
-  if (!ai) {
+  if (ai === undefined) {
     return {
       symbol: summary.instrument.id,
       generatedAt: now,
       model: primaryGeminiModel(),
       status: 'AI_UNCONFIGURED',
       message:
-        'Chưa có khoá Gemini nên AI Verdict tạm tắt. Lấy khoá miễn phí tại aistudio.google.com/apikey, thêm dòng GEMINI_API_KEY=... vào file .env rồi khởi động lại server. Bảng "Đánh giá các mã" vẫn có nhận xét miễn phí theo công thức.',
+        'Chưa có khoá AI nên AI Verdict tạm tắt. Lấy khoá miễn phí tại aistudio.google.com/apikey (GEMINI_API_KEY=...) hoặc openrouter.ai/keys (OPENROUTER_API_KEY=...), thêm vào file .env rồi khởi động lại server. Bảng "Đánh giá các mã" vẫn có nhận xét miễn phí theo công thức.',
       answers: null,
     };
   }
@@ -179,11 +184,11 @@ export async function enrichDailyReportWithAi(
   baseReport: DailyResearchReportPayload
 ): Promise<DailyResearchReportPayload> {
   const ai = createGeminiClient();
-  if (!ai) {
+  if (ai === undefined) {
     return {
       ...baseReport,
       aiStatus: 'AI_UNCONFIGURED',
-      message: 'GEMINI_API_KEY chưa được cấu hình trên server.',
+      message: 'Server chưa cấu hình GEMINI_API_KEY hoặc OPENROUTER_API_KEY.',
     };
   }
 

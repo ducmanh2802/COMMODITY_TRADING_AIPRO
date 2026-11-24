@@ -76,6 +76,15 @@ export interface DriversComputeInput {
   now: Date;
 }
 
+/** WASDE soft commodities: cotton + sugar (SOFT_COMMODITIES in server/data/instruments.ts). Coffee/cocoa are not in WASDE. */
+const WASDE_SOFT_SYMBOLS = new Set(['CT', 'SB']);
+
+/** WASDE covers grains/oilseeds (AGRICULTURE) and, among SOFT_COMMODITIES, cotton (CT) and sugar (SB). */
+export function isWasdeInstrument(inst: Pick<InstrumentDefinition, 'category' | 'exchangeSymbol'>): boolean {
+  if (inst.category === 'AGRICULTURE') return true;
+  return inst.category === 'SOFT_COMMODITIES' && WASDE_SOFT_SYMBOLS.has(inst.exchangeSymbol.toUpperCase());
+}
+
 /** Pure composition (offline-testable). */
 export function computeDrivers(x: DriversComputeInput): DriversResponse {
   const { inst, series, now } = x;
@@ -179,7 +188,9 @@ export function computeDrivers(x: DriversComputeInput): DriversResponse {
   const from = addDays(today, 0);
   const to = addDays(today, 14);
   const upcoming: DriverUpcomingEvent[] = [];
-  if (inst.category === 'AGRICULTURE')
+  const wasdeRelevant = isWasdeInstrument(inst);
+  const wasdeKnown = (x.wasde?.upcoming.length ?? 0) > 0;
+  if (wasdeRelevant)
     for (const r of x.wasde?.upcoming ?? []) {
       const d = r.releasedAt?.slice(0, 10);
       if (d && d >= from && d <= to)
@@ -195,7 +206,7 @@ export function computeDrivers(x: DriversComputeInput): DriversResponse {
   const notes: DText[] = [
     t('Chưa có nguồn máy đọc được chính thức cho lịch CPI và FOMC, vì vậy không hiển thị ngày cụ thể.', 'No official machine-readable source for CPI and FOMC dates is wired in, so no dates are shown.'),
   ];
-  if (inst.category === 'AGRICULTURE' && (x.wasde?.upcoming.length ?? 0) === 0)
+  if (wasdeRelevant && !wasdeKnown)
     notes.push(t('ESMIS chưa công bố ngày WASDE sắp tới trong dữ liệu; không ước tính.', 'ESMIS lists no upcoming WASDE date; none is estimated.'));
 
   // 3. Seasonality: next calendar month after the last bar
@@ -208,7 +219,7 @@ export function computeDrivers(x: DriversComputeInput): DriversResponse {
     asOf,
     attribution,
     scenarios,
-    events: { status: 'OK', upcoming, notes },
+    events: { status: 'OK', upcoming, notes, wasdeKnown },
     seasonality: seas,
     disclaimer: DRIVERS_DISCLAIMER,
   };

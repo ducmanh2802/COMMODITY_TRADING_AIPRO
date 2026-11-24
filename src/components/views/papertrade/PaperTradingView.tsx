@@ -219,7 +219,9 @@ export function PaperTradingView() {
   const [answers, setAnswers] = useState<Answers>(EMPTY_ANSWERS);
   const [eventsManual, setEventsManual] = useState<Answer>(null);
   const [limitText, setLimitText] = useState(String(DEFAULT_RISK_LIMIT_PCT));
-  const [upcoming, setUpcoming] = useState<{ date: string }[] | null>(null);
+  const [upcoming, setUpcoming] = useState<{ date: string; kind?: string }[] | null>(null);
+  // True only when the server actually fetched official ESMIS WASDE dates; otherwise the banner estimates.
+  const [wasdeKnown, setWasdeKnown] = useState(false);
 
   // position editing + settings draft
   const [editPos, setEditPos] = useState<{ id: string; sl: string; tp: string; journal: string; noteId: string } | null>(null);
@@ -289,12 +291,16 @@ export function PaperTradingView() {
   const driverSymbol = inst?.exchangeSymbol ?? null;
   useEffect(() => {
     setUpcoming(null);
+    setWasdeKnown(false);
     if (!driverSymbol) return;
     const ctrl = new AbortController();
-    fetchJsonWithRetry<{ events?: { status?: string; upcoming?: { date: string }[] } }>(`/api/drivers/${encodeURIComponent(driverSymbol)}`, { signal: ctrl.signal })
+    fetchJsonWithRetry<{ events?: { status?: string; upcoming?: { date: string; kind?: string }[]; wasdeKnown?: boolean } }>(`/api/drivers/${encodeURIComponent(driverSymbol)}`, { signal: ctrl.signal })
       .then((d) => {
         const ev = d?.events;
-        if (!ctrl.signal.aborted && ev && ev.status !== 'UNAVAILABLE' && Array.isArray(ev.upcoming)) setUpcoming(ev.upcoming);
+        if (!ctrl.signal.aborted && ev && ev.status !== 'UNAVAILABLE' && Array.isArray(ev.upcoming)) {
+          setUpcoming(ev.upcoming);
+          setWasdeKnown(ev.wasdeKnown === true);
+        }
       })
       .catch(() => undefined);
     return () => ctrl.abort();
@@ -684,7 +690,7 @@ export function PaperTradingView() {
                   </div>
                 </div>
                 <p className="text-[11px] text-[var(--text)]/60">{t('pt.order.marginAssumed')}</p>
-                <EventRiskBanner symbol={inst?.exchangeSymbol} upcoming={upcoming} />
+                <EventRiskBanner symbol={inst?.exchangeSymbol} upcoming={wasdeKnown ? upcoming : null} />
                 <PreTradeChecklist
                   answers={answers}
                   onAnswer={(id, v) => setAnswers((a) => ({ ...a, [id]: v }))}

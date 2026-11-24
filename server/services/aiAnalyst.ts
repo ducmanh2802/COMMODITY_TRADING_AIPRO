@@ -13,7 +13,7 @@
  */
 import { GoogleGenAI, Type } from '@google/genai';
 import { z } from 'zod';
-import { generateContentWithFallback, geminiModelChain, primaryGeminiModel } from '../lib/geminiModels.ts';
+import { generateContentWithFallback, geminiModelChain, isAiConfigured, primaryGeminiModel } from '../lib/geminiModels.ts';
 import type {
   AiDataInput,
   AiDataInputId,
@@ -59,8 +59,13 @@ function resolveAiTimeoutMs(): number {
   return Number.isFinite(n) && n >= 1000 && n <= 120_000 ? Math.floor(n) : DEFAULT_AI_TIMEOUT_MS;
 }
 
-export function createGeminiModelClient(apiKey: string, model: string = resolveGeminiModel()): AiModelClient {
-  const ai = new GoogleGenAI({ apiKey });
+/**
+ * Model client walking the free Gemini chain, then OpenRouter. apiKey null/blank = no Gemini key:
+ * no GoogleGenAI is created and only OpenRouter (OPENROUTER_API_KEY) is tried.
+ */
+export function createGeminiModelClient(apiKey: string | null, model: string = resolveGeminiModel()): AiModelClient {
+  const key = apiKey?.trim();
+  const ai = key ? new GoogleGenAI({ apiKey: key }) : null;
   return {
     model,
     async generate({ systemInstruction, prompt, signal }) {
@@ -450,7 +455,10 @@ const ModelOutputSchema = z.object({
 });
 
 export interface AiAnalystDeps {
-  /** undefined → process.env.GEMINI_API_KEY. Empty/blank → UNAVAILABLE (NO_API_KEY). */
+  /**
+   * undefined → process.env (GEMINI_API_KEY or OPENROUTER_API_KEY; either is enough).
+   * Explicit empty/blank → UNAVAILABLE (NO_API_KEY).
+   */
   apiKey?: string | null;
   /** Injected model client (tests). Default: Gemini client built from the key. */
   modelClient?: AiModelClient;
@@ -492,8 +500,9 @@ export async function generateResearchSummary(
     postCheck: { flagged: false, removedSentences: 0, matchedTerms: [], droppedUnsourcedFacts: 0 },
   };
 
-  const apiKey = deps.apiKey === undefined ? process.env.GEMINI_API_KEY : deps.apiKey;
-  if (!apiKey || apiKey.trim().length === 0) {
+  const apiKey = deps.apiKey === undefined ? process.env.GEMINI_API_KEY?.trim() || null : deps.apiKey?.trim() || null;
+  const configured = deps.apiKey === undefined ? isAiConfigured() : Boolean(apiKey);
+  if (!configured) {
     return { ...base, unavailableReason: 'NO_API_KEY' };
   }
 
@@ -502,7 +511,7 @@ export async function generateResearchSummary(
     return { ...base, unavailableReason: 'NO_VERIFIED_DATA' };
   }
 
-  const client = deps.modelClient ?? createGeminiModelClient(apiKey.trim());
+  const client = deps.modelClient ?? createGeminiModelClient(apiKey);
   const timeoutMs = deps.timeoutMs ?? resolveAiTimeoutMs();
   const prompt = buildAnalystPrompt(ctx, inputs, now);
   const logError = deps.logError ?? ((m: string, e: unknown) => console.error(m, e));

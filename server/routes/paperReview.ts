@@ -1,11 +1,12 @@
 /**
  * POST /api/paper/weekly-review: optional short Vietnamese narrative for the paper-trading weekly review.
  * Input = computed summary NUMBERS only (no names, ids, journals, instruments). Education only, never advice.
- * No GEMINI_API_KEY or any model error -> 503 / 502 and the client silently keeps its formula text.
+ * No GEMINI_API_KEY / OPENROUTER_API_KEY or any model error -> 503 / 502 and the client silently keeps its formula text.
  */
 import type { Express, Request, Response } from 'express';
 import { z } from 'zod';
 import { createRateLimiter } from '../middleware/rateLimit.ts';
+import { isAiConfigured } from '../lib/geminiModels.ts';
 import { createGeminiModelClient, stripRecommendationLanguage } from '../services/aiAnalyst.ts';
 
 const num = z.number().finite().nullable();
@@ -40,11 +41,10 @@ const SYSTEM =
   'Không bịa số liệu, không dự đoán giá, không khuyến nghị mua/bán bất kỳ hàng hóa nào. ' +
   'Trả JSON có trường "summary"; "keyFacts", "risks" và "dataGaps" là mảng rỗng.';
 
-/** Gemini narrator, or null when GEMINI_API_KEY is not set. */
+/** AI narrator, or null when neither GEMINI_API_KEY nor OPENROUTER_API_KEY is set. */
 export function createWeeklyNarrator(env: NodeJS.ProcessEnv = process.env): WeeklyNarrator | null {
-  const key = env.GEMINI_API_KEY?.trim();
-  if (!key) return null;
-  const client = createGeminiModelClient(key);
+  if (!isAiConfigured(env)) return null;
+  const client = createGeminiModelClient(env.GEMINI_API_KEY?.trim() || null);
   return async (s) => {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), 15_000);

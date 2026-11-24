@@ -19,7 +19,7 @@ export const vi = {
   'air.importCsv': 'Nhập dữ liệu CSV',
   'air.unavailableTitle': 'Không có tóm tắt AI (UNAVAILABLE)',
   'air.reason.NO_API_KEY':
-    'Máy chủ chưa cấu hình GEMINI_API_KEY nên không tạo tóm tắt. Dữ liệu gốc vẫn được liệt kê bên dưới.',
+    'Máy chủ chưa cấu hình GEMINI_API_KEY hoặc OPENROUTER_API_KEY nên không tạo tóm tắt. Dữ liệu gốc vẫn được liệt kê bên dưới.',
   'air.reason.NO_VERIFIED_DATA':
     'Chưa có dữ liệu thị trường đã xác minh (giá, nến hoặc COT) cho {symbol} ({tf}), nên không gọi AI.',
   'air.reason.MODEL_TIMEOUT': 'Mô hình AI phản hồi quá thời gian cho phép. Vui lòng thử lại sau.',
@@ -71,7 +71,7 @@ export const en: Record<keyof typeof vi, string> = {
   'air.importCsv': 'Import CSV data',
   'air.unavailableTitle': 'AI summary UNAVAILABLE',
   'air.reason.NO_API_KEY':
-    'GEMINI_API_KEY is not configured on the server, so no summary was generated. The underlying data is still listed below.',
+    'Neither GEMINI_API_KEY nor OPENROUTER_API_KEY is configured on the server, so no summary was generated. The underlying data is still listed below.',
   'air.reason.NO_VERIFIED_DATA':
     'No verified market data (quote, candles or COT) for {symbol} ({tf}), so the AI was not called.',
   'air.reason.MODEL_TIMEOUT': 'The AI model timed out. Please try again later.',

@@ -122,6 +122,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [activeModule, setActiveModule] = useState<AppModuleId>('today-hub');
   // Focus primarily on Vietnam MXV commodities by default (Cà phê Robusta · ICE:RC / MXV:LRC)
   const [selectedSymbol, setSelectedSymbolState] = useState<string>('RC');
+  const selectedSymbolRef = useRef(selectedSymbol);
   const [marketScope, setMarketScope] = useState<MarketScope>('MXV');
   const [searchQuery, setSearchQuery] = useState('');
   const [timeframe, setTimeframe] = useState<Timeframe>('D1');
@@ -364,13 +365,13 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     });
   }, [refreshHealth]);
 
+  // Side effect (search history) stays outside the state updater: updaters must be pure and run twice in StrictMode.
   const setSelectedSymbol = useCallback((symbol: string) => {
-    setSelectedSymbolState((prev) => {
-      if (symbol && symbol !== prev) {
-        recordCommoditySearch(symbol);
-      }
-      return symbol;
-    });
+    if (symbol && symbol !== selectedSymbolRef.current) {
+      recordCommoditySearch(symbol);
+    }
+    selectedSymbolRef.current = symbol;
+    setSelectedSymbolState(symbol);
   }, []);
 
   useEffect(() => {
@@ -393,6 +394,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     if (symbol) {
       recordCommoditySearch(symbol);
     }
+    selectedSymbolRef.current = symbol;
     setSelectedSymbolState(symbol);
     setActiveModule(module);
   }, []);

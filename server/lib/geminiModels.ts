@@ -122,30 +122,73 @@ export async function generateViaOpenRouter(
 
 // --------------------------------------------------------------------------- unified entry point
 
+/** True when AI can run at all: a Gemini key or an OpenRouter key is set (either is enough). */
+export function isAiConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  return Boolean(env.GEMINI_API_KEY?.trim() || env.OPENROUTER_API_KEY?.trim());
+}
+
 /**
- * Calls Gemini generateContent with the first model, falling back to the next on retryable errors,
- * then to OpenRouter free models when OPENROUTER_API_KEY is set.
- * Non-retryable errors (bad request, abort, invalid key) are thrown immediately.
+ * True for errors no other model/provider can fix: caller abort, or an auth failure
+ * (401, 403, or 400 carrying API_KEY_INVALID / "API key not valid").
+ */
+export function isFatalModelError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { status?: unknown; code?: unknown; name?: unknown; message?: unknown };
+  if (e.name === 'AbortError') return true;
+  const status = Number(e.status ?? e.code);
+  if (status === 401 || status === 403) return true;
+  const msg = typeof e.message === 'string' ? e.message : '';
+  if (/API_KEY_INVALID|API key not valid|PERMISSION_DENIED|UNAUTHENTICATED/i.test(msg)) return true;
+  return false;
+}
+
+/**
+ * Gemma models on the Gemini API often reject systemInstruction and JSON-schema output config
+ * (400 INVALID_ARGUMENT). Strip those and fold the system text into the user prompt instead.
+ */
+export function adaptParamsForModel(
+  params: Omit<GenerateContentParameters, 'model'>,
+  model: string
+): Omit<GenerateContentParameters, 'model'> {
+  if (!model.startsWith('gemma-')) return params;
+  const cfg = { ...((params.config ?? {}) as Record<string, unknown>) };
+  const sys = systemToText(cfg.systemInstruction);
+  const wantJson = cfg.responseMimeType === 'application/json' || cfg.responseSchema !== undefined;
+  delete cfg.systemInstruction;
+  delete cfg.responseSchema;
+  delete cfg.responseMimeType;
+  delete cfg.responseJsonSchema;
+  const preamble = [sys, wantJson ? 'Trả lời CHỈ bằng một object JSON hợp lệ.' : null].filter(Boolean).join('\n');
+  const contents = preamble ? `${preamble}\n\n${contentsToText(params.contents)}` : params.contents;
+  return { ...params, contents, config: cfg as GenerateContentParameters['config'] };
+}
+
+/**
+ * Calls Gemini generateContent with the first model, falling back to the next on any error except
+ * abort/auth, then to OpenRouter free models when OPENROUTER_API_KEY is set (also when ai is null,
+ * i.e. no Gemini key). Abort and auth errors are thrown immediately.
  * The caller's abortSignal travels inside params.config and is honoured by every attempt.
  */
 export async function generateContentWithFallback(
   ai: Pick<GoogleGenAI, 'models'> | null,
   params: Omit<GenerateContentParameters, 'model'>,
   models: readonly string[] = geminiModelChain(),
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  fetchImpl: FetchLike = fetch
 ): Promise<{ response: GenerateContentResponse; model: string }> {
   let lastErr: unknown = new Error('No AI model configured');
   if (ai) {
     for (const model of models) {
       try {
-        const response = await ai.models.generateContent({ ...params, model }); // abortSignal travels in params.config
+        const response = await ai.models.generateContent({ ...adaptParamsForModel(params, model), model }); // abortSignal travels in params.config
         return { response, model };
       } catch (err) {
         lastErr = err;
-        if (!isRetryableModelError(err)) throw err;
+        const signal = (params.config as { abortSignal?: AbortSignal } | undefined)?.abortSignal;
+        if (isFatalModelError(err) || signal?.aborted) throw err;
       }
     }
   }
-  if (env.OPENROUTER_API_KEY?.trim()) return generateViaOpenRouter(params, env);
+  if (env.OPENROUTER_API_KEY?.trim()) return generateViaOpenRouter(params, env, fetchImpl);
   throw lastErr;
 }

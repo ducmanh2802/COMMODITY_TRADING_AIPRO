@@ -188,8 +188,11 @@ function mistakeLabel(code: string): string {
   return key in disciplineVi ? disciplineVi[key] : code;
 }
 
-function csvCell(v: string | number): string {
-  const s = String(v);
+/** Exported for tests. Neutralises spreadsheet formula injection (text starting with = + - @ tab CR gets a leading '). */
+export function csvCell(v: string | number): string {
+  let s = String(v);
+  const numeric = typeof v === 'number' || /^-?\d+(?:\.\d+)?$/.test(s);
+  if (!numeric && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
