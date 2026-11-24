@@ -45,9 +45,13 @@ import {
 import { SessionHistory } from './SessionHistory';
 import { SessionReport, type NoteOption } from './SessionReport';
 import { PaperStatsPanel } from './PaperStatsPanel';
+import { EventRiskBanner } from './EventRiskBanner';
+import { WeeklyReviewCard } from './WeeklyReviewCard';
 import { ExpiryCalendar, RollReminderChip } from './ExpiryCalendar';
 import { Stat, bigBtn, cardCls, fmtPct, fmtVnd, inputCls, labelCls, pnlColor, signedVnd } from './paperUi';
 import { usePaperStore } from './usePaperStore';
+import { CoolOffBanner, CoolOffToggle } from './CoolOffBanner';
+import { coolOffNow } from './coolOffPrefs';
 import { OrderCalculator } from '../learn/OrderCalculator';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
 import { PlanBadge, PreTradeChecklist } from './PreTradeChecklist';
@@ -288,6 +292,7 @@ export function PaperTradingView() {
 
   const prepareOrder = () => {
     setOrderError(null);
+    if (coolOffNow(state)) return setOrderError(t('co.blocked'));
     if (!session || !snap || !inst) return setOrderError(t('pt.err.pickInstrument'));
     if (!specRes || !specRes.ok) return setOrderError(t(`pt.specBlock.${specRes ? specRes.reason : 'NO_SPEC'}` as TKey));
     if (!gate || !gate.ok) return setOrderError(t(`pt.block.${gate ? gate.reason : 'NO_QUOTE'}` as TKey));
@@ -308,6 +313,10 @@ export function PaperTradingView() {
 
   const confirmOrder = async () => {
     if (!pending || !session || !fx || !specRes || !specRes.ok) return;
+    if (coolOffNow(state)) {
+      setPending(null);
+      return setOrderError(t('co.blocked'));
+    }
     const perContract = marginPerContractUsd(specRes.spec, pending.fill, session.settings.marginPct, pending.explicitMarginUsd);
     const position: PaperPosition = {
       id: newPaperId('pos'),
@@ -472,7 +481,10 @@ export function PaperTradingView() {
       ) : !store.ready ? (
         <p className="text-sm text-[var(--text)]/60">{t('pt.loading')}</p>
       ) : tab === 'stats' ? (
-        <PaperStatsPanel startingCapitalVnd={session?.startingCapitalVnd ?? 0} trades={trades} instrumentName={instrumentName} />
+        <div className="space-y-5">
+          <WeeklyReviewCard trades={trades} startingCapitalVnd={session?.startingCapitalVnd ?? 0} instrumentName={instrumentName} />
+          <PaperStatsPanel startingCapitalVnd={session?.startingCapitalVnd ?? 0} trades={trades} instrumentName={instrumentName} />
+        </div>
       ) : tab === 'history' ? (
         <SessionHistory
           state={state}
@@ -549,6 +561,7 @@ export function PaperTradingView() {
                 </div>
                 <details className="text-xs" onToggle={(e) => (e.currentTarget as HTMLDetailsElement).open && !settingsDraft && setSettingsDraft({ marginPct: String(session.settings.marginPct), feePerContractUsd: String(session.settings.feePerContractUsd), slippageTicks: String(session.settings.slippageTicks), marginCallPct: String(session.settings.marginCallPct), stopOutPct: String(session.settings.stopOutPct) })}>
                   <summary className="cursor-pointer text-[var(--accent-text)]">{t('pt.settings.title')}</summary>
+                  <div className="mt-3"><CoolOffToggle /></div>
                   {settingsDraft && (
                     <div className="mt-3 space-y-2">
                       <p className="text-[var(--text)]/60">{t('pt.settings.note')}</p>
@@ -573,6 +586,7 @@ export function PaperTradingView() {
                   <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('pt.order.title')}</h2>
                   <button type="button" onClick={() => setCalcOpen(true)} className="text-xs text-[var(--accent-text)] underline">{t('oc.open')}</button>
                 </div>
+                <CoolOffBanner state={state} />
                 <div>
                   <label htmlFor="pt-inst" className={labelCls}>{t('pt.order.instrument')}</label>
                   <select id="pt-inst" value={instId} onChange={(e) => { setInstId(e.target.value); setOrderError(null); }} className={inputCls}>
@@ -625,6 +639,7 @@ export function PaperTradingView() {
                   </div>
                 </div>
                 <p className="text-[11px] text-[var(--text)]/60">{t('pt.order.marginAssumed')}</p>
+                <EventRiskBanner symbol={inst?.exchangeSymbol} upcoming={upcoming} />
                 <PreTradeChecklist
                   answers={answers}
                   onAnswer={(id, v) => setAnswers((a) => ({ ...a, [id]: v }))}

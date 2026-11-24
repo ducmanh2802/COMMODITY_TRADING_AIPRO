@@ -14,6 +14,8 @@ export const BACKUP_KEYS = {
   learnGoal: 'ctap.learnGoal',
   review: 'ctap.review.v1',
   program: 'ctap.program.v1',
+  /** Paper-trading preferences (cool-off rule on/off), papertrade/coolOffPrefs PAPER_PREFS_KEY. */
+  paperPrefs: 'ctap.paperPrefs.v1',
 } as const;
 
 export type BackupSection = keyof typeof BACKUP_KEYS;
@@ -103,6 +105,9 @@ export function validateBackup(json: unknown): ValidateResult {
   }
   if (data.program !== null && (typeof data.program !== 'object' || Array.isArray(data.program))) {
     return { ok: false, error: 'Dữ liệu lộ trình 3 tháng trong tệp không hợp lệ.' };
+  }
+  if (data.paperPrefs !== null && (typeof data.paperPrefs !== 'object' || Array.isArray(data.paperPrefs))) {
+    return { ok: false, error: 'Cài đặt giao dịch thử trong tệp không hợp lệ.' };
   }
   return { ok: true, backup: { version: o.version, exportedAt: o.exportedAt, data } };
 }

@@ -434,6 +434,13 @@ service cloud.firestore {
         && plan.onPlan is bool;
     }
 
+    // Self-review mistake tags on a closed paper trade (optional). Mirrors MISTAKE_TAGS in papertrade/mistakeStats.ts.
+    function isValidPaperMistakeTags(tags) {
+      return tags is list
+        && tags.size() <= 9
+        && tags.hasOnly(['noStop', 'movedStop', 'oversized', 'fomo', 'revenge', 'offPlan', 'ignoredNews', 'heldTooLong', 'other']);
+    }
+
     function isValidPaperJournal(data) {
       return data.journal is string
         && data.journal.size() <= 1000
@@ -473,7 +480,7 @@ service cloud.firestore {
 
     function isValidPaperOrder(data) {
       return data.keys().hasAll(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'exitPrice', 'stopLoss', 'takeProfit', 'closeReason', 'grossPnlUsd', 'feesVnd', 'pnlUsd', 'pnlVnd', 'rMultiple', 'fxRate', 'journal', 'researchNoteId', 'openedAt', 'closedAt'])
-        && data.keys().hasOnly(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'exitPrice', 'stopLoss', 'takeProfit', 'closeReason', 'grossPnlUsd', 'feesVnd', 'pnlUsd', 'pnlVnd', 'rMultiple', 'fxRate', 'journal', 'researchNoteId', 'openedAt', 'closedAt', 'plan'])
+        && data.keys().hasOnly(['userId', 'sessionId', 'instrumentId', 'side', 'contracts', 'entryPrice', 'exitPrice', 'stopLoss', 'takeProfit', 'closeReason', 'grossPnlUsd', 'feesVnd', 'pnlUsd', 'pnlVnd', 'rMultiple', 'fxRate', 'journal', 'researchNoteId', 'openedAt', 'closedAt', 'plan', 'mistakeTags', 'mistakeNote'])
         && data.userId is string
         && data.userId == request.auth.uid
         && data.sessionId is string
@@ -501,7 +508,9 @@ service cloud.firestore {
         && isValidPaperJournal(data)
         && data.openedAt is timestamp
         && data.closedAt is timestamp
-        && (!('plan' in data) || isValidPaperPlan(data.plan));
+        && (!('plan' in data) || isValidPaperPlan(data.plan))
+        && (!('mistakeTags' in data) || isValidPaperMistakeTags(data.mistakeTags))
+        && (!('mistakeNote' in data) || (data.mistakeNote is string && data.mistakeNote.size() <= 140));
     }
 
     // Users collection (PII isolated to verified owner only; list completely disabled)
@@ -683,7 +692,7 @@ service cloud.firestore {
       allow delete: if isValidId(positionId) && isVerifiedUser() && existing().userId == request.auth.uid;
     }
 
-    // Closed paper trades (order history): write-once, only the journal note may change afterwards.
+    // Closed paper trades (order history): write-once, only the journal note and mistake tags may change afterwards.
     match /paperOrders/{orderId} {
       allow get: if isValidId(orderId) && isVerifiedUser() && existing().userId == request.auth.uid;
       allow list: if isVerifiedUser() && resource.data.userId == request.auth.uid;
@@ -697,7 +706,7 @@ service cloud.firestore {
         && isVerifiedUser()
         && isValidPaperOrder(incoming())
         && existing().userId == request.auth.uid
-        && incoming().diff(existing()).affectedKeys().hasOnly(['journal', 'researchNoteId']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['journal', 'researchNoteId', 'mistakeTags', 'mistakeNote']);
       allow delete: if isValidId(orderId) && isVerifiedUser() && existing().userId == request.auth.uid;
     }
 

@@ -188,3 +188,21 @@ test('openOps / closeOps / closeSessionOps keep the balance consistent', () => {
   assert.equal(closed.sessions[0].finalEquityVnd, 777);
   assert.equal(closed.sessions[0].closedAtMs, 123);
 });
+
+test('mistake tags: optional, migration-safe, normalized and persisted', () => {
+  // Older records (no keys) stay key-less.
+  const old = deserializeState(JSON.stringify({ sessions: [], positions: [], trades: [{ ...trade }] })).trades[0];
+  assert.equal('mistakeTags' in old, false);
+  assert.equal('mistakeNote' in old, false);
+  assert.equal('mistakeTags' in buildTradeCreate('u', trade, F, false), false);
+  // Tagged trade survives a round trip; unknown tags are dropped.
+  const raw = { ...trade, mistakeTags: ['revenge', 'bogus', 'fomo'], mistakeNote: '  chased  ' };
+  const back = deserializeState(JSON.stringify({ sessions: [], positions: [], trades: [raw] })).trades[0];
+  assert.deepEqual(back.mistakeTags, ['fomo', 'revenge']);
+  assert.equal(back.mistakeNote, 'chased');
+  const doc = buildTradeCreate('u', back, F, false);
+  assert.deepEqual(doc.mistakeTags, ['fomo', 'revenge']);
+  // Patch via the reducer.
+  const s = applyOps({ ...EMPTY_STATE, trades: [trade] }, [{ t: 'tradeUpdate', id: trade.id, patch: { mistakeTags: ['noStop'], mistakeNote: 'x' } }]);
+  assert.deepEqual(s.trades[0].mistakeTags, ['noStop']);
+});

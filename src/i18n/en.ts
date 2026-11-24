@@ -31,6 +31,7 @@ import * as chain from './dict/chain';
 import * as instrument from './dict/instrument';
 import * as checklist from './dict/checklist';
 import * as paperstats from './dict/paperstats';
+import * as discipline from './dict/discipline';
 import * as contest from './dict/contest';
 import * as compare from './dict/compare';
 import * as drawing from './dict/drawing';
@@ -48,6 +49,7 @@ import * as sessions from './dict/sessions';
 import * as lab from './dict/lab';
 import * as readability from './dict/readability';
 import * as program from './dict/program';
+import * as papercoach from './dict/papercoach';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
@@ -82,6 +84,7 @@ export const en: Record<TKey, string> = {
   ...instrument.en,
   ...checklist.en,
   ...paperstats.en,
+  ...discipline.en,
   ...contest.en,
   ...compare.en,
   ...drawing.en,
@@ -102,4 +105,5 @@ export const en: Record<TKey, string> = {
   ...lab.en,
   ...readability.en,
   ...program.en,
+  ...papercoach.en,
 };

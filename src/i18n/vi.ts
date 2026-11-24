@@ -31,6 +31,7 @@ import * as chain from './dict/chain';
 import * as instrument from './dict/instrument';
 import * as checklist from './dict/checklist';
 import * as paperstats from './dict/paperstats';
+import * as discipline from './dict/discipline';
 import * as contest from './dict/contest';
 import * as compare from './dict/compare';
 import * as drawing from './dict/drawing';
@@ -48,6 +49,7 @@ import * as sessions from './dict/sessions';
 import * as lab from './dict/lab';
 import * as readability from './dict/readability';
 import * as program from './dict/program';
+import * as papercoach from './dict/papercoach';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
@@ -81,6 +83,7 @@ export const vi = {
   ...instrument.vi,
   ...checklist.vi,
   ...paperstats.vi,
+  ...discipline.vi,
   ...contest.vi,
   ...compare.vi,
   ...drawing.vi,
@@ -101,6 +104,7 @@ export const vi = {
   ...lab.vi,
   ...readability.vi,
   ...program.vi,
+  ...papercoach.vi,
 };
 
 export type TKey = keyof typeof vi;

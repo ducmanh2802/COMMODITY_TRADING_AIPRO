@@ -5,6 +5,7 @@
  * Limits MUST stay in sync with the paper* functions in firestore.rules.
  */
 import { normalizePlan, type PaperPlan } from './checklist';
+import { normalizeMistakeNote, normalizeMistakeTags, type MistakeTag } from './mistakeStats';
 import { DEFAULT_SETTINGS, balanceAfterOpen, type ClosedTradeCalc, type CloseReason, type PaperSettings, type PositionLike, type Side } from './paperMath';
 
 export const PAPER_LIMITS = {
@@ -65,6 +66,10 @@ export interface PaperTrade {
   closedAtMs: number;
   /** Copied from the position at close (optional: absent on older trades). */
   plan?: PaperPlan;
+  /** Self-review mistake tags (optional: absent on older / untagged trades). */
+  mistakeTags?: MistakeTag[];
+  /** Short note for the mistake tags (optional). */
+  mistakeNote?: string;
 }
 
 export interface PaperState {
@@ -129,7 +134,7 @@ export function newPaperId(prefix: 'ses' | 'pos' | 'ord', now: number = Date.now
 
 export type SessionPatch = Partial<Pick<PaperSession, 'name' | 'startingCapitalVnd' | 'balanceVnd' | 'settings' | 'status' | 'closedAtMs' | 'finalEquityVnd'>>;
 type PositionPatch = Partial<Pick<PaperPosition, 'stopLoss' | 'takeProfit' | 'journal' | 'researchNoteId'>>;
-export type TradePatch = Partial<Pick<PaperTrade, 'journal' | 'researchNoteId'>>;
+export type TradePatch = Partial<Pick<PaperTrade, 'journal' | 'researchNoteId' | 'mistakeTags' | 'mistakeNote'>>;
 
 export type PaperOp =
   | { t: 'sessionCreate'; session: PaperSession }
@@ -286,6 +291,7 @@ export function buildTradeCreate<T>(userId: string, t: PaperTrade, f: TsFns<T>, 
     openedAt: f.ts(t.openedAtMs),
     closedAt: preserveDates ? f.ts(t.closedAtMs) : f.now,
     ...(PERSIST_PLAN_TO_FIRESTORE && t.plan ? { plan: t.plan } : {}),
+    ...mistakeFields(t),
   };
 }
 
@@ -305,6 +311,13 @@ const side = (v: unknown): Side => (v === 'SHORT' ? 'SHORT' : 'LONG');
 function planField(v: unknown): { plan?: PaperPlan } {
   const plan = normalizePlan(v);
   return plan ? { plan } : {};
+}
+
+/** Spreadable optional mistake fields (no keys for untagged / older records; see firestore.rules isValidPaperOrder). */
+function mistakeFields(d: { mistakeTags?: unknown; mistakeNote?: unknown }): { mistakeTags?: MistakeTag[]; mistakeNote?: string } {
+  const tags = normalizeMistakeTags(d.mistakeTags);
+  const note = normalizeMistakeNote(d.mistakeNote);
+  return { ...(tags.length ? { mistakeTags: tags } : {}), ...(note ? { mistakeNote: note } : {}) };
 }
 
 export function parseSessionDoc(id: string, d: Record<string, unknown>): PaperSession {
@@ -369,6 +382,7 @@ export function parseTradeDoc(id: string, d: Record<string, unknown>): PaperTrad
     openedAtMs: tsToMs(d.openedAt) ?? Date.now(),
     closedAtMs: tsToMs(d.closedAt) ?? Date.now(),
     ...planField(d.plan),
+    ...mistakeFields(d),
   };
 }
 

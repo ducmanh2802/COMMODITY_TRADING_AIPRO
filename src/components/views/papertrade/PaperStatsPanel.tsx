@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { fmtFixed, fmtInt, useT } from '../../../i18n';
 import { EquityChart } from '../../ui/viz/EquityChart';
 import type { PaperTrade } from './paperModel';
+import { MistakeStatsCard } from './MistakeStatsCard';
 import { MIN_TRADES_TO_CONCLUDE, computePerformance, planTakeaway, type CurvePoint, type Drawdown, type GroupStats } from './paperStats';
 import { Stat, cardCls, fmtPct, fmtVnd, pnlColor, signedVnd } from './paperUi';
 
@@ -130,6 +131,8 @@ export function PaperStatsPanel({ startingCapitalVnd, trades, instrumentName }: 
           </p>
         </div>
       )}
+
+      <MistakeStatsCard trades={trades} />
     </div>
   );
 }

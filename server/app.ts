@@ -19,6 +19,7 @@ import { registerDriversRoutes } from './routes/drivers.ts';
 import { registerRadarRoutes } from './routes/radar.ts';
 import { registerNotifyRoutes } from './routes/notify.ts';
 import { registerContestRoutes } from './routes/contest.ts';
+import { registerPaperReviewRoutes } from './routes/paperReview.ts';
 import { MacroService } from './macro/service.ts';
 import { logger, errorSummary } from './lib/logger.ts';
 import { accessLogMiddleware, installProcessHooks, recordError } from './lib/observability.ts';
@@ -859,6 +860,8 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   (app.locals.warmers as { name: string; refresh: () => Promise<void> }[]).push({ name: 'radar', refresh: () => radarCache.refresh() });
   // T67: optional Telegram notifications (off without TELEGRAM_BOT_TOKEN); server.ts starts the poller + jobs from these.
   registerNotifyRoutes(app);
+  // Paper trading weekly review: optional AI narrative from summary numbers only (503 without GEMINI_API_KEY).
+  registerPaperReviewRoutes(app);
   // T63: monthly paper-trading contest (server-side fills on latest server quotes; SQLite; Firebase ID token for join/orders).
   {
     const contestInstruments = new Map<string, Awaited<ReturnType<typeof instrumentRepository.list>>[number]>();
