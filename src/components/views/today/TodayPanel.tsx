@@ -11,6 +11,7 @@ import { buildVietnamEconomicCalendar } from '../../../shared/utils/vietnamCalen
 import { fmtDateTime } from '../../../i18n';
 import { LazySection } from '../../common/LazySection';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
+import { SessionCountdownTimer } from '../../common/SessionCountdownTimer';
 import { Card } from '../../ui/Card';
 import { EmptyState } from '../../ui/EmptyState';
 import { SectionHeader } from '../../ui/SectionHeader';
@@ -378,6 +379,7 @@ export function TodayPanel() {
       />
       <TodayWeekCard />
       {body}
+      <SessionCountdownTimer variant="dashboard" onOpenWorldMarkets={() => setActiveModule('world')} />
       <FundamentalNewsFeed />
     </div>
   );

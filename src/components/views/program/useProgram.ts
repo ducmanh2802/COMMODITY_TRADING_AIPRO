@@ -3,7 +3,7 @@ import { DEFAULT_CAPITAL_VND } from '../papertrade/paperMath';
 import { usePaperStore } from '../papertrade/usePaperStore';
 import { CURRICULUM } from '../learn/curriculum';
 import { loadExams } from '../learn/exam/examLogic';
-import { loadProgress } from '../learn/progress';
+import { useAcademyProgress } from '../learn/progress';
 import { dueItems, loadReview } from '../learn/review';
 import {
   PROGRAM_WEEKS,
@@ -45,8 +45,9 @@ export interface ProgramModel {
 export function useProgram(): ProgramModel {
   const [state, setState] = useState<ProgramState>(loadProgram);
   const store = usePaperStore();
-  // Lesson / exam / review data live in localStorage and are read when the card mounts (they change on other pages).
-  const [local] = useState(() => ({ lessons: loadProgress().lessons, exams: loadExams(), reviewDue: dueItems(loadReview(), Date.now()).length }));
+  const { progress } = useAcademyProgress();
+  // Exam / review data live in localStorage and are read when the card mounts (they change on other pages).
+  const [local] = useState(() => ({ exams: loadExams(), reviewDue: dueItems(loadReview(), Date.now()).length }));
 
   const update = useCallback((fn: (s: ProgramState) => ProgramState) => {
     setState((s) => {
@@ -70,13 +71,13 @@ export function useProgram(): ProgramModel {
     const sessions = store.state.sessions;
     const session = sessions.find((s) => s.status === 'active') ?? sessions[0];
     return {
-      lessons: local.lessons,
+      lessons: progress.lessons,
       examsPassed: Object.fromEntries(Object.entries(local.exams).map(([k, v]) => [k, v.passed])),
       trades,
       startingCapitalVnd: session?.startingCapitalVnd ?? DEFAULT_CAPITAL_VND,
       reviewDue: local.reviewDue,
     };
-  }, [store.state, local]);
+  }, [store.state, progress.lessons, local]);
 
   const startDate = state.startDate;
   const computed = useMemo(() => {

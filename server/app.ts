@@ -65,6 +65,10 @@ import {
   type AiAnalystDeps,
   type AiCotQueryLike,
 } from './services/aiAnalyst.ts';
+import {
+  generateLessonRecommendations,
+  type LessonRecommenderDeps,
+} from './services/lessonRecommender.ts';
 import { CotService } from './cot/service.ts';
 import { historicalCandleStore } from './services/candleStore.ts';
 import { parseAndValidateCsvCandles } from './services/csvImporter.ts';
@@ -149,6 +153,8 @@ export interface CreateApiAppOptions {
    * (undefined → lazily created CotService on MARKET_DB_PATH; null → COT not looked up).
    */
   aiAnalyst?: AiAnalystDeps & { cot?: AiCotQueryLike | null };
+  /** Lesson Recommender overrides (API key / model client / timeout for tests). */
+  lessonRecommender?: LessonRecommenderDeps;
 }
 
 const CsvImportSchema = z.object({
@@ -229,6 +235,50 @@ const AiAnalyzeRequestSchema = z.object({
   symbol: z.string().min(1).max(24),
   timeframe: TimeframeEnum,
   language: z.enum(['vi', 'en']).default('vi'),
+});
+
+const RecommendLessonsRequestSchema = z.object({
+  language: z.enum(['vi', 'en']).default('vi'),
+  searchedCommodities: z
+    .array(
+      z.object({
+        symbol: z.string().min(1).max(24),
+        name: z.string().min(1).max(120),
+        category: z.string().max(40).nullable().optional(),
+        count: z.number().int().min(1).max(100_000),
+        lastAt: z.number().optional(),
+      })
+    )
+    .max(12)
+    .default([]),
+  openPositions: z
+    .array(
+      z.object({
+        symbol: z.string().min(1).max(24),
+        name: z.string().min(1).max(120),
+        category: z.string().max(40).nullable().optional(),
+        side: z.enum(['LONG', 'SHORT']),
+        contracts: z.number().positive().max(10_000),
+      })
+    )
+    .max(20)
+    .default([]),
+  candidates: z
+    .array(
+      z.object({
+        id: z.string().min(1).max(64),
+        title: z.string().min(1).max(200),
+        objective: z.string().min(1).max(400),
+        levelNumber: z.number().int().min(1).max(20),
+        levelTitle: z.string().min(1).max(200),
+        instrumentIds: z.array(z.string().max(32)).max(20),
+        done: z.boolean(),
+        matchedSymbols: z.array(z.string().max(24)).max(12),
+      })
+    )
+    .min(1)
+    .max(30),
+  maxResults: z.number().int().min(1).max(6).optional(),
 });
 
 const FundamentalCategoryEnum = z.enum([
@@ -1145,6 +1195,33 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
       );
 
       res.json({ analysis });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Academy AI Lesson Recommendations (Gemini server-side)
+  app.post('/api/ai/recommend-lessons', aiRateLimiter, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const parsed = RecommendLessonsRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({
+          error: 'VALIDATION_ERROR',
+          message: 'Invalid lesson recommendation request.',
+          details: parsed.error.issues,
+        });
+        return;
+      }
+
+      const result = await generateLessonRecommendations(parsed.data, {
+        ...(options.lessonRecommender ?? {}),
+        logError: (msg, err) => {
+          (options.lessonRecommender?.logError ?? logError)(msg, err);
+          recordError(req, res, err, 502);
+        },
+      });
+
+      res.json({ result });
     } catch (err) {
       next(err);
     }

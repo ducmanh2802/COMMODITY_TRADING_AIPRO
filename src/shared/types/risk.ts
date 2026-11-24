@@ -107,6 +107,7 @@ export type AppModuleId =
   | 'settings'
   | 'learn'
   | 'market-hub'
+  | 'world'
   | 'analysis-hub'
   | 'instrument'
   | 'mine-hub'

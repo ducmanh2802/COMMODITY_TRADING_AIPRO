@@ -1,0 +1,169 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import type { LessonRecommendationRequest } from '../../src/shared/types/lessonRecommendation.ts';
+import {
+  generateLessonRecommendations,
+  type RecommenderModelClient,
+} from './lessonRecommender.ts';
+
+const SAMPLE_REQ: LessonRecommendationRequest = {
+  language: 'vi',
+  searchedCommodities: [{ symbol: 'ZC', name: 'Ngô CBOT', category: 'AGRICULTURE', count: 4 }],
+  openPositions: [{ symbol: 'RC', name: 'Cà phê Robusta', category: 'SOFT_COMMODITIES', side: 'SHORT', contracts: 2 }],
+  candidates: [
+    {
+      id: 'l3-coffee',
+      title: 'Nông sản: cà phê arabica và robusta',
+      objective: 'Phân biệt arabica (KC) và robusta (RC)',
+      levelNumber: 3,
+      levelTitle: 'Cấp 3',
+      instrumentIds: ['ICE:KC', 'ICE:RC'],
+      done: false,
+      matchedSymbols: ['RC'],
+    },
+    {
+      id: 'l3-grains',
+      title: 'Nông sản: ngô và lúa mì',
+      objective: 'Nắm yếu tố cung–cầu ngô (ZC)',
+      levelNumber: 3,
+      levelTitle: 'Cấp 3',
+      instrumentIds: ['CBOT:ZC', 'CBOT:ZW'],
+      done: false,
+      matchedSymbols: ['ZC'],
+    },
+  ],
+  maxResults: 4,
+};
+
+test('generateLessonRecommendations returns NO_SIGNALS when signals or candidates are empty', async () => {
+  const res = await generateLessonRecommendations(
+    {
+      ...SAMPLE_REQ,
+      searchedCommodities: [],
+      openPositions: [],
+    },
+    { apiKey: 'dummy' }
+  );
+  assert.equal(res.status, 'UNAVAILABLE');
+  assert.equal(res.unavailableReason, 'NO_SIGNALS');
+  assert.equal(res.recommendations.length, 0);
+});
+
+test('generateLessonRecommendations returns NO_API_KEY when key is absent', async () => {
+  const res = await generateLessonRecommendations(SAMPLE_REQ, { apiKey: '' });
+  assert.equal(res.status, 'UNAVAILABLE');
+  assert.equal(res.unavailableReason, 'NO_API_KEY');
+});
+
+test('generateLessonRecommendations validates schema, filters unknown lessonIds, and preserves valid items', async () => {
+  const fakeClient: RecommenderModelClient = {
+    model: 'gemini-4-hydrogen',
+    async generate() {
+      return JSON.stringify({
+        headline: 'Ưu tiên bài học về Robusta và Ngô theo hoạt động gần đây.',
+        recommendations: [
+          {
+            lessonId: 'hallucinated-lesson',
+            reason: 'Should be filtered out',
+            matchedSymbols: ['XX'],
+            priority: 'HIGH',
+          },
+          {
+            lessonId: 'l3-coffee',
+            reason: 'Bạn đang mở vị thế Short RC nên cần nắm mùa vụ Tây Nguyên và quy cách 10 tấn.',
+            matchedSymbols: ['RC'],
+            priority: 'HIGH',
+          },
+          {
+            lessonId: 'l3-grains',
+            reason: 'Bạn vừa tìm kiếm nhiều về mã ZC, bài này giải thích báo cáo WASDE.',
+            matchedSymbols: ['ZC'],
+            priority: 'MEDIUM',
+          },
+        ],
+      });
+    },
+  };
+
+  const res = await generateLessonRecommendations(SAMPLE_REQ, { modelClient: fakeClient });
+  assert.equal(res.status, 'OK');
+  assert.equal(res.model, 'gemini-4-hydrogen');
+  assert.equal(res.recommendations.length, 2);
+  assert.deepEqual(
+    res.recommendations.map((r) => r.lessonId),
+    ['l3-coffee', 'l3-grains']
+  );
+});
+
+test('generateLessonRecommendations maps rate limit errors honestly', async () => {
+  const rateClient: RecommenderModelClient = {
+    model: 'gemini-4-hydrogen',
+    async generate() {
+      throw Object.assign(new Error('429 Too Many Requests'), { status: 429 });
+    },
+  };
+  const res = await generateLessonRecommendations(SAMPLE_REQ, { modelClient: rateClient });
+  assert.equal(res.status, 'UNAVAILABLE');
+  assert.equal(res.unavailableReason, 'MODEL_RATE_LIMITED');
+});
+
+test('generateLessonRecommendations maps timeouts honestly', async () => {
+  const slowClient: RecommenderModelClient = {
+    model: 'gemini-4-hydrogen',
+    async generate({ signal }) {
+      return new Promise<string>((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })));
+      });
+    },
+  };
+  const res = await generateLessonRecommendations(SAMPLE_REQ, {
+    modelClient: slowClient,
+    timeoutMs: 25,
+  });
+  assert.equal(res.status, 'UNAVAILABLE');
+  assert.equal(res.unavailableReason, 'MODEL_TIMEOUT');
+});
+
+test('generateLessonRecommendations handles invalid JSON output honestly', async () => {
+  const badClient: RecommenderModelClient = {
+    model: 'gemini-4-hydrogen',
+    async generate() {
+      return 'not valid json';
+    },
+  };
+  const res = await generateLessonRecommendations(SAMPLE_REQ, { modelClient: badClient });
+  assert.equal(res.status, 'UNAVAILABLE');
+  assert.equal(res.unavailableReason, 'INVALID_MODEL_OUTPUT');
+});
+
+test('generateLessonRecommendations retries transient 503 errors and recovers', async () => {
+  let attempts = 0;
+  const flakyClient: RecommenderModelClient = {
+    model: 'gemini-4-hydrogen',
+    async generate() {
+      attempts += 1;
+      if (attempts === 1) {
+        throw Object.assign(new Error('503 high demand'), { status: 503 });
+      }
+      return JSON.stringify({
+        headline: 'Gợi ý phục hồi sau retry.',
+        recommendations: [
+          {
+            lessonId: 'l3-coffee',
+            reason: 'Khớp vị thế RC.',
+            matchedSymbols: ['RC'],
+            priority: 'HIGH',
+          },
+        ],
+      });
+    },
+  };
+  const res = await generateLessonRecommendations(SAMPLE_REQ, {
+    modelClient: flakyClient,
+    maxAttempts: 2,
+    retryBaseMs: 5,
+  });
+  assert.equal(attempts, 2);
+  assert.equal(res.status, 'OK');
+  assert.equal(res.recommendations[0]?.lessonId, 'l3-coffee');
+});

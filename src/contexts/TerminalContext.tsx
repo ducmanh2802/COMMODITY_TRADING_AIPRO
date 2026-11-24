@@ -11,6 +11,10 @@ import {
   hasHealthSnapshotChanged,
   startActiveHealthPoller,
 } from '../shared/utils/healthPolling';
+import {
+  recordCommoditySearch,
+  resolveSearchMatchSymbols,
+} from '../shared/utils/commodityActivity';
 
 /** Auto-refresh period for quotes (ms); paused while the tab is hidden. */
 export const QUOTE_AUTO_REFRESH_MS = 20_000;
@@ -117,11 +121,12 @@ const TerminalContext = createContext<TerminalContextValue | null>(null);
 export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [activeModule, setActiveModule] = useState<AppModuleId>('today-hub');
   // Focus primarily on Vietnam MXV commodities by default (Cà phê Robusta · ICE:RC / MXV:LRC)
-  const [selectedSymbol, setSelectedSymbol] = useState<string>('RC');
+  const [selectedSymbol, setSelectedSymbolState] = useState<string>('RC');
   const [marketScope, setMarketScope] = useState<MarketScope>('MXV');
   const [searchQuery, setSearchQuery] = useState('');
   const [timeframe, setTimeframe] = useState<Timeframe>('D1');
   const [tradingStyle, setTradingStyle] = useState<TradingStyle>('SWING');
+  const lastRecordedQueryRef = useRef('');
 
   const [health, setHealth] = useState<BackendHealthPayload | null>(null);
   const [providers, setProviders] = useState<ProviderHealth[]>([]);
@@ -359,8 +364,36 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     });
   }, [refreshHealth]);
 
+  const setSelectedSymbol = useCallback((symbol: string) => {
+    setSelectedSymbolState((prev) => {
+      if (symbol && symbol !== prev) {
+        recordCommoditySearch(symbol);
+      }
+      return symbol;
+    });
+  }, []);
+
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (trimmed.length < 2 || instruments.length === 0) return;
+    const timer = window.setTimeout(() => {
+      if (lastRecordedQueryRef.current === trimmed.toLowerCase()) return;
+      const matches = resolveSearchMatchSymbols(trimmed, instruments);
+      if (matches.length > 0) {
+        lastRecordedQueryRef.current = trimmed.toLowerCase();
+        for (const sym of matches) {
+          recordCommoditySearch(sym);
+        }
+      }
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery, instruments]);
+
   const openInstrumentIn = useCallback((symbol: string, module: AppModuleId) => {
-    setSelectedSymbol(symbol);
+    if (symbol) {
+      recordCommoditySearch(symbol);
+    }
+    setSelectedSymbolState(symbol);
     setActiveModule(module);
   }, []);
 

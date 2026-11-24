@@ -29,6 +29,7 @@ const MAP: Partial<Record<AppModuleId, Resolved>> = {
   'cycle-hunter': { hub: 'today-hub', tab: 'highlights' },
   // Giá & thị trường
   'market-hub': { hub: 'market-hub' },
+  world: { hub: 'market-hub', tab: 'world' },
   'commodity-world': { hub: 'market-hub', tab: 'prices', sub: 'cards' },
   markets: { hub: 'market-hub', tab: 'prices', sub: 'table' },
   // Tin & vĩ mô

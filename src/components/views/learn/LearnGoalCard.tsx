@@ -9,14 +9,16 @@ const TITLES = new Map(CURRICULUM.flatMap((l) => l.lessons.map((x) => [x.id, x.t
 interface Props {
   lessons: Record<string, { done?: boolean } | undefined>;
   onOpen: (lessonId: string) => void;
+  onGoalChange?: (goal: LearnGoal | null) => void;
 }
 
-export function LearnGoalCard({ lessons, onOpen }: Props) {
+export function LearnGoalCard({ lessons, onOpen, onGoalChange }: Props) {
   const { t } = useI18n();
   const [goal, setGoal] = useState<LearnGoal | null>(() => loadGoal());
   const choose = (g: LearnGoal | null) => {
     setGoal(g);
     saveGoal(g);
+    onGoalChange?.(g);
   };
 
   if (!goal) {

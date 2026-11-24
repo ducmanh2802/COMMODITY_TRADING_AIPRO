@@ -1,8 +1,11 @@
 import { useState, type ReactNode } from 'react';
+import { Bookmark } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
+import { useI18n } from '../../../i18n';
 import type { InstrumentDefinition } from '../../../shared/types/instrument';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
+import { estimateLessonReadMinutes, highlightTextSegments } from './academyUtils';
 import { Exercise, RefusalBox, SourceLinks } from './Calculators';
 import type { ExampleCalc, Lesson, QuizQuestion } from './curriculum/types';
 import { LessonDiagram } from './diagrams/Diagrams';
@@ -191,42 +194,115 @@ function Quiz({ lessonId, questions, best, onScore }: { lessonId: string; questi
   );
 }
 
+function HighlightedSpan({ text, query }: { text: string; query?: string }) {
+  if (!query || !query.trim()) return <>{text}</>;
+  const segments = highlightTextSegments(text, query);
+  return (
+    <>
+      {segments.map((seg, i) =>
+        seg.match ? (
+          <mark
+            key={i}
+            data-testid="note-highlight"
+            className="rounded-sm bg-[var(--warning)]/30 text-[var(--text-strong)] px-0.5 font-medium"
+          >
+            {seg.text}
+          </mark>
+        ) : (
+          <span key={i}>{seg.text}</span>
+        )
+      )}
+    </>
+  );
+}
+
 export function LessonPage({
   lesson,
+  levelNumber,
   progress,
+  note = '',
+  highlightQuery = '',
+  bookmarked = false,
+  onToggleBookmark,
+  onChangeNote,
   onScore,
   onToggleDone,
   checklist,
   onToggleCheck,
   onBack,
+  onPrev,
   onNext,
   footer,
 }: {
   lesson: Lesson;
+  levelNumber?: number;
   progress?: LessonProgress;
+  note?: string;
+  highlightQuery?: string;
+  bookmarked?: boolean;
+  onToggleBookmark?: () => void;
+  onChangeNote?: (text: string) => void;
   onScore: (pct: number) => void;
   onToggleDone: () => void;
   checklist: Record<string, boolean>;
   onToggleCheck: (key: string) => void;
   onBack: () => void;
+  onPrev?: () => void;
   onNext?: () => void;
   /** Optional block rendered after the lesson actions (e.g. end-of-level exam card). */
   footer?: ReactNode;
 }) {
+  const { t } = useI18n();
   const { instruments, loading, setActiveModule } = useTerminal();
+  const readMinutes = estimateLessonReadMinutes(lesson);
+  const noteHasMatch =
+    !!highlightQuery.trim() &&
+    !!note.trim() &&
+    highlightTextSegments(note, highlightQuery).some((seg) => seg.match);
+
   return (
     <div className="space-y-4 max-w-3xl">
-      <button type="button" onClick={onBack} className="text-xs text-[var(--accent-text)] hover:underline">
-        ← Về danh sách bài
-      </button>
-      <h2 className="text-xl font-semibold text-[var(--text-strong)]">{lesson.title}</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button type="button" onClick={onBack} className="text-xs text-[var(--accent-text)] hover:underline min-h-9 inline-flex items-center">
+          ← Về danh sách bài
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="text-xs text-[var(--muted)] tabular-nums">
+            {levelNumber !== undefined && <span>{t('ac.lesson.levelTag', { n: levelNumber })} · </span>}
+            <span>{t('ac.lesson.readMin', { m: readMinutes })}</span>
+          </div>
+          {onToggleBookmark && (
+            <button
+              type="button"
+              aria-pressed={bookmarked}
+              data-testid="lesson-page-bookmark"
+              onClick={onToggleBookmark}
+              className={`min-h-8 px-2.5 py-1 rounded-md border text-xs font-medium inline-flex items-center gap-1.5 transition-colors ${
+                bookmarked
+                  ? 'border-[var(--warning)]/60 bg-[var(--warning)]/15 text-[var(--text-strong)]'
+                  : 'border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--text-strong)] hover:border-[var(--accent)]'
+              }`}
+            >
+              <Bookmark className="w-3.5 h-3.5" fill={bookmarked ? 'currentColor' : 'none'} aria-hidden="true" />
+              {bookmarked ? t('ac.lesson.bookmarked') : t('ac.lesson.bookmark')}
+            </button>
+          )}
+        </div>
+      </div>
+      <h2 className="text-xl font-semibold text-[var(--text-strong)]">
+        <HighlightedSpan text={lesson.title} query={highlightQuery} />
+      </h2>
       <Card tone="accent">
         <p className="text-xs font-semibold text-[var(--accent-text)] mb-1">Mục tiêu</p>
-        <p className="text-sm">{lesson.objective}</p>
+        <p className="text-sm">
+          <HighlightedSpan text={lesson.objective} query={highlightQuery} />
+        </p>
       </Card>
       <div className="space-y-3 text-sm leading-relaxed">
         {lesson.body.map((p) => (
-          <p key={p}>{p}</p>
+          <p key={p}>
+            <HighlightedSpan text={p} query={highlightQuery} />
+          </p>
         ))}
       </div>
       {lesson.diagram && <LessonDiagram id={lesson.diagram} />}
@@ -268,7 +344,9 @@ export function LessonPage({
         <p className="text-xs font-semibold mb-1">Ghi nhớ</p>
         <ul className="list-disc pl-4 text-xs space-y-1">
           {lesson.remember.map((r) => (
-            <li key={r}>{r}</li>
+            <li key={r}>
+              <HighlightedSpan text={r} query={highlightQuery} />
+            </li>
           ))}
         </ul>
       </Card>
@@ -304,13 +382,48 @@ export function LessonPage({
         <p className="text-sm font-semibold mb-3">Câu hỏi trắc nghiệm</p>
         <Quiz lessonId={lesson.id} questions={lesson.quiz} best={progress?.best} onScore={onScore} />
       </Card>
+      {onChangeNote && (
+        <Card className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label htmlFor={`note-${lesson.id}`} className="text-sm font-semibold text-[var(--text-strong)]">
+              {t('ac.note.title')}
+            </label>
+            <span className="text-[11px] text-[var(--muted)] tabular-nums">
+              {note.trim().length > 0 ? `${t('ac.note.saved')} · ${t('ac.note.chars', { n: note.length })}` : ''}
+            </span>
+          </div>
+          {noteHasMatch && (
+            <div
+              data-testid="lesson-note-highlight-preview"
+              className="rounded-md border border-[var(--warning)]/40 bg-[var(--warning)]/10 px-3 py-2 text-xs leading-relaxed text-[var(--text)]"
+            >
+              <span className="font-semibold text-[var(--text-strong)] mr-1.5">{t('ac.search.noteMatch')}</span>
+              <HighlightedSpan text={note} query={highlightQuery} />
+            </div>
+          )}
+          <textarea
+            id={`note-${lesson.id}`}
+            data-testid="lesson-personal-note"
+            rows={3}
+            value={note}
+            onChange={(e) => onChangeNote(e.target.value)}
+            placeholder={t('ac.note.placeholder')}
+            className="w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)]"
+          />
+        </Card>
+      )}
       <SourceLinks sources={lesson.sources} />
       <div className="flex flex-wrap gap-2 items-center">
-        <button type="button" onClick={onToggleDone} className="text-xs px-3 py-1.5 rounded-md border border-[var(--accent)]/50 bg-[var(--accent-soft)]">
+        {onPrev && (
+          <button type="button" onClick={onPrev} className="text-xs min-h-9 px-3 py-1.5 rounded-md border border-[var(--border)] hover:border-[var(--accent)]">
+            {t('ac.lesson.prev')}
+          </button>
+        )}
+        <button type="button" onClick={onToggleDone} className="text-xs min-h-9 px-3 py-1.5 rounded-md border border-[var(--accent)]/50 bg-[var(--accent-soft)]">
           {progress?.done ? 'Bỏ đánh dấu đã học' : 'Đánh dấu đã học'}
         </button>
         {onNext && (
-          <button type="button" onClick={onNext} className="text-xs px-3 py-1.5 rounded-md border border-[var(--border)]">
+          <button type="button" onClick={onNext} className="text-xs min-h-9 px-3 py-1.5 rounded-md border border-[var(--border)] hover:border-[var(--accent)]">
             Bài tiếp theo →
           </button>
         )}

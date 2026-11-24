@@ -252,6 +252,83 @@ test('POST /api/ai/analyze without GEMINI key returns UNAVAILABLE NO_API_KEY', a
   );
 });
 
+test('POST /api/ai/recommend-lessons validates payload, returns NO_API_KEY, and serves mock model results', async () => {
+  const payload = {
+    language: 'vi',
+    searchedCommodities: [{ symbol: 'ZC', name: 'Ngô CBOT', category: 'AGRICULTURE', count: 3 }],
+    openPositions: [{ symbol: 'RC', name: 'Cà phê Robusta', category: 'SOFT_COMMODITIES', side: 'SHORT', contracts: 2 }],
+    candidates: [
+      {
+        id: 'l3-coffee',
+        title: 'Nông sản: cà phê arabica và robusta',
+        objective: 'Phân biệt arabica (KC) và robusta (RC)',
+        levelNumber: 3,
+        levelTitle: 'Cấp 3',
+        instrumentIds: ['ICE:KC', 'ICE:RC'],
+        done: false,
+        matchedSymbols: ['RC'],
+      },
+    ],
+    maxResults: 4,
+  };
+
+  await withTestServer(
+    async (baseUrl) => {
+      const badRes = await fetch(`${baseUrl}/api/ai/recommend-lessons`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: 'vi', candidates: [] }),
+      });
+      assert.equal(badRes.status, 400);
+
+      const res = await fetch(`${baseUrl}/api/ai/recommend-lessons`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      assert.equal(res.status, 200);
+      const body = await res.json();
+      assert.equal(body.result.status, 'UNAVAILABLE');
+      assert.equal(body.result.unavailableReason, 'NO_API_KEY');
+    },
+    { lessonRecommender: { apiKey: '' } }
+  );
+
+  await withTestServer(
+    async (baseUrl) => {
+      const res = await fetch(`${baseUrl}/api/ai/recommend-lessons`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      assert.equal(res.status, 200);
+      const body = await res.json();
+      assert.equal(body.result.status, 'OK');
+      assert.equal(body.result.recommendations.length, 1);
+      assert.equal(body.result.recommendations[0].lessonId, 'l3-coffee');
+    },
+    {
+      lessonRecommender: {
+        modelClient: {
+          model: 'gemini-4-hydrogen',
+          generate: async () =>
+            JSON.stringify({
+              headline: 'Ưu tiên bài học về Robusta theo vị thế mở.',
+              recommendations: [
+                {
+                  lessonId: 'l3-coffee',
+                  reason: 'Bạn đang giữ vị thế Short RC nên cần ôn lại quy cách ICE Robusta.',
+                  matchedSymbols: ['RC'],
+                  priority: 'HIGH',
+                },
+              ],
+            }),
+        },
+      },
+    }
+  );
+});
+
 test('CSV import unlocks technicals, scanner, and backtesting end-to-end', async () => {
   await withTestServer(async (baseUrl) => {
     const startMs = Date.parse('2026-08-01T00:00:00Z');

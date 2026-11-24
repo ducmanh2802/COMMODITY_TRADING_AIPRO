@@ -18,6 +18,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { TerminalProvider, useTerminal } from './contexts/TerminalContext';
 import { I18nProvider, useT, type TKey } from './i18n';
 import { UiModeProvider } from './contexts/UiModeContext';
+import { AcademyProvider } from './contexts/AcademyContext';
 import { OnboardingTour } from './components/common/OnboardingTour';
 
 function TerminalWorkspace() {
@@ -90,8 +91,10 @@ export default function App() {
       <AuthProvider>
         <TerminalProvider>
           <UiModeProvider>
-            <TerminalWorkspace />
-            <OnboardingTour />
+            <AcademyProvider>
+              <TerminalWorkspace />
+              <OnboardingTour />
+            </AcademyProvider>
           </UiModeProvider>
         </TerminalProvider>
       </AuthProvider>
