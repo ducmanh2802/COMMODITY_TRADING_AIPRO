@@ -34,6 +34,23 @@ function whyLine(t: TFunction, r: WeatherRegionResult): string {
   return t('wx.why.normal', base);
 }
 
+/** Short impact chip: "Chậm thu hoạch · RC" (region/% stay in the bars; the full sentence is the chip's accessible name). */
+function impactChip(t: TFunction, r: WeatherRegionResult): { text: string; full: string } {
+  const syms = r.instruments.map((id) => id.split(':')[1] ?? id);
+  const target = syms.length > 0 ? [...new Set(syms)].join('/') : t(`wx.crop.${r.regionId}` as TKey);
+  const f = r.flags;
+  const impact = f.includes('SƯƠNG_GIÁ_RISK')
+    ? t('wx.impact.frost', { c: r.next14d.tminMin })
+    : f.includes('KHÔ_HẠN')
+      ? t('wx.impact.dry')
+      : f.includes('MƯA_NHIỀU')
+        ? t('wx.impact.wet')
+        : f.includes('NẮNG_NÓNG')
+          ? t('wx.impact.hot')
+          : t('wx.impact.normal');
+  return { text: `${impact} · ${target}`, full: whyLine(t, r) };
+}
+
 function centroid(r: WeatherRegionResult) {
   const lat = r.points.reduce((a, p) => a + p.lat, 0) / r.points.length;
   const lon = r.points.reduce((a, p) => a + p.lon, 0) / r.points.length;
@@ -146,7 +163,21 @@ function RegionCard({ r, t }: { r: WeatherRegionResult; t: TFunction }) {
         </div>
       )}
 
-      <p className="text-sm text-[var(--text-strong)]">{whyLine(t, r)}</p>
+      {(() => {
+        const chip = impactChip(t, r);
+        return (
+          <p className="text-xs">
+            <span
+              className="inline-flex rounded-full border px-2.5 py-1 font-medium"
+              style={sev === 'normal' ? { borderColor: 'var(--border)', color: 'var(--muted)' } : { borderColor: 'var(--warning)', color: 'var(--text-strong)' }}
+              title={chip.full}
+              aria-label={chip.full}
+            >
+              {chip.text}
+            </span>
+          </p>
+        );
+      })()}
 
       <div className="space-y-1.5">
         <div className="flex items-baseline justify-between text-xs text-[var(--muted)]">

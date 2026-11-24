@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { BellOff, Copy, RefreshCw } from 'lucide-react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
+import { BellOff, Copy, Info, RefreshCw } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { reportText } from '../../../shared/radar/notify';
 import type { RadarItem, RadarRating, RadarSetup } from '../../../shared/types/radar';
@@ -28,12 +28,118 @@ export function sortItems(items: RadarItem[], mode: SortMode): RadarItem[] {
 }
 const GRADE_COLOR: Record<RadarRating['grade'], string> = { A: 'var(--accent)', B: 'var(--positive)', C: 'var(--warning)', D: 'var(--muted)' };
 
-function RatingBlock({ rating }: { rating: RadarRating | undefined }) {
+/** Rating sub-score groups, keyed by the component labels produced by server/services/radar/rating.ts. */
+const GROUPS = [
+  { id: 'trend', labels: ['Xu hướng ngày', 'Xu hướng tuần', 'Cấu trúc giá'], color: 'var(--series-1)' },
+  { id: 'setup', labels: ['Chất lượng thiết lập', 'Động lượng (RSI)'], color: 'var(--accent)' },
+  { id: 'risk', labels: ['Biến động (ATR%)', 'Sự kiện sắp tới', 'Vị thế COT'], color: 'var(--warning)' },
+  { id: 'data', labels: ['Chất lượng dữ liệu'], color: 'var(--muted)' },
+] as const;
+
+export function groupScores(rating: RadarRating) {
+  return GROUPS.map((g) => {
+    const cs = rating.components.filter((c) => (g.labels as readonly string[]).includes(c.label));
+    return {
+      id: g.id,
+      color: g.color,
+      points: cs.reduce((a, c) => a + c.points, 0),
+      max: cs.reduce((a, c) => a + c.max, 0),
+      missing: cs.some((c) => !c.available),
+    };
+  }).filter((g) => g.max > 0);
+}
+
+/** Reward:risk the server already wrote into the setup note ("R:R ước tính 1:2,3"); null when absent. */
+export function parseRR(rating: RadarRating | undefined): number | null {
+  const note = rating?.components.find((c) => c.label === 'Chất lượng thiết lập')?.note ?? '';
+  const m = /R:R[^:]*1:([\d.,]+)/.exec(note);
+  if (!m) return null;
+  const v = Number(m[1].replace(/\./g, '').replace(',', '.'));
+  return Number.isFinite(v) && v >= 0 ? v : null;
+}
+
+/** 4-segment bar (trend / setup / risk / data): segment width = group weight, fill = points earned. */
+function SubScoreBar({ rating }: { rating: RadarRating }) {
   const t = useT();
-  if (!rating) return <p className="text-xs text-[var(--text)]/50">{t('rd.rating.none')}</p>;
-  const color = GRADE_COLOR[rating.grade];
+  const groups = groupScores(rating);
+  const total = groups.reduce((a, g) => a + g.max, 0) || 1;
+  const fmt1 = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
+  const aria = groups.map((g) => `${t(`rd.grp.${g.id}` as 'rd.grp.trend')} ${fmt1(g.points)}/${g.max}`).join(', ');
   return (
     <div className="space-y-1">
+      <div className="flex h-2.5 gap-0.5" role="img" aria-label={aria}>
+        {groups.map((g) => (
+          <div key={g.id} className="h-full rounded-[3px] bg-[var(--surface-3)] overflow-hidden" style={{ width: `${(g.max / total) * 100}%` }} title={`${t(`rd.grp.${g.id}` as 'rd.grp.trend')} ${fmt1(g.points)}/${g.max}`}>
+            <div className="h-full" style={{ width: `${Math.min(100, (g.points / g.max) * 100)}%`, background: g.color }} />
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-0.5 text-[10px] leading-tight text-[var(--muted)]" aria-hidden="true">
+        {groups.map((g) => (
+          <span key={g.id} className="min-w-0 truncate" style={{ width: `${(g.max / total) * 100}%` }}>
+            {t(`rd.grp.${g.id}` as 'rd.grp.trend')} <span className="tabular-nums text-[var(--text-strong)]">{Math.round(g.points)}</span>
+            {g.missing ? '*' : ''}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Two-sided R:R bar: apricot risk (1 unit) | blue reward (rr units). */
+function RRBar({ rr }: { rr: number }) {
+  const t = useT();
+  const shown = Math.min(rr, 5);
+  const riskW = (1 / (1 + shown)) * 100;
+  const rrTxt = rr.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
+  return (
+    <div className="space-y-0.5">
+      <div className="flex items-center justify-between text-[11px] text-[var(--muted)]">
+        <span>{t('rd.rr.risk')} 1</span>
+        <span className="tabular-nums">R:R 1:{rrTxt} <span className="text-[var(--faint)]">({t('rd.rr.est')})</span></span>
+        <span>{t('rd.rr.reward')} {rrTxt}</span>
+      </div>
+      <div className="flex h-2 gap-0.5" role="img" aria-label={t('rd.rr.aria', { rr: rrTxt })}>
+        <div className="h-full rounded-l-[4px] bg-[var(--negative)]" style={{ width: `${riskW}%` }} />
+        <div className="h-full rounded-r-[4px] bg-[var(--positive)]" style={{ width: `${100 - riskW}%` }} />
+      </div>
+    </div>
+  );
+}
+
+/** (i) popover next to the grade badge (pattern from InstrumentOverview ContextCard). */
+function InfoTip({ id, label, children }: { id: string; label: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        aria-label={label}
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen((v) => !v)}
+        onBlur={() => setOpen(false)}
+        className="shrink-0 w-10 h-10 -m-2 flex items-center justify-center text-[var(--muted)] hover:text-[var(--text-strong)]"
+      >
+        <Info className="w-4 h-4" aria-hidden="true" />
+      </button>
+      {open && (
+        <span id={id} role="tooltip" className="absolute left-0 top-full z-50 mt-1 block w-64 max-w-[calc(100vw-48px)] text-xs leading-relaxed text-[var(--text)] bg-[var(--surface-2)] border border-[var(--border)] rounded-lg p-2.5 shadow-lg">
+          {children}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function RatingBlock({ rating }: { rating: RadarRating | undefined }) {
+  const t = useT();
+  const tipId = useId();
+  if (!rating) return <p className="text-xs text-[var(--text)]/50">{t('rd.rating.none')}</p>;
+  const color = GRADE_COLOR[rating.grade];
+  const rr = parseRR(rating);
+  return (
+    <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <span
           className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold tabular-nums border"
@@ -42,11 +148,16 @@ function RatingBlock({ rating }: { rating: RadarRating | undefined }) {
         >
           {rating.grade} · {rating.rating}
         </span>
+        <InfoTip id={tipId} label={t('rd.rating.info')}>
+          {t('rd.rating.note')}
+        </InfoTip>
         <span className="px-2 py-0.5 rounded-full text-[11px] bg-[var(--surface-3)] text-[var(--text-strong)]">{t(`rd.rating.dir.${rating.direction}` as 'rd.rating.dir.TĂNG')}</span>
         <span className="text-[11px] text-[var(--text)]/60">{t('rd.rating.conf').replace('{conf}', rating.confidence)}</span>
       </div>
+      <SubScoreBar rating={rating} />
+      {rr !== null && <RRBar rr={rr} />}
       <details className="text-xs">
-        <summary className="cursor-pointer text-[var(--accent-text)]">{t('rd.rating.why')}</summary>
+        <summary className="cursor-pointer inline-flex min-h-10 items-center text-[var(--accent-text)]">{t('rd.rating.why')}</summary>
         <ul className="mt-1 space-y-0.5 text-[var(--text)]">
           {rating.components.map((c) => (
             <li key={c.label} className={c.available ? '' : 'opacity-60'}>
@@ -65,7 +176,7 @@ const fmt = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 2 
 function ScoreBar({ score }: { score: number }) {
   const t = useT();
   return (
-    <div className="flex items-center gap-2" role="img" aria-label={`${t('rd.scoreLabel')} ${score} trên 100`}>
+    <div className="flex items-center gap-2" role="img" aria-label={t('rd.scoreAria', { label: t('rd.scoreLabel'), score })}>
       <div className="h-2 flex-1 rounded-full bg-[var(--surface-3)]">
         <div className="h-full rounded-r-[4px] bg-[var(--series-1)]" style={{ width: `${score}%` }} />
       </div>
@@ -101,7 +212,7 @@ function ItemCard({ item, rank, muted, onOpen }: { item: RadarItem; rank: number
         <RatingBlock rating={item.rating} />
         <ScoreBar score={item.score} />
         <div className="text-xs text-[var(--text)]/70 tabular-nums">
-          Giá {fmt(item.lastClose)}
+          {t('rd.price')} {fmt(item.lastClose)}
           {item.changePct !== null && (
             <span className={up ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}>
               {up ? ` (+${fmt(item.changePct)}%)` : ` (${fmt(item.changePct)}%)`}
@@ -116,14 +227,19 @@ function ItemCard({ item, rank, muted, onOpen }: { item: RadarItem; rank: number
             </span>
           ))}
         </div>
-        <LineChart points={item.spark.map((v, i) => ({ t: String(i), v }))} ariaLabel={`Giá 30 phiên gần nhất của ${item.name}`} height={64} formatValue={fmt} />
-        <ul className="list-disc pl-4 text-sm text-[var(--text)] space-y-0.5">
-          {item.reasons.map((r) => (
-            <li key={r}>{r}</li>
-          ))}
-        </ul>
+        <LineChart points={item.spark.map((v, i) => ({ t: String(i), v }))} ariaLabel={t('rd.sparkAria', { name: item.name })} height={64} formatValue={fmt} />
+        {item.reasons.length > 0 && (
+          <details className="text-xs">
+            <summary className="cursor-pointer inline-flex min-h-10 items-center text-[var(--accent-text)]">{t('rd.item.reasons', { n: item.reasons.length })}</summary>
+            <ul className="list-disc pl-4 text-[var(--text)] space-y-0.5">
+              {item.reasons.map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          </details>
+        )}
         <p className="text-[11px] text-[var(--text)]/50 flex items-center gap-2">
-          <span>Phiên {item.asOf}</span>
+          <span>{t('rd.session', { d: item.asOf })}</span>
           <SourceChip sources={item.source ? [item.source] : []} />
           {item.quality ? <span className="text-[var(--muted)]">({item.quality})</span> : null}
         </p>
@@ -133,27 +249,36 @@ function ItemCard({ item, rank, muted, onOpen }: { item: RadarItem; rank: number
 }
 
 function SetupCard({ s, onOpen }: { s: RadarSetup; onOpen: () => void }) {
+  const t = useT();
   return (
     <Card>
       <div className="space-y-1.5">
-        <button type="button" onClick={onOpen} className="text-left">
+        <button type="button" onClick={onOpen} className="text-left min-h-10">
           <span className="text-base font-semibold text-[var(--text-strong)] hover:underline">{s.name}</span>
           <span className="text-xs text-[var(--text)]/60"> {s.symbol}</span>
         </button>
         <RatingBlock rating={s.rating} />
         <p className="text-sm text-[var(--text-strong)]">{s.description}</p>
-        <ul className="list-disc pl-4 text-xs text-[var(--text)] space-y-0.5">
-          {s.conditions.map((c) => (
-            <li key={c}>{c}</li>
-          ))}
-        </ul>
-        <ul className="list-disc pl-4 text-xs text-[var(--warning)] space-y-0.5">
-          {s.risks.map((c) => (
-            <li key={c}>{c}</li>
-          ))}
-        </ul>
+        {(s.conditions.length > 0 || s.risks.length > 0) && (
+          <details className="text-xs">
+            <summary className="cursor-pointer flex min-h-10 flex-wrap items-center gap-1.5">
+              <span className="rounded-full border border-[var(--accent)]/30 bg-[var(--accent-soft)] px-2 py-0.5 text-[var(--accent-text)]">{t('rd.setup.conds', { n: s.conditions.length })}</span>
+              {s.risks.length > 0 && <span className="rounded-full border border-[var(--warning)]/40 px-2 py-0.5 text-[var(--warning)]">{t('rd.setup.risks', { n: s.risks.length })}</span>}
+            </summary>
+            <ul className="list-disc pl-4 text-[var(--text)] space-y-0.5">
+              {s.conditions.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+            <ul className="mt-1 list-disc pl-4 text-[var(--warning)] space-y-0.5">
+              {s.risks.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+          </details>
+        )}
         <p className="text-[11px] text-[var(--text)]/50 flex items-center gap-2">
-          <span>Phiên {s.asOf}</span>
+          <span>{t('rd.session', { d: s.asOf })}</span>
           <SourceChip sources={s.source ? [s.source] : []} />
         </p>
       </div>
@@ -206,26 +331,25 @@ export function RadarView() {
         subtitle={t('rd.subtitle').replace('{time}', data.asOf ?? 'không rõ').replace('{scored}', String(data.instrumentsScored)).replace('{total}', String(data.instrumentsTotal)) + (data.stale ? ` ${t('rd.stale')}` : '')}
       />
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" onClick={() => void copy()} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-white/10 text-[var(--text-strong)] hover:bg-white/5">
+        <button type="button" onClick={() => void copy()} className="inline-flex items-center gap-1.5 min-h-10 px-3 py-1.5 text-xs rounded-md border border-[var(--border)] text-[var(--text-strong)] hover:bg-[var(--surface-2)]">
           <Copy className="w-3.5 h-3.5" aria-hidden="true" /> {t('rd.copyBtn')}
         </button>
-        <button type="button" onClick={() => void refreshRadar()} disabled={radar.loading} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-white/10 text-[var(--text-strong)] hover:bg-white/5 disabled:opacity-50">
+        <button type="button" onClick={() => void refreshRadar()} disabled={radar.loading} className="inline-flex items-center gap-1.5 min-h-10 px-3 py-1.5 text-xs rounded-md border border-[var(--border)] text-[var(--text-strong)] hover:bg-[var(--surface-2)] disabled:opacity-50">
           <RefreshCw className={`w-3.5 h-3.5 ${radar.loading ? 'animate-spin' : ''}`} aria-hidden="true" /> {t('rd.refreshBtn')}
         </button>
         {copied && <span className="text-xs text-[var(--text)]/70">{copied}</span>}
       </div>
 
-      <p className="text-xs text-[var(--text)]/70">{t('rd.rating.note')}</p>
       <div role="group" aria-label={t('rd.sort.label')} className="flex items-center gap-2 text-xs">
         <span className="text-[var(--text)]/70">{t('rd.sort.label')}</span>
-        <div className="inline-flex rounded-md border border-white/10 overflow-hidden">
+        <div className="inline-flex rounded-md border border-[var(--border)] overflow-hidden">
           {(['rating', 'activity'] as const).map((m) => (
             <button
               key={m}
               type="button"
               onClick={() => setSort(m)}
               aria-pressed={sort === m}
-              className={`px-3 py-1.5 ${sort === m ? 'bg-[var(--accent-soft)] text-[var(--accent-text)] font-semibold' : 'text-[var(--text-strong)] hover:bg-white/5'}`}
+              className={`min-h-10 px-3 py-1.5 ${sort === m ? 'bg-[var(--accent-soft)] text-[var(--accent-text)] font-semibold' : 'text-[var(--text-strong)] hover:bg-[var(--surface-2)]'}`}
             >
               {t(m === 'rating' ? 'rd.sort.rating' : 'rd.sort.activity')}
             </button>
@@ -247,8 +371,12 @@ export function RadarView() {
       </section>
 
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-[var(--text-strong)]">{t('rd.setupTitle')}</h3>
-        <p className="text-xs text-[var(--text)]/60">{t('rd.setupNote')}</p>
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--text-strong)]">
+          {t('rd.setupTitle')}
+          <InfoTip id="rd-setup-note" label={t('rd.setupInfo')}>
+            {t('rd.setupNote')}
+          </InfoTip>
+        </h3>
         {data.setups.length === 0 ? (
           <p className="text-sm text-[var(--text)]/70">{t('rd.noSetups')}</p>
         ) : (
@@ -275,14 +403,19 @@ export function RadarView() {
         )}
       </section>
 
-      <section className="space-y-1">
-        <h3 className="text-sm font-semibold text-[var(--text-strong)]">{t('rd.caveatsTitle')}</h3>
-        <ul className="list-disc pl-4 text-xs text-[var(--text)]/80 space-y-0.5">
-          {data.caveats.map((c) => (
-            <li key={c}>{c}</li>
-          ))}
-        </ul>
-      </section>
+      {data.caveats.length > 0 && (
+        <details className="text-xs">
+          <summary className="cursor-pointer flex min-h-10 items-center gap-2 text-sm font-semibold text-[var(--text-strong)]">
+            {t('rd.caveatsTitle')}
+            <span className="rounded-full border border-[var(--warning)]/40 px-2 py-0.5 text-[11px] font-medium text-[var(--warning)]">{data.caveats.length}</span>
+          </summary>
+          <ul className="list-disc pl-4 text-[var(--text)]/80 space-y-0.5">
+            {data.caveats.map((c) => (
+              <li key={c}>{c}</li>
+            ))}
+          </ul>
+        </details>
+      )}
     </div>
   );
 }

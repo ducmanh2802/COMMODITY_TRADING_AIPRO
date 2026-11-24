@@ -6,7 +6,7 @@ export const vi = {
   'wx.error': 'Chưa tải được dữ liệu thời tiết. Thử lại sau ít phút.',
   'wx.empty': 'Chưa có dữ liệu thời tiết cho vùng nào (nguồn Open-Meteo tạm thời không phản hồi).',
   'wx.retry': 'Thử lại',
-  'wx.unavailable': 'Dữ liệu thời tiết tạm thời không khả dụng: nguồn Open-Meteo chưa phản hồi và chưa có bản lưu. Hãy thử lại sau ít phút.',
+  'wx.unavailable': 'Chưa có dữ liệu thời tiết (Open-Meteo chưa phản hồi). Thử lại sau.',
   'wx.updated': 'Cập nhật {time}',
   'wx.mapLabel': 'Bản đồ vùng trồng, màu theo mức bất thường',
   'wx.legend.normal': 'Bình thường',
@@ -39,6 +39,11 @@ export const vi = {
   'wx.why.hot': '{region} nóng hơn bình thường khoảng {c}°C trong 14 ngày tới — nhiệt độ cao gây stress cho {crop}.',
   'wx.why.frost': '{region} có ngày lạnh dự báo xuống {c}°C — nguy cơ sương giá với {crop}.',
   'wx.why.normal': '{region}: thời tiết 14 ngày tới gần mức bình thường, chưa có tín hiệu đáng chú ý cho {crop}.',
+  'wx.impact.dry': 'Thiếu nước',
+  'wx.impact.wet': 'Chậm thu hoạch',
+  'wx.impact.hot': 'Stress nhiệt',
+  'wx.impact.frost': 'Sương giá {c}°C',
+  'wx.impact.normal': 'Chưa có tín hiệu',
 } as const;
 
 export const en: Record<keyof typeof vi, string> = {
@@ -48,7 +53,7 @@ export const en: Record<keyof typeof vi, string> = {
   'wx.error': 'Could not load weather data. Try again in a few minutes.',
   'wx.empty': 'No weather data for any region yet (Open-Meteo temporarily not responding).',
   'wx.retry': 'Retry',
-  'wx.unavailable': 'Weather data is temporarily unavailable: Open-Meteo is not responding and there is no cached copy. Try again in a few minutes.',
+  'wx.unavailable': 'No weather data yet (Open-Meteo not responding). Try again later.',
   'wx.updated': 'Updated {time}',
   'wx.mapLabel': 'Growing-region map, colored by anomaly',
   'wx.legend.normal': 'Normal',
@@ -81,4 +86,9 @@ export const en: Record<keyof typeof vi, string> = {
   'wx.why.hot': '{region} is about {c}°C hotter than normal over the next 14 days — heat stress for {crop}.',
   'wx.why.frost': '{region} forecasts lows down to {c}°C — frost risk for {crop}.',
   'wx.why.normal': '{region}: the next 14 days look near normal, no notable signal for {crop}.',
+  'wx.impact.dry': 'Water shortage',
+  'wx.impact.wet': 'Harvest delay',
+  'wx.impact.hot': 'Heat stress',
+  'wx.impact.frost': 'Frost {c}°C',
+  'wx.impact.normal': 'No signal',
 };

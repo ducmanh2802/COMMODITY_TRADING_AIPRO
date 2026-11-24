@@ -105,7 +105,7 @@ export function FxPanel() {
         <button
           type="button"
           onClick={() => void load()}
-          className="inline-flex items-center gap-1 text-xs text-[var(--muted)] hover:text-[var(--text)]"
+          className="inline-flex min-h-10 items-center gap-1 px-2 text-xs text-[var(--muted)] hover:text-[var(--text)]"
         >
           <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> {t('fx.retry')}
         </button>

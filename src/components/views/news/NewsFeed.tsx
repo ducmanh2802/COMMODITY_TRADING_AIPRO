@@ -31,11 +31,13 @@ export function NewsFeed() {
           <div className="divide-y divide-[var(--border)]/70">
             {(showAll ? news : news.slice(0, 10)).map((n) => (
               <div key={n.id} className="p-4 space-y-1 text-xs">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-[var(--text-strong)]">{n.headline}</span>
-                  <span className="font-mono text-[var(--accent)] shrink-0">{codeLabel('news.dir.', n.classification)}</span>
-                </div>
-                <p className="text-[var(--text)]/80">{n.summary}</p>
+                <details>
+                  <summary className="cursor-pointer flex min-h-10 items-center justify-between gap-2">
+                    <span className="font-semibold text-[var(--text-strong)] min-w-0">{n.headline}</span>
+                    <span className="shrink-0 rounded-full border border-[var(--accent)]/30 bg-[var(--accent-soft)] px-2 py-0.5 text-[var(--accent-text)]">{codeLabel('news.dir.', n.classification)}</span>
+                  </summary>
+                  <p className="mt-1 text-[var(--text)]/80">{n.summary}</p>
+                </details>
                 <p className="text-[11px] font-mono text-[var(--text)]/50">
                   {t('news.sourceLine', { source: n.source, time: formatTimestampInZone(n.publicationTimestamp, 'Asia/Ho_Chi_Minh') })}
                 </p>
@@ -48,7 +50,7 @@ export function NewsFeed() {
             <button
               type="button"
               onClick={() => setShowAll(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] hover:bg-[var(--accent)] hover:text-white"
+              className="inline-flex min-h-10 items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] hover:bg-[var(--accent)] hover:text-white"
             >
               {t('drv.more')}
             </button>

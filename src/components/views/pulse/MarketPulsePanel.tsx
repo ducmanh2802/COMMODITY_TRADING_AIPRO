@@ -9,6 +9,7 @@ import { Sparkline } from '../../ui/viz/Sparkline';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
 import { Heatmap } from '../../ui/viz/Heatmap';
+import { SourceChip } from '../../common/SourceChip';
 import { FxPanel } from './FxPanel';
 
 const signed = (v: number | null, d = 2, suffix = ''): string => (v === null ? '-' : `${v > 0 ? '+' : ''}${fmtFixed(v, d)}${suffix}`);
@@ -106,6 +107,38 @@ function MoverList({ title, items }: { title: string; items: PulseMover[] }) {
   );
 }
 
+/** Provider name of a long provenance string ("Yahoo Finance chart API (UNOFFICIAL, …) API sync …" -> "Yahoo Finance chart API"). */
+export function providerOf(src: string): string {
+  return src.split(/\s*\(|\s+API sync|\s+-\s+/)[0].trim() || src;
+}
+
+/** Count/date badges + one SourceChip for the distinct providers; raw per-instrument provenance stays in a collapsed <details>. */
+function SourcesRow({ n, asOf, sources }: { n: number; asOf: string | null; sources: string[] }) {
+  const { t } = useI18n();
+  const providers = [...new Set(sources.map(providerOf))];
+  return (
+    <div className="space-y-1 text-[11px] text-[var(--faint)]">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="rounded-full border border-[var(--border)] px-2 py-0.5 tabular-nums">{t('pulse.withData', { n })}</span>
+        {asOf && <span className="rounded-full border border-[var(--border)] px-2 py-0.5 tabular-nums">{asOf}</span>}
+        {providers.length > 0 && <SourceChip sources={providers}>{providers.length === 1 ? providers[0] : t('common.source')}</SourceChip>}
+      </div>
+      {sources.length > 0 && (
+        <details>
+          <summary className="cursor-pointer inline-flex min-h-10 items-center text-[var(--muted)] hover:text-[var(--text)]">
+            {t('pulse.srcDetails', { n: sources.length })}
+          </summary>
+          <ul className="mt-1 max-h-48 space-y-1 overflow-y-auto break-words">
+            {sources.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
+  );
+}
+
 function Explanations({ items, lang }: { items: MarketPulse['explanations']; lang: 'vi' | 'en' }) {
   const { t } = useI18n();
   return (
@@ -169,7 +202,7 @@ export function MarketPulsePanel() {
         <button
           type="button"
           onClick={() => void load()}
-          className="inline-flex items-center gap-1 text-xs text-[var(--muted)] hover:text-[var(--text)]"
+          className="inline-flex min-h-10 items-center gap-1 px-2 text-xs text-[var(--muted)] hover:text-[var(--text)]"
         >
           <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> {t('pulse.retry')}
         </button>
@@ -259,11 +292,7 @@ export function MarketPulsePanel() {
             </div>
             <BreadthBar up={c.breadth.up1d} down={c.breadth.down1d} flat={c.breadth.flat1d} label={t('pulse.breadthToday')} />
             <BreadthBar up={c.breadth.up5d} down={c.breadth.down5d} flat={c.breadth.flat5d} label={t('pulse.breadth5d')} />
-            <p className="text-[11px] text-[var(--faint)]">
-              {t('pulse.withData', { n: c.breadth.instrumentsWithData })}
-              {c.breadth.asOf ? ` · ${t('pulse.asOf', { v: c.breadth.asOf })}` : ''}
-              {c.historySources.length > 0 ? ` · ${t('pulse.commSource', { v: c.historySources.join(', ') })}` : ''}
-            </p>
+            <SourcesRow n={c.breadth.instrumentsWithData} asOf={c.breadth.asOf} sources={c.historySources} />
             <div className="grid grid-cols-2 gap-3 pt-1">
               <MoverList title={t('pulse.moversUp')} items={c.moversUp} />
               <MoverList title={t('pulse.moversDown')} items={c.moversDown} />
@@ -321,8 +350,19 @@ export function MarketPulsePanel() {
       <FxPanel />
 
       <Explanations items={data.explanations} lang={l} />
-      {data.warnings.length > 0 && <p className="text-[11px] text-[var(--faint)]">{t('pulse.warnings', { v: data.warnings.join('; ') })}</p>}
-      <p className="text-xs text-[var(--muted)]">
+      {data.warnings.length > 0 && (
+        <details className="text-[11px] text-[var(--faint)]">
+          <summary className="cursor-pointer inline-flex min-h-10 items-center">
+            <span className="rounded-full border border-[var(--warning)]/40 px-2 py-0.5 text-[var(--warning)]">{t('pulse.warnCount', { n: data.warnings.length })}</span>
+          </summary>
+          <ul className="mt-1 space-y-0.5 break-words">
+            {data.warnings.map((w) => (
+              <li key={w}>{w}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+      <p className="text-[11px] leading-snug text-[var(--muted)]">
         <span className="font-medium">{t('pulse.disclaimerLabel')}: </span>
         {text(data.disclaimer, l)}
       </p>

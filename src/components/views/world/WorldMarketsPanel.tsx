@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { CircleCheck, CircleSlash } from 'lucide-react';
+import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
+import { CircleCheck, CircleSlash, Info } from 'lucide-react';
 import { divergingFill } from '../../../shared/theme/chartScale';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { fmtFixed, useI18n } from '../../../i18n';
@@ -22,6 +22,8 @@ import {
 import { VIETNAM_TIMEZONE } from '../../../shared/utils/time';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
+import { SourceChip } from '../../common/SourceChip';
+import { ScaleLegend } from '../../ui/viz/ScaleLegend';
 import { Card } from '../../ui/Card';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
@@ -244,14 +246,44 @@ function buildTiles(
   return tiles;
 }
 
+/** (i) popover (pattern from InstrumentOverview ContextCard): one-line hint stays out of the card until asked. */
+function InfoTip({ label, children }: { label: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  return (
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        aria-label={label}
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen((v) => !v)}
+        onBlur={() => setOpen(false)}
+        className="shrink-0 w-10 h-10 -m-2 flex items-center justify-center text-[var(--muted)] hover:text-[var(--text-strong)]"
+      >
+        <Info className="w-4 h-4" aria-hidden="true" />
+      </button>
+      {open && (
+        <span id={id} role="tooltip" className="absolute left-0 top-full z-50 mt-1 block w-60 max-w-[calc(100vw-48px)] text-xs font-normal leading-relaxed text-[var(--text)] bg-[var(--surface-2)] border border-[var(--border)] rounded-lg p-2.5 shadow-lg">
+          {children}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function MacroTileCard({ tile }: { tile: MacroTile }) {
   const { t } = useI18n();
+  const reason = tile.id === 'sp500' ? t('wd.macro.sp500.reason') : tile.reason;
   const has = tile.value !== null;
   const tone = !tile.change || tile.change.sign === 0 ? 'text-[var(--muted)]' : tile.change.sign > 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]';
   return (
     <Card className="space-y-2" aria-label={t(tile.nameKey)}>
       <div className="flex items-start justify-between gap-2">
-        <div className="text-sm font-semibold text-[var(--text-strong)]">{t(tile.nameKey)}</div>
+        <div className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-[var(--text-strong)]">
+          <span className="min-w-0">{t(tile.nameKey)}</span>
+          <InfoTip label={t('wd.macro.hintLabel', { name: t(tile.nameKey) })}>{t(tile.hintKey)}</InfoTip>
+        </div>
         <DataStatusBadge status={tile.status} compact />
       </div>
       {has ? (
@@ -267,16 +299,20 @@ function MacroTileCard({ tile }: { tile: MacroTile }) {
           )}
         </div>
       ) : (
-        <div className="text-sm text-[var(--muted)]">
-          {t('wd.macro.unavailable')}
-          {tile.id === 'sp500' ? ` — ${t('wd.macro.sp500.reason')}` : tile.reason ? ` — ${tile.reason}` : ''}
+        <div className="space-y-1 text-xs">
+          <span className="inline-flex rounded-full border border-[var(--border)] px-2 py-0.5 text-[var(--faint)]">{t('wd.macro.unavailable')}</span>
+          {reason && (
+            <details>
+              <summary className="cursor-pointer inline-flex min-h-10 items-center text-[11px] text-[var(--muted)] hover:text-[var(--text)]">{t('wd.macro.why')}</summary>
+              <p className="text-[11px] text-[var(--muted)] break-words">{reason}</p>
+            </details>
+          )}
         </div>
       )}
-      <p className="text-xs text-[var(--text)]">{t(tile.hintKey)}</p>
       {(tile.source || tile.asOf) && (
-        <div className="text-[11px] text-[var(--muted)] space-y-0.5">
-          {tile.source && <div>{t('wd.macro.source', { v: tile.source })}</div>}
-          {tile.asOf && <div className="tabular-nums">{t('wd.macro.asOf', { v: tile.asOf.slice(0, 16).replace('T', ' ') })}</div>}
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--muted)]">
+          {tile.asOf && <span className="tabular-nums" title={t('wd.macro.asOf', { v: tile.asOf })}>{tile.asOf.slice(0, 16).replace('T', ' ')}</span>}
+          {tile.source && <SourceChip sources={[tile.source]} />}
         </div>
       )}
     </Card>
@@ -439,9 +475,11 @@ function ExchangePerformance() {
           })}
         </div>
       )}
-      <p className="text-[11px] text-[var(--muted)]">
-        {t('wd.perf.legend')} {t('wd.perf.asOf')}
-      </p>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--muted)]">
+        <ScaleLegend kind="diverging" low={t('wd.perf.down')} mid="0" high={t('wd.perf.up')} />
+        <span>{t('wd.perf.legend')}</span>
+        <span className="text-[var(--faint)]">{t('wd.perf.asOf')}</span>
+      </div>
     </section>
   );
 }
