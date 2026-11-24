@@ -6,6 +6,7 @@
  */
 import { useMemo, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
+import { useI18n } from '../../../i18n';
 import type { SeriesOption } from '../../../api/analysisApi';
 import { type SeriesPoint, interCommoditySpread, spreadZScore } from '../../../shared/analytics';
 import { CHART_COLORS, type ChartLine, TimeSeriesChart } from './TimeSeriesChart';
@@ -64,6 +65,7 @@ const zFmt = (v: number) => v.toFixed(2);
 let uidCounter = 1;
 
 export function SpreadsTab({ options }: { options: SeriesOption[] }) {
+  const { t } = useI18n();
   const byKey = useOptionMap(options);
   const [legs, setLegs] = useState<LegDraft[]>([
     { uid: uidCounter++, seriesKey: '', coefficient: 1, priceUnit: '' },
@@ -232,7 +234,7 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
               </div>
               <button
                 type="button"
-                aria-label={`Remove leg ${i + 1}`}
+                aria-label={t('spreads.removeLeg', { n: i + 1 })}
                 disabled={legs.length <= 2}
                 onClick={() => setLegs((ls) => ls.filter((x) => x.uid !== l.uid))}
                 className="p-2 text-[var(--text)]/60 hover:text-[var(--negative)] disabled:opacity-30"

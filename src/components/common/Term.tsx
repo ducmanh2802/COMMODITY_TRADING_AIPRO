@@ -71,7 +71,7 @@ export function Term({ k, children }: TermProps) {
         tabIndex={0}
         role="button"
         aria-describedby={pos ? id : undefined}
-        aria-label={`${t(`gl.${k}`)} — ${t('gl.hint')}`}
+        aria-label={`${typeof children === 'string' || typeof children === 'number' ? children : t(`gl.${k}`)} — ${t('gl.hint')}`}
         onMouseEnter={show}
         onMouseLeave={hide}
         onFocus={show}

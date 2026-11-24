@@ -178,7 +178,7 @@ export function SettingsView() {
           ) : (
             <button
               type="button"
-              onClick={() => void signInWithGoogle()}
+              data-signin="" onClick={() => void signInWithGoogle()}
               className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md self-start whitespace-nowrap"
             >
               <LogIn className="w-3.5 h-3.5" aria-hidden="true" />

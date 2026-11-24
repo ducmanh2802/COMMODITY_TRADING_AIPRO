@@ -53,7 +53,7 @@ const numOrNull = (s: string): number | null => {
 /** T63 "Cuộc đua": monthly paper-trading contest. All fills/scores happen on the server; this view only displays them. */
 export function ContestView() {
   const t = useT();
-  const { user, signInWithGoogle } = useAuth();
+  const { user, authReady, signInWithGoogle } = useAuth();
   const { instruments } = useTerminal();
   const [season, setSeason] = useState<SeasonInfo | null>(null);
   const [me, setMe] = useState<MeDto | null>(null);
@@ -97,6 +97,7 @@ export function ContestView() {
   );
 
   const load = useCallback(async () => {
+    if (!authReady) return; // auth loads lazily: user===null is unknown until ready
     try {
       setSeason((await api('/season')) as unknown as SeasonInfo);
       if (user) setMe((await api('/me')) as unknown as MeDto);
@@ -104,7 +105,7 @@ export function ContestView() {
     } catch (e) {
       setMsg(errText((e as Error).message));
     }
-  }, [api, user, errText]);
+  }, [api, user, authReady, errText]);
 
   useEffect(() => {
     void load();
@@ -168,10 +169,12 @@ export function ContestView() {
       <h2 className="text-base font-semibold text-[var(--text-strong)]">{t('ct.title', { season: season?.season ?? '…' })}</h2>
       {msg && <p className="text-xs text-[var(--accent-text)]" role="status">{msg}</p>}
 
-      {!user ? (
+      {!authReady ? (
+        <p className="text-sm text-[var(--text)]/60">{t('ct.loading')}</p>
+      ) : !user ? (
         <div className={`${cardCls} space-y-3`}>
           <p className="text-sm text-[var(--text)]/80">{t('ct.signin')}</p>
-          <button type="button" onClick={() => void signInWithGoogle()} className={`${bigBtn} bg-[var(--accent)] text-white`}>
+          <button type="button" data-signin="" onClick={() => void signInWithGoogle()} className={`${bigBtn} bg-[var(--accent)] text-white`}>
             <LogIn className="w-4 h-4" aria-hidden /> {t('ct.signin.btn')}
           </button>
         </div>

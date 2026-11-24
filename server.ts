@@ -37,6 +37,9 @@ async function startServer(): Promise<void> {
   if (isProduction) {
     const distPath = path.resolve(__dirname, 'dist');
     const indexHtml = path.join(distPath, 'index.html');
+    const { staticCompress } = await import('./server/lib/staticCompress.ts');
+    app.use(staticCompress(distPath));
+    app.use('/fonts', express.static(path.join(distPath, 'fonts'), { maxAge: '30d', immutable: true }));
     app.use(express.static(distPath, { index: false }));
     // SPA fallback (Express 4 compatible): serve index.html for any non-API
     // GET/HEAD request that did not match a static file, so deep links like

@@ -96,6 +96,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [signedInUid]);
 
+  // Warm up firebase/auth when the user approaches a sign-in button (data-signin) so the popup opens synchronously on click.
+  useEffect(() => {
+    const warm = (e: Event) => {
+      if ((e.target as Element | null)?.closest?.('[data-signin]')) void getAuthModules().catch(() => {});
+    };
+    const evs = ['pointerover', 'focusin', 'pointerdown', 'touchstart'];
+    evs.forEach((n) => document.addEventListener(n, warm, { capture: true, passive: true }));
+    return () => evs.forEach((n) => document.removeEventListener(n, warm, { capture: true }));
+  }, []);
+
   useEffect(() => {
     let disposed = false;
     let unsubscribe: () => void = () => {};

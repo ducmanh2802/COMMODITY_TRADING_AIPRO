@@ -186,7 +186,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
         ) : (
           <button
             type="button"
-            onClick={() => void signInWithGoogle()}
+            data-signin="" onClick={() => void signInWithGoogle()}
             aria-label={t('topbar.signIn')}
             title={t('topbar.signIn')}
             className="inline-flex items-center justify-center gap-1.5 h-10 w-10 xl:w-auto xl:px-4 bg-[var(--accent)] hover:brightness-110 text-white text-xs font-semibold rounded-[10px] transition-colors whitespace-nowrap shrink-0"

@@ -20,7 +20,7 @@ export function LanguageSwitch({ showLabel = false }: { showLabel?: boolean }) {
             onClick={() => setLang(l)}
             aria-pressed={lang === l}
             title={t(l === 'vi' ? 'lang.vi' : 'lang.en')}
-            aria-label={t(l === 'vi' ? 'lang.vi' : 'lang.en')}
+            aria-label={`${l.toUpperCase()} - ${t(l === 'vi' ? 'lang.vi' : 'lang.en')}`}
             className={`h-full min-w-10 px-3 text-xs font-semibold rounded-lg transition-colors ${
               lang === l ? 'bg-[var(--accent)] text-white' : 'text-[var(--text)]/70 hover:text-[var(--text-strong)]'
             }`}

@@ -7,6 +7,8 @@ import type { AppModuleId } from '../../shared/types/risk';
 
 export const ONBOARDING_KEY = 'ctap.onboardingDone';
 const TOTAL = 5;
+/** System stack (must match the static first-run shell in index.html): a web-font swap must not resize the LCP text. */
+const ONBOARDING_BODY_FONT = "system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
 const TARGETS: Record<number, AppModuleId> = { 2: 'today-hub', 3: 'learn', 4: 'mine-hub' };
 
 function isDone(): boolean {
@@ -49,7 +51,7 @@ export function OnboardingTour() {
       <div className="w-full max-w-lg rounded-2xl border border-[var(--accent)] bg-[var(--bg)] p-6 text-[var(--text-strong)] shadow-2xl">
         <div className="text-base text-[var(--accent-text)]">{t('ob.step', { n: step, total: TOTAL })}</div>
         <h2 className="mt-2 text-3xl font-bold">{t(k('title'))}</h2>
-        <p className="mt-3 text-xl leading-relaxed">{t(k('body'))}</p>
+        <p className="mt-3 text-xl leading-relaxed" style={{ fontFamily: ONBOARDING_BODY_FONT }}>{t(k('body'))}</p>
 
         <div className="mt-5 flex flex-wrap gap-3">
           {step === 1 && (
@@ -71,7 +73,7 @@ export function OnboardingTour() {
             (user ? (
               <span className="text-lg text-[var(--accent-text)] self-center">{t('ob.s5.signedIn')}</span>
             ) : (
-              <button type="button" onClick={() => void signInWithGoogle()} className={`${btn} border-[var(--accent-text)] hover:bg-[var(--accent)]/20`}>
+              <button type="button" data-signin="" onClick={() => void signInWithGoogle()} className={`${btn} border-[var(--accent-text)] hover:bg-[var(--accent)]/20`}>
                 {t('ob.s5.go')}
               </button>
             ))}

@@ -39,7 +39,7 @@ export const vi = {
   'nav.groupOperations': 'Quản trị & Dữ liệu',
   'nav.groupEngines': 'Công cụ phân tích',
   'nav.moreTools': 'Công cụ khác ({n})',
-  'nav.slogan': 'Understand the Cycle. Catch the Opportunity.',
+  'nav.slogan': 'Hiểu chu kỳ. Nắm bắt cơ hội.',
   'nav.ariaLabel': 'Điều hướng',
   'nav.closeMenu': 'Đóng menu điều hướng',
   'nav.collapse': 'Thu gọn thanh bên',

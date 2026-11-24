@@ -4,6 +4,7 @@ import type { DataQualityStatus, MarketQuote, MarketScope, ProviderHealth } from
 import type { FullDataHealthReport } from '../shared/types/dataHealth';
 import type { AppModuleId, PhaseModuleDescriptor } from '../shared/types/risk';
 import type { RoadmapPhase } from '../shared/architecture';
+import { afterFirstPaint } from '../shared/utils/defer';
 import { fetchJsonWithRetry, safeReadJson } from '../shared/utils/http';
 import {
   HEALTH_POLL_INTERVAL_MS,
@@ -299,8 +300,17 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     [refreshBackendData, timeframe]
   );
 
+  // The very first load is deferred until after first paint (LCP); later changes (e.g. timeframe) load at once.
+  const firstLoadDoneRef = useRef(false);
   useEffect(() => {
-    void refreshBackendData();
+    if (firstLoadDoneRef.current) {
+      void refreshBackendData();
+      return;
+    }
+    return afterFirstPaint(() => {
+      firstLoadDoneRef.current = true;
+      void refreshBackendData();
+    });
   }, [refreshBackendData]);
 
   // When Yahoo delayed feeds are enabled, the polite 1 req/s background queue and 10y warm-up fill

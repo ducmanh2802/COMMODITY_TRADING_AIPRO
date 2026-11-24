@@ -17,7 +17,10 @@ export function TopBarMore() {
       if (box.current && !box.current.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        setOpen(false);
+        box.current?.querySelector('button')?.focus();
+      }
     };
     document.addEventListener('mousedown', onDoc);
     document.addEventListener('keydown', onKey);

@@ -415,7 +415,7 @@ export function PaperTradingView() {
       {/* Sign-in / storage mode */}
       {!user ? (
         <div className={`${cardCls} flex flex-wrap items-center gap-3`}>
-          <button type="button" onClick={() => void signInWithGoogle()} className={`${bigBtn} bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white`}>
+          <button type="button" data-signin="" onClick={() => void signInWithGoogle()} className={`${bigBtn} bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white`}>
             <LogIn className="w-4 h-4" aria-hidden="true" />
             {t('pt.auth.signIn')}
           </button>
@@ -448,7 +448,7 @@ export function PaperTradingView() {
       {store.error && <p className="text-xs text-[var(--negative)]" role="alert">{store.error}</p>}
       {message && <p className="text-xs text-[var(--accent-text)]" role="status">{message}</p>}
 
-      <div className="flex gap-2" role="tablist">
+      <div className="flex gap-2 overflow-x-auto snap-x -mx-1 px-1 pb-1" role="tablist">
         {(['trade', 'stats', 'history', 'replay', 'contest'] as const).map((k) => (
           <button
             key={k}
@@ -456,7 +456,7 @@ export function PaperTradingView() {
             role="tab"
             aria-selected={tab === k}
             onClick={() => setTab(k)}
-            className={`px-4 py-2 text-sm rounded-md border ${tab === k ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--border)] text-[var(--text)]/80'}`}
+            className={`shrink-0 snap-start whitespace-nowrap min-h-10 px-4 py-2 text-sm rounded-md border ${tab === k ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--border)] text-[var(--text)]/80'}`}
           >
             {t(k === 'trade' ? 'pt.tab.trade' : k === 'stats' ? 'ps.tab' : k === 'replay' ? 'rp.tab' : k === 'contest' ? 'ct.tab' : 'pt.tab.history')}
           </button>

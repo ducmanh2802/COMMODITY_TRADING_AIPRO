@@ -15,9 +15,37 @@ export default defineConfig(() => {
         enforce: 'pre' as const,
         async resolveId(this: any, source: string, importer: string | undefined, options: any) {
           if (!importer || !/dict\//.test(source) || source.includes('?')) return null;
-          if (!/[\/]src[\/]i18n[\/]en\.ts$/.test(importer.split('?')[0])) return null;
+          if (!/[\\/]src[\\/]i18n[\\/]en\.ts$/.test(importer.split('?')[0])) return null;
           const resolved = await this.resolve(source, importer, { ...options, skipSelf: true });
           return resolved ? `${resolved.id}?en-only` : null;
+        },
+      },
+      // Production only: do not let the entry bundle compete with (or block) the first paint. The built
+      // <script type=module> + modulepreload tags are replaced by a tiny inline loader that injects them right after
+      // the first frame (with a timer fallback for background tabs where rAF is paused). When the static shell is present the loader instead waits for the browser to report the shell's LCP candidate (a candidate whose element is removed before it is reported is dropped, which would make the later React render the LCP). The static first-run shell in
+      // index.html and the render-blocking CSS therefore paint before any app JS is fetched/executed.
+      {
+        name: 'defer-entry-after-first-paint',
+        apply: 'build' as const,
+        transformIndexHtml: {
+          order: 'post' as const,
+          handler(html: string): string {
+            const scriptRe = /<script type="module"[^>]*src="([^"]+)"[^>]*><\/script>\s*/;
+            const entry = html.match(scriptRe);
+            if (!entry) return html;
+            const preRe = /<link rel="modulepreload"[^>]*href="([^"]+)"[^>]*>\s*/g;
+            const preloads = [...html.matchAll(preRe)].map((m) => m[1]);
+            const stripped = html.replace(scriptRe, '').replace(preRe, '');
+            const loader =
+              '<script>(function(){var d=document,done=0,P=' +
+              JSON.stringify(preloads) +
+              ',E=' +
+              JSON.stringify(entry[1]) +
+              ';function go(){if(done)return;done=1;P.forEach(function(h){var l=d.createElement("link");l.rel="modulepreload";l.crossOrigin="";l.href=h;d.head.appendChild(l)});var s=d.createElement("script");s.type="module";s.crossOrigin="";s.src=E;d.head.appendChild(s)}' +
+              'if(window.__ctapShell&&window.PerformanceObserver){try{new PerformanceObserver(function(l,o){if(l.getEntries().length){o.disconnect();setTimeout(go,0)}}).observe({type:"largest-contentful-paint",buffered:true})}catch(e){}setTimeout(go,1500)}else{requestAnimationFrame(function(){setTimeout(go,0)});setTimeout(go,600)}})();</script>';
+            return stripped.replace('</body>', `    ${loader}
+  </body>`);
+          },
         },
       },
       react(),
@@ -62,7 +90,7 @@ export default defineConfig(() => {
               {
                 // Firebase Auth is loaded after first paint (see src/firebase.ts getAuthModules).
                 name: 'vendor-auth',
-                test: /[\/]node_modules[\/](@firebase[\/]auth|firebase[\/]auth)[\/]/,
+                test: /[\\/]node_modules[\\/](@firebase[\\/]auth|firebase[\\/]auth)[\\/]/,
                 priority: 48,
               },
               {
@@ -85,12 +113,12 @@ export default defineConfig(() => {
                 // Heavy libs that are only reached through dynamic import() (certificate PDF). Keeping them out of the
                 // catch-all `vendor` chunk stops the entry from downloading ~1 MB it never executes.
                 name: 'vendor-pdf',
-                test: /[\/]node_modules[\/](jspdf|html2canvas|canvg|pako|fflate|dompurify|fast-png|stackblur-canvas|iobuffer|core-js|rgbcolor|svg-pathdata|raf|performance-now|@babel[\/]runtime|text-segmentation|utrie|css-line-break)[\/]/,
+                test: /[\\/]node_modules[\\/](jspdf|html2canvas|canvg|pako|fflate|dompurify|fast-png|stackblur-canvas|iobuffer|core-js|rgbcolor|svg-pathdata|raf|performance-now|@babel[\\/]runtime|text-segmentation|utrie|css-line-break)[\\/]/,
                 priority: 45,
               },
               {
                 name: 'vendor-charts',
-                test: /[\/]node_modules[\/]lightweight-charts[\/]/,
+                test: /[\\/]node_modules[\\/]lightweight-charts[\\/]/,
                 priority: 44,
               },
               {

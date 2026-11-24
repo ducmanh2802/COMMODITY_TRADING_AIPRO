@@ -12,6 +12,7 @@ import {
   toggleMute,
   useRadar,
 } from './radarStore';
+import { afterFirstPaint } from '../../shared/utils/defer';
 import { useT } from '../../i18n';
 
 /** TopBar bell for the market radar: unread count, notification list, mute per instrument, optional browser alerts. */
@@ -23,7 +24,16 @@ export function RadarBell() {
   const [msg, setMsg] = useState<string | null>(null);
   const box = useRef<HTMLDivElement>(null);
 
-  useEffect(() => startRadarPolling(), []);
+  useEffect(() => {
+    let stop: (() => void) | undefined;
+    const cancel = afterFirstPaint(() => {
+      stop = startRadarPolling();
+    });
+    return () => {
+      cancel();
+      stop?.();
+    };
+  }, []);
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {

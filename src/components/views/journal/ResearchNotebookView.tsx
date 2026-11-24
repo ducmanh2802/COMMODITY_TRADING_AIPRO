@@ -146,7 +146,7 @@ export function ResearchNotebookView() {
         <p className="text-xs text-[var(--text)]/65 max-w-md mx-auto">{t('nb.signInBody')}</p>
         <button
           type="button"
-          onClick={() => void signInWithGoogle()}
+          data-signin="" onClick={() => void signInWithGoogle()}
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md"
         >
           <LogIn className="w-3.5 h-3.5" aria-hidden="true" />

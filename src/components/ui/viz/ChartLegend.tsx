@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useI18n } from '../../../i18n';
 
 export interface LegendItem {
   id: string;
@@ -15,9 +16,10 @@ export interface LegendItem {
  * Text uses text tokens only; identity comes from the key beside it.
  */
 export function ChartLegend({ items, className = '', trailing }: { items: LegendItem[]; className?: string; trailing?: ReactNode }) {
+  const { t } = useI18n();
   if (items.length < 2 && !trailing) return null;
   return (
-    <ul className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--muted)] ${className}`} aria-label="legend">
+    <ul className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--muted)] ${className}`} aria-label={t('viz.legend')}>
       {items.length >= 2 &&
         items.map((it) => (
           <li key={it.id} className="inline-flex items-center gap-1.5">

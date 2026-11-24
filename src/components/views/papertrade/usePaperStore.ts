@@ -184,7 +184,8 @@ export function usePaperStore(): PaperStore {
 
   return {
     mode: cloud ? 'cloud' : 'local',
-    ready: cloud ? loaded.s && loaded.p && loaded.t : true,
+    // Not ready until auth resolved: user===null during the lazy auth load is "unknown", not signed-out.
+    ready: !authReady ? false : cloud ? loaded.s && loaded.p && loaded.t : true,
     state: cloud ? remote : local,
     localPending: cloud ? local : EMPTY_STATE,
     error,

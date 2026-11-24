@@ -97,10 +97,10 @@
   --shadow-card: 0 1px 2px rgba(20, 28, 40, 0.06), 0 4px 14px -6px rgba(20, 28, 40, 0.12);
 }
 /* Light theme: soften translucent-white helpers that assumed a dark background. */
-:root[data-theme="light"] .bg-white/5,
-:root[data-theme="light"] .bg-white/10 { background-color: rgba(22, 27, 38, 0.05); }
-:root[data-theme="light"] .border-white/10,
-:root[data-theme="light"] .border-white/5 { border-color: var(--border); }
+:root[data-theme="light"] .bg-white\/5,
+:root[data-theme="light"] .bg-white\/10 { background-color: rgba(22, 27, 38, 0.05); }
+:root[data-theme="light"] .border-white\/10,
+:root[data-theme="light"] .border-white\/5 { border-color: var(--border); }
 
 @layer base {
   html,
