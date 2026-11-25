@@ -44,7 +44,8 @@ export function CommodityWorldView() {
     setError(null);
     try {
       const json = await fetchJsonWithRetry<CycleMarketOverview>('/api/cycle/overview', { signal });
-      setOverview(json);
+      // Empty/malformed payload (e.g. {}): normalise to an empty list, never crash.
+      setOverview({ ...json, commodities: Array.isArray(json?.commodities) ? json.commodities : [] });
     } catch (err) {
       if (signal?.aborted) return;
       setError(err instanceof Error ? err.message : t('hc.cw.loadFail'));
