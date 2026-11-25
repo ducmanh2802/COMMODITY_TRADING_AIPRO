@@ -12,7 +12,7 @@ Các mục trong thanh bên và `src/App.tsx`:
 
 | Mục | Mô tả |
 |---|---|
-| Tổng quan (`overview`) | Bảng điều khiển tổng quan |
+| Thị trường > Hôm nay / Nhịp đập | Giao diện trực quan (thẻ, thanh, chip); giải thích dài nằm sau "Xem giải thích" hoặc popover (i). Quy tắc UI: `docs/UI_GUIDE.md` |
 | Học (`learn`) | Lộ trình học cho người mới: bài học dựng bằng `learn/lesson/*` (KeyPoints, LessonBody, quiz, GlossaryTip), hình minh họa `learn/diagrams/groupA-D.tsx`, video chỉ từ nhà xuất bản uy tín (kiểm tra bằng oEmbed trước khi thêm; YouTube chỉ tải sau khi bấm); Lộ trình 3 tháng (`src/shared/program/threeMonth.ts`, 12 tuần) |
 | Thị trường (`markets`) | Bảng giá / market watch |
 | Khám phá hợp đồng (`explorer`) | Chuỗi hợp đồng, hồ sơ hợp đồng, quy tắc lịch (`/api/instruments/...`) |
@@ -26,6 +26,8 @@ Các mục trong thanh bên và `src/App.tsx`:
 | Giao dịch giả lập (paper trading, `views/papertrade/`) | Kỷ luật: khóa nghỉ 24h sau 3 lệnh lỗ liên tiếp hoặc lỗ ngày <= -3% vốn (`coolOff.ts`; vẫn được đóng lệnh); thẻ lỗi + thống kê lỗi theo tháng (`mistakeStats.ts`); banner rủi ro sự kiện 24h tới (`src/shared/events/eventRisk.ts`, lịch FOMC/CPI trong `usMacroCalendar.ts`, EIA/USDA/WASDE); review tuần (`weeklyReview.ts`, tóm tắt AI tùy chọn qua `POST /api/paper/weekly-review`, lỗi AI thì giữ nội dung công thức) |
 | Cài đặt (`settings`) | Cài đặt ứng dụng |
 
+Bảo mật: header CSP có `frame-ancestors 'self'`, rate limit toàn `/api` và giới hạn riêng cho endpoint AI (429 `RATE_LIMIT_EXCEEDED`). Test trung thực dữ liệu kiểm tra fail-closed; `quizIntegrity` và `i18nParity` chạy trong `npm test`.
+
 Đăng nhập Google bằng Firebase Auth; danh mục/nhật ký có thể lưu trên Firestore (`firestore.rules`). Khách (chưa đăng nhập) không bao giờ tải Firestore SDK: mã chỉ nạp qua `getFirestoreModules()` (lazy, `src/firebase.ts`). Lỗi form có hỗ trợ truy cập (aria-invalid/aria-describedby từng trường) qua `src/components/common/fieldErrors.ts`. Lịch nghỉ lễ có Tết 2027 (MXV đóng cửa dự kiến, số liệu dự phóng, không phải thông báo chính thức).
 
 ## Chạy nhanh
@@ -38,7 +40,7 @@ cp .env.example .env     # tùy chọn (Windows: copy .env.example .env)
 npm run dev              # http://localhost:3000 (Express + Vite)
 npm test                 # chạy test (tsx --test)
 npm run test:rules       # test firestore.rules bằng emulator (cần Java)
-npm run test:e2e         # Playwright: tests/e2e (smoke, learning, program, keyboard, features13b, discipline)
+npm run test:e2e         # Playwright: tests/e2e (smoke, learning, program, keyboard, features13b, discipline, mobile 390px, a11y axe-core tối+sáng); tự build + chạy server cổng 3199, lần đầu vài phút
 npm run typecheck        # kiểm tra kiểu TypeScript
 npm run build            # build frontend ra dist/
 npm start                # chạy production (build trước), cổng PORT hoặc 3000
@@ -104,3 +106,4 @@ Ngoài trạng thái trên, mỗi nguồn còn có nhãn chất lượng nguồn
 - `docs/LEARNING_PATH.md`: lộ trình học
 - `docs/SPEC_CROSSCHECK.md`: đối chiếu đặc tả
 - `docs/DEPLOY.md`: triển khai Google Cloud Run
+- `docs/UI_GUIDE.md`: quy tắc giao diện (màu, a11y, i18n, mobile)

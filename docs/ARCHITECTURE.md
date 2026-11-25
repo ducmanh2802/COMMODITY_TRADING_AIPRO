@@ -111,11 +111,11 @@ sequenceDiagram
   end
   REG-->>API: MarketQuote {status, sourceQuality, kind, retrievedAt}
   API-->>UI: quotes + overallStatus + notice
-  Note over UI: DataStatusBadge / UpdatedAgo hiển thị nhãn;<br/>UNAVAILABLE hiện "không có dữ liệu", không điền số
+  Note over UI: DataStatusBadge hiển thị nhãn;<br/>UNAVAILABLE hiện "không có dữ liệu", không điền số
 ```
 
 `overallStatus` trong `server/app.ts` = CURRENT nếu có quote live; ngược lại DELAYED > HISTORICAL > STALE > UNAVAILABLE.
-UI hiển thị nhãn bằng `src/components/common/DataStatusBadge.tsx` và `UpdatedAgo.tsx`.
+UI hiển thị nhãn bằng `src/components/common/DataStatusBadge.tsx`.
 
 ---
 
@@ -127,10 +127,10 @@ hiển thị ở `Sidebar.tsx`, điều phối trang ở `src/App.tsx`, các tab
 | Mục menu | Tab / view | File chính (`src/components/views/`) | API | Service / engine |
 |---|---|---|---|---|
 | Thị trường | Hôm nay | `today/TodayPanel.tsx` | `/api/market-pulse`, `/api/scorecard` | `services/marketPulse`, `services/scorecard` |
-| Thị trường | Nhịp đập | `pulse/MarketPulsePanel.tsx` | `/api/market-pulse` | `services/marketPulse/service.ts` |
+| Thị trường | Nhịp đập | `pulse/MarketPulsePanel.tsx` (+ `tileBits.tsx`, `tileMath.ts`) | `/api/market-pulse` | `services/marketPulse/service.ts` |
 | Thị trường | Giá (thẻ/bảng) | `CommodityWorldView.tsx`, `MarketWatchView.tsx` | `/api/market/quotes`, `/api/instruments`, `/api/market/fx/usdvnd` | `providers/registry.ts` |
-| Thị trường | Tin tức / Vĩ mô | `FundamentalNewsView.tsx` (+ `news/MacroPanel.tsx`) | `/api/macro/overview\|eia\|wasde\|fx`, `/api/fundamental/records` | `server/macro`, `services/fundamentalService.ts` |
-| Phân tích | Scorecard | `scorecard/*` | `/api/scorecard[/:id]`, `POST .../summary` | `services/scorecard/*` (scoring, valuation, narrative) |
+| Thị trường | Tin tức / Vĩ mô | `today/FundamentalNewsFeed.tsx`, `news/MacroPanel.tsx`, `common/calendarGroups.ts` | `/api/macro/overview\|eia\|wasde\|fx`, `/api/fundamental/records` | `server/macro`, `services/fundamentalService.ts` |
+| Phân tích | Scorecard | `scorecard/*` (`shared.tsx`, `scoreMath.ts`) | `/api/scorecard[/:id]`, `POST .../summary` | `services/scorecard/*` (scoring, valuation, narrative) |
 | Phân tích | Chu kỳ | `CycleScannerView.tsx` | `/api/cycle/overview\|scanner\|profile\|verdict` | `engines/cycleEngine.ts`, `bottomDetectionEngine.ts`, `services/cycle*Service.ts` |
 | Phân tích | Báo cáo | `CycleResearchReportView.tsx` | `/api/cycle/report[/generate]` | `services/cycleResearchService.ts` |
 | Mã (instrument) | Tổng quan | `brief/*` | `/api/analysis/brief/:id` | `services/brief/briefService.ts` |
@@ -218,7 +218,7 @@ có TTL cho quote; `data/cache` cho file COT. Lưu ý: trên host tạm thời (
    `server/data/csvOhlcvParser.ts`); mọi nguồn khác quy về cùng mô hình nến (`MarketCandle`).
 5. **Fail closed.** Nguồn chưa cấu hình/không hợp lệ -> báo không khả dụng (`FailClosedProviderAdapter`), không rơi
    về dữ liệu giả. Validate đầu vào bằng zod; lỗi trả JSON có `error` + `message`.
-6. Tiếng Việt là mặc định, có bản tiếng Anh; thuật ngữ khó giải thích qua `common/Term.tsx`.
+6. Tiếng Việt là mặc định, có bản tiếng Anh; thuật ngữ khó giải thích qua popover `today/InfoTip.tsx` hoặc `<details>`. Quy tắc UI: `docs/UI_GUIDE.md`.
 
 ---
 
@@ -243,7 +243,7 @@ có TTL cho quote; `data/cache` cho file COT. Lưu ý: trên host tạm thời (
   (xem các file dict hiện có, vd `nav2.ts`, `scorecard.ts`); mọi chuỗi UI dùng `t('khóa')`, không hardcode.
 - [ ] Tab trong hub: thêm vào `Hubs.tsx`; id module mới (nếu cần) thêm vào `AppModuleId` (`src/shared/types/risk.ts`) và `navMap.ts`
   (`MAP` hoặc `SETTINGS_ITEMS`/`ADVANCED_ITEMS`).
-- [ ] Hiển thị giá/số: luôn kèm `DataStatusBadge` + `UpdatedAgo`; trạng thái trống dùng `EmptyState`, tải dùng `Skeleton`.
+- [ ] Hiển thị giá/số: luôn kèm `DataStatusBadge`; trạng thái trống dùng `EmptyState`, tải dùng `Skeleton`.
 - [ ] Endpoint mới: tạo `server/routes/<tên>.ts` (`registerXRoutes(app, deps)`) rồi gọi trong `server/app.ts`;
   validate bằng zod; endpoint ghi phải qua `requireAdmin`; kiểu dùng chung đặt ở `src/shared/types/`; thêm client trong `src/api/`.
 
