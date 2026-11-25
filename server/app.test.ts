@@ -521,3 +521,25 @@ test('owner mutating endpoints are admin-guarded (non-loopback without token -> 
     { adminToken: null, adminIsLoopback: () => false }
   );
 });
+
+test('compute routes have their own per-IP budget (429 + Retry-After, window reset, others unaffected)', async () => {
+  let t = 1_000_000;
+  await withTestServer(
+    async (baseUrl) => {
+      const hit = (path: string) =>
+        fetch(`${baseUrl}${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+      for (let i = 0; i < 3; i++) assert.notEqual((await hit('/api/risk/calculate')).status, 429);
+      const blocked = await hit('/api/risk/calculate');
+      assert.equal(blocked.status, 429);
+      assert.ok(Number(blocked.headers.get('retry-after')) >= 1);
+      assert.equal((await blocked.json()).error, 'RATE_LIMITED');
+      // separate budgets per route
+      assert.notEqual((await hit('/api/scanner/scan')).status, 429);
+      assert.notEqual((await hit('/api/portfolio/analyze')).status, 429);
+      assert.equal((await fetch(`${baseUrl}/api/health`)).status, 200);
+      t += 60_001;
+      assert.notEqual((await hit('/api/risk/calculate')).status, 429);
+    },
+    { rateLimit: false, computeRateLimit: { max: 3, windowMs: 60_000, now: () => t } }
+  );
+});

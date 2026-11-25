@@ -93,7 +93,7 @@ test('link-code flow via bot /start', async () => {
   await handleUpdate({ update_id: 4, message: { text: `/start ${code}`, chat: { id: 8, type: 'private' } } }, store, m, 3000);
   assert.equal(m.sent.at(-1)?.text, MSG_BAD_CODE); // code is single use
   const expired = store.createPending(0)!;
-  assert.equal(store.claim(expired, '9', 61 * 60_000 + 1), false);
+  assert.equal(store.claim(expired, '9', 15 * 60_000 + 1), false);
   await handleUpdate({ update_id: 5, message: { text: '/stop', chat: { id: 7, type: 'private' } } }, store, m, 4000);
   assert.equal(store.chatIdFor(code), null);
 });
@@ -196,5 +196,33 @@ test('routes: only linked chats can be messaged; sync validated', async () => {
     const st = (await (await fetch(`${base}/api/notify/telegram/status`, { headers: { 'x-link-code': linkCode } })).json()) as { linked: boolean; enabled: boolean };
     assert.equal(st.linked, true);
     assert.equal(st.enabled, true);
+  });
+});
+
+test('link code: >=128 bits, 15 min expiry, single use', () => {
+  const store = new NotifyStore(':memory:');
+  const code = store.createPending(0)!;
+  assert.match(code, /^[A-HJ-NP-Z2-9]{26}$/); // 26 * 5 bits = 130 bits
+  assert.notEqual(store.createPending(0), code);
+  assert.equal(store.claim(code, '1', 15 * 60_000 + 1), false); // expired
+  const c2 = store.createPending(0)!;
+  assert.equal(store.claim(c2, '1', 14 * 60_000), true);
+  assert.equal(store.claim(c2, '2', 14 * 60_000), false); // single use
+  assert.equal(store.chatIdFor(c2), '1');
+  assert.equal(store.chatIdFor(c2.slice(0, -1) + (c2.endsWith('A') ? 'B' : 'A')), null);
+  assert.equal(store.chatIdFor(undefined), null);
+});
+
+test('routes: failed link-code attempts are rate limited per IP', async () => {
+  const store = new NotifyStore(':memory:');
+  const svc: NotifyService = { store, messenger: new FakeMessenger(), botUsername: async () => 'bot' };
+  await withApp(svc, async (base) => {
+    const bad = { linkCode: 'ABCDEFGHJKLMNPQRSTUVWXYZ23' };
+    for (let i = 0; i < 20; i++) assert.equal((await post(base, '/api/notify/telegram/alert', { ...bad, text: 'x' })).status, 403);
+    const blocked = await post(base, '/api/notify/telegram/unlink', bad);
+    assert.equal(blocked.status, 429);
+    assert.ok(Number(blocked.headers.get('retry-after')) >= 1);
+    assert.equal(((await blocked.json()) as { error: string }).error, 'RATE_LIMITED');
+    assert.equal((await fetch(`${base}/api/notify/telegram/status`, { headers: { 'x-link-code': bad.linkCode } })).status, 429);
   });
 });

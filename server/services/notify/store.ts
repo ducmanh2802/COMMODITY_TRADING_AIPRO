@@ -1,15 +1,18 @@
 /** T67 - SQLite storage for Telegram links (chat <-> secret link code), sync preferences and synced watchlist zones. */
-import { randomInt } from 'node:crypto';
+import { randomInt, timingSafeEqual } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type { WatchZone } from '../../../src/shared/watchlist/watchlist.ts';
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const LINK_CODE_LENGTH = 10;
-const PENDING_TTL_MS = 60 * 60_000;
+// 26 chars x 5 bits = 130 bits of CSPRNG entropy (crypto.randomInt). Codes of the legacy length (10) stay
+// valid for lookups of already-linked chats but can no longer be claimed.
+const LINK_CODE_LENGTH = 26;
+export const PENDING_TTL_MS = 15 * 60_000;
 const MAX_PENDING = 500;
-const LINK_CODE_RE = /^[A-HJ-NP-Z2-9]{10}$/;
+const LINK_CODE_RE = /^[A-HJ-NP-Z2-9]{26}$/;
+const LINKED_CODE_RE = /^[A-HJ-NP-Z2-9]{10}$|^[A-HJ-NP-Z2-9]{26}$/;
 
 export interface SyncedZone {
   symbol: string;
@@ -41,7 +44,7 @@ export class NotifyStore {
     `);
   }
 
-  /** Issues an unclaimed code (valid 1h). Returns null when too many are pending. */
+  /** Issues an unclaimed code (valid 15 min). Returns null when too many are pending. */
   createPending(now: number): string | null {
     this.db.prepare('DELETE FROM tg_pending WHERE created_at < ?').run(now - PENDING_TTL_MS);
     const n = (this.db.prepare('SELECT COUNT(*) AS n FROM tg_pending').get() as { n: number }).n;
@@ -63,9 +66,11 @@ export class NotifyStore {
   }
 
   chatIdFor(code: unknown): string | null {
-    if (typeof code !== 'string' || !LINK_CODE_RE.test(code)) return null;
-    const r = this.db.prepare('SELECT chat_id FROM tg_links WHERE link_code = ?').get(code) as { chat_id: string } | undefined;
-    return r?.chat_id ?? null;
+    if (typeof code !== 'string' || !LINKED_CODE_RE.test(code)) return null;
+    const r = this.db.prepare('SELECT link_code, chat_id FROM tg_links WHERE link_code = ?').get(code) as { link_code: string; chat_id: string } | undefined;
+    if (!r) return null;
+    // Constant-time confirmation of the match (the index lookup itself is not).
+    return timingSafeEqual(Buffer.from(r.link_code), Buffer.from(code)) ? r.chat_id : null;
   }
 
   unlinkChat(chatId: string): void {

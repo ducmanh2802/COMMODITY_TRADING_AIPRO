@@ -118,6 +118,8 @@ export interface CreateApiAppOptions {
    * (API_RATE_LIMIT_DISABLED, API_RATE_LIMIT_WINDOW_MS, API_RATE_LIMIT_MAX).
    */
   rateLimit?: RateLimitOptions | false;
+  /** Per-IP limit for the compute routes (scanner/risk/portfolio). Default 30/min; applies even when `rateLimit` is false. */
+  computeRateLimit?: { windowMs?: number; max?: number; now?: () => number };
   /** Dependency overrides (primarily for tests). */
   instruments?: InstrumentRepositoryLike;
   providers?: ProviderRegistryLike;
@@ -462,6 +464,13 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   app.use('/api', express.json({ limit: '256kb' }));
 
   const aiRateLimiter = createAiRateLimiter(12, 60_000);
+  // Separate per-IP budget for each CPU-heavy compute route (the global limiter allows 300 writes/min).
+  const computeOpts = options.computeRateLimit ?? {};
+  const computeLimiter = () =>
+    createRateLimiter({ windowMs: computeOpts.windowMs ?? 60_000, max: computeOpts.max ?? 30, now: computeOpts.now });
+  const scannerLimiter = computeLimiter();
+  const riskLimiter = computeLimiter();
+  const portfolioLimiter = computeLimiter();
   const { cot: aiCotOption, ...aiOptions } = options.aiAnalyst ?? {};
   let aiCot: AiCotQueryLike | null | undefined = aiCotOption;
   const getAiCot = (): AiCotQueryLike | null => {
@@ -1233,7 +1242,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   });
 
   // Phase 6: AI Trade Scanner
-  app.post('/api/scanner/scan', async (req: Request, res: Response, next: NextFunction) => {
+  app.post('/api/scanner/scan', scannerLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const parsed = ScannerRequestSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -1262,7 +1271,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   });
 
   // Phase 7: Deterministic Risk Management Engine
-  app.post('/api/risk/calculate', async (req: Request, res: Response, next: NextFunction) => {
+  app.post('/api/risk/calculate', riskLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const parsed = RiskCalculationSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -1403,7 +1412,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   });
 
   // Phase 9: Portfolio Exposure & Trade Journal Analytics
-  app.post('/api/portfolio/analyze', async (req: Request, res: Response, next: NextFunction) => {
+  app.post('/api/portfolio/analyze', portfolioLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const parsed = PortfolioAnalyzeSchema.safeParse(req.body);
       if (!parsed.success) {

@@ -7,7 +7,7 @@ import type { Express, Request, Response } from 'express';
 import { sanitizeZone, type WatchZone } from '../../src/shared/watchlist/watchlist.ts';
 import { createRateLimiter } from '../middleware/rateLimit.ts';
 import type { Channels } from '../services/notify/channels.ts';
-import { NotifyStore } from '../services/notify/store.ts';
+import { NotifyStore, PENDING_TTL_MS } from '../services/notify/store.ts';
 import { registerChannelRoutes } from './notifyChannels.ts';
 import { clampText, getBotToken, isValidChatId, TelegramClient, type Messenger, type TelegramUpdate } from '../services/notify/telegram.ts';
 
@@ -55,6 +55,29 @@ export function registerNotifyRoutes(app: Express, options: NotifyRouteOptions =
   const lim = (max: number) => createRateLimiter({ windowMs: 60_000, max });
   const off = (res: Response) => res.status(503).json({ error: 'TELEGRAM_DISABLED', message: 'Telegram notifications are not configured on this server.' });
 
+  // Failed link-code attempts per IP (fixed window); blocks guessing on status/authenticated routes.
+  const FAIL_MAX = 20;
+  const FAIL_WINDOW_MS = 60_000;
+  const fails = new Map<string, { start: number; n: number }>();
+  const failKey = (req: Request) => req.ip ?? req.socket.remoteAddress ?? 'unknown';
+  const failBlocked = (req: Request, res: Response): boolean => {
+    const t = now();
+    if (fails.size > 5000) for (const [k, v] of fails) if (t - v.start >= FAIL_WINDOW_MS) fails.delete(k);
+    const e = fails.get(failKey(req));
+    if (!e || t - e.start >= FAIL_WINDOW_MS || e.n < FAIL_MAX) return false;
+    const retryAfterSeconds = Math.max(1, Math.ceil((e.start + FAIL_WINDOW_MS - t) / 1000));
+    res.setHeader('Retry-After', String(retryAfterSeconds));
+    res.status(429).json({ error: 'RATE_LIMITED', message: 'Too many failed attempts. Please retry later.', retryAfterSeconds });
+    return true;
+  };
+  const noteFail = (req: Request) => {
+    const t = now();
+    const k = failKey(req);
+    const e = fails.get(k);
+    if (!e || t - e.start >= FAIL_WINDOW_MS) fails.set(k, { start: t, n: 1 });
+    else e.n += 1;
+  };
+
   /** Resolves the chat for a request or answers 4xx. */
   const authChat = (req: Request, res: Response): { s: NotifyService; chatId: string } | null => {
     const s = svc();
@@ -62,9 +85,11 @@ export function registerNotifyRoutes(app: Express, options: NotifyRouteOptions =
       off(res);
       return null;
     }
+    if (failBlocked(req, res)) return null;
     const body = (req.body ?? {}) as { linkCode?: unknown; chatId?: unknown };
     const chatId = s.store.chatIdFor(body.linkCode);
     if (!chatId) {
+      noteFail(req);
       res.status(403).json({ error: 'NOT_LINKED', message: 'Chat is not linked.' });
       return null;
     }
@@ -81,8 +106,10 @@ export function registerNotifyRoutes(app: Express, options: NotifyRouteOptions =
       res.json({ configured: false, bot: null, linked: false, enabled: false, radar: false });
       return;
     }
+    if (failBlocked(req, res)) return;
     const code = req.header('x-link-code');
     const chatId = s.store.chatIdFor(code);
+    if (code && !chatId) noteFail(req);
     const prefs = chatId ? s.store.getPrefs(chatId) : { enabled: false, radar: false };
     res.json({ configured: true, bot: await s.botUsername(), linked: !!chatId, enabled: prefs.enabled, radar: prefs.radar });
   });
@@ -92,7 +119,7 @@ export function registerNotifyRoutes(app: Express, options: NotifyRouteOptions =
     if (!s) return off(res);
     const code = s.store.createPending(now());
     if (!code) return res.status(429).json({ error: 'TOO_MANY_PENDING', message: 'Too many pending link codes.' });
-    res.json({ linkCode: code, expiresInMinutes: 60 });
+    res.json({ linkCode: code, expiresInMinutes: PENDING_TTL_MS / 60_000 });
   });
 
   app.post('/api/notify/telegram/test', lim(5), async (req: Request, res: Response) => {
