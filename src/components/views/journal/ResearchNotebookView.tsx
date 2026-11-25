@@ -26,7 +26,7 @@ import {
 } from './researchNotes';
 
 const COLLECTION = 'researchNotes';
-const inputCls = 'w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--negative)] rounded-md px-2.5 py-2 text-xs text-[var(--text-strong)]';
+const inputCls = 'w-full bg-[var(--bg)] border border-[var(--border)] aria-[invalid=true]:border-[var(--warning)] rounded-md px-2.5 py-2 text-xs text-[var(--text-strong)]';
 const labelCls = 'block text-xs text-[var(--text)]/65 mb-1';
 
 /** T18 Research Notebook: owner-only notes per instrument, optionally carrying chart context. */
@@ -252,7 +252,7 @@ export function ResearchNotebookView() {
             </div>
           </div>
         </fieldset>
-        {error && <p id="nb-form-err" role="alert" className="text-xs font-mono text-[var(--negative)]">{error}</p>}
+        {error && <p id="nb-form-err" role="alert" className="text-xs font-mono text-[var(--warning)]">{error}</p>}
         <div className="flex justify-end gap-2">
           {(editingId || draft !== EMPTY_DRAFT) && (
             <button type="button" onClick={resetForm} className="px-3 py-1.5 border border-[var(--border)] rounded-md text-xs text-[var(--text)]/80">
@@ -288,7 +288,7 @@ export function ResearchNotebookView() {
           </select>
           <input type="search" aria-label={t('nb.filterText')} placeholder={t('nb.filterText')} value={filter.text} onChange={(e) => setFilter((f) => ({ ...f, text: e.target.value }))} className="bg-[var(--bg)] border border-[var(--border)] rounded-md px-2 py-1.5 text-xs text-[var(--text-strong)]" />
         </div>
-        {loadError && <p role="alert" className="px-4 py-2 text-xs text-[var(--negative)]">{loadError}</p>}
+        {loadError && <p role="alert" className="px-4 py-2 text-xs text-[var(--warning)]">{loadError}</p>}
         {visible.length === 0 ? (
           <div className="p-6 text-xs font-mono text-[var(--text)]/60">{notes.length === 0 ? t('nb.empty') : t('nb.emptyFiltered')}</div>
         ) : (
@@ -314,7 +314,7 @@ export function ResearchNotebookView() {
                   <button type="button" onClick={() => startEdit(n)} aria-label={t('nb.edit')} className="p-1 text-[var(--text)]/75 hover:bg-[var(--surface-2)] rounded">
                     <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
-                  <button type="button" onClick={() => void handleDelete(n)} aria-label={t('nb.delete')} className="p-1 text-[var(--negative)] hover:bg-[var(--negative)]/15 rounded">
+                  <button type="button" onClick={() => void handleDelete(n)} aria-label={t('nb.delete')} className="p-1 text-[var(--warning)] hover:bg-[var(--warning)]/15 rounded">
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>

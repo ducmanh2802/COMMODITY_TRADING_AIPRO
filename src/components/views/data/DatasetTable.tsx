@@ -37,7 +37,7 @@ export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDel
           {t('common.refresh')}
         </button>
       </div>
-      {error && <p role="alert" className="px-4 py-2 text-xs text-[var(--negative)] border-b border-[var(--border)]">{error}</p>}
+      {error && <p role="alert" className="px-4 py-2 text-xs text-[var(--warning)] border-b border-[var(--border)]">{error}</p>}
       <div className="overflow-x-auto" tabIndex={0}>
         <table className="w-full text-left border-collapse min-w-[1080px]">
           <thead>
@@ -105,7 +105,7 @@ export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDel
                       type="button"
                       onClick={() => onRequestDelete(d)}
                       aria-label={t('data.ds.deleteAria', { id: `${d.instrumentId} ${d.contractCode} ${d.timeframe}` })}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded text-[var(--negative)]/85 hover:text-[var(--negative)] hover:bg-[var(--negative)]/10"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded text-[var(--warning)]/85 hover:text-[var(--warning)] hover:bg-[var(--warning)]/10"
                     >
                       <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                       {t('common.delete')}
@@ -158,7 +158,7 @@ export function ConfirmDeleteDialog({ dataset, busy, error, onCancel, onConfirm 
           {t('data.ds.confirm2', { source: dataset.sourceLabel })}{' '}
           <span className="font-mono text-[var(--text-strong)]">{fmtInt(dataset.insertedCount)}</span> {t('data.ds.confirm3')}
         </p>
-        {error && <p role="alert" className="text-xs text-[var(--negative)]">{error}</p>}
+        {error && <p role="alert" className="text-xs text-[var(--warning)]">{error}</p>}
         <div className="flex justify-end gap-2">
           <button
             ref={cancelRef}
@@ -173,7 +173,7 @@ export function ConfirmDeleteDialog({ dataset, busy, error, onCancel, onConfirm 
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="px-3 py-1.5 text-xs rounded-md bg-[var(--negative)] text-white hover:brightness-110 disabled:opacity-50"
+            className="px-3 py-1.5 text-xs rounded-md bg-[var(--warning)] text-white hover:brightness-110 disabled:opacity-50"
           >
             {busy ? t('data.ds.deleting') : t('data.ds.deleteBtn')}
           </button>

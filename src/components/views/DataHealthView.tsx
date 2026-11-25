@@ -161,10 +161,10 @@ export function DataHealthView() {
   }, [dataHealthReport, exchangeFilter, coverageSearch, coverageFilter]);
 
   const scoreColor = (score: number) =>
-    score >= 75 ? 'text-[var(--positive)]' : score >= 45 ? 'text-[var(--warning)]' : 'text-[var(--negative)]';
+    score >= 75 ? 'text-[var(--accent-text)]' : score >= 45 ? 'text-[var(--warning)]' : 'text-[var(--warning)]';
 
   const scoreBarColor = (score: number) =>
-    score >= 75 ? 'bg-[var(--series-1)]' : score >= 45 ? 'bg-[var(--warning)]' : 'bg-[var(--negative)]';
+    score >= 75 ? 'bg-[var(--series-1)]' : score >= 45 ? 'bg-[var(--warning)]' : 'bg-[var(--warning)]';
 
   return (
     <div className="space-y-6">
@@ -229,7 +229,7 @@ export function DataHealthView() {
             <p className="text-xs font-semibold text-[var(--text-strong)]">
               {t('fr.dh.syncDoneAt', { time: formatTimestampInZone(lastSyncSummary.syncedAt, 'Asia/Ho_Chi_Minh') })}
             </p>
-            <span className="text-xs text-[var(--positive)] tabular-nums">
+            <span className="text-xs text-[var(--accent-text)] tabular-nums">
               {t('fr.dh.syncAdded', { candles: lastSyncSummary.totalCandlesDatasetsAdded, macro: lastSyncSummary.totalMacroAdded })}
             </span>
           </div>
@@ -242,7 +242,7 @@ export function DataHealthView() {
                     title={o.status}
                     className={`text-[11px] shrink-0 ${
                       o.status === 'CONNECTED'
-                        ? 'text-[var(--positive)]'
+                        ? 'text-[var(--accent-text)]'
                         : o.status === 'UNCONFIGURED'
                           ? 'text-[var(--text)]/50'
                           : 'text-[var(--warning)]'
@@ -306,12 +306,12 @@ export function DataHealthView() {
             <Activity className="w-4 h-4 text-[var(--accent)]" aria-hidden="true" />
           </div>
           <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] tabular-nums pt-0.5">
-            <span className="text-[var(--positive)]">{t('fr.status.CURRENT')}: {dataHealthReport?.statusBreakdown.current ?? 0}</span>
+            <span className="text-[var(--accent-text)]">{t('fr.status.CURRENT')}: {dataHealthReport?.statusBreakdown.current ?? 0}</span>
             <span className="text-[var(--warning)]">{t('fr.status.DELAYED')}: {dataHealthReport?.statusBreakdown.delayed ?? 0}</span>
             <span className="text-[var(--accent)]">{t('status.HISTORICAL')}: {dataHealthReport?.statusBreakdown.historical ?? 0}</span>
             <span className="text-[var(--warning)]">{t('fr.status.STALE')}: {dataHealthReport?.statusBreakdown.stale ?? 0}</span>
             <span className="text-[var(--text)]/65">{t('fr.status.UNAVAILABLE')}: {dataHealthReport?.statusBreakdown.unavailable ?? 0}</span>
-            <span className="text-[var(--negative)]">{t('fr.status.INVALID')}: {dataHealthReport?.statusBreakdown.invalid ?? 0}</span>
+            <span className="text-[var(--warning)]">{t('fr.status.INVALID')}: {dataHealthReport?.statusBreakdown.invalid ?? 0}</span>
           </div>
           <p className="text-[11px] text-[var(--text)]/50 tabular-nums">
             {t('fr.dh.gaps', { g: dataHealthReport?.coverageSummary.totalMissingGaps ?? 0, s: dataHealthReport?.coverageSummary.totalStaleSeries ?? 0 })}
@@ -500,7 +500,7 @@ export function DataHealthView() {
                           <div
                             className={
                               row.cotStatus === 'SYNCED'
-                                ? 'text-[var(--positive)]'
+                                ? 'text-[var(--accent-text)]'
                                 : row.cotStatus === 'NOT_REPORTED'
                                   ? 'text-[var(--text)]/45'
                                   : 'text-[var(--warning)]'
@@ -559,7 +559,7 @@ export function DataHealthView() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-[var(--text-strong)]">{eng.name}</span>
                         {eng.formulaPreserved && (
-                          <span className="text-[10px] text-[var(--positive)]">· {t('fr.dh.formulaLocked')}</span>
+                          <span className="text-[10px] text-[var(--accent-text)]">· {t('fr.dh.formulaLocked')}</span>
                         )}
                       </div>
                       <p className="text-[var(--text)]/60">{eng.notes}</p>
@@ -571,7 +571,7 @@ export function DataHealthView() {
                       <span
                         className={
                           eng.status === 'READY'
-                            ? 'text-[var(--positive)]'
+                            ? 'text-[var(--accent-text)]'
                             : eng.status === 'PARTIAL'
                               ? 'text-[var(--warning)]'
                               : 'text-[var(--text)]/50'
@@ -610,7 +610,7 @@ export function DataHealthView() {
                         <p className="font-mono text-[11px] text-[var(--accent)] mt-0.5">{ex.primaryOfficialFeed}</p>
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-[11px] shrink-0">
-                        <span className={ex.requiresPaidLicense ? 'text-[var(--warning)]' : 'text-[var(--positive)]'}>
+                        <span className={ex.requiresPaidLicense ? 'text-[var(--warning)]' : 'text-[var(--accent-text)]'}>
                           {label('fr.dh.tier.', ex.accessTier)}
                         </span>
                         <span className="text-[var(--text)]/60">
@@ -677,7 +677,7 @@ export function DataHealthView() {
                           <div className="text-[10px] text-[var(--text)]/50 mt-0.5">{p.delayNote}</div>
                         )}
                       </td>
-                      <td className={`py-3 px-3 ${p.credentialsConfigured ? 'text-[var(--positive)]' : 'text-[var(--text)]/50'}`}>
+                      <td className={`py-3 px-3 ${p.credentialsConfigured ? 'text-[var(--accent-text)]' : 'text-[var(--text)]/50'}`}>
                         {p.credentialsConfigured ? t('fr.dh.keySet') : t('fr.dh.keyNotSet')}
                       </td>
                       <td className="py-3 px-3 text-[var(--text)]/70">
@@ -732,7 +732,7 @@ export function DataHealthView() {
                         <td className="py-2.5 px-4 text-right">
                           <span
                             className={
-                              liveState?.credentialsConfigured ? 'text-[var(--positive)]' : 'text-[var(--text)]/50'
+                              liveState?.credentialsConfigured ? 'text-[var(--accent-text)]' : 'text-[var(--text)]/50'
                             }
                           >
                             {liveState?.credentialsConfigured ? t('fr.dh.keySet') : t('fr.dh.keyNotSet')}

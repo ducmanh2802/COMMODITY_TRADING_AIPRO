@@ -33,7 +33,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       return (
         <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex items-center justify-center p-6">
           <div className="max-w-lg w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6 space-y-4">
-            <div className="flex items-center gap-3 text-[var(--negative)]">
+            <div className="flex items-center gap-3 text-[var(--warning)]">
               <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden="true" />
               <h1 className="text-base font-semibold">{tr('error.title')}</h1>
             </div>

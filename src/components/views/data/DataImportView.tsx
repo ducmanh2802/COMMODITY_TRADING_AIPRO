@@ -302,7 +302,7 @@ export function DataImportView() {
               </span>
             )}
           </div>
-          {fileError && <p role="alert" className="mt-1 text-xs text-[var(--negative)]">{fileError}</p>}
+          {fileError && <p role="alert" className="mt-1 text-xs text-[var(--warning)]">{fileError}</p>}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -384,7 +384,7 @@ export function DataImportView() {
 
           <div>
             <label htmlFor="imp-tz" className={labelCls}>
-              {t('data.timezone')} <span className="text-[var(--negative)]">*</span>
+              {t('data.timezone')} <span className="text-[var(--warning)]">*</span>
             </label>
             <select
               id="imp-tz"
@@ -483,7 +483,7 @@ export function DataImportView() {
 
           <div>
             <label htmlFor="imp-source" className={labelCls}>
-              {t('data.sourceLabel')} <span className="text-[var(--negative)]">*</span>
+              {t('data.sourceLabel')} <span className="text-[var(--warning)]">*</span>
             </label>
             <input
               id="imp-source"
@@ -497,7 +497,7 @@ export function DataImportView() {
 
           <div>
             <label htmlFor="imp-quality" className={labelCls}>
-              {t('data.sourceQuality')} <span className="text-[var(--negative)]">*</span>
+              {t('data.sourceQuality')} <span className="text-[var(--warning)]">*</span>
             </label>
             <select
               id="imp-quality"
@@ -553,7 +553,7 @@ export function DataImportView() {
           <button
             type="submit"
             disabled={!request || busy !== null}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-[var(--accent)] text-white hover:bg-[#5458E8] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Play className="w-3.5 h-3.5" aria-hidden="true" />
             {busy === 'dry' ? t('data.dryRunning') : t('data.dryRun')}
@@ -584,7 +584,7 @@ export function DataImportView() {
             className={`text-xs rounded-md px-3 py-2 border ${
               requestError.auth
                 ? 'text-[var(--warning)] border-[var(--warning)]/40 bg-[var(--warning)]/10'
-                : 'text-[var(--negative)] border-[var(--negative)]/40 bg-[var(--negative)]/10'
+                : 'text-[var(--warning)] border-[var(--warning)]/40 bg-[var(--warning)]/10'
             }`}
           >
             {requestError.message}

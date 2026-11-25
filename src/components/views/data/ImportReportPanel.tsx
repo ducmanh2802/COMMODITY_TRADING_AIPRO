@@ -16,7 +16,7 @@ export function ImportReportPanel({ report, httpStatus, timeframe }: ImportRepor
   const t = useT();
   const ok = report.ok && report.errorCount === 0;
   const StatusIcon = ok ? CheckCircle2 : XCircle;
-  const statusColor = ok ? 'text-[var(--positive)]' : 'text-[var(--negative)]';
+  const statusColor = ok ? 'text-[var(--accent-text)]' : 'text-[var(--warning)]';
 
   return (
     <section
@@ -97,7 +97,7 @@ export function ImportReportPanel({ report, httpStatus, timeframe }: ImportRepor
 
         {report.conflicts.length > 0 && (
           <div>
-            <h3 className="text-xs font-semibold text-[var(--negative)] mb-2">{t('data.rep.conflicts')} ({report.conflicts.length})</h3>
+            <h3 className="text-xs font-semibold text-[var(--warning)] mb-2">{t('data.rep.conflicts')} ({report.conflicts.length})</h3>
             <div className="overflow-x-auto border border-[var(--border)] rounded-md max-h-72">
               <table className="w-full text-left border-collapse min-w-[640px]">
                 <thead className="sticky top-0 bg-[var(--surface-2)]">
@@ -137,7 +137,7 @@ function IssueTable({
   rows: { line: number | null; code: string; message: string }[];
 }) {
   const t = useT();
-  const color = tone === 'error' ? 'text-[var(--negative)]' : 'text-[var(--warning)]';
+  const color = tone === 'error' ? 'text-[var(--warning)]' : 'text-[var(--warning)]';
   return (
     <div>
       <h3 className={`text-xs font-semibold mb-2 flex items-center gap-1.5 ${color}`}>

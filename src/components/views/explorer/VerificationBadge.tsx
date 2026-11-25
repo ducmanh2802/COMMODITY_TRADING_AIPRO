@@ -4,9 +4,9 @@ import { useT } from '../../../i18n';
 export type VerificationLevel = 'VERIFIED' | 'UNVERIFIED' | 'UNAVAILABLE';
 
 const META: Record<VerificationLevel, { colorClass: string; Icon: typeof CheckCircle2 }> = {
-  VERIFIED: { colorClass: 'text-[var(--positive)] border-[var(--positive)]/30 bg-[var(--positive)]/10', Icon: CheckCircle2 },
+  VERIFIED: { colorClass: 'text-[var(--accent-text)] border-[var(--accent)]/30 bg-[var(--accent)]/10', Icon: CheckCircle2 },
   UNVERIFIED: { colorClass: 'text-[var(--warning)] border-[var(--warning)]/30 bg-[var(--warning)]/10', Icon: HelpCircle },
-  UNAVAILABLE: { colorClass: 'text-[var(--negative)] border-[var(--negative)]/30 bg-[var(--negative)]/10', Icon: ShieldAlert },
+  UNAVAILABLE: { colorClass: 'text-[var(--warning)] border-[var(--warning)]/30 bg-[var(--warning)]/10', Icon: ShieldAlert },
 };
 
 export function VerificationBadge({

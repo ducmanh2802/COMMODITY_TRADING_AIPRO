@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowUpRight, ChevronRight, Filter, Info, Radar } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
 import { useT } from '../../i18n';
@@ -8,6 +8,7 @@ import { CommodityHeroImage } from '../common/CommodityHeroImage';
 import { CyclePhaseBadge, getBottomScoreAccent } from '../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { Badge } from '../ui/Badge';
+import { InfoTip } from './today/InfoTip';
 import { ScaleLegend } from '../ui/viz/ScaleLegend';
 import { fetchJsonWithRetry } from '../../shared/utils/http';
 import { sortCommoditiesByPotential } from '../../shared/utils/commoditySort';
@@ -23,32 +24,6 @@ const PHASE_COLOR: Record<string, string> = {
   PHASE_3_MARKUP: 'var(--accent)',
   PHASE_4_DISTRIBUTION: 'var(--warning)',
 };
-
-/** (i) popover (pattern copied from InstrumentOverview ContextCard). */
-function InfoTip({ label, children }: { label: string; children: ReactNode }) {
-  const id = useId();
-  const [open, setOpen] = useState(false);
-  return (
-    <span className="relative inline-flex">
-      <button
-        type="button"
-        aria-label={label}
-        aria-expanded={open}
-        aria-controls={id}
-        onClick={() => setOpen((v) => !v)}
-        onBlur={() => setOpen(false)}
-        className="shrink-0 w-10 h-10 -my-2 flex items-center justify-center text-[var(--muted)] hover:text-[var(--text-strong)]"
-      >
-        <Info className="w-4 h-4" aria-hidden="true" />
-      </button>
-      {open && (
-        <span id={id} role="tooltip" className="absolute right-0 sm:left-0 sm:right-auto top-full z-50 mt-1 block w-72 max-w-[calc(100vw-32px)] text-xs leading-relaxed text-[var(--text)] bg-[var(--surface-2)] border border-[var(--border)] rounded-lg p-2.5 shadow-lg">
-          {children}
-        </span>
-      )}
-    </span>
-  );
-}
 
 /** 4 segments = 4 cycle phases; the current one is filled. Text lives in aria-label / title. */
 function PhaseStrip({ phase, label }: { phase: CyclePhase; label: string }) {
@@ -151,7 +126,7 @@ export function CycleScannerView({ embedded = false }: { embedded?: boolean } = 
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <p className="flex items-center gap-1 text-sm text-[var(--text)]/70">
           <span>{t('cs.lead')}</span>
-          <InfoTip label={t('cs.info')}>{t('cs.infoBody')}</InfoTip>
+          <InfoTip text={t('cs.infoBody')} />
         </p>
         <ScaleLegend kind="sequential" low={t('cs.scoreLegendLow')} high={t('cs.scoreLegendHigh')} />
       </div>

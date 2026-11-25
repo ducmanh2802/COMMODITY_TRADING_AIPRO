@@ -23,6 +23,7 @@ import * as simple from './dict/simple';
 import * as drivers from './dict/drivers';
 import * as hedge from './dict/hedge';
 import * as onboarding from './dict/onboarding';
+import * as onboard2 from './dict/onboard2';
 import * as radar from './dict/radar';
 import * as watchlist from './dict/watchlist';
 import * as telegram from './dict/telegram';
@@ -61,6 +62,7 @@ import * as cyclescan from './dict/cyclescan';
 import * as toppick from './dict/toppick';
 import * as hardcoded from './dict/hardcoded';
 import * as honesty from './dict/honesty';
+import * as badges2 from './dict/badges2';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
@@ -89,6 +91,7 @@ export const vi = {
   ...drivers.vi,
   ...hedge.vi,
   ...onboarding.vi,
+  ...onboard2.vi,
   ...radar.vi,
   ...watchlist.vi,
   ...telegram.vi,
@@ -126,6 +129,7 @@ export const vi = {
   ...cyclescan.vi,
   ...toppick.vi,
   ...honesty.vi,
+  ...badges2.vi,
   ...hardcoded.vi,
 };
 

@@ -65,7 +65,9 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
     setError(null);
     try {
       const res = await fetch('/api/scorecard', { signal });
-      setData(await safeReadJson<ScorecardListResponse>(res));
+      const body = await safeReadJson<ScorecardListResponse>(res);
+      // Empty/malformed payload (e.g. {}): normalise to an empty list, never crash.
+      setData({ ...body, scorecards: Array.isArray(body?.scorecards) ? body.scorecards : [], count: body?.count ?? 0 });
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
       setError(err instanceof Error ? err.message : String(err));

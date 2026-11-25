@@ -72,7 +72,7 @@ export function SessionHistory({ state, notes, instrumentName, onUpdateTrade, on
               ) : (
                 <h3 className="text-sm font-semibold text-[var(--text-strong)]">{s.name}</h3>
               )}
-              <span className={`text-[11px] px-2 py-0.5 rounded-full border ${s.status === 'active' ? 'border-[var(--positive)] text-[var(--positive)]' : 'border-[#6B7280] text-[var(--muted)]'}`}>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full border ${s.status === 'active' ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--muted)]'}`}>
                 {s.status === 'active' ? t('pt.session.active') : t('pt.session.closed')}
               </span>
               <span className="text-[11px] text-[var(--text)]/55">
@@ -94,7 +94,7 @@ export function SessionHistory({ state, notes, instrumentName, onUpdateTrade, on
                 {openId === s.id ? t('pt.hist.hide') : t('pt.hist.open')}
               </button>
               <button type="button" className="px-4 py-2 border border-[var(--border)] text-xs rounded-md" onClick={() => setRenaming({ id: s.id, name: s.name })}>{t('pt.session.rename')}</button>
-              <button type="button" className="px-4 py-2 border border-[var(--negative)]/60 text-[var(--negative)] text-xs rounded-md" onClick={() => onDeleteSession(s)}>{t('pt.session.delete')}</button>
+              <button type="button" className="px-4 py-2 border border-[var(--warning)]/60 text-[var(--warning)] text-xs rounded-md" onClick={() => onDeleteSession(s)}>{t('pt.session.delete')}</button>
             </div>
             {open?.s.id === s.id && (
               <SessionReport

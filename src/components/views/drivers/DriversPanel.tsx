@@ -4,6 +4,7 @@ import { useTerminal } from '../../../contexts/TerminalContext';
 import { fmtFixed, useI18n } from '../../../i18n';
 import type { ConeHorizon, DText, DriverHorizon, DriverPartId, DriversResponse } from '../../../shared/types/drivers';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
+import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { Card } from '../../ui/Card';
 import { Skeleton } from '../../ui/Skeleton';
 import { AttributionBar, ConeChart, SeasonBars } from './charts';
@@ -194,7 +195,7 @@ export function DriversPanel() {
   if (err)
     return (
       <Card className="space-y-2 text-sm">
-        <p className="text-[var(--negative)]">{t('drv.error', { msg: err })}</p>
+        <p className="text-[var(--warning)]">{t('drv.error', { msg: err })}</p>
         <button type="button" onClick={retry} className="underline text-[var(--accent-text)]">{t('drv.retry')}</button>
       </Card>
     );
@@ -207,6 +208,10 @@ export function DriversPanel() {
     );
   return (
     <div className="space-y-3">
+      <p className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--faint)]" data-testid="drivers-asof">
+        <DataStatusBadge status={data.asOf ? 'HISTORICAL' : 'UNAVAILABLE'} />
+        <span>{data.asOf ? t('b2.drv.line', { date: data.asOf, src: data.scenarios.source ? ` · ${data.scenarios.source}` : '' }) : t('b2.drv.none')}</span>
+      </p>
       <WhyBlock data={data} l={l} />
       <ConeBlock data={data} l={l} />
       <div className="grid gap-3 md:grid-cols-2">

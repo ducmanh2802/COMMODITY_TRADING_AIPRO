@@ -142,7 +142,7 @@ export function BenchmarkReferencePanel() {
         </span>
       </div>
 
-      {error && <p role="alert" className="text-xs text-[var(--negative)]">{t('bm.error', { msg: error })}</p>}
+      {error && <p role="alert" className="text-xs text-[var(--warning)]">{t('bm.error', { msg: error })}</p>}
 
       {loading ? (
         <p className="h-[340px] flex items-center justify-center text-xs text-[var(--text)]/55">{t('bm.loading')}</p>

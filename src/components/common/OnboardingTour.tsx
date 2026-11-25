@@ -10,7 +10,7 @@ export const ONBOARDING_KEY = 'ctap.onboardingDone';
 const TOTAL = 5;
 /** System stack (must match the static first-run shell in index.html): a web-font swap must not resize the LCP text. */
 const ONBOARDING_BODY_FONT = "system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-const TARGETS: Record<number, AppModuleId> = { 2: 'today-hub', 3: 'learn', 4: 'mine-hub' };
+const TARGETS: Record<number, AppModuleId> = { 2: 'commodity-world', 3: 'learn', 4: 'paper-trade' };
 
 function isDone(): boolean {
   try {
@@ -69,7 +69,7 @@ export function OnboardingTour() {
             </>
           )}
           {target && (
-            <button type="button" onClick={() => setActiveModule(target)} className={`${btn} border-[var(--accent-text)] hover:bg-[var(--accent)]/20`}>
+            <button type="button" onClick={() => { setActiveModule(target); close(); }} className={`${btn} border-[var(--accent-text)] hover:bg-[var(--accent)]/20`}>
               {t(k('go'))}
             </button>
           )}
@@ -87,9 +87,16 @@ export function OnboardingTour() {
           <button type="button" onClick={close} className="text-lg underline text-[var(--muted)] px-2 py-2">
             {t('ob.skip')}
           </button>
-          <button type="button" onClick={next} className={`${btn} bg-[var(--accent)] border-[var(--accent)]`}>
-            {step >= TOTAL ? t('ob.done') : t('ob.next')}
-          </button>
+          <div className="flex gap-2">
+            {step > 1 && (
+              <button type="button" onClick={() => setStep(step - 1)} className={`${btn} border-[var(--accent-text)]`}>
+                {t('ob.back')}
+              </button>
+            )}
+            <button type="button" onClick={next} className={`${btn} bg-[var(--accent)] border-[var(--accent)]`}>
+              {step >= TOTAL ? t('ob.done') : t('ob.next')}
+            </button>
+          </div>
         </div>
       </div>
     </div>

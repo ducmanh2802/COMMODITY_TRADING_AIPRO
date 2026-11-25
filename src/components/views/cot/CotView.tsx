@@ -35,6 +35,7 @@ import {
   MIN_COT_LOOKBACK_WEEKS,
   categoriesFor,
 } from '../../../shared/cot/analytics';
+import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { CHART_COLORS, type ChartLine, TimeSeriesChart } from '../analysis/TimeSeriesChart';
 import { Notice, NumberField, Panel, StatusBlock, inputClass, labelClass } from '../analysis/shared';
 import { fmtDate, fmtFixed, fmtInt as fmtIntDisplay, tr, useT } from '../../../i18n';
@@ -321,7 +322,7 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
       {result && (
         <div className="space-y-2 text-xs">
           <p className="font-mono">
-            {t('cot.sync.status')} <span className={result.status === 'SUCCESS' ? 'text-[var(--positive)]' : result.status === 'PARTIAL' ? 'text-[var(--warning)]' : 'text-[var(--negative)]'}>{result.status}</span>{' '}
+            {t('cot.sync.status')} <span className={result.status === 'SUCCESS' ? 'text-[var(--accent-text)]' : result.status === 'PARTIAL' ? 'text-[var(--warning)]' : 'text-[var(--warning)]'}>{result.status}</span>{' '}
             · {t('cot.sync.code', { code: result.cftcContractMarketCode })}
           </p>
           <div className="overflow-x-auto" tabIndex={0}>
@@ -430,6 +431,10 @@ function CotResults({ data }: { data: CotQueryResponse }) {
           )}
         </div>
         {rows.length === 0 && a.status !== 'INVALID_INPUT' && <Notice tone="info">{t('cot.an.noReports')}</Notice>}
+        <p className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--faint)]" data-testid="cot-asof">
+          <DataStatusBadge status={latest ? 'HISTORICAL' : 'UNAVAILABLE'} />
+          <span>{latest ? t('b2.cot.line', { date: fmtDate(latest.reportDate), rel: fmtDate(latest.expectedReleaseDate) }) : t('b2.cot.lineNone')}</span>
+        </p>
         {latest && <CotReleaseTimeline reportDate={latest.reportDate} releaseDate={latest.expectedReleaseDate} todayIso={todayIso} />}
       </Panel>
 

@@ -286,7 +286,7 @@ function EntryForm({ onSaved }: { onSaved: () => void }) {
         </button>
       </details>
       {msg && (
-        <p role="status" className={`text-sm ${msg.ok ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>
+        <p role="status" className={`text-sm ${msg.ok ? 'text-[var(--accent-text)]' : 'text-[var(--warning)]'}`}>
           {msg.text}
         </p>
       )}
@@ -323,7 +323,7 @@ export function DomesticPricesPanel() {
       {loading && !data ? (
         <Skeleton className="h-40 w-full" />
       ) : error && !data ? (
-        <p className="text-sm text-[var(--negative)]">{t('dm.error', { msg: error })}</p>
+        <p className="text-sm text-[var(--warning)]">{t('dm.error', { msg: error })}</p>
       ) : data ? (
         <>
           <p className="text-xs text-[var(--muted)]">

@@ -42,14 +42,14 @@ export function CommodityHeroImage({
   const [errored, setErrored] = useState(false);
   const visual = getCommodityVisual(symbol);
   const FallbackIcon = getCategoryFallbackIcon(category ?? visual?.category);
-  const accent = visual?.accentHex ?? '#6366F1';
+  const accent = visual?.accentHex ?? 'var(--accent)';
 
   if (!visual || errored) {
     return (
       <div
         className={`relative overflow-hidden bg-gradient-to-br from-[var(--surface-2)] via-[var(--surface)] to-[var(--bg)] flex flex-col items-center justify-center p-4 text-center ${className}`}
         style={{
-          backgroundImage: `radial-gradient(circle at 25% 25%, ${accent}24 0%, transparent 60%)`,
+          backgroundImage: `radial-gradient(circle at 25% 25%, color-mix(in srgb, ${accent} 14%, transparent) 0%, transparent 60%)`,
         }}
       >
         <FallbackIcon className="w-8 h-8 mb-2 opacity-80" style={{ color: accent }} aria-hidden="true" />

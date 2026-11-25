@@ -5,6 +5,8 @@ import { useTerminal } from '../../../contexts/TerminalContext';
 import type { Scorecard, ScorecardNarrative } from '../../../shared/types/scorecard';
 import { safeReadJson } from '../../../shared/utils/http';
 import { useFocusTrap } from '../../../shared/hooks/useFocusTrap';
+import { DataStatusBadge } from '../../common/DataStatusBadge';
+import type { DataQualityStatus } from '../../../shared/types/market';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { DimBadge, LEVEL_TONE } from './shared';
@@ -13,6 +15,8 @@ interface Props {
   card: Scorecard;
   onClose: () => void;
 }
+
+const QUOTE_STATUSES: string[] = ['CURRENT', 'DELAYED', 'HISTORICAL', 'STALE', 'UNAVAILABLE', 'INVALID'];
 
 type AiState =
   | { kind: 'idle' }
@@ -141,6 +145,10 @@ export function ScorecardDrawer({ card, onClose }: Props) {
 
         <section aria-labelledby="sc-dq" className="space-y-1">
           <h3 id="sc-dq" className="text-sm font-semibold text-[var(--text-strong)]">{t('sc.detail.dataQuality')} <Badge tone={LEVEL_TONE[dq.level]}>{dq.label[lang]}</Badge></h3>
+          <p className="flex flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
+            <DataStatusBadge status={QUOTE_STATUSES.includes(dq.quoteStatus as DataQualityStatus) ? (dq.quoteStatus as DataQualityStatus) : 'UNAVAILABLE'} />
+            <span>{t('b2.sc.quote', { src: dq.quoteSource })}</span>
+          </p>
           <p className="text-xs text-[var(--muted)] break-words">{t('sc.detail.quote', { status: dq.quoteStatus, src: dq.quoteSource })}</p>
           <p className="text-xs text-[var(--muted)] break-words">
             {dq.historyBars > 0

@@ -28,7 +28,7 @@ function QualityCell({ input, t }: { input: AiDataInput; t: TFunction }) {
   }
   const verified = input.quality === 'VERIFIED';
   return (
-    <span className={`font-mono text-[11px] ${verified ? 'text-[var(--positive)]' : 'text-[var(--warning)]'}`}>
+    <span className={`font-mono text-[11px] ${verified ? 'text-[var(--accent-text)]' : 'text-[var(--warning)]'}`}>
       {t(verified ? 'air.quality.VERIFIED' : 'air.quality.UNVERIFIED')}
     </span>
   );
@@ -105,7 +105,7 @@ export function AiAnalystView() {
       />
 
       {error && (
-        <div role="alert" className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-lg p-4 text-xs text-[var(--negative)]">
+        <div role="alert" className="bg-[var(--surface)] border border-[var(--warning)]/40 rounded-lg p-4 text-xs text-[var(--warning)]">
           {error}
         </div>
       )}

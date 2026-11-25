@@ -390,7 +390,7 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
   if (error || !dossier) {
     return (
       <Card className="space-y-2 text-sm">
-        <p className="text-[var(--negative)]">{t('ins.error', { msg: error ?? '—' })}</p>
+        <p className="text-[var(--warning)]">{t('ins.error', { msg: error ?? '—' })}</p>
         <button type="button" onClick={retry} className="underline text-[var(--accent-text)]">
           {t('drv.retry')}
         </button>

@@ -66,9 +66,9 @@ export function Panel({ title, subtitle, children }: { title: string; subtitle?:
 }
 
 const STATUS_STYLE: Record<string, { cls: string; Icon: typeof CheckCircle2 }> = {
-  OK: { cls: 'text-[var(--positive)] border-[var(--positive)]/40 bg-[var(--positive)]/10', Icon: CheckCircle2 },
+  OK: { cls: 'text-[var(--accent-text)] border-[var(--accent)]/40 bg-[var(--accent)]/10', Icon: CheckCircle2 },
   INSUFFICIENT_DATA: { cls: 'text-[var(--warning)] border-[var(--warning)]/40 bg-[var(--warning)]/10', Icon: AlertTriangle },
-  INVALID_INPUT: { cls: 'text-[var(--negative)] border-[var(--negative)]/40 bg-[var(--negative)]/10', Icon: XCircle },
+  INVALID_INPUT: { cls: 'text-[var(--warning)] border-[var(--warning)]/40 bg-[var(--warning)]/10', Icon: XCircle },
 };
 
 export function StatusChip({ status }: { status: AnalyticsStatus | string }) {
@@ -131,7 +131,7 @@ export function StatusBlock({
 export function Notice({ tone, children }: { tone: 'warn' | 'error' | 'info'; children: ReactNode }) {
   const cls =
     tone === 'error'
-      ? 'border-[var(--negative)]/50 bg-[var(--negative)]/10 text-[var(--negative)]'
+      ? 'border-[var(--warning)]/50 bg-[var(--warning)]/10 text-[var(--warning)]'
       : tone === 'warn'
         ? 'border-[var(--warning)]/50 bg-[var(--warning)]/10 text-[var(--warning)]'
         : 'border-[var(--accent)]/40 bg-[var(--accent)]/10 text-[var(--accent-text)]';

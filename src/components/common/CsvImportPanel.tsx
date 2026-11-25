@@ -148,7 +148,7 @@ export function CsvImportPanel({
               type="button"
               onClick={() => void handleClearAll()}
               disabled={clearing}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-2)] hover:bg-[var(--negative)]/15 border border-[var(--border)] hover:border-[var(--negative)]/40 rounded-md text-xs text-[var(--negative)] disabled:opacity-50 whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-2)] hover:bg-[var(--warning)]/15 border border-[var(--border)] hover:border-[var(--warning)]/40 rounded-md text-xs text-[var(--warning)] disabled:opacity-50 whitespace-nowrap"
             >
               <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{clearing ? t('data.csv.clearing') : t('data.csv.clear')}</span>
@@ -241,7 +241,7 @@ export function CsvImportPanel({
           {feedback ? (
             <p
               className={`text-xs font-mono ${
-                feedback.type === 'ok' ? 'text-[var(--positive)]' : 'text-[var(--negative)]'
+                feedback.type === 'ok' ? 'text-[var(--accent-text)]' : 'text-[var(--warning)]'
               }`}
             >
               {feedback.text}

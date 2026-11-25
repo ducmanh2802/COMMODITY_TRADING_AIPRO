@@ -47,11 +47,11 @@ const impactLabel = (level: string): string => {
 function getSessionStateStyle(state: SessionLiveState): { text: string; label: string } {
   switch (state) {
     case 'OPEN':
-      return { text: 'text-[var(--positive)]', label: tr('cal.state.OPEN') };
+      return { text: 'text-[var(--accent-text)]', label: tr('cal.state.OPEN') };
     case 'BREAK':
       return { text: 'text-[var(--warning)]', label: tr('cal.state.BREAK') };
     case 'HOLIDAY_CLOSED':
-      return { text: 'text-[var(--negative)]', label: tr('cal.state.HOLIDAY_CLOSED') };
+      return { text: 'text-[var(--warning)]', label: tr('cal.state.HOLIDAY_CLOSED') };
     default:
       return { text: 'text-[var(--text)]/55', label: tr('cal.state.CLOSED') };
   }
@@ -382,7 +382,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                               </button>
                             ))}
                             {verifiedRec && (
-                              <span className="font-mono text-[11px] text-[var(--positive)]" title={verifiedFull}>
+                              <span className="font-mono text-[11px] text-[var(--accent-text)]" title={verifiedFull}>
                                 {t('calv.verifiedShort', { value: verifiedRec.actualValue, unit: verifiedRec.unit })}
                               </span>
                             )}
@@ -412,7 +412,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                                 <span className="text-[var(--text)]/55">{t('calv.note')}: </span>
                                 {ev.mxvImpactNote}
                               </p>
-                              {verifiedRec && <p className="font-mono text-[var(--positive)]">{verifiedFull}</p>}
+                              {verifiedRec && <p className="font-mono text-[var(--accent-text)]">{verifiedFull}</p>}
                               {ev.relatedSymbols.length > CHIPS && (
                                 <div className="flex flex-wrap gap-1">
                                   {ev.relatedSymbols.slice(CHIPS, 5).map((sym) => (

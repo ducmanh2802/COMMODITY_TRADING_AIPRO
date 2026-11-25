@@ -5,6 +5,7 @@ import type { StrategyDefinition, StrategyId } from '../../shared/types/analysis
 import type { Timeframe } from '../../shared/types/instrument';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { fmtFixed, fmtNum, hasKey, tr, useT, type TKey } from '../../i18n';
+import { Badge } from '../ui/Badge';
 import { EquityChart } from '../ui/viz/EquityChart';
 import { MonteCarloSection, StrategyParamsPanel, WalkForwardSection } from './backtest/LabPanels';
 import { defaultsOf, type ParamDef } from './backtest/labGrid';
@@ -391,6 +392,15 @@ export function BacktestView() {
 
       {result && result.valid && (
         <div className="space-y-6">
+          <p className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--muted)]" data-testid="bt-sim-label">
+            <Badge tone="warning">{t('b2.bt.sim')}</Badge>
+            <span>
+              {result.equityCurve.length > 0
+                ? t('b2.bt.range', { from: result.equityCurve[0].timestamp.slice(0, 10), to: result.equityCurve[result.equityCurve.length - 1].timestamp.slice(0, 10), tf: result.timeframe, n: result.metrics.tradeCount })
+                : t('b2.bt.rangeNone', { tf: result.timeframe, n: result.metrics.tradeCount })}
+            </span>
+            <span className="text-[var(--faint)]">{t('b2.bt.note')}</span>
+          </p>
           <section className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 text-xs font-mono tabular-nums">
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
               <span className="text-[var(--text)]/55 font-sans block">{t('bt.netProfit')}</span>
@@ -513,6 +523,7 @@ export function BacktestView() {
         <div>
           <h2 className="text-lg font-semibold text-[var(--text-strong)] tracking-tight">{t('lab.title')}</h2>
           <p className="text-sm text-[var(--text)]/65 mt-1">{t('lab.subtitle')}</p>
+          <p className="mt-1"><Badge tone="warning">{t('b2.bt.sim')}</Badge></p>
         </div>
         <WalkForwardSection
           buildPayload={buildPayload}

@@ -231,7 +231,7 @@ export function WalkForwardSection({
         </p>
       </fieldset>
 
-      {error && <p role="alert" className="text-xs font-mono text-[var(--negative)] break-words">{error}</p>}
+      {error && <p role="alert" className="text-xs font-mono text-[var(--warning)] break-words">{error}</p>}
 
       {res && !res.valid && <p role="alert" className="text-xs text-[var(--warning)]">{res.error}</p>}
 
@@ -424,7 +424,7 @@ export function MonteCarloSection({
         </button>
       </div>
 
-      {error && <p role="alert" className="text-xs font-mono text-[var(--negative)] break-words">{error}</p>}
+      {error && <p role="alert" className="text-xs font-mono text-[var(--warning)] break-words">{error}</p>}
       {res && !res.valid && <p role="alert" className="text-xs text-[var(--warning)]">{t('lab.mc.tooFew')}</p>}
 
       {res && res.valid && (

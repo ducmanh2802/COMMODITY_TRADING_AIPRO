@@ -23,6 +23,7 @@ import * as simple from './dict/simple';
 import * as drivers from './dict/drivers';
 import * as hedge from './dict/hedge';
 import * as onboarding from './dict/onboarding';
+import * as onboard2 from './dict/onboard2';
 import * as radar from './dict/radar';
 import * as watchlist from './dict/watchlist';
 import * as telegram from './dict/telegram';
@@ -61,6 +62,7 @@ import * as cyclescan from './dict/cyclescan';
 import * as toppick from './dict/toppick';
 import * as hardcoded from './dict/hardcoded';
 import * as honesty from './dict/honesty';
+import * as badges2 from './dict/badges2';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
@@ -90,6 +92,7 @@ export const en: Record<TKey, string> = {
   ...drivers.en,
   ...hedge.en,
   ...onboarding.en,
+  ...onboard2.en,
   ...radar.en,
   ...watchlist.en,
   ...telegram.en,
@@ -127,5 +130,6 @@ export const en: Record<TKey, string> = {
   ...cyclescan.en,
   ...toppick.en,
   ...honesty.en,
+  ...badges2.en,
   ...hardcoded.en,
 };

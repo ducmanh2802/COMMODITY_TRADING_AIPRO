@@ -79,7 +79,7 @@ function SpecPicker({
         <p className="text-[11px] text-[var(--text)]/60 font-mono">
           {s.contractSize ?? '?'} {s.contractSizeUnit} · tick {s.minimumTickSize ?? '?'} {s.quotationUnit} · tick value{' '}
           {s.tickValue ?? '?'} {s.tradingCurrency} ·{' '}
-          <span className={s.verificationStatus === 'VERIFIED' ? 'text-[var(--positive)]' : 'text-[var(--warning)]'}>{s.verificationStatus}</span>
+          <span className={s.verificationStatus === 'VERIFIED' ? 'text-[var(--accent-text)]' : 'text-[var(--warning)]'}>{s.verificationStatus}</span>
           {s.dataSource.startsWith('http') && (
             <>
               {' · '}
@@ -347,7 +347,7 @@ function CurveQuiz() {
               ))}
             </div>
             {chosen && (
-              <p className={`text-xs ${chosen === correct ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>
+              <p className={`text-xs ${chosen === correct ? 'text-[var(--accent-text)]' : 'text-[var(--warning)]'}`}>
                 {chosen === correct ? 'Đúng.' : `Chưa đúng — đáp án: ${SHAPE_LABEL[correct]}.`}{' '}
                 {correct === 'CONTANGO' && 'Long roll liên tục sẽ bán rẻ tháng gần, mua đắt tháng xa → roll yield âm.'}
                 {correct === 'BACKWARDATION' && 'Long roll liên tục bán đắt tháng gần, mua rẻ tháng xa → roll yield dương (nếu đường cong giữ nguyên).'}

@@ -144,7 +144,12 @@ function MacroOverviewPanel() {
     try {
       const res = await fetch('/api/macro/overview');
       if (!res.ok) throw new Error(String(res.status));
-      setData((await res.json()) as MacroOverview);
+      const body = (await res.json()) as Partial<MacroOverview> | null;
+      // Empty/malformed payload (e.g. {}): show the retry state instead of crashing.
+      if (!body || !body.eia || !body.fx || !body.wasde || !Array.isArray(body.eia.items) || !Array.isArray(body.fx.items) || !Array.isArray(body.wasde.releases) || !Array.isArray(body.wasde.upcoming) || !Array.isArray(body.wasde.keyNumbers)) {
+        throw new Error('malformed');
+      }
+      setData(body as MacroOverview);
     } catch {
       setData(null);
       setFailed(true);

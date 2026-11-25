@@ -5,6 +5,8 @@ import { useTerminal } from '../../contexts/TerminalContext';
 import { getCommodityVisual } from '../../shared/data/commodityVisuals';
 import type { DailyResearchReportPayload } from '../../shared/types/cycle';
 import { CyclePhaseBadge } from '../common/CyclePhaseBadge';
+import { DataStatusBadge } from '../common/DataStatusBadge';
+import type { CommodityCycleSummary } from '../../shared/types/cycle';
 import { fetchJsonWithRetry, safeReadJson } from '../../shared/utils/http';
 
 export function CycleResearchReportView() {
@@ -91,6 +93,9 @@ export function CycleResearchReportView() {
       <span className="text-[var(--text-strong)]/90 min-w-0 truncate">{ev.title}</span>
     </li>
   );
+  const statusBadge = (item: CommodityCycleSummary) => (
+    <DataStatusBadge status={item.dataStatus} sourceQuality={item.quote.sourceQuality} delayMinutes={item.quote.delayMinutes} kind={item.quote.kind} />
+  );
   const nameBtn = (symbol: string, name: string, sub?: string) => (
     <button type="button" onClick={() => openInstrumentIn(symbol, 'commodity-profile')} className="text-left hover:text-[var(--accent)] min-w-0" title={sub}>
       <p className="font-medium text-[var(--text-strong)] truncate">{name}</p>
@@ -106,6 +111,7 @@ export function CycleResearchReportView() {
             <span>{t('sc2.rep.title')}</span>
           </h2>
           <p className="text-sm text-[var(--muted)] mt-1">{t('sc2.rep.intro')}</p>
+          {report && <p className="text-[11px] text-[var(--faint)] mt-1">{t('b2.rep.line', { date: report.generatedAt })}</p>}
           <details className="mt-1">
             <summary className={sum}>{t('sc2.explain')}</summary>
             <p className="text-xs text-[var(--muted)] mt-1">{t('sc2.rep.introFull')}</p>
@@ -169,7 +175,10 @@ export function CycleResearchReportView() {
               {report.topWatch.map((item) => (
                 <li key={item.instrument.id} className="py-2 flex items-center justify-between gap-2">
                   {nameBtn(item.instrument.exchangeSymbol, nameOf(item.instrument.id, item.instrument.productName), item.instrument.id)}
-                  <CyclePhaseBadge phase={item.cyclePhase} compact />
+                  <span className="flex flex-wrap items-center justify-end gap-1">
+                    {statusBadge(item)}
+                    <CyclePhaseBadge phase={item.cyclePhase} compact />
+                  </span>
                 </li>
               ))}
             </ul>
@@ -184,7 +193,10 @@ export function CycleResearchReportView() {
                 {report.topBottomCandidates.map((item) => (
                   <li key={item.instrument.id} className="py-2 flex items-center justify-between gap-2">
                     {nameBtn(item.instrument.exchangeSymbol, nameOf(item.instrument.id, item.instrument.productName), item.instrument.exchangeSymbol)}
-                    {item.bottomScore !== null ? scoreBar(item.bottomScore, `${item.bottomScore}/100`) : <span className="text-[var(--faint)]">—</span>}
+                    <span className="flex flex-wrap items-center justify-end gap-2">
+                      {statusBadge(item)}
+                      {item.bottomScore !== null ? scoreBar(item.bottomScore, `${item.bottomScore}/100`) : <span className="text-[var(--faint)]">—</span>}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -202,7 +214,8 @@ export function CycleResearchReportView() {
                   return (
                     <li key={item.instrument.id} className="py-2 flex items-center justify-between gap-2">
                       {nameBtn(item.instrument.exchangeSymbol, nameOf(item.instrument.id, item.instrument.productName), `Percentile: ${pct}`)}
-                      <span className="flex items-center gap-2">
+                      <span className="flex flex-wrap items-center justify-end gap-2">
+                        {statusBadge(item)}
                         {item.percentile10Y !== null && scoreBar(item.percentile10Y, `Percentile: ${pct}`)}
                         <CyclePhaseBadge phase={item.cyclePhase} compact />
                       </span>

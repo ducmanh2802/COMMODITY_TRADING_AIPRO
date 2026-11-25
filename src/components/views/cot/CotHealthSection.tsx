@@ -98,7 +98,7 @@ export function CotHealthSection() {
                       <td className="py-2 px-3 font-mono text-[var(--text)]/70">
                         {r.lastSync ? (
                           <span title={r.lastSync.message ?? undefined}>
-                            <span className={r.lastSync.status === 'SUCCESS' ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}>{r.lastSync.status}</span> ·{' '}
+                            <span className={r.lastSync.status === 'SUCCESS' ? 'text-[var(--accent-text)]' : 'text-[var(--warning)]'}>{r.lastSync.status}</span> ·{' '}
                             {r.lastSync.startedAt.slice(0, 16).replace('T', ' ')}Z · {t('cot.h.accRej', { acc: r.lastSync.rowsAccepted, rej: r.lastSync.rowsRejected })}
                           </span>
                         ) : (

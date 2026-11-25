@@ -245,8 +245,8 @@ export function CommodityProfileView() {
 
   if (error || !dossier) {
     return (
-      <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-[var(--radius-md)] p-6 space-y-3">
-        <p className="text-sm text-[var(--negative)]">{error ?? t('hc.cp.notFound')}</p>
+      <div className="bg-[var(--surface)] border border-[var(--warning)]/40 rounded-[var(--radius-md)] p-6 space-y-3">
+        <p className="text-sm text-[var(--warning)]">{error ?? t('hc.cp.notFound')}</p>
         <button
           type="button"
           onClick={() => setActiveModule('commodity-world')}
@@ -684,7 +684,7 @@ export function CommodityProfileView() {
               </div>
               <div className="bg-[var(--bg)] border border-[var(--border)] rounded p-2.5">
                 <span className="block text-[11px] text-[var(--faint)]">{t('hc.cp.sl')}</span>
-                <span className="font-mono text-[var(--negative)] tabular-nums">
+                <span className="font-mono text-[var(--warning)] tabular-nums">
                   {plan.stopLoss !== null ? plan.stopLoss : '—'}
                 </span>
               </div>
@@ -748,7 +748,7 @@ export function CommodityProfileView() {
                       ? 'text-[var(--text)]/40'
                       : m.avgReturnPct >= 0
                         ? 'text-[var(--positive)]'
-                        : 'text-[var(--negative)]'
+                        : 'text-[var(--warning)]'
                   }`}
                 >
                   {m.avgReturnPct !== null ? `${m.avgReturnPct >= 0 ? '+' : ''}${m.avgReturnPct}%` : '—'}

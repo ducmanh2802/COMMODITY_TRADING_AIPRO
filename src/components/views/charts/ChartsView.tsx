@@ -403,8 +403,8 @@ export function ChartsView() {
         </div>
       </div>
 
-      {datasetsError && <p role="alert" className="text-xs text-[var(--negative)]">{datasetsError}</p>}
-      {candlesError && <p role="alert" className="text-xs text-[var(--negative)]">{candlesError}</p>}
+      {datasetsError && <p role="alert" className="text-xs text-[var(--warning)]">{datasetsError}</p>}
+      {candlesError && <p role="alert" className="text-xs text-[var(--warning)]">{candlesError}</p>}
 
       {/* Provenance banner */}
       {contractSeries.resolved.source === 'CONTRACT' && (
@@ -512,12 +512,12 @@ export function ChartsView() {
           {computed.reports.map((r) => (
               <li key={r.name} className="flex items-start gap-2 text-xs">
                 {r.status === 'OK' && r.warnings.length === 0 ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[var(--positive)] shrink-0 mt-px" aria-hidden="true" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[var(--accent-text)] shrink-0 mt-px" aria-hidden="true" />
                 ) : (
                   <AlertTriangle className="w-3.5 h-3.5 text-[var(--warning)] shrink-0 mt-px" aria-hidden="true" />
                 )}
                 <span className="font-mono text-[var(--text-strong)]">{r.name}</span>
-                <span className={`font-mono ${r.status === 'OK' ? 'text-[var(--positive)]' : 'text-[var(--warning)]'}`}>{r.status}</span>
+                <span className={`font-mono ${r.status === 'OK' ? 'text-[var(--accent-text)]' : 'text-[var(--warning)]'}`}>{r.status}</span>
                 <span className="text-[var(--text)]/70">
                   {r.status !== 'OK' ? `${r.reason ?? ''} — ${t('chart.notDrawn')}` : ''} {r.warnings.join('; ')}
                 </span>
