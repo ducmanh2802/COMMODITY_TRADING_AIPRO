@@ -1,28 +1,18 @@
 import { ArrowDown, ArrowUp, ExternalLink, Minus } from 'lucide-react';
 import type { TailoredSupplyDemandItem } from '../../shared/types/cycle';
-
-const QUALITY_VI: Record<string, string> = {
-  OFFICIAL: 'nguồn chính thức',
-  LICENSED_VENDOR: 'nhà cung cấp có bản quyền',
-  UNOFFICIAL: 'nguồn không chính thức',
-  BENCHMARK: 'chuẩn tham chiếu',
-};
-const STATUS_VI: Record<string, string> = {
-  CURRENT: 'đang cập nhật',
-  DELAYED: 'trễ',
-  HISTORICAL: 'số liệu kỳ trước',
-  STALE: 'đã cũ',
-};
+import { hasKey, useT } from '../../i18n';
+import type { TKey } from '../../i18n/vi';
 
 function Bars({ cur, prev }: { cur: number; prev: number | null }) {
+  const t = useT();
   if (prev === null || typeof prev !== 'number' || !Number.isFinite(prev) || prev < 0 || cur < 0) return null;
   const max = Math.max(cur, prev) || 1;
   return (
     <div className="mt-1 space-y-0.5" aria-hidden="true">
-      <div className="h-1 w-full bg-[var(--chart-grid)]" title="Kỳ trước">
+      <div className="h-1 w-full bg-[var(--chart-grid)]" title={t('hc.sd.prev')}>
         <div className="h-full rounded-r-[4px] bg-[var(--series-other)]" style={{ width: `${(prev / max) * 100}%` }} />
       </div>
-      <div className="h-1 w-full bg-[var(--chart-grid)]" title="Kỳ này">
+      <div className="h-1 w-full bg-[var(--chart-grid)]" title={t('hc.sd.cur')}>
         <div className="h-full rounded-r-[4px] bg-[var(--series-1)]" style={{ width: `${(cur / max) * 100}%` }} />
       </div>
     </div>
@@ -30,10 +20,12 @@ function Bars({ cur, prev }: { cur: number; prev: number | null }) {
 }
 
 export function SupplyDemandRow({ item }: { item: TailoredSupplyDemandItem }) {
+  const t = useT();
+  const lookup = (prefix: string, code: string): string => (hasKey(`${prefix}${code}`) ? t(`${prefix}${code}` as TKey) : code);
   const ok = item.state === 'OK' && item.latestValue !== null;
   const Arrow = item.changeDir === 'UP' ? ArrowUp : item.changeDir === 'DOWN' ? ArrowDown : Minus;
-  const quality = item.sourceQuality ? (QUALITY_VI[item.sourceQuality] ?? item.sourceQuality) : null;
-  const status = item.dataStatus ? (STATUS_VI[item.dataStatus] ?? item.dataStatus) : null;
+  const quality = item.sourceQuality ? lookup('hc.sd.q.', item.sourceQuality) : null;
+  const status = item.dataStatus ? lookup('hc.sd.s.', item.dataStatus) : null;
   return (
     <div className="py-3 space-y-1" data-sd-state={item.state ?? 'UNAVAILABLE'}>
       <div className="flex items-start justify-between gap-3">
@@ -62,7 +54,7 @@ export function SupplyDemandRow({ item }: { item: TailoredSupplyDemandItem }) {
             </p>
           ))}
           <p className="text-[10px] text-[var(--faint)]">
-            {item.asOf ? `Kỳ số liệu: ${item.asOf} · ` : ''}
+            {item.asOf ? `${t('hc.sd.asOf', { v: item.asOf })} · ` : ''}
             {item.sourceName ?? item.sourceHint}
             {quality ? ` · ${quality}` : ''}
             {status ? ` · ${status}` : ''}
@@ -70,7 +62,7 @@ export function SupplyDemandRow({ item }: { item: TailoredSupplyDemandItem }) {
               <>
                 {' · '}
                 <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center gap-0.5">
-                  xem nguồn <ExternalLink className="w-2.5 h-2.5" aria-hidden="true" />
+                  {t('hc.sd.viewSource')} <ExternalLink className="w-2.5 h-2.5" aria-hidden="true" />
                 </a>
               </>
             ) : null}

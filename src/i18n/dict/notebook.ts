@@ -1,8 +1,6 @@
 // Section dictionary: research notebook (nb.) — T18. `en` is typed against `vi`.
 export const vi = {
-  'nb.tab.journal': 'Nhật ký giao dịch',
   'nb.tab.journalNote': 'Ghi lại lệnh đã vào / đã đóng và thống kê kết quả.',
-  'nb.tab.notebook': 'Sổ nghiên cứu',
   'nb.tab.notebookNote': 'Ghi chú nghiên cứu riêng tư gắn với từng hợp đồng (có thể kèm bối cảnh biểu đồ).',
   'nb.title': 'Sổ nghiên cứu',
   'nb.subtitle': 'Ghi chú riêng tư theo hợp đồng: giả thuyết, dữ kiện cơ bản, quan sát trên biểu đồ. Chỉ bạn đọc được.',
@@ -64,9 +62,7 @@ export const vi = {
 };
 
 export const en: Record<keyof typeof vi, string> = {
-  'nb.tab.journal': 'Trade journal',
   'nb.tab.journalNote': 'Log opened / closed trades and review performance.',
-  'nb.tab.notebook': 'Research notebook',
   'nb.tab.notebookNote': 'Private research notes attached to an instrument (optionally with chart context).',
   'nb.title': 'Research Notebook',
   'nb.subtitle': 'Private notes per instrument: theses, fundamentals, chart observations. Only you can read them.',

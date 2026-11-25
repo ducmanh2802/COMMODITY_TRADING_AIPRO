@@ -59,6 +59,7 @@ import * as academy from './dict/academy';
 import * as academyLite from './dict/academyLite';
 import * as cyclescan from './dict/cyclescan';
 import * as toppick from './dict/toppick';
+import * as hardcoded from './dict/hardcoded';
 import * as honesty from './dict/honesty';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
@@ -125,6 +126,7 @@ export const vi = {
   ...cyclescan.vi,
   ...toppick.vi,
   ...honesty.vi,
+  ...hardcoded.vi,
 };
 
 export type TKey = keyof typeof vi;

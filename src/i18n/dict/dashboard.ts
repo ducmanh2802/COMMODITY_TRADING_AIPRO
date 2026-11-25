@@ -1,7 +1,6 @@
 // Section dictionary: dashboard (Overview, Market Watch, Data Health, Settings, module placeholder).
 // Keys are prefixed 'dash.'; `en` is typed against `vi`, so a missing English key is a compile error.
 export const vi = {
-  'dash.ov.watch': 'Danh sách theo dõi',
   'dash.cat.ALL': 'Tất cả nhóm hàng',
   'dash.cat.AGRICULTURE': 'Nông sản',
   'dash.cat.SOFT_COMMODITIES': 'Nguyên liệu công nghiệp',
@@ -54,7 +53,6 @@ export const vi = {
 };
 
 export const en: Record<keyof typeof vi, string> = {
-  'dash.ov.watch': 'Watchlist',
   'dash.cat.ALL': 'All Categories',
   'dash.cat.AGRICULTURE': 'Agriculture',
   'dash.cat.SOFT_COMMODITIES': 'Soft commodities',

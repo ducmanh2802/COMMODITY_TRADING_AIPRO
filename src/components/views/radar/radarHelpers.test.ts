@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { RadarRating, RadarRatingComponent } from '../../../shared/types/radar';
-import { groupScores, parseRR } from './radarHelpers';
+import { barValue, groupScores, parseRR } from './radarHelpers';
 
 const c = (label: string, points: number, max: number, note = '', available = true): RadarRatingComponent => ({ label, points, max, note, available });
 const rating = (components: RadarRatingComponent[]): RadarRating => ({ rating: 50, grade: 'C', direction: 'CHƯA RÕ', confidence: 'THẤP', components });
@@ -39,4 +39,10 @@ test('groupScores sums points/max per group and flags missing inputs', () => {
 
 test('groupScores drops groups with no components', () => {
   assert.deepEqual(groupScores(rating([])), []);
+});
+
+test('barValue prefers rating over activity score', () => {
+  assert.equal(barValue({ score: 80, rating: { rating: 42 } }), 42);
+  assert.equal(barValue({ score: 80 }), 80);
+  assert.equal(barValue({ score: 80, rating: { rating: 0 } }), 0);
 });

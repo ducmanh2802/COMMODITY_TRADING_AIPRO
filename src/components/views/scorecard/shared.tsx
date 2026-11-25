@@ -1,6 +1,7 @@
 import { useI18n } from '../../../i18n';
 import type { Scorecard, ScorecardDimension, ScorecardDimensionId } from '../../../shared/types/scorecard';
 import { Badge } from '../../ui/Badge';
+import { clampScore, qualityDotCount } from './scoreMath';
 
 type Tone = 'neutral' | 'accent' | 'positive' | 'negative' | 'warning';
 
@@ -37,7 +38,7 @@ const TONE_VAR: Record<Tone, string> = {
 export function ScoreBar({ score, level, label }: { score: number | null; level?: string | null; label?: string }) {
   const { t } = useI18n();
   if (score === null || score === undefined) return <span className="text-xs text-[var(--faint)]" title={t('sc.noValue')}>—</span>;
-  const pct = Math.max(0, Math.min(100, score));
+  const pct = clampScore(score);
   const tone = LEVEL_TONE[level ?? ''] ?? 'neutral';
   const text = `${label ? `${label} · ` : ''}${Math.round(pct)}/100`;
   return (
@@ -58,7 +59,7 @@ export function DimBar({ dim }: { dim: ScorecardDimension | undefined }) {
 
 /** Data-quality as 3 dots; label in title. */
 export function QualityDots({ level, label, hint }: { level: string; label: string; hint?: string }) {
-  const n = level === 'GOOD' ? 3 : level === 'LIMITED' ? 2 : level === 'POOR' ? 1 : 0;
+  const n = qualityDotCount(level);
   const tone = LEVEL_TONE[level] ?? 'neutral';
   const title = hint ? `${label} · ${hint}` : label;
   return (

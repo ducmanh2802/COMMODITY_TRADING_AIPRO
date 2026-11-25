@@ -56,7 +56,11 @@ export function useTaggedNews(instrument: string | null, limit: number): NewsSta
     if (instrument) qs.set('instrument', instrument);
     fetch(`/api/news?${qs.toString()}`, { signal: ctrl.signal })
       .then((r) => (r.ok ? (r.json() as Promise<TaggedNewsResponse>) : Promise.reject(new Error(String(r.status)))))
-      .then((data) => setState({ status: 'ok', data }))
+      .then((data) => {
+        // Malformed/empty payload (e.g. {}): treat as an empty list, never crash.
+        const items = Array.isArray(data?.items) ? data.items.filter((n) => n && Array.isArray(n.instruments)) : [];
+        setState({ status: 'ok', data: { retrievedAt: data?.retrievedAt ?? '', aiSummaries: Boolean(data?.aiSummaries), items } });
+      })
       .catch(() => {
         if (!ctrl.signal.aborted) setState({ status: 'error' });
       });

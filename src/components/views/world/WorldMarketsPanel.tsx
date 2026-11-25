@@ -28,6 +28,7 @@ import { Card } from '../../ui/Card';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
 import { Delta, Fold } from '../pulse/tileBits';
+import { shortDuration, splitMinutes } from './durationMath';
 import { InfoTip as TipPopover } from '../today/InfoTip';
 
 /* ───────────────────────── 1. Exchange clock ───────────────────────── */
@@ -47,9 +48,8 @@ function dayRange(t: TFunction, days: number[]): string {
 }
 
 function duration(t: TFunction, minutes: number, short = false): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (short) return h > 0 ? `${h}${t('c4.wd.hShort')}${String(m).padStart(2, '0')}` : `${m}${t('c4.wd.mShort')}`;
+  const { h, m } = splitMinutes(minutes);
+  if (short) return shortDuration(minutes, t('c4.wd.hShort'), t('c4.wd.mShort'));
   return h > 0 ? t('wd.clock.hm', { h, m }) : t('wd.clock.m', { m });
 }
 

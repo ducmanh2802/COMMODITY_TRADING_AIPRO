@@ -13,13 +13,14 @@ import {
   type SessionLiveState,
   type VietnamSessionSlot,
 } from '../../shared/utils/vietnamCalendar';
+import { CALENDAR_PAGE, groupByDay, impactDots, nextPageCount } from './calendarGroups';
 import { fmtDate, hasKey, tr, useI18n } from '../../i18n';
 
 interface VietnamEconomicCalendarProps {
   macroRecords?: FundamentalMacroRecord[];
 }
 
-const PAGE = 12;
+const PAGE = CALENDAR_PAGE;
 const MAX_EVENTS = 60;
 const CHIPS = 3;
 
@@ -110,12 +111,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
 
   const visibleEvents = filteredEvents.slice(0, MAX_EVENTS);
   const pageEvents = visibleEvents.slice(0, shown);
-  const groups: { dateIso: string; items: typeof pageEvents }[] = [];
-  for (const ev of pageEvents) {
-    const last = groups[groups.length - 1];
-    if (last && last.dateIso === ev.dateIso) last.items.push(ev);
-    else groups.push({ dateIso: ev.dateIso, items: [ev] });
-  }
+  const groups = groupByDay(pageEvents);
   const resetPage = () => setShown(PAGE);
 
   return (
@@ -336,7 +332,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                     {g.items.map((ev) => {
                       const verifiedRec = findVerifiedMacroMatch(ev.titleEn);
                       const isHoliday = ev.type === 'MARKET_HOLIDAY';
-                      const level = ev.impactLevel === 'HIGH' ? 3 : 2;
+                      const level = impactDots(ev.impactLevel);
                       const verifiedFull = verifiedRec
                         ? t('cal.verified', {
                             value: verifiedRec.actualValue,
@@ -439,7 +435,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
               <div className="px-4 py-2.5 text-center">
                 {shown < visibleEvents.length ? (
                   <button type="button" onClick={() => setShown((n) => n + PAGE)} className={linkBtnCls}>
-                    {t('calv.more', { n: Math.min(PAGE, visibleEvents.length - shown) })}
+                    {t('calv.more', { n: nextPageCount(visibleEvents.length, shown, PAGE) })}
                   </button>
                 ) : (
                   <button type="button" onClick={resetPage} className={linkBtnCls}>

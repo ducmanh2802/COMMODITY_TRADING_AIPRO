@@ -1,7 +1,6 @@
 // Section dictionary: "Thị trường quốc tế" (world exchanges clock, global macro tiles, exchange heatmap). Keys prefixed 'wd.'.
 export const vi = {
   'wd.tab': 'Thị trường quốc tế',
-  'wd.tabNote': 'Giờ mở cửa các sàn thế giới, bối cảnh vĩ mô toàn cầu và hiệu suất theo sàn.',
   'wd.clock.title': 'Đồng hồ các sàn thế giới',
   'wd.clock.subtitle': 'Sàn nào đang mở · giờ chính quy theo giờ Việt Nam.',
   'wd.clock.note': 'Giờ tham khảo — tra MXV/môi giới cho giờ chính xác từng mã.',
@@ -65,8 +64,6 @@ export const vi = {
   'wd.macro.hintLabel': 'Ý nghĩa của {name}',
   'wd.macro.why': 'Vì sao chưa có?',
   'wd.macro.loading': 'Đang tải số liệu vĩ mô…',
-  'wd.macro.unavailable': 'Chưa có số liệu',
-  'wd.macro.source': 'Nguồn: {v}',
   'wd.macro.asOf': 'Kỳ số liệu: {v}',
   'wd.macro.ppUnit': ' điểm %',
   'wd.macro.chg1w': '{v} so với 1 tuần trước',
@@ -100,7 +97,6 @@ export const vi = {
 
 export const en: Record<keyof typeof vi, string> = {
   'wd.tab': 'International markets',
-  'wd.tabNote': 'World exchange hours, global macro backdrop and performance by exchange.',
   'wd.clock.title': 'World exchange clock',
   'wd.clock.subtitle': 'Which exchanges are open · main hours in Vietnam time.',
   'wd.clock.note': 'Reference hours - check MXV/your broker for exact hours per contract.',
@@ -164,8 +160,6 @@ export const en: Record<keyof typeof vi, string> = {
   'wd.macro.hintLabel': 'What {name} means',
   'wd.macro.why': 'Why no data?',
   'wd.macro.loading': 'Loading macro data...',
-  'wd.macro.unavailable': 'No data',
-  'wd.macro.source': 'Source: {v}',
   'wd.macro.asOf': 'Data period: {v}',
   'wd.macro.ppUnit': ' pp',
   'wd.macro.chg1w': '{v} vs 1 week ago',

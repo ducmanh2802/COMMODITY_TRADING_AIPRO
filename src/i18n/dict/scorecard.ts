@@ -2,7 +2,6 @@
 // Dimension labels/explanations come from the server as {vi,en}; this file only holds page chrome.
 export const vi = {
   'sc.title': 'Đánh giá các mã',
-  'sc.subtitle': 'Mỗi hàng hoá được chấm bằng các nhãn mô tả (xu hướng, động lượng, biến động, vị thế COT). Không phải điểm mua/bán.',
   'sc.error': 'Không tải được đánh giá: {msg}',
   'sc.retry': 'Thử lại',
   'sc.refresh': 'Làm mới',
@@ -69,7 +68,6 @@ export const vi = {
 
 export const en: Record<keyof typeof vi, string> = {
   'sc.title': 'Instrument scorecard',
-  'sc.subtitle': 'Every commodity gets descriptive labels (trend, momentum, volatility, COT positioning). It is not a buy/sell score.',
   'sc.error': 'Could not load the scorecard: {msg}',
   'sc.retry': 'Retry',
   'sc.refresh': 'Refresh',

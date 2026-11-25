@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, ChevronDown, RefreshCw, Search } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
+import { useT } from '../../i18n';
 import {
   COMMODITY_GROUP_LABELS_VI,
   getCommodityVisual,
@@ -25,6 +26,7 @@ const GROUP_FILTERS: CommodityGroupFilter[] = [
 ];
 
 export function CommodityWorldView() {
+  const t = useT();
   const { openInstrumentIn, datasets, quotesBySymbol } = useTerminal();
   const pricedQuotesCount = useMemo(
     () => Object.values(quotesBySymbol).filter((q) => q?.price !== null).length,
@@ -45,7 +47,7 @@ export function CommodityWorldView() {
       setOverview(json);
     } catch (err) {
       if (signal?.aborted) return;
-      setError(err instanceof Error ? err.message : 'Không thể tải dữ liệu Living Commodity World.');
+      setError(err instanceof Error ? err.message : t('hc.cw.loadFail'));
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
@@ -85,12 +87,12 @@ export function CommodityWorldView() {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight text-balance">
-            Giá hàng hóa
+            {t('hc.cw.title')}
           </h2>
           <details className="mt-1 text-xs text-[var(--muted)]">
-            <summary className="cursor-pointer select-none text-[var(--accent)]">Xem giải thích</summary>
+            <summary className="cursor-pointer select-none text-[var(--accent)]">{t('hc.cw.explainSummary')}</summary>
             <p className="mt-1 max-w-prose">
-              Thế giới Hàng hóa Sống (Living Commodity World): danh mục {overview?.commodities.length ?? 21} hàng hóa phái sinh MXV &amp; quốc tế · tự động xếp các hàng hóa tiềm năng (điểm cơ hội &amp; chu kỳ cao) lên đầu danh sách.
+              {t('hc.cw.explain', { n: overview?.commodities.length ?? 21 })}
             </p>
           </details>
         </div>
@@ -99,8 +101,8 @@ export function CommodityWorldView() {
           type="button"
           onClick={() => void fetchWorld()}
           disabled={loading}
-          title="Làm mới Chu kỳ"
-          aria-label="Làm mới Chu kỳ"
+          title={t('hc.cw.refresh')}
+          aria-label={t('hc.cw.refresh')}
           className="inline-flex items-center px-3 py-2 bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--border)] rounded-md text-xs font-medium text-[var(--text)] whitespace-nowrap shrink-0"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
@@ -109,7 +111,7 @@ export function CommodityWorldView() {
 
       {/* Filter Toolbar */}
       <section
-        aria-label="Bộ lọc Thế giới Hàng hóa"
+        aria-label={t('hc.cw.filterLabel')}
         className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4"
       >
         <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[var(--bg)] border border-[var(--border)] rounded-md">
@@ -126,7 +128,7 @@ export function CommodityWorldView() {
                     : 'text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
                 }`}
               >
-                {group === 'ALL' ? `Tất cả (${overview?.commodities.length ?? 21})` : COMMODITY_GROUP_LABELS_VI[group]}
+                {group === 'ALL' ? t('hc.cw.all', { n: overview?.commodities.length ?? 21 }) : COMMODITY_GROUP_LABELS_VI[group]}
               </button>
             );
           })}
@@ -139,8 +141,8 @@ export function CommodityWorldView() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Tìm Ngô, Robusta, ZC, LRC..."
-              aria-label="Tìm kiếm hàng hóa"
+              placeholder={t('hc.cw.searchPlaceholder')}
+              aria-label={t('hc.cw.searchLabel')}
               className="w-full sm:w-64 pl-8 pr-3 py-1.5 bg-[var(--bg)] border border-[var(--border)] rounded-md text-xs text-[var(--text-strong)] placeholder:text-[var(--faint)] focus:outline-none focus:border-[var(--accent)]"
             />
           </div>
@@ -155,20 +157,20 @@ export function CommodityWorldView() {
                 : 'bg-[var(--bg)] border-[var(--border)] text-[var(--muted)] hover:text-[var(--text-strong)]'
             }`}
           >
-            {mxvOnly ? 'Đang lọc MXV' : 'Chỉ MXV'}
+            {mxvOnly ? t('hc.cw.mxvOn') : t('hc.cw.mxvOnly')}
           </button>
         </div>
       </section>
 
       {error && (
         <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-[var(--radius-md)] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[var(--negative)]">
-          <span>Không thể tải dữ liệu Thế giới Hàng hóa: {error}</span>
+          <span>{t('hc.cw.loadFailBanner', { error })}</span>
           <button
             type="button"
             onClick={() => void fetchWorld()}
             className="px-3 py-1.5 bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border)] rounded text-xs font-medium text-[var(--text-strong)] whitespace-nowrap self-start sm:self-auto"
           >
-            Thử lại ngay
+            {t('hc.cw.retry')}
           </button>
         </div>
       )}
@@ -185,7 +187,7 @@ export function CommodityWorldView() {
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-8 text-center text-sm text-[var(--muted)]">
-          Không tìm thấy hàng hóa nào khớp bộ lọc hiện tại.
+          {t('hc.cw.empty')}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -212,6 +214,7 @@ function CommodityWorldCard({
   priority: boolean;
   onSelect: () => void;
 }) {
+  const t = useT();
   const { instrument, quote, cyclePhase, bottomScore, bottomClassification, returns } = item;
   const visual = getCommodityVisual(instrument.id);
   const nameVi = visual?.nameVi ?? instrument.commodityProfile?.vietnameseName ?? instrument.productName;
@@ -247,7 +250,7 @@ function CommodityWorldCard({
             title={quote.price === null ? 'DATA_UNAVAILABLE' : undefined}
             className={`shrink-0 font-semibold tabular-nums text-right ${quote.price !== null ? 'text-base text-[var(--text-strong)]' : 'text-xs text-[var(--text)]/85'}`}
           >
-            {quote.price !== null ? quote.price.toFixed(2) : 'Chưa có giá'}
+            {quote.price !== null ? quote.price.toFixed(2) : t('hc.cw.noPrice')}
           </p>
         </div>
       </div>
@@ -258,18 +261,18 @@ function CommodityWorldCard({
             <CyclePhaseBadge phase={cyclePhase} compact />
           </span>
           <span
-            title={`Bottom Score: ${bottomScore !== null ? `${bottomScore}/100` : 'Chưa chấm'}`}
+            title={`Bottom Score: ${bottomScore !== null ? `${bottomScore}/100` : t('hc.cw.unscored')}`}
             className={`text-xs font-semibold tabular-nums ${getBottomScoreAccent(bottomClassification)}`}
           >
             {bottomScore !== null ? bottomScore : '—'}
           </span>
         </div>
 
-        <div className="flex items-center gap-2" title="Biến động 1 tháng">
+        <div className="flex items-center gap-2" title={t('hc.cw.change1mTitle')}>
           <div
             className="relative h-1.5 flex-1 rounded-full bg-[var(--surface-3)]"
             role="img"
-            aria-label={m1 === null ? 'Biến động 1M: chưa có' : `Biến động 1M ${fmt(m1)}`}
+            aria-label={m1 === null ? t('hc.cw.change1mNone') : t('hc.cw.change1mVal', { v: fmt(m1) })}
           >
             <span aria-hidden="true" className="absolute -top-0.5 -bottom-0.5 left-1/2 w-px bg-[var(--border)]" />
             {m1 !== null && (
@@ -287,28 +290,28 @@ function CommodityWorldCard({
 
         <details onClick={(e) => e.stopPropagation()} className="text-[11px] text-[var(--muted)]">
           <summary
-            aria-label={`Chi tiết ${nameVi}`}
+            aria-label={t('hc.cw.detail', { name: nameVi })}
             className="cursor-pointer select-none text-[var(--faint)] hover:text-[var(--text)] list-none flex justify-center"
           >
             <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
           </summary>
           <dl className="mt-1.5 space-y-0.5">
-            <div><dt className="inline text-[var(--faint)]">Sàn: </dt><dd className="inline font-mono">{instrument.exchange}:{instrument.exchangeSymbol}{mxvCode ? ` · MXV ${mxvCode}` : ''}</dd></div>
-            <div><dt className="inline text-[var(--faint)]">Tên: </dt><dd className="inline">{instrument.productName}</dd></div>
-            <div><dt className="inline text-[var(--faint)]">Nhóm: </dt><dd className="inline">{visual?.groupVi ?? instrument.category} · {visual?.originTag ?? instrument.exchange}</dd></div>
-            <div><dt className="inline text-[var(--faint)]">Đơn vị: </dt><dd className="inline">{quote.price !== null ? quote.unit : 'Chưa có feed'}</dd></div>
-            <div><dt className="inline text-[var(--faint)]">Bottom Score: </dt><dd className="inline">{bottomScore !== null ? `${bottomScore}/100` : 'Chưa chấm'}</dd></div>
-            <div><dt className="inline text-[var(--faint)]">Biến động 1M: </dt><dd className="inline">{m1 !== null ? fmt(m1) : '—'}</dd></div>
-            <div><dt className="inline text-[var(--faint)]">Cung–Cầu: </dt><dd className="inline">{item.supplyDemandBias === 'DATA_UNAVAILABLE' ? '—' : item.supplyDemandBias}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">{t('hc.cw.exchange')}: </dt><dd className="inline font-mono">{instrument.exchange}:{instrument.exchangeSymbol}{mxvCode ? ` · MXV ${mxvCode}` : ''}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">{t('hc.cw.name')}: </dt><dd className="inline">{instrument.productName}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">{t('hc.cw.group')}: </dt><dd className="inline">{visual?.groupVi ?? instrument.category} · {visual?.originTag ?? instrument.exchange}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">{t('hc.cw.unit')}: </dt><dd className="inline">{quote.price !== null ? quote.unit : t('hc.cw.noFeed')}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">Bottom Score: </dt><dd className="inline">{bottomScore !== null ? `${bottomScore}/100` : t('hc.cw.unscored')}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">{t('hc.cw.change1m')}: </dt><dd className="inline">{m1 !== null ? fmt(m1) : '—'}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">{t('hc.cw.supplyDemand')}: </dt><dd className="inline">{item.supplyDemandBias === 'DATA_UNAVAILABLE' ? '—' : item.supplyDemandBias}</dd></div>
           </dl>
           <div>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onSelect(); }}
-                aria-label={`Hồ sơ chu kỳ: ${nameVi}`}
+                aria-label={t('hc.cw.profileAria', { name: nameVi })}
                 className="inline-flex items-center gap-1 min-h-10 font-medium text-[var(--accent)]"
               >
-                <span aria-hidden="true">Hồ sơ chu kỳ</span> <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
+                <span aria-hidden="true">{t('hc.cw.profileLink')}</span> <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
               </button>
             </div>
         </details>

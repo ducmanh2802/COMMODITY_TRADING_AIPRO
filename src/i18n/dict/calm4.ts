@@ -5,7 +5,6 @@ export const vi = {
   'c4.risk.detail': 'Chi tiết tính toán',
   'c4.risk.legend': 'Hợp đồng không ghi chú gì là đã xác minh; mã "Chưa xác minh" bị từ chối khi tính.',
   'c4.risk.empty': 'Nhập số liệu rồi bấm tính.',
-  'c4.risk.unver': 'Chưa xác minh',
   'c4.wx.detail': 'Chi tiết',
   'c4.wx.noCt': 'Chưa có hợp đồng',
   'c4.wx.dry': 'mùa khô',
@@ -18,7 +17,6 @@ export const vi = {
   'c4.wd.per1m': '1 tháng',
   'c4.wd.per1w': '1 tuần',
   'c4.sb.note': 'Chỉ để học, không phải lời khuyên.',
-  'c4.sb.hint': 'Gợi ý',
 };
 
 export const en: Record<keyof typeof vi, string> = {
@@ -27,7 +25,6 @@ export const en: Record<keyof typeof vi, string> = {
   'c4.risk.detail': 'Calculation details',
   'c4.risk.legend': 'Contracts with no note are verified; "Unverified" ones are rejected in the calculation.',
   'c4.risk.empty': 'Enter numbers, then calculate.',
-  'c4.risk.unver': 'Unverified',
   'c4.wx.detail': 'Details',
   'c4.wx.noCt': 'No contract',
   'c4.wx.dry': 'dry season',
@@ -40,5 +37,4 @@ export const en: Record<keyof typeof vi, string> = {
   'c4.wd.per1m': '1 month',
   'c4.wd.per1w': '1 week',
   'c4.sb.note': 'Learning only, not advice.',
-  'c4.sb.hint': 'Hint',
 };

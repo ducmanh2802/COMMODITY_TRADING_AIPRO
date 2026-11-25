@@ -1,7 +1,6 @@
 // Section dictionary: "Thời tiết vùng trồng" (T90). Keys prefixed 'wx.'.
 export const vi = {
   'wx.tab': 'Thời tiết vùng trồng',
-  'wx.tabNote': 'Dự báo 14 ngày ở các vùng trồng chính, so với mức trung bình nhiều năm.',
   'wx.title': 'Thời tiết vùng trồng',
   'wx.error': 'Chưa tải được dữ liệu thời tiết. Thử lại sau ít phút.',
   'wx.empty': 'Chưa có dữ liệu thời tiết cho vùng nào (nguồn Open-Meteo tạm thời không phản hồi).',
@@ -48,7 +47,6 @@ export const vi = {
 
 export const en: Record<keyof typeof vi, string> = {
   'wx.tab': 'Growing-region weather',
-  'wx.tabNote': '14-day forecast for key growing regions versus the multi-year average.',
   'wx.title': 'Growing-region weather',
   'wx.error': 'Could not load weather data. Try again in a few minutes.',
   'wx.empty': 'No weather data for any region yet (Open-Meteo temporarily not responding).',

@@ -1,7 +1,6 @@
 // Section dictionary: Vietnam domestic prices vs international + basis (T87). Keys prefixed 'dm.'.
 export const vi = {
   'dm.tab': 'Giá trong nước',
-  'dm.tabNote': 'Giá nông sản trong nước đặt cạnh giá quốc tế quy đổi và chênh lệch (basis).',
   'dm.title': 'Giá trong nước so với quốc tế',
   'dm.subtitle': 'Giá thu mua trong nước (nhập tay kèm nguồn) đặt cạnh giá quốc tế quy đổi ra đ/kg. Chỉ để tham khảo, không phải khuyến nghị mua bán.',
   'dm.commodity.coffee': 'Cà phê nhân (robusta, Tây Nguyên)',
@@ -34,8 +33,6 @@ export const vi = {
   'dm.unitVndKg': 'đ/kg',
   'dm.error': 'Không tải được giá trong nước: {msg}',
   'dm.empty.title': 'Chưa có dữ liệu giá trong nước',
-  'dm.empty.desc':
-    'Ứng dụng không tự cào giá từ trang tin. Hãy nhập giá thu mua kèm tên nguồn, đường dẫn và ngày bằng biểu mẫu hoặc dán CSV bên dưới.',
   'dm.empty.cta': 'Nhập giá',
   'dm.entry.title': 'Nhập giá trong nước',
   'dm.entry.note': 'Bắt buộc có tên nguồn, đường dẫn (URL) và ngày. Không nhập số liệu bạn không có nguồn.',
@@ -57,7 +54,6 @@ export const vi = {
 };
 export const en: Record<keyof typeof vi, string> = {
   'dm.tab': 'Domestic prices',
-  'dm.tabNote': 'Vietnam domestic commodity prices next to converted international prices and the basis.',
   'dm.title': 'Domestic vs international prices',
   'dm.subtitle': 'Domestic purchase prices (manually entered with source) shown next to international prices converted to VND/kg. For reference only, not trading advice.',
   'dm.commodity.coffee': 'Green coffee (robusta, Central Highlands)',
@@ -90,8 +86,6 @@ export const en: Record<keyof typeof vi, string> = {
   'dm.unitVndKg': 'VND/kg',
   'dm.error': 'Could not load domestic prices: {msg}',
   'dm.empty.title': 'No domestic price data yet',
-  'dm.empty.desc':
-    'The app does not scrape news sites. Enter purchase prices with source name, URL and date using the form or paste CSV below.',
   'dm.empty.cta': 'Enter price',
   'dm.entry.title': 'Enter domestic price',
   'dm.entry.note': 'Source name, URL and date are required. Do not enter numbers you cannot source.',

@@ -19,6 +19,16 @@ interface TopBarProps {
 
 const TIMEFRAMES: Timeframe[] = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1'];
 
+/** Own state so the 1s tick re-renders only this span, not the whole header. */
+function ClockLabel() {
+  const [label, setLabel] = useState(() => getVietnamClockLabel());
+  useEffect(() => {
+    const timer = window.setInterval(() => setLabel(getVietnamClockLabel()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return <>{label}</>;
+}
+
 export function TopBar({ onOpenMobileMenu }: TopBarProps) {
   const { user, signInWithGoogle, logout } = useAuth();
   const {
@@ -36,15 +46,6 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
   } = useTerminal();
 
   const t = useT();
-  const [clockLabel, setClockLabel] = useState(() => getVietnamClockLabel());
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setClockLabel(getVietnamClockLabel());
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
   const overallDataStatus = health?.capabilities.marketDataOverallStatus ?? 'UNAVAILABLE';
 
   return (
@@ -136,7 +137,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
             |
           </span>
           <span className="text-xs text-[var(--text)] tabular-nums whitespace-nowrap">
-            {clockLabel}
+            <ClockLabel />
           </span>
         </div>
 

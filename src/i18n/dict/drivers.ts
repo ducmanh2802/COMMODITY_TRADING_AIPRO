@@ -2,7 +2,6 @@
 // Sentences come from the server as {vi,en}; this file only holds chrome.
 export const vi = {
   'drv.tab': 'Vì sao & sắp tới',
-  'drv.tabNote': 'Giải thích biến động gần đây và các kịch bản thống kê. Không phải dự báo.',
   'drv.loading': 'Đang tính…',
   'drv.error': 'Không tải được: {msg}',
   'drv.retry': 'Thử lại',
@@ -43,7 +42,6 @@ export const vi = {
 
 export const en: Record<keyof typeof vi, string> = {
   'drv.tab': 'Why & what next',
-  'drv.tabNote': 'Explains recent moves and statistical scenarios. Not a forecast.',
   'drv.loading': 'Calculating…',
   'drv.error': 'Could not load: {msg}',
   'drv.retry': 'Retry',

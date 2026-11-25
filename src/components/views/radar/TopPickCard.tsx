@@ -3,6 +3,8 @@ import { BellOff } from 'lucide-react';
 import { useT } from '../../../i18n';
 import type { RadarItem } from '../../../shared/types/radar';
 import { Card } from '../../ui/Card';
+import { barValue } from './radarHelpers';
+import { clampScore } from '../scorecard/scoreMath';
 
 const fmt = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
 const CHIP = 'inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--surface-3)] px-2 py-0.5 text-[11px] text-[var(--text-strong)]';
@@ -12,7 +14,7 @@ export function TopPickCard({ item, rank, muted, onOpen, onToggleMute, children 
   const t = useT();
   const r = item.rating;
   // Bar follows the rating the list is ranked by; activity score stays in the details.
-  const bar = r ? r.rating : item.score;
+  const bar = barValue(item);
   const nActive = item.signals.filter((s) => s.active).length;
   const up = (item.changePct ?? 0) >= 0;
   return (
@@ -38,7 +40,7 @@ export function TopPickCard({ item, rank, muted, onOpen, onToggleMute, children 
         </div>
         <div className="flex items-center gap-2" role="img" aria-label={r ? t('tp.ratingAria', { score: bar }) : t('tp.scoreAria', { score: bar })}>
           <div className="h-2 flex-1 rounded-full bg-[var(--surface-3)] overflow-hidden">
-            <div className="h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, bar))}%`, background: 'var(--accent)' }} />
+            <div className="h-full rounded-full" style={{ width: `${clampScore(bar)}%`, background: 'var(--accent)' }} />
           </div>
           <span className="w-8 text-right text-sm font-semibold tabular-nums text-[var(--text-strong)]">{bar}</span>
         </div>

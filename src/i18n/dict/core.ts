@@ -85,7 +85,6 @@ export const vi = {
   'common.cancel': 'Hủy',
   'common.delete': 'Xóa',
   'app.disclaimer': 'Công cụ nghiên cứu và học tập, không phải khuyến nghị đầu tư.',
-  'common.no': 'Không',
   'common.all': 'Tất cả',
   'common.none': 'Không có',
   'common.na': 'Không có',
@@ -103,7 +102,6 @@ export const vi = {
 
   // ---- derivatives glossary (reuse for consistent terminology)
   'term.contract': 'Hợp đồng',
-  'term.contractMonth': 'Tháng đáo hạn',
   'term.margin': 'Ký quỹ',
   'term.tickValue': 'Giá trị bước giá',
   'term.contractSize': 'Khối lượng hợp đồng',
@@ -193,7 +191,6 @@ export const en: Record<keyof typeof vi, string> = {
   'common.cancel': 'Cancel',
   'common.delete': 'Delete',
   'app.disclaimer': 'A research and learning tool, not investment advice.',
-  'common.no': 'No',
   'common.all': 'All',
   'common.none': 'None',
   'common.na': 'N/A',
@@ -210,7 +207,6 @@ export const en: Record<keyof typeof vi, string> = {
   'common.notes': 'Notes',
 
   'term.contract': 'Contract',
-  'term.contractMonth': 'Contract month',
   'term.margin': 'Margin',
   'term.tickValue': 'Tick value',
   'term.contractSize': 'Contract size',

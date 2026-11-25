@@ -5,7 +5,6 @@ export const vi = {
   'acl.levelGoal': 'Mục tiêu cấp',
   'acl.quizCount': '{n} câu quiz',
   'acl.warnCount': '{n} lưu ý',
-  'acl.explainMore': 'Chi tiết',
   'acl.examNeed': 'Thi: cần {p}% số bài ({d}/{t})',
 } as const;
 
@@ -16,6 +15,5 @@ export const en: Record<keyof typeof vi, string> = {
   'acl.levelGoal': 'Level goal',
   'acl.quizCount': '{n} quiz questions',
   'acl.warnCount': '{n} notes',
-  'acl.explainMore': 'Details',
   'acl.examNeed': 'Exam: needs {p}% of lessons ({d}/{t})',
 };

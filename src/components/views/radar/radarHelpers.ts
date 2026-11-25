@@ -8,6 +8,11 @@ export const GROUPS = [
   { id: 'data', labels: ['Chất lượng dữ liệu'], color: 'var(--muted)' },
 ] as const;
 
+/** Bar value of a top-pick card: the rating it is ranked by, else the activity score. */
+export function barValue(item: { score: number; rating?: { rating: number } }): number {
+  return item.rating ? item.rating.rating : item.score;
+}
+
 export function groupScores(rating: RadarRating) {
   return GROUPS.map((g) => {
     const cs = rating.components.filter((c) => (g.labels as readonly string[]).includes(c.label));

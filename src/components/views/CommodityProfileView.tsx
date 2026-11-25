@@ -34,7 +34,7 @@ import { CyclePhaseBadge, getBottomScoreAccent } from '../common/CyclePhaseBadge
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { SupplyDemandRow } from '../common/SupplyDemandRow';
 import { fetchJsonWithRetry, safeReadJson } from '../../shared/utils/http';
-import { useT, type TKey } from '../../i18n';
+import { tr, useT, type TKey } from '../../i18n';
 
 type ChartHorizon = '1Y' | '3Y' | '5Y' | '10Y' | 'ALL';
 
@@ -139,7 +139,7 @@ export function CommodityProfileView() {
         setCandles(Array.isArray(candleJson?.candles) ? candleJson.candles : []);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Không thể tải hồ sơ hàng hóa.');
+          setError(err instanceof Error ? err.message : tr('hc.cp.loadFail'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -227,7 +227,7 @@ export function CommodityProfileView() {
         generatedAt: new Date().toISOString(),
         model: 'Gemini',
         status: 'AI_ERROR',
-        message: err instanceof Error ? err.message : 'Lỗi kết nối AI Verdict.',
+        message: err instanceof Error ? err.message : tr('hc.cp.verdictFail'),
         answers: null,
       });
     } finally {
@@ -238,7 +238,7 @@ export function CommodityProfileView() {
   if (loading && !dossier) {
     return (
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-10 text-center text-sm text-[var(--muted)]">
-        Đang tải hồ sơ nghiên cứu chu kỳ hàng hóa ({selectedSymbol})...
+        {t('hc.cp.loading', { sym: selectedSymbol })}
       </div>
     );
   }
@@ -246,13 +246,13 @@ export function CommodityProfileView() {
   if (error || !dossier) {
     return (
       <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-[var(--radius-md)] p-6 space-y-3">
-        <p className="text-sm text-[var(--negative)]">{error ?? 'Không tìm thấy dữ liệu hồ sơ.'}</p>
+        <p className="text-sm text-[var(--negative)]">{error ?? t('hc.cp.notFound')}</p>
         <button
           type="button"
           onClick={() => setActiveModule('commodity-world')}
           className="px-3 py-1.5 bg-[var(--surface-2)] border border-[var(--border)] rounded text-xs text-[var(--text-strong)]"
         >
-          Quay lại Thế giới Hàng hóa
+          {t('hc.cp.back')}
         </button>
       </div>
     );
@@ -273,12 +273,12 @@ export function CommodityProfileView() {
           className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text)] hover:text-[var(--text-strong)] self-start"
         >
           <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>Quay lại Thế giới Hàng hóa</span>
+          <span>{t('hc.cp.back')}</span>
         </button>
 
         <div className="flex items-center gap-2">
           <label htmlFor="profile-symbol-select" className="text-xs text-[var(--muted)] whitespace-nowrap">
-            Chuyển mã:
+            {t('hc.cp.switchSym')}
           </label>
           <select
             id="profile-symbol-select"
@@ -330,13 +330,13 @@ export function CommodityProfileView() {
                 <div className="flex flex-wrap items-center gap-3 mt-2">
                   <CyclePhaseBadge phase={summary.cyclePhase} />
                   <span className="text-xs font-mono text-[var(--muted)]">
-                    Phiên ICT: {instrument.commodityProfile?.vietnamTradingSessionsIct ?? 'Theo giờ sàn chuẩn'}
+                    {t('hc.cp.sessions', { v: instrument.commodityProfile?.vietnamTradingSessionsIct ?? t('hc.cp.sessionsDefault') })}
                   </span>
                 </div>
               </div>
 
               <div className="bg-[var(--bg)]/90 border border-[var(--border)] rounded-[var(--radius-md)] px-4 py-3 text-right shrink-0 max-w-xs">
-                <span className="block text-[11px] text-[var(--faint)]">Giá tham chiếu / Hiện tại</span>
+                <span className="block text-[11px] text-[var(--faint)]">{t('hc.cp.refPrice')}</span>
                 <span className="block text-2xl font-mono font-semibold text-[var(--text-strong)] tabular-nums">
                   {quote.price !== null ? quote.price.toFixed(2) : 'DATA_UNAVAILABLE'}
                 </span>
@@ -352,8 +352,8 @@ export function CommodityProfileView() {
                       instrument.exchangeSymbol === 'JRU' ||
                       instrument.exchangeSymbol === 'TIO' ||
                       instrument.exchangeSymbol === 'CT'
-                        ? 'Chưa có feed API miễn phí cho mã này — cần cấu hình MXV/Commodities API hoặc Import CSV.'
-                        : 'Chưa bật feed (YAHOO_ENABLED=true, Twelve Data, FMP) hoặc chưa Import CSV D1.'}
+                        ? t('hc.cp.noFeedFree')
+                        : t('hc.cp.feedOff')}
                     </span>
                     <div className="flex items-center justify-end gap-2">
                       <button
@@ -413,9 +413,9 @@ export function CommodityProfileView() {
         <section className="xl:col-span-2 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-[var(--text-strong)]">Biểu đồ Chu kỳ Dài hạn (D1 OHLCV)</h2>
+              <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('hc.cp.chartTitle')}</h2>
               <p className="text-xs text-[var(--faint)] tabular-nums">
-                {candles.length} nến lịch sử khả dụng · Percentile chu kỳ:{' '}
+                {t('hc.cp.candlesAvail', { n: candles.length })}{' '}
                 {summary.percentile10Y !== null ? `${summary.percentile10Y.toFixed(1)}%` : 'DATA_UNAVAILABLE'}
               </p>
             </div>
@@ -438,17 +438,17 @@ export function CommodityProfileView() {
           {visibleCandles.length === 0 ? (
             <div className="h-[300px] bg-[var(--bg)] border border-[var(--border)] rounded flex flex-col items-center justify-center p-6 text-center space-y-3">
               <p className="text-sm font-mono text-[var(--warning)]">
-                DATA_UNAVAILABLE — Chưa có chuỗi nến D1 lịch sử cho {instrument.exchangeSymbol}.
+                {t('hc.cp.noCandles', { sym: instrument.exchangeSymbol })}
               </p>
               <p className="text-xs text-[var(--muted)] max-w-md">
-                Đồng bộ từ Twelve Data / FMP / Yahoo (nếu bật) hoặc import file CSV OHLCV chuẩn để vẽ biểu đồ chu kỳ &amp; kích hoạt chấm điểm Bottom Detection.
+                {t('hc.cp.noCandlesHint')}
               </p>
               <button
                 type="button"
                 onClick={() => setActiveModule('data-import')}
                 className="px-3 py-1.5 bg-[var(--accent)] hover:bg-[var(--accent)]/90 rounded text-xs font-medium text-white"
               >
-                Mở Data Import (CSV)
+                {t('hc.cp.openImport')}
               </button>
             </div>
           ) : (
@@ -460,9 +460,9 @@ export function CommodityProfileView() {
         <section className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-4 space-y-4 min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <h2 className="text-sm font-semibold text-[var(--text-strong)]">Động cơ Phát hiện Đáy (100 Điểm)</h2>
+              <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('hc.cp.bottomTitle')}</h2>
               <p className="text-xs text-[var(--faint)] mt-0.5">
-                Trọng số quan sát thực tế: {bottomDetection.observedWeight}/100
+                {t('hc.cp.observedWeight', { n: bottomDetection.observedWeight })}
               </p>
             </div>
             <InfoToggle id="prof-bottom-method" label={t('prof.method')}>
@@ -538,7 +538,7 @@ export function CommodityProfileView() {
             <Bot className="w-4 h-4 text-[var(--accent)]" aria-hidden="true" />
             <div>
               <h2 className="text-sm font-semibold text-[var(--text-strong)]">
-                AI Verdict — 8 Câu hỏi Nghiên cứu Chu kỳ
+                {t('hc.cp.verdictTitle')}
               </h2>
               <p className="text-xs text-[var(--faint)]">Gemini · server-side</p>
             </div>
@@ -551,7 +551,7 @@ export function CommodityProfileView() {
             className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 disabled:opacity-50 rounded-md text-xs font-medium text-white whitespace-nowrap self-start sm:self-auto"
           >
             <Bot className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{verdictLoading ? 'Đang phân tích 8 câu hỏi...' : 'Chạy AI Verdict (8 Câu hỏi)'}</span>
+            <span>{verdictLoading ? t('hc.cp.verdictRunning') : t('hc.cp.verdictRun')}</span>
           </button>
         </div>
 
@@ -590,14 +590,14 @@ export function CommodityProfileView() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             {[
-              ['1. Hàng hóa đang ở giai đoạn nào của chu kỳ?', verdict.answers.q1CyclePhase],
-              ['2. Trạng thái Cung – Cầu hiện tại ra sao?', verdict.answers.q2SupplyDemandState],
-              ['3. Giá đã thực sự hấp dẫn hay chỉ là bẫy giảm giá?', verdict.answers.q3ValuableOrTrap],
-              ['4. Đánh giá điểm tạo đáy & độ tin cậy mô hình?', verdict.answers.q4BottomProbabilityAssessment],
-              ['5. Động lực chính và rủi ro lớn nhất hiện tại?', verdict.answers.q5KeyDriversAndRisks],
-              ['6. Nên hành động ngay hay chờ xác nhận thêm?', verdict.answers.q6ShouldActNowOrWait],
-              ['7. Vùng mua, điểm vô hiệu kịch bản & mục tiêu?', verdict.answers.q7EntryZoneInvalidationTargets],
-              ['8. Tín hiệu kỹ thuật / vĩ mô cần để xác nhận?', verdict.answers.q8ConfirmationTriggers],
+              [t('hc.cp.q1'), verdict.answers.q1CyclePhase],
+              [t('hc.cp.q2'), verdict.answers.q2SupplyDemandState],
+              [t('hc.cp.q3'), verdict.answers.q3ValuableOrTrap],
+              [t('hc.cp.q4'), verdict.answers.q4BottomProbabilityAssessment],
+              [t('hc.cp.q5'), verdict.answers.q5KeyDriversAndRisks],
+              [t('hc.cp.q6'), verdict.answers.q6ShouldActNowOrWait],
+              [t('hc.cp.q7'), verdict.answers.q7EntryZoneInvalidationTargets],
+              [t('hc.cp.q8'), verdict.answers.q8ConfirmationTriggers],
             ].map(([q, ans]) => (
               <div key={q} className="bg-[var(--bg)] border border-[var(--border)] rounded-md p-3.5 space-y-1.5">
                 <p className="font-semibold text-[var(--text-strong)]">{q}</p>
@@ -613,7 +613,7 @@ export function CommodityProfileView() {
         <div className="flex items-center gap-2">
           <Layers className="w-4 h-4 text-[var(--accent)]" aria-hidden="true" />
           <h2 className="text-sm font-semibold text-[var(--text-strong)]">
-            Ma trận Đa khung Chu kỳ (Thứ tự ưu tiên: Monthly → Weekly → Daily → H4 Timing)
+            {t('hc.cp.mtfTitle')}
           </h2>
         </div>
 
@@ -624,7 +624,7 @@ export function CommodityProfileView() {
               <div key={tfKey} className="bg-[var(--bg)] border border-[var(--border)] rounded-md p-3.5 space-y-2 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono font-semibold text-[var(--text-strong)]">{tfKey}</span>
-                  <span className="font-mono text-[11px] text-[var(--faint)]">{tf.candleCount} nến</span>
+                  <span className="font-mono text-[11px] text-[var(--faint)]">{t('hc.cp.candlesCount', { n: tf.candleCount })}</span>
                 </div>
                 <CyclePhaseBadge phase={tf.phase} compact />
                 <p className="text-[var(--muted)] leading-relaxed">{tf.summary}</p>
@@ -683,19 +683,19 @@ export function CommodityProfileView() {
                 </span>
               </div>
               <div className="bg-[var(--bg)] border border-[var(--border)] rounded p-2.5">
-                <span className="block text-[11px] text-[var(--faint)]">Cắt lỗ (SL)</span>
+                <span className="block text-[11px] text-[var(--faint)]">{t('hc.cp.sl')}</span>
                 <span className="font-mono text-[var(--negative)] tabular-nums">
                   {plan.stopLoss !== null ? plan.stopLoss : '—'}
                 </span>
               </div>
               <div className="bg-[var(--bg)] border border-[var(--border)] rounded p-2.5">
-                <span className="block text-[11px] text-[var(--faint)]">Chốt lời (TP1 / TP2)</span>
+                <span className="block text-[11px] text-[var(--faint)]">{t('hc.cp.tp')}</span>
                 <span className="font-mono text-[var(--positive)] tabular-nums">
                   {plan.takeProfits.length > 0 ? plan.takeProfits.join(' / ') : '—'}
                 </span>
               </div>
               <div className="bg-[var(--bg)] border border-[var(--border)] rounded p-2.5">
-                <span className="block text-[11px] text-[var(--faint)]">Tỷ lệ Risk/Reward</span>
+                <span className="block text-[11px] text-[var(--faint)]">{t('hc.cp.rr')}</span>
                 <span className="font-mono text-[var(--accent)] font-semibold tabular-nums">
                   {plan.riskRewardRatio !== null ? `1 : ${plan.riskRewardRatio}` : '—'}
                 </span>
@@ -704,7 +704,7 @@ export function CommodityProfileView() {
 
             <div className="space-y-2 text-xs">
               <p className="text-[var(--text)] leading-relaxed">{plan.positionSizingGuidance}</p>
-              <p className="text-[var(--warning)]/90 font-mono">Vô hiệu kịch bản: {plan.invalidationCondition}</p>
+              <p className="text-[var(--warning)]/90 font-mono">{t('hc.cp.invalidation', { v: plan.invalidationCondition })}</p>
             </div>
           </div>
         ))}
@@ -716,7 +716,7 @@ export function CommodityProfileView() {
           <div className="flex items-center gap-2">
             <Compass className="w-4 h-4 text-[var(--accent)]" aria-hidden="true" />
             <h2 className="text-sm font-semibold text-[var(--text-strong)]">
-              Ma trận Cung – Cầu Chuyên biệt ({nameVi})
+              {t('hc.cp.sdMatrix', { name: nameVi })}
             </h2>
           </div>
 
@@ -731,7 +731,7 @@ export function CommodityProfileView() {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[var(--accent)]" aria-hidden="true" />
-              <h2 className="text-sm font-semibold text-[var(--text-strong)]">Tính mùa vụ 12 tháng &amp; Vị thế COT</h2>
+              <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('hc.cp.seasonTitle')}</h2>
             </div>
             <span className="text-[11px] font-mono text-[var(--faint)]">
               COT Index: {cotSnapshot.cotIndex !== null ? `${cotSnapshot.cotIndex.toFixed(1)}%` : 'UNAVAILABLE'}
@@ -754,7 +754,7 @@ export function CommodityProfileView() {
                   {m.avgReturnPct !== null ? `${m.avgReturnPct >= 0 ? '+' : ''}${m.avgReturnPct}%` : '—'}
                 </span>
                 <span className="block text-[10px] font-mono text-[var(--faint)]">
-                  {m.sampleYears > 0 ? `${m.sampleYears} năm · Win ${m.winRatePct}%` : 'Thiếu dữ liệu'}
+                  {m.sampleYears > 0 ? t('hc.cp.seasonSample', { years: m.sampleYears, pct: m.winRatePct }) : t('hc.cp.seasonMissing')}
                 </span>
               </div>
             ))}
@@ -763,7 +763,7 @@ export function CommodityProfileView() {
           <div className="bg-[var(--bg)] border border-[var(--border)] rounded p-3 text-xs space-y-1">
             <div className="flex items-center gap-1.5 text-[var(--text-strong)] font-medium">
               <TrendingUp className="w-3.5 h-3.5 text-[var(--accent)]" aria-hidden="true" />
-              <span>Bối cảnh CFTC COT &amp; Liên hệ Việt Nam</span>
+              <span>{t('hc.cp.cotTitle')}</span>
             </div>
             <p className="text-[var(--muted)]">{cotSnapshot.note}</p>
             {instrument.commodityProfile?.vietnamMarketRelevance && (
