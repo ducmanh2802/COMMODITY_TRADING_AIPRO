@@ -354,6 +354,10 @@ function createAiRateLimiter(maxRequests: number, windowMs: number) {
   return (req: Request, res: Response, next: NextFunction) => {
     const key = req.ip || 'local';
     const now = Date.now();
+    if (hits.size > 5000) {
+      // Bound memory: drop keys whose hits have all expired.
+      for (const [k, v] of hits) if (v.every((t) => now - t >= windowMs)) hits.delete(k);
+    }
     const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
     if (recent.length >= maxRequests) {
       res.status(429).json({

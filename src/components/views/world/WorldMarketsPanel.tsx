@@ -27,6 +27,8 @@ import { ScaleLegend } from '../../ui/viz/ScaleLegend';
 import { Card } from '../../ui/Card';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
+import { Delta, Fold } from '../pulse/tileBits';
+import { InfoTip as TipPopover } from '../today/InfoTip';
 
 /* ───────────────────────── 1. Exchange clock ───────────────────────── */
 
@@ -44,9 +46,10 @@ function dayRange(t: TFunction, days: number[]): string {
   return runs.map((r) => (r.length > 1 ? `${name(r[0])}–${name(r[r.length - 1])}` : name(r[0]))).join(', ');
 }
 
-function duration(t: TFunction, minutes: number): string {
+function duration(t: TFunction, minutes: number, short = false): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
+  if (short) return h > 0 ? `${h}${t('c4.wd.hShort')}${String(m).padStart(2, '0')}` : `${m}${t('c4.wd.mShort')}`;
   return h > 0 ? t('wd.clock.hm', { h, m }) : t('wd.clock.m', { m });
 }
 
@@ -67,36 +70,36 @@ function ExchangeClockCard({ schedule, now }: { schedule: ExchangeSchedule; now:
     [schedule, now.toDateString()]
   );
   return (
-    <Card className="space-y-2">
+    <Card className="space-y-1.5">
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="text-sm font-semibold text-[var(--text-strong)]">{t(`wd.ex.${schedule.id}` as TKey)}</div>
-          <div className="text-[11px] text-[var(--muted)]">{schedule.scope}</div>
-        </div>
+        <div className="min-w-0 text-sm font-semibold text-[var(--text-strong)]" title={schedule.scope}>{t(`wd.ex.${schedule.id}` as TKey)}</div>
         <span
           className={`inline-flex items-center gap-1.5 text-xs font-medium shrink-0 ${status.open ? 'text-[var(--positive)]' : 'text-[var(--muted)]'}`}
         >
           {status.open ? <CircleCheck className="h-3.5 w-3.5" aria-hidden="true" /> : <CircleSlash className="h-3.5 w-3.5" aria-hidden="true" />}
-          {status.open ? t('wd.clock.open') : t('wd.clock.closed')}
+          <span title={status.open ? t('wd.clock.open') : t('wd.clock.closed')}>{status.open ? t('c4.wd.on') : t('c4.wd.off')}</span>
         </span>
       </div>
       {status.minutesToChange !== null && (
-        <div className="text-xs text-[var(--text)]">
-          {t(status.open ? 'wd.clock.closesIn' : 'wd.clock.opensIn', { t: duration(t, status.minutesToChange) })}
+        <div className="text-xs text-[var(--text)]" title={t(status.open ? 'wd.clock.closesIn' : 'wd.clock.opensIn', { t: duration(t, status.minutesToChange) })}>
+          {t(status.open ? 'wd.clock.closesIn' : 'wd.clock.opensIn', { t: duration(t, status.minutesToChange, true) })}
         </div>
       )}
-      <ul className="space-y-0.5 text-xs tabular-nums text-[var(--text)]">
-        {ranges.map((r) => (
-          <li key={`${r.start}-${r.end}`} className="flex flex-wrap gap-x-1.5">
-            <span className="text-[var(--muted)]">{t('wd.clock.dayLabel', { days: dayRange(t, r.days) })}</span>
-            <span className="text-[var(--text-strong)]">
-              {r.start}–{r.end}
-              {r.endsNextDay ? t('wd.clock.nextDay') : ''}
-            </span>
-          </li>
-        ))}
-      </ul>
-      <div className="text-[11px] text-[var(--muted)]">{offsetText(t, schedule.tz, now)}</div>
+      <Fold summary={t('c4.wd.hours')}>
+        <div className="text-[var(--text)]">{schedule.scope}</div>
+        <ul className="space-y-0.5 tabular-nums text-[var(--text)]">
+          {ranges.map((r) => (
+            <li key={`${r.start}-${r.end}`} className="flex flex-wrap gap-x-1.5">
+              <span className="text-[var(--muted)]">{t('wd.clock.dayLabel', { days: dayRange(t, r.days) })}</span>
+              <span className="text-[var(--text-strong)]">
+                {r.start}–{r.end}
+                {r.endsNextDay ? t('wd.clock.nextDay') : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div>{offsetText(t, schedule.tz, now)}</div>
+      </Fold>
     </Card>
   );
 }
@@ -111,13 +114,15 @@ function ExchangeClock() {
   const vnTime = new Intl.DateTimeFormat('en-GB', { timeZone: VIETNAM_TIMEZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now);
   return (
     <section className="space-y-3">
-      <SectionHeader title={t('wd.clock.title')} subtitle={t('wd.clock.subtitle')} actions={<span className="text-xs text-[var(--muted)] tabular-nums">{t('wd.clock.vnNow', { time: vnTime })}</span>} />
+      <SectionHeader
+        title={<span className="inline-flex items-center gap-1">{t('wd.clock.title')}<TipPopover text={`${t('wd.clock.subtitle')} ${t('wd.clock.note')}`} /></span>}
+        actions={<span className="text-xs text-[var(--muted)] tabular-nums" title={t('wd.clock.vnNow', { time: vnTime })} aria-label={t('wd.clock.vnNow', { time: vnTime })}>VN {vnTime}</span>}
+      />
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         {EXCHANGE_SCHEDULES.map((s) => (
           <ExchangeClockCard key={s.id} schedule={s} now={now} />
         ))}
       </div>
-      <p className="text-xs text-[var(--warning)]">{t('wd.clock.note')}</p>
     </section>
   );
 }
@@ -278,7 +283,7 @@ function MacroTileCard({ tile }: { tile: MacroTile }) {
   const { t } = useI18n();
   const reason = tile.id === 'sp500' ? t('wd.macro.sp500.reason') : tile.reason;
   const has = tile.value !== null;
-  const tone = !tile.change || tile.change.sign === 0 ? 'text-[var(--muted)]' : tile.change.sign > 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]';
+  const period = tile.change ? t(tile.change.periodKey === 'wd.macro.chg1m' ? 'c4.wd.per1m' : tile.change.periodKey === 'wd.macro.chg1w' ? 'c4.wd.per1w' : 'c4.wd.perPrev') : '';
   return (
     <Card className="space-y-2" aria-label={t(tile.nameKey)}>
       <div className="flex items-start justify-between gap-2">
@@ -295,14 +300,13 @@ function MacroTileCard({ tile }: { tile: MacroTile }) {
             {tile.suffix}
           </span>
           {tile.change && (
-            <span className={`text-xs tabular-nums ${tone}`}>
-              {t(tile.change.periodKey, { v: tile.change.text })}
+            <span className="text-xs" title={t(tile.change.periodKey, { v: tile.change.text })} aria-label={t(tile.change.periodKey, { v: tile.change.text })}>
+              <Delta v={tile.change.sign} text={tile.change.text} label={period} />
             </span>
           )}
         </div>
       ) : (
         <div className="space-y-1 text-xs">
-          <span className="inline-flex rounded-full border border-[var(--border)] px-2 py-0.5 text-[var(--faint)]">{t('wd.macro.unavailable')}</span>
           {reason && (
             <details>
               <summary className="cursor-pointer inline-flex min-h-10 items-center text-[11px] text-[var(--muted)] hover:text-[var(--text)]">{t('wd.macro.why')}</summary>
@@ -313,7 +317,7 @@ function MacroTileCard({ tile }: { tile: MacroTile }) {
       )}
       {(tile.source || tile.asOf) && (
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--muted)]">
-          {tile.asOf && <span className="tabular-nums" title={t('wd.macro.asOf', { v: tile.asOf })}>{tile.asOf.slice(0, 16).replace('T', ' ')}</span>}
+          {tile.asOf && <span className="tabular-nums" title={t('wd.macro.asOf', { v: tile.asOf.slice(0, 16).replace('T', ' ') })}>{tile.asOf.slice(0, 10)}</span>}
           {tile.source && <SourceChip sources={[tile.source]} />}
         </div>
       )}
@@ -345,7 +349,7 @@ function GlobalMacro() {
   const tiles = useMemo(() => buildTiles(fx, rates, pulse, ppUnit), [fx, rates, pulse, ppUnit]);
   return (
     <section className="space-y-3">
-      <SectionHeader title={t('wd.macro.title')} subtitle={t('wd.macro.subtitle')} />
+      <SectionHeader title={<span className="inline-flex items-center gap-1">{t('wd.macro.title')}<TipPopover text={t('wd.macro.subtitle')} /></span>} />
       {loading ? (
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" role="status" aria-busy="true" aria-label={t('wd.macro.loading')}>
           {Array.from({ length: 6 }, (_, i) => (
@@ -431,7 +435,7 @@ function ExchangePerformance() {
 
   return (
     <section className="space-y-3">
-      <SectionHeader title={t('wd.perf.title')} subtitle={t('wd.perf.subtitle')} />
+      <SectionHeader title={<span className="inline-flex items-center gap-1">{t('wd.perf.title')}<TipPopover text={`${t('wd.perf.subtitle')} ${t('wd.perf.legend')} ${t('wd.perf.asOf')}`} /></span>} />
       {loading ? (
         <Skeleton className="h-40 w-full" />
       ) : groups.length === 0 ? (
@@ -445,10 +449,10 @@ function ExchangePerformance() {
               <Card key={g.ex} className="space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="text-sm font-semibold text-[var(--text-strong)]">
-                    {exLabel(g.ex)} <span className="text-[11px] font-normal text-[var(--muted)]">· {t('wd.perf.count', { n: g.items.length })}</span>
+                    {exLabel(g.ex)} <span className="text-[11px] font-normal text-[var(--muted)]" title={t('wd.perf.count', { n: g.items.length })}>· {g.items.length}</span>
                   </div>
-                  <span className="text-xs font-semibold tabular-nums text-[var(--text-strong)]">
-                    {t('wd.perf.avg', { v: pctText(g.avg) })}
+                  <span className="text-xs font-semibold tabular-nums text-[var(--text-strong)]" title={t('wd.perf.avg', { v: pctText(g.avg) })} aria-label={t('wd.perf.avg', { v: pctText(g.avg) })}>
+                    <Delta v={g.avg} text={pctText(g.avg)} />
                   </span>
                 </div>
                 <div className="relative h-2 rounded-full bg-[var(--surface-2)]" aria-hidden="true">
@@ -468,7 +472,7 @@ function ExchangePerformance() {
                       className="rounded-md border border-[var(--border)] px-2 py-1.5 text-left transition hover:border-[var(--accent)]/60 min-w-0"
                       style={{ background: tint(it.pct) }}
                     >
-                      <div className="truncate text-[11px] text-[var(--text-strong)]">{it.name}</div>
+                      <div className="truncate text-[11px] text-[var(--text-strong)]">{it.name.replace(/\s*\(.*\)\s*$/, '')}</div>
                       <div className="text-xs font-semibold tabular-nums text-[var(--text-strong)]">{pctText(it.pct)}</div>
                     </button>
                   ))}
@@ -480,8 +484,6 @@ function ExchangePerformance() {
       )}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--muted)]">
         <ScaleLegend kind="diverging" low={t('wd.perf.down')} mid="0" high={t('wd.perf.up')} />
-        <span>{t('wd.perf.legend')}</span>
-        <span className="text-[var(--faint)]">{t('wd.perf.asOf')}</span>
       </div>
     </section>
   );

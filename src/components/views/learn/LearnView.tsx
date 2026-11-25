@@ -316,12 +316,13 @@ function LevelStepper({
                 type="button"
                 onClick={() => onPick(lvl.id)}
                 aria-current={current ? 'step' : undefined}
-                aria-label={`${t('ac.levels.stepLabel', { n: lvl.number, title: shortLevelTitle(lvl.title), d: done, t: total })}, ${t(EXAM_BADGE[state].key)}${current ? `, ${t('ac.levels.stepCurrent')}` : ''}`}
                 title={lvl.title}
                 className={`w-full flex flex-col items-center gap-1 rounded-lg border px-1 py-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
                   current ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-transparent hover:bg-[var(--surface-2)]'
                 }`}
               >
+                <span className="sr-only">{`${t('ac.levels.stepLabel', { n: lvl.number, title: shortLevelTitle(lvl.title), d: done, t: total })}, ${t(EXAM_BADGE[state].key)}${current ? `, ${t('ac.levels.stepCurrent')}` : ''}`}</span>
+                <span aria-hidden="true" className="contents">
                 <ProgressRing pct={pct} size={36} tone={complete ? 'var(--positive)' : 'var(--accent)'}>
                   {complete ? <CheckCircle2 className="w-4 h-4 text-[var(--positive)]" aria-hidden="true" /> : lvl.number}
                 </ProgressRing>
@@ -331,6 +332,7 @@ function LevelStepper({
                     aria-hidden="true"
                   />
                   {done}/{total}
+                </span>
                 </span>
               </button>
             </li>
@@ -500,13 +502,14 @@ function ExamsAndRiskSection({
                   type="button"
                   aria-expanded={active}
                   aria-controls="academy-exam-detail"
-                  aria-label={t('ac.examsHub.tileLabel', { n: lvl.number, title: shortLevelTitle(lvl.title), d: done, t: lvl.lessons.length, status: t(key) })}
                   data-testid={`exam-tile-${lvl.id}`}
                   onClick={() => setPicked(active ? null : lvl.id)}
                   className={`w-full h-full text-left rounded-lg border p-2.5 space-y-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
                     active ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)]'
                   }`}
                 >
+                  <span className="sr-only">{t('ac.examsHub.tileLabel', { n: lvl.number, title: shortLevelTitle(lvl.title), d: done, t: lvl.lessons.length, status: t(key) })}</span>
+                  <span aria-hidden="true" className="contents">
                   <span className="flex items-center justify-between gap-1">
                     <span className="text-xs font-semibold text-[var(--text-strong)]">{t('ac.lesson.levelTag', { n: lvl.number })}</span>
                     <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full border ${cls}`}>
@@ -515,6 +518,7 @@ function ExamsAndRiskSection({
                   </span>
                   <span className="block text-[11px] text-[var(--muted)] truncate" title={shortLevelTitle(lvl.title)}>{clipWords(shortLevelTitle(lvl.title))}</span>
                   <span className="block text-[10px] font-mono tabular-nums text-[var(--muted)]">{t('ac.levels.count', { d: done, t: lvl.lessons.length })}</span>
+                  </span>
                 </button>
               </li>
             );
@@ -671,7 +675,7 @@ function LessonCard({
         aria-label={bookmarked ? t('ac.bookmark.remove', { title: lesson.title }) : t('ac.bookmark.add', { title: lesson.title })}
         data-testid={`lesson-bookmark-${lesson.id}`}
         onClick={onToggleBookmark}
-        className={`absolute top-2.5 right-2.5 h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors ${
+        className={`absolute top-1 right-1 sm:top-2.5 sm:right-2.5 h-10 w-10 sm:h-7 sm:w-7 inline-flex items-center justify-center rounded-md transition-colors ${
           bookmarked
             ? 'text-[var(--warning)] bg-[var(--warning)]/15 hover:bg-[var(--warning)]/25'
             : 'text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'

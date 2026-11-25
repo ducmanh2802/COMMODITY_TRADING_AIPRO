@@ -5,7 +5,14 @@ import { useI18n } from '../../../i18n';
 export function InfoTip({ text }: { text: string }) {
   const { t } = useI18n();
   return (
-    <details className="group relative inline-block align-middle">
+    <details
+      className="group relative inline-block align-middle"
+      onKeyDown={(e) => {
+        if (e.key !== 'Escape' || !e.currentTarget.open) return;
+        e.currentTarget.open = false;
+        e.currentTarget.querySelector('summary')?.focus();
+      }}
+    >
       <summary
         aria-label={t('n2.tdv.info')}
         title={t('n2.tdv.info')}

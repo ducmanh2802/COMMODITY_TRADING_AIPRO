@@ -127,7 +127,7 @@ function SourcesRow({ n, asOf, sources }: { n: number; asOf: string | null; sour
           <summary className="cursor-pointer inline-flex min-h-10 items-center text-[var(--muted)] hover:text-[var(--text)]">
             {t('pulse.srcDetails', { n: sources.length })}
           </summary>
-          <ul className="mt-1 max-h-48 space-y-1 overflow-y-auto break-words">
+          <ul tabIndex={0} className="mt-1 max-h-48 space-y-1 overflow-y-auto break-words">
             {sources.map((s) => (
               <li key={s}>{s}</li>
             ))}

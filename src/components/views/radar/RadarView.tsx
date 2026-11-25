@@ -92,6 +92,7 @@ function InfoTip({ id, label, children }: { id: string; label: string; children:
         aria-controls={id}
         onClick={() => setOpen((v) => !v)}
         onBlur={() => setOpen(false)}
+        onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }}
         className="shrink-0 w-10 h-10 -m-2 flex items-center justify-center text-[var(--muted)] hover:text-[var(--text-strong)]"
       >
         <Info className="w-4 h-4" aria-hidden="true" />

@@ -6,6 +6,7 @@ import { fieldErrorProps } from '../common/fieldErrors';
 import { getFirestoreModules, handleFirestoreError, OperationType } from '../../firebase';
 import type { ExchangeCode, ProductCategory } from '../../shared/types/instrument';
 import { fmtFixed, fmtInt, fmtNum, useT } from '../../i18n';
+import { Fold } from './pulse/tileBits';
 
 interface PositionRecord {
   id: string;
@@ -261,17 +262,17 @@ export function PortfolioView() {
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">{t('pf.title')}</h2>
-          <p className="text-sm text-[var(--text)]/65 mt-1">
-            {t('pf.subtitleGuest')}
-          </p>
+          <Fold summary={t('n2.tdv.info')}>
+            <p>{t('pf.subtitleGuest')}</p>
+          </Fold>
         </div>
 
         <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-8 text-center space-y-3">
           <Briefcase className="w-8 h-8 text-[var(--accent)] mx-auto" aria-hidden="true" />
           <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('pf.signInTitle')}</h2>
-          <p className="text-xs text-[var(--text)]/65 max-w-md mx-auto">
-            {t('pf.signInBody')}
-          </p>
+          <Fold summary={t('n2.tdv.info')} className="max-w-md mx-auto">
+            <p>{t('pf.signInBody')}</p>
+          </Fold>
           <button
             type="button"
             data-signin="" onClick={() => void signInWithGoogle()}

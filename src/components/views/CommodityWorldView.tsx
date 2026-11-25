@@ -300,17 +300,17 @@ function CommodityWorldCard({
             <div><dt className="inline text-[var(--faint)]">Bottom Score: </dt><dd className="inline">{bottomScore !== null ? `${bottomScore}/100` : 'Chưa chấm'}</dd></div>
             <div><dt className="inline text-[var(--faint)]">Biến động 1M: </dt><dd className="inline">{m1 !== null ? fmt(m1) : '—'}</dd></div>
             <div><dt className="inline text-[var(--faint)]">Cung–Cầu: </dt><dd className="inline">{item.supplyDemandBias === 'DATA_UNAVAILABLE' ? '—' : item.supplyDemandBias}</dd></div>
-            <div>
+          </dl>
+          <div>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onSelect(); }}
                 aria-label={`Hồ sơ chu kỳ: ${nameVi}`}
-                className="inline-flex items-center gap-1 pt-1 font-medium text-[var(--accent)]"
+                className="inline-flex items-center gap-1 min-h-10 font-medium text-[var(--accent)]"
               >
                 <span aria-hidden="true">Hồ sơ chu kỳ</span> <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
               </button>
             </div>
-          </dl>
         </details>
       </div>
     </div>

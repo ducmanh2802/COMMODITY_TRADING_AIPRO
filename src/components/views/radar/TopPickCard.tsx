@@ -20,9 +20,10 @@ export function TopPickCard({ item, rank, muted, onOpen, onToggleMute, children 
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <span className="shrink-0 w-7 h-7 inline-flex items-center justify-center rounded-full bg-[var(--accent-soft)] text-xs font-semibold tabular-nums text-[var(--accent-text)]">{rank}</span>
-          <button type="button" onClick={onOpen} aria-label={t('tp.open', { name: item.name })} className="min-w-0 flex-1 text-left min-h-10">
-            <span className="block truncate text-sm font-semibold text-[var(--text-strong)] hover:underline">{item.name}</span>
-            <span className="block truncate text-[11px] text-[var(--muted)]">{item.symbol}</span>
+          <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left min-h-10">
+            <span className="sr-only">{t('tp.open', { name: item.name })}</span>
+            <span aria-hidden="true" className="block truncate text-sm font-semibold text-[var(--text-strong)] hover:underline">{item.name}</span>
+            <span aria-hidden="true" className="block truncate text-[11px] text-[var(--muted)]">{item.symbol}</span>
           </button>
           <button
             type="button"
@@ -50,6 +51,7 @@ export function TopPickCard({ item, rank, muted, onOpen, onToggleMute, children 
         <p className="text-xs tabular-nums text-[var(--muted)]">
           {fmt(item.lastClose)}
           {item.changePct !== null && <span style={{ color: up ? 'var(--positive)' : 'var(--negative)' }}> {up ? '+' : ''}{fmt(item.changePct)}%</span>}
+          {item.asOf ? <span className="text-[var(--faint)]"> · {t('rd.session', { d: item.asOf })}{item.quality ? ` (${item.quality})` : ''}</span> : null}
         </p>
         <details className="text-xs">
           <summary className="cursor-pointer inline-flex min-h-10 items-center text-[var(--accent-text)]">{t('tp.detail')}</summary>

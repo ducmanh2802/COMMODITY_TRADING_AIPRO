@@ -363,7 +363,7 @@ function CurveQuiz() {
 
 export function Exercise({ id, instruments, loading }: { id: CalculatorId; instruments: InstrumentDefinition[]; loading: boolean }) {
   if (id === 'curve-quiz') return <CurveQuiz />;
-  if (id === 'order') return <OrderCalculator instruments={instruments} />;
+  if (id === 'order') return <OrderCalculator instruments={instruments} compact />;
   if (id === 'fx-convert' && !instruments.length) return <FxExercise instruments={instruments} />;
   if (!instruments.length) {
     return (

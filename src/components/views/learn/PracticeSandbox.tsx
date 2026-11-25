@@ -5,6 +5,7 @@ import { useI18n, type TKey } from '../../../i18n';
 import { Card } from '../../ui/Card';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Exercise } from './Calculators';
+import { InfoTip } from '../today/InfoTip';
 import { SANDBOX_EXERCISES } from './academyUtils';
 import type { CalculatorId } from './curriculum/types';
 
@@ -17,7 +18,7 @@ export function PracticeSandbox({ onOpenLesson }: { onOpenLesson: (lessonId: str
 
   return (
     <section aria-label={t('ac.sandbox.title')} data-testid="academy-sandbox" className="space-y-4">
-      <SectionHeader title={t('ac.sandbox.title')} subtitle={t('ac.sandbox.subtitle')} />
+      <SectionHeader title={<span className="inline-flex items-center gap-1">{t('ac.sandbox.title')}<InfoTip text={t('ac.sandbox.subtitle')} /></span>} />
 
       <div className="grid gap-4 lg:grid-cols-[17rem_1fr] items-start">
         <nav
@@ -51,12 +52,10 @@ export function PracticeSandbox({ onOpenLesson }: { onOpenLesson: (lessonId: str
         <Card className="space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-2 pb-3 border-b border-[var(--border)]">
             <div className="min-w-0">
-              <h3 className="text-base font-semibold text-[var(--text-strong)]">
+              <h3 className="flex items-center gap-1 text-base font-semibold text-[var(--text-strong)]">
                 {t(`ac.sandbox.ex.${activeMeta.id}` as TKey)}
+                <InfoTip text={t(`ac.sandbox.ex.${activeMeta.id}.desc` as TKey)} />
               </h3>
-              <p className="text-xs text-[var(--muted)] mt-0.5">
-                {t(`ac.sandbox.ex.${activeMeta.id}.desc` as TKey)}
-              </p>
             </div>
             <button
               type="button"

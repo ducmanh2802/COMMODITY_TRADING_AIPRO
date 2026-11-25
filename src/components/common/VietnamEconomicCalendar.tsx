@@ -25,7 +25,7 @@ const CHIPS = 3;
 
 const chipCls =
   'px-1.5 py-0.5 bg-[var(--bg)] hover:bg-[var(--accent)] border border-[var(--border)] rounded text-[11px] font-mono text-[var(--text-strong)] hover:text-[var(--on-accent)] transition-colors';
-const linkBtnCls = 'text-xs font-medium text-[var(--accent)] hover:text-[var(--text-strong)]';
+const linkBtnCls = 'inline-flex items-center min-h-10 px-2 text-xs font-medium text-[var(--accent)] hover:text-[var(--text-strong)]';
 const summaryCls = 'text-[11px] text-[var(--accent)] cursor-pointer select-none';
 
 /** Weekday + dd/mm badge parts for a YYYY-MM-DD ICT date. */
@@ -329,7 +329,7 @@ export function VietnamEconomicCalendar({ macroRecords = [] }: VietnamEconomicCa
                         : 'bg-[var(--surface-2)] border-[var(--border)] text-[var(--text-strong)]'
                     }`}
                   >
-                    <div className="text-[10px] uppercase leading-tight opacity-80">{dp.wd}</div>
+                    <div className="text-[10px] uppercase leading-tight">{dp.wd}</div>
                     <div className="font-mono text-xs font-semibold tabular-nums">{dp.dm}</div>
                   </div>
                   <ul className="flex-1 min-w-0 space-y-2.5">

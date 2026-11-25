@@ -24,11 +24,13 @@ export function requestIdMiddleware(req: Request, res: Response, next: NextFunct
 
 /**
  * Security headers safe for a Vite SPA using Firebase Auth popups.
- * Intentionally no CSP and no Cross-Origin-Opener-Policy (both can break auth popups).
+ * Intentionally no script/style/connect CSP and no Cross-Origin-Opener-Policy (both can break auth popups,
+ * Vite HMR, Google Fonts, YouTube embeds). Only non-fetch directives that cannot break any of those are set.
  */
 export function securityHeadersMiddleware(_req: Request, res: Response, next: NextFunction): void {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'");
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   next();

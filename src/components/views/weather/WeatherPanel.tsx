@@ -6,7 +6,8 @@ import type { TFunction } from '../../../i18n';
 import type { TKey } from '../../../i18n/vi';
 import type { WeatherRegionResult, WeatherRegionsResponse } from '../../../shared/types/weather';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
-import { AlertOctagon, AlertTriangle, CircleCheck } from 'lucide-react';
+import { AlertOctagon, AlertTriangle, CircleCheck, CloudRain, Thermometer } from 'lucide-react';
+import { Delta, Fold } from '../pulse/tileBits';
 import { Card } from '../../ui/Card';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
@@ -128,6 +129,12 @@ function Legend({ t }: { t: TFunction }) {
           {t(`wx.legend.${s}` as TKey)}
         </span>
       ))}
+      {([['wx.rainForecast', 'var(--series-1)'], ['wx.rainNormal', 'var(--series-other)']] as const).map(([k, c]) => (
+        <span key={k} className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-4 rounded-[2px]" style={{ background: c }} aria-hidden="true" />
+          {t(k)}
+        </span>
+      ))}
     </div>
   );
 }
@@ -139,8 +146,10 @@ function RegionCard({ r, t }: { r: WeatherRegionResult; t: TFunction }) {
   const maxDay = Math.max(...r.daily.map((d) => d.precipMm), 1);
   const sev = severity(r);
   const pct = n.precipAnomalyPct;
+  const chip = impactChip(t, r);
+  const tAnom = n.tmaxAnomalyC;
   return (
-    <Card id={`wx-${r.regionId}`} tone={sev === 'normal' ? 'default' : 'warning'} className="space-y-3">
+    <Card id={`wx-${r.regionId}`} tone={sev === 'normal' ? 'default' : 'warning'} className="space-y-2.5">
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-sm font-semibold text-[var(--text-strong)]">{r.nameVi}</h3>
         <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-[11px] text-[var(--muted)]">
@@ -149,77 +158,50 @@ function RegionCard({ r, t }: { r: WeatherRegionResult; t: TFunction }) {
         </span>
       </div>
 
-      {r.flags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {r.flags.map((f) => (
-            <span
-              key={f}
-              className="rounded-full border px-2 py-0.5 text-[11px] font-medium"
-              style={{ borderColor: f === 'SƯƠNG_GIÁ_RISK' ? 'var(--negative)' : 'var(--warning)', color: f === 'SƯƠNG_GIÁ_RISK' ? 'var(--negative)' : 'var(--warning)' }}
-            >
-              {t(`wx.flag.${f}` as TKey)}
-            </span>
-          ))}
-        </div>
-      )}
+      <p className="text-xs">
+        <span
+          className="inline-flex rounded-full border px-2.5 py-1 font-medium"
+          style={sev === 'normal' ? { borderColor: 'var(--border)', color: 'var(--muted)' } : { borderColor: 'var(--warning)', color: 'var(--text-strong)' }}
+          title={chip.full}
+          aria-label={chip.full}
+        >
+          {chip.text}
+        </span>
+      </p>
 
-      {(() => {
-        const chip = impactChip(t, r);
-        return (
-          <p className="text-xs">
-            <span
-              className="inline-flex rounded-full border px-2.5 py-1 font-medium"
-              style={sev === 'normal' ? { borderColor: 'var(--border)', color: 'var(--muted)' } : { borderColor: 'var(--warning)', color: 'var(--text-strong)' }}
-              title={chip.full}
-              aria-label={chip.full}
-            >
-              {chip.text}
-            </span>
-          </p>
-        );
-      })()}
-
-      <div className="space-y-1.5">
-        <div className="flex items-baseline justify-between text-xs text-[var(--muted)]">
-          <span>{t('wx.rain')}</span>
-          <span style={{ color: pct == null ? undefined : pct <= -40 ? 'var(--warning)' : pct >= 50 ? 'var(--accent-text)' : undefined }}>
-            {pct == null ? t('wx.rainNoPct') : `${pct > 0 ? '+' : ''}${pct}% ${t('wx.rainAnomaly')}`}
+      <div className="space-y-1" role="group" aria-label={`${t('wx.rain')}: ${t('wx.rainForecast')} ${t('wx.mm', { n: Math.round(n.precipMm) })}, ${t('wx.rainNormal')} ${t('wx.mm', { n: Math.round(n.precipNormalMm) })}`}>
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span className="inline-flex items-center gap-1 text-[var(--muted)]" title={t('wx.rain')}>
+            <CloudRain className="h-3.5 w-3.5" aria-hidden="true" />
+            {pct == null ? t('c4.wx.dry') : <Delta v={pct} text={`${pct > 0 ? '+' : ''}${pct}%`} />}
+          </span>
+          <span className="tabular-nums text-[var(--muted)]" title={t('wx.tmax')}>
+            <Thermometer className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />
+            {n.tmaxAvg}°C <Delta v={tAnom} text={`${tAnom > 0 ? '+' : ''}${tAnom}°`} />
           </span>
         </div>
         {([
-          ['wx.rainForecast', n.precipMm, 'var(--series-1)'],
-          ['wx.rainNormal', n.precipNormalMm, 'var(--series-other)'],
-        ] as const).map(([label, v, color]) => (
-          <div key={label} className="flex items-center gap-2 text-xs">
-            <span className="w-16 shrink-0 text-[var(--muted)]">{t(label)}</span>
+          [n.precipMm, 'var(--series-1)'],
+          [n.precipNormalMm, 'var(--series-other)'],
+        ] as const).map(([v, color], i) => (
+          <div key={i} className="flex items-center gap-2 text-xs" aria-hidden="true">
             <div className="h-2 flex-1 bg-[var(--surface-2)]">
               <div className="h-2 rounded-r-[4px]" style={{ width: `${(v / maxRain) * 100}%`, background: color }} />
             </div>
-            <span className="w-16 shrink-0 text-right tabular-nums text-[var(--text-strong)]">{t('wx.mm', { n: Math.round(v) })}</span>
+            <span className="w-14 shrink-0 text-right tabular-nums text-[var(--text-strong)]">{t('wx.mm', { n: Math.round(v) })}</span>
           </div>
         ))}
       </div>
 
-      <div className="flex items-baseline justify-between text-xs">
-        <span className="text-[var(--muted)]">{t('wx.tmax')}</span>
-        <span className="tabular-nums text-[var(--text-strong)]">
-          {n.tmaxAvg}°C <span className="text-[var(--muted)]">({t('wx.tmaxVs', { n: n.tmaxNormal })}, {n.tmaxAnomalyC > 0 ? '+' : ''}{n.tmaxAnomalyC}°C)</span>
-        </span>
-      </div>
-
-      <div>
-        <div className="mb-1 text-xs text-[var(--muted)]">{t('wx.daily')}</div>
-        <div className="flex h-10 items-end gap-0.5" role="img" aria-label={t('wx.daily')}>
-          {r.daily.map((d) => (
-            <div key={d.date} className="max-w-[24px] flex-1 rounded-t-[4px] bg-[var(--series-1)] hover:brightness-125" title={`${d.date}: ${d.precipMm} mm, ${d.tmin}–${d.tmax}°C`} style={{ height: `${Math.max(4, (d.precipMm / maxDay) * 100)}%` }} />
-          ))}
-        </div>
+      <div className="flex h-8 items-end gap-0.5" role="img" aria-label={t('wx.daily')}>
+        {r.daily.map((d) => (
+          <div key={d.date} className="max-w-[24px] flex-1 rounded-t-[4px] bg-[var(--series-1)] hover:brightness-125" title={`${d.date}: ${d.precipMm} mm, ${d.tmin}–${d.tmax}°C`} style={{ height: `${Math.max(4, (d.precipMm / maxDay) * 100)}%` }} />
+        ))}
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
-        <span className="text-[var(--muted)]">{t('wx.instruments')}:</span>
         {r.instruments.length === 0 ? (
-          <span className="text-[var(--muted)]">{t('wx.noInstruments')}</span>
+          <span className="text-[var(--muted)]" title={t('wx.noInstruments')}>{t('c4.wx.noCt')}</span>
         ) : (
           r.instruments.map((id) => {
             const sym = id.split(':')[1] ?? id;
@@ -228,6 +210,7 @@ function RegionCard({ r, t }: { r: WeatherRegionResult; t: TFunction }) {
                 key={id}
                 type="button"
                 onClick={() => openInstrumentIn(sym, 'instrument')}
+                aria-label={`${t('wx.instruments')}: ${id}`}
                 className="inline-flex items-center min-h-10 rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1 text-[var(--accent-text)] hover:border-[var(--accent)]/60"
               >
                 {id}
@@ -236,6 +219,31 @@ function RegionCard({ r, t }: { r: WeatherRegionResult; t: TFunction }) {
           })
         )}
       </div>
+
+      <Fold summary={t('c4.wx.detail')}>
+        <p>{chip.full}</p>
+        {r.flags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {r.flags.map((f) => (
+              <span
+                key={f}
+                className="rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                style={{ borderColor: f === 'SƯƠNG_GIÁ_RISK' ? 'var(--negative)' : 'var(--warning)', color: f === 'SƯƠNG_GIÁ_RISK' ? 'var(--negative)' : 'var(--warning)' }}
+              >
+                {t(`wx.flag.${f}` as TKey)}
+              </span>
+            ))}
+          </div>
+        )}
+        <p>
+          {t('wx.rain')}: {pct == null ? t('wx.rainNoPct') : `${pct > 0 ? '+' : ''}${pct}% ${t('wx.rainAnomaly')}`} · {t('wx.rainForecast')} {t('wx.mm', { n: Math.round(n.precipMm) })} · {t('wx.rainNormal')} {t('wx.mm', { n: Math.round(n.precipNormalMm) })}
+        </p>
+        <p>
+          {t('wx.tmax')}: {n.tmaxAvg}°C ({t('wx.tmaxVs', { n: n.tmaxNormal })}, {tAnom > 0 ? '+' : ''}{tAnom}°C)
+        </p>
+        <p>{t('wx.daily')}</p>
+        <p>{t('wx.instruments')}: {r.instruments.length === 0 ? t('wx.noInstruments') : r.instruments.join(', ')}</p>
+      </Fold>
     </Card>
   );
 }

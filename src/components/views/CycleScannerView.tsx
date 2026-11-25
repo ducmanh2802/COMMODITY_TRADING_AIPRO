@@ -231,15 +231,17 @@ export function CycleScannerView({ embedded = false }: { embedded?: boolean } = 
                   <button
                     type="button"
                     onClick={() => open(item)}
-                    aria-label={t('cs.rowAria', { name, phase: ph, score: item.bottomScore ?? t('cs.noData'), pct: pctText(item.percentile10Y) })}
                     className="w-full flex items-center gap-3 px-4 py-2.5 min-h-11 text-left hover:bg-[var(--surface-2)]/60 transition-colors"
                   >
-                    <span className="w-4 text-[11px] font-mono text-[var(--muted)] tabular-nums" aria-hidden="true">{i + 1}</span>
+                    <span className="sr-only">{t('cs.rowAria', { name, phase: ph, score: item.bottomScore ?? t('cs.noData'), pct: pctText(item.percentile10Y) })}</span>
+                    <span aria-hidden="true" className="contents">
+                    <span className="w-4 text-[11px] font-mono text-[var(--muted)] tabular-nums">{i + 1}</span>
                     <span className="w-28 sm:w-40 min-w-0 shrink-0 text-xs font-medium text-[var(--text-strong)] truncate">{name}</span>
                     <PhaseStrip phase={item.cyclePhase} label={phIdx >= 0 ? t('cs.phaseAria', { n: phIdx + 1, phase: ph }) : ph} />
                     <ScoreMeter score={item.bottomScore} accent={getBottomScoreAccent(item.bottomClassification)} />
                     <PercentileDot pct={item.percentile10Y} label={t('cs.pctAria', { pct: pctText(item.percentile10Y) })} />
                     <ChevronRight className="w-4 h-4 shrink-0 text-[var(--muted)]" aria-hidden="true" />
+                    </span>
                   </button>
                 </li>
               );

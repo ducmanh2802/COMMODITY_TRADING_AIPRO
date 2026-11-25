@@ -146,7 +146,10 @@ test('security headers are set and X-Powered-By is disabled', async () => {
     assert.equal(res.headers.get('x-frame-options'), 'SAMEORIGIN');
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(res.headers.get('x-powered-by'), null);
-    assert.equal(res.headers.get('content-security-policy'), null);
+    assert.equal(
+      res.headers.get('content-security-policy'),
+      "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'"
+    );
   });
 });
 

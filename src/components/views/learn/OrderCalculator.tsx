@@ -3,6 +3,7 @@ import type { InstrumentDefinition } from '../../../shared/types/instrument';
 import { calcOrder, rRatioBand, type Direction, type OrderField } from '../../../shared/calc/orderCalc';
 import { useT } from '../../../i18n';
 import { fieldErrorProps } from '../../common/fieldErrors';
+import { InfoTip } from '../today/InfoTip';
 
 const fld =
   'w-full bg-[var(--bg)] border rounded-md px-2.5 py-2 text-sm text-[var(--text-strong)] font-mono focus:outline-none focus:border-[var(--accent)]';
@@ -33,20 +34,24 @@ function useUsdVnd(): number | null {
   return rate;
 }
 
-function Field({ id, label, value, onChange, error, hint }: { id: string; label: string; value: string; onChange: (v: string) => void; error?: string; hint?: string }) {
+function Field({ id, label, value, onChange, error, hint, tip }: { id: string; label: string; value: string; onChange: (v: string) => void; error?: string; hint?: string; /** Compact mode: hint lives in an (i) popover instead of a text line. */ tip?: boolean }) {
+  const inline = !tip && !error && hint;
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="block text-xs text-[var(--text)]/70">{label}</label>
+      <div className="flex items-center gap-1">
+        <label htmlFor={id} className="block text-xs text-[var(--text)]/70">{label}</label>
+        {tip && !error && hint && <InfoTip text={hint} />}
+      </div>
       <input
         id={id}
         inputMode="decimal"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        {...fieldErrorProps(!!error, `${id}-err`, !error && hint ? `${id}-hint` : undefined)}
+        {...fieldErrorProps(!!error, `${id}-err`, inline ? `${id}-hint` : undefined)}
         className={`${fld} ${error ? 'border-[var(--negative)]' : 'border-[var(--border)]'}`}
       />
       {error && <p id={`${id}-err`} className="text-[11px] text-[var(--negative)]">{error}</p>}
-      {!error && hint && <p id={`${id}-hint`} className="text-[11px] text-[var(--text)]/50">{hint}</p>}
+      {inline && <p id={`${id}-hint`} className="text-[11px] text-[var(--text)]/50">{hint}</p>}
     </div>
   );
 }
@@ -67,10 +72,13 @@ export function OrderCalculator({
   instruments,
   initialInstrumentId,
   initialEntry,
+  compact = false,
 }: {
   instruments: InstrumentDefinition[];
   initialInstrumentId?: string;
   initialEntry?: number | null;
+  /** Text-light layout (academy sandbox): disclaimer folded, hints in (i) popovers, short option labels. */
+  compact?: boolean;
 }) {
   const t = useT();
   const [instId, setInstId] = useState(initialInstrumentId ?? 'CBOT:ZC');
@@ -128,13 +136,20 @@ export function OrderCalculator({
 
   return (
     <div className="space-y-4">
-      <p className="text-[11px] text-[var(--text)]/60">{t('oc.note')}</p>
+      {compact ? (
+        <p className="flex items-center gap-1 text-[11px] text-[var(--text)]/60">
+          {t('c4.sb.note')}
+          <InfoTip text={t('oc.note')} />
+        </p>
+      ) : (
+        <p className="text-[11px] text-[var(--text)]/60">{t('oc.note')}</p>
+      )}
       <div className="grid sm:grid-cols-2 gap-3">
         <div className="space-y-1 sm:col-span-2">
           <label htmlFor="oc-inst" className="block text-xs text-[var(--text)]/70">{t('oc.instrument')}</label>
           <select id="oc-inst" {...fieldErrorProps(!r.ok && !!r.errors.spec, 'oc-spec-err')} value={instId} onChange={(e) => setInstId(e.target.value)} className={`${fld} border-[var(--border)]`}>
             {instruments.map((i) => (
-              <option key={i.id} value={i.id}>{i.productName} · {i.exchangeSymbol}</option>
+              <option key={i.id} value={i.id} title={`${i.productName} · ${i.exchangeSymbol}`}>{compact ? `${i.exchangeSymbol} ${i.productName.replace(/\s*\(.*\)\s*$/, '').split(' ').slice(0, 1).join(' ')}` : `${i.productName} · ${i.exchangeSymbol}`}</option>
             ))}
           </select>
           {r.ok ? (
@@ -151,13 +166,13 @@ export function OrderCalculator({
           </div>
         </div>
         <Field id="oc-cap" label={t('oc.capital')} value={capital} onChange={setCapital} error={err('capital')} />
-        <Field id="oc-fx" label={t('oc.fx')} value={fx} onChange={(v) => { setFx(v); setFxTouched(true); }} error={err('fx')} hint={auto && !fxTouched ? t('oc.fxAuto') : !auto ? t('oc.fxManual') : undefined} />
+        <Field id="oc-fx" label={t('oc.fx')} value={fx} onChange={(v) => { setFx(v); setFxTouched(true); }} error={err('fx')} tip={compact} hint={auto && !fxTouched ? t('oc.fxAuto') : !auto ? t('oc.fxManual') : undefined} />
         <Field id="oc-risk" label={t('oc.risk')} value={risk} onChange={setRisk} error={err('risk')} />
         <Field id="oc-cost" label={t('oc.cost')} value={cost} onChange={setCost} error={err('cost')} />
-        <Field id="oc-entry" label={t('oc.entry')} value={entry} onChange={setEntry} error={err('entry')} hint={initialEntry ? t('oc.res.fromPrice') : undefined} />
+        <Field id="oc-entry" label={t('oc.entry')} value={entry} onChange={setEntry} error={err('entry')} tip={compact} hint={initialEntry ? t('oc.res.fromPrice') : undefined} />
         <Field id="oc-stop" label={t('oc.stop')} value={stop} onChange={setStop} error={err('stop')} />
         <Field id="oc-target" label={t('oc.target')} value={target} onChange={setTarget} error={err('target')} />
-        <Field id="oc-margin" label={t('oc.margin')} value={margin} onChange={setMargin} error={err('margin')} hint={t('oc.marginHint')} />
+        <Field id="oc-margin" label={t('oc.margin')} value={margin} onChange={setMargin} error={err('margin')} tip={compact} hint={t('oc.marginHint')} />
       </div>
 
       {!r.ok ? (

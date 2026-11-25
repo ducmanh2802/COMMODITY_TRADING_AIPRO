@@ -1,3 +1,4 @@
+import * as calm4 from './dict/calm4';
 import * as core from './dict/core';
 import * as fsstatus from './dict/fsstatus';
 import * as freshness from './dict/freshness';
@@ -57,12 +58,13 @@ import * as papercoach from './dict/papercoach';
 import * as academy from './dict/academy';
 import * as academyLite from './dict/academyLite';
 import * as cyclescan from './dict/cyclescan';
-import * as radartiles from './dict/radartiles';
 import * as toppick from './dict/toppick';
+import * as honesty from './dict/honesty';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
   ...core.vi,
+  ...calm4.vi,
   ...fsstatus.vi,
   ...freshness.vi,
   ...dashboard.vi,
@@ -121,8 +123,8 @@ export const vi = {
   ...academy.vi,
   ...academyLite.vi,
   ...cyclescan.vi,
-  ...radartiles.vi,
   ...toppick.vi,
+  ...honesty.vi,
 };
 
 export type TKey = keyof typeof vi;

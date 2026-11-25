@@ -1,42 +1,11 @@
 import { useState } from 'react';
-import { Info, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { AccountCurrency } from '../../shared/types/risk';
 import { fmtFixed, fmtInt, fmtNum, useT } from '../../i18n';
 import { fieldErrorProps } from '../common/fieldErrors';
-
-/** One-line subtitle + (i) button revealing the full text (popover pattern copied from InstrumentOverview ContextCard). */
-function OneLineSubtitle({ id, text, helpLabel }: { id: string; text: string; helpLabel: string }) {
-  const [open, setOpen] = useState(false);
-  const tipId = `${id}-tip`;
-  return (
-    <div className="relative mt-1 max-w-3xl">
-      <div className="flex items-center gap-1 min-w-0">
-        <p className="text-sm text-[var(--text)]/65 truncate min-w-0">{text}</p>
-        <button
-          type="button"
-          aria-label={helpLabel}
-          aria-expanded={open}
-          aria-controls={tipId}
-          onClick={() => setOpen((v) => !v)}
-          onBlur={() => setOpen(false)}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') setOpen(false);
-          }}
-          className="shrink-0 w-10 h-10 -my-3 sm:w-7 sm:h-7 sm:-my-1 flex items-center justify-center text-[var(--muted)] hover:text-[var(--text-strong)]"
-        >
-          <Info className="w-4 h-4" aria-hidden="true" />
-        </button>
-      </div>
-      {open && (
-        <div id={tipId} role="tooltip" className="mt-1.5 text-xs leading-relaxed text-[var(--text)] bg-[var(--surface-2)] border border-[var(--border)] rounded-lg p-2.5">
-          {text}
-        </div>
-      )}
-    </div>
-  );
-}
+import { Fold } from './pulse/tileBits';
 
 interface RiskCalculationResponse {
   valid: boolean;
@@ -58,6 +27,24 @@ interface RiskCalculationResponse {
   projectedPortfolioRiskPct: number | null;
   marginStatus: 'VERIFIED' | 'UNAVAILABLE';
   marginRequirementPerContract: number | null;
+}
+
+function RiskTile({ label, value, tone = 'text-[var(--text-strong)]' }: { label: string; value: string; tone?: string }) {
+  return (
+    <div className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-2.5 min-w-0">
+      <p className="text-[11px] text-[var(--text)]/60">{label}</p>
+      <p className={`text-sm font-semibold break-words ${tone}`}>{value}</p>
+    </div>
+  );
+}
+
+function RiskRow({ label, value, tone = 'text-[var(--text-strong)]' }: { label: string; value: string; tone?: string }) {
+  return (
+    <div className="flex justify-between gap-2">
+      <span className="text-[var(--text)]/60">{label}</span>
+      <span className={tone}>{value}</span>
+    </div>
+  );
 }
 
 export function RiskManagementView() {
@@ -93,6 +80,7 @@ export function RiskManagementView() {
   const [invalidIds, setInvalidIds] = useState<string[]>([]);
   const [fxFetching, setFxFetching] = useState(false);
   const [fxNotice, setFxNotice] = useState<string | null>(null);
+  const [advOpen, setAdvOpen] = useState(false);
 
   const activeInstrument = instruments.find((i) => i.exchangeSymbol === selectedSymbol);
   const needsFx =
@@ -136,6 +124,7 @@ export function RiskManagementView() {
     ].filter(([v]) => v.trim() === '' || !Number.isFinite(Number(v)));
     const missing = bad.map(([, label]) => label);
     setInvalidIds(bad.map(([, , id]) => id));
+    if (bad.some(([, , id]) => id !== 'risk-entry' && id !== 'risk-sl')) setAdvOpen(true);
     if (missing.length > 0) {
       setOutput(null);
       setError(t('risk.missing', { fields: missing.join(', ') }));
@@ -192,7 +181,11 @@ export function RiskManagementView() {
         <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight">
           {t('risk.title')}
         </h2>
-        <OneLineSubtitle id="risk-subtitle" text={t('risk.subtitle')} helpLabel={t('pt.infoTip')} />
+        <p className="mt-1 max-w-3xl text-sm text-[var(--text)]/65">{t('c4.risk.one')}</p>
+        <Fold summary={t('n2.tdv.info')}>
+          <p>{t('risk.subtitle')}</p>
+          <p>{t('c4.risk.legend')}</p>
+        </Fold>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -213,7 +206,8 @@ export function RiskManagementView() {
               >
                 {instruments.map((inst) => (
                   <option key={inst.id} value={inst.exchangeSymbol}>
-                    {inst.exchange}:{inst.exchangeSymbol} · {inst.productName} ({inst.specification.verificationStatus === 'VERIFIED' ? t('verify.VERIFIED') : inst.specification.verificationStatus === 'UNVERIFIED' ? t('verify.UNVERIFIED') : inst.specification.verificationStatus})
+                    {inst.exchange}:{inst.exchangeSymbol} {inst.productName}
+                    {inst.specification.verificationStatus === 'VERIFIED' ? '' : ` (${inst.specification.verificationStatus === 'UNVERIFIED' ? t('verify.UNVERIFIED') : inst.specification.verificationStatus})`}
                   </option>
                 ))}
               </select>
@@ -328,6 +322,9 @@ export function RiskManagementView() {
             </div>
           </div>
 
+          <details open={advOpen || !!needsFx} onToggle={(e) => setAdvOpen(e.currentTarget.open)} className="rounded-md border border-[var(--border)] p-3">
+            <summary className="cursor-pointer min-h-10 inline-flex items-center text-xs font-medium text-[var(--text)]">{t('c4.risk.adv')}</summary>
+            <div className="mt-3 space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
               <label htmlFor="risk-comm" className="block text-xs text-[var(--text)]/65 mb-1">
@@ -481,6 +478,8 @@ export function RiskManagementView() {
               />
             </div>
           </div>
+            </div>
+          </details>
 
           {fxNotice && (
             <p className="text-xs font-mono text-[var(--warning)]">{fxNotice}</p>
@@ -507,11 +506,11 @@ export function RiskManagementView() {
           </h2>
 
           {!output ? (
-            <p className="text-xs text-[var(--text)]/60 font-mono">
-              {t('risk.emptyHint')}
+            <p className="text-xs text-[var(--text)]/60" title={t('risk.emptyHint')}>
+              {t('c4.risk.empty')}
             </p>
           ) : (
-            <div className="space-y-3 text-xs font-mono tabular-nums">
+            <div className="space-y-3 text-xs tabular-nums">
               {!output.valid && (
                 <div className="bg-[var(--bg)] border border-[var(--negative)]/40 rounded-md p-4 space-y-2">
                   <div className="flex items-center gap-2 font-semibold text-[var(--negative)]">
@@ -529,9 +528,9 @@ export function RiskManagementView() {
               {output.riskBudget !== null && (
                 <>
                   {output.valid && (
-                    <div className="bg-[var(--bg)] border border-[var(--positive)]/40 rounded-md p-3">
+                    <div className="bg-[var(--bg)] border border-[var(--accent)]/40 rounded-md p-3">
                       <span className="text-[var(--text)]/60 block">{t('risk.recommended')}</span>
-                      <span className="text-2xl font-bold text-[var(--positive)]">
+                      <span className="text-3xl font-bold text-[var(--accent-text)]">
                         {output.recommendedContracts}
                       </span>
                       {output.cappedByLimits && (
@@ -542,56 +541,26 @@ export function RiskManagementView() {
                     </div>
                   )}
 
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-[var(--text)]/60">{t('risk.budget')}</span>
-                      <span className="text-[var(--text-strong)]">
-                        {fmtNum(output.riskBudget)} {output.accountCurrency}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--text)]/60">{t('risk.ticksAtRisk')}</span>
-                      <span className="text-[var(--text-strong)]">{fmtFixed(output.ticksAtRisk, 2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--text)]/60">{t('risk.grossRisk')}</span>
-                      <span className="text-[var(--text-strong)]">
-                        {fmtFixed(output.grossRiskPerContract, 2)} {output.contractCurrency}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--text)]/60">{t('risk.costs')}</span>
-                      <span className="text-[var(--text-strong)]">
-                        {fmtFixed(output.estimatedCostsPerContract, 2)} {output.contractCurrency}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--text)]/60">{t('risk.riskPerCtr', { cur: output.accountCurrency })}</span>
-                      <span className="text-[var(--text-strong)]">
-                        {fmtNum(output.riskPerContractInAccountCurrency)} {output.accountCurrency}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-t border-[var(--border)] pt-2">
-                      <span className="text-[var(--text)]/60">{t('risk.maxLoss')}</span>
-                      <span className="text-[var(--negative)]">
-                        {fmtNum(output.maxLossEstimate)} {output.accountCurrency}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--text)]/60">{t('risk.rr')}</span>
-                      <span className="text-[var(--positive)]">
-                        {output.riskRewardRatio !== null ? `${fmtFixed(output.riskRewardRatio, 2)}R` : t('common.na')}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--text)]/60">{t('risk.projected')}</span>
-                      <span className="text-[var(--text-strong)]">{fmtFixed(output.projectedPortfolioRiskPct, 2)}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--text)]/60">{t('risk.marginStatus')}</span>
-                      <span className="text-[var(--warning)]">{t(`risk.margin.${output.marginStatus}`)}</span>
-                    </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <RiskTile label={t('risk.budget')} value={`${fmtNum(output.riskBudget)} ${output.accountCurrency}`} />
+                    <RiskTile label={t('risk.maxLoss')} value={`${fmtNum(output.maxLossEstimate)} ${output.accountCurrency}`} tone="text-[var(--negative)]" />
+                    <RiskTile
+                      label={t('risk.rr')}
+                      value={output.riskRewardRatio !== null ? `${fmtFixed(output.riskRewardRatio, 2)}R` : t('common.na')}
+                      tone="text-[var(--positive)]"
+                    />
+                    <RiskTile label={t('risk.projected')} value={`${fmtFixed(output.projectedPortfolioRiskPct, 2)}%`} />
                   </div>
+
+                  <Fold summary={t('c4.risk.detail')}>
+                    <div className="space-y-2">
+                      <RiskRow label={t('risk.ticksAtRisk')} value={fmtFixed(output.ticksAtRisk, 2)} />
+                      <RiskRow label={t('risk.grossRisk')} value={`${fmtFixed(output.grossRiskPerContract, 2)} ${output.contractCurrency}`} />
+                      <RiskRow label={t('risk.costs')} value={`${fmtFixed(output.estimatedCostsPerContract, 2)} ${output.contractCurrency}`} />
+                      <RiskRow label={t('risk.riskPerCtr', { cur: output.accountCurrency })} value={`${fmtNum(output.riskPerContractInAccountCurrency)} ${output.accountCurrency}`} />
+                      <RiskRow label={t('risk.marginStatus')} value={t(`risk.margin.${output.marginStatus}`)} tone="text-[var(--warning)]" />
+                    </div>
+                  </Fold>
                 </>
               )}
             </div>

@@ -1,3 +1,4 @@
+import * as calm4 from './dict/calm4';
 import * as core from './dict/core';
 import * as fsstatus from './dict/fsstatus';
 import * as freshness from './dict/freshness';
@@ -57,13 +58,14 @@ import * as papercoach from './dict/papercoach';
 import * as academy from './dict/academy';
 import * as academyLite from './dict/academyLite';
 import * as cyclescan from './dict/cyclescan';
-import * as radartiles from './dict/radartiles';
 import * as toppick from './dict/toppick';
+import * as honesty from './dict/honesty';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
 export const en: Record<TKey, string> = {
   ...core.en,
+  ...calm4.en,
   ...fsstatus.en,
   ...freshness.en,
   ...dashboard.en,
@@ -122,6 +124,6 @@ export const en: Record<TKey, string> = {
   ...academy.en,
   ...academyLite.en,
   ...cyclescan.en,
-  ...radartiles.en,
   ...toppick.en,
+  ...honesty.en,
 };

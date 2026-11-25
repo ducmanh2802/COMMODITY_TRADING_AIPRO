@@ -134,7 +134,7 @@ export function Notice({ tone, children }: { tone: 'warn' | 'error' | 'info'; ch
       ? 'border-[var(--negative)]/50 bg-[var(--negative)]/10 text-[var(--negative)]'
       : tone === 'warn'
         ? 'border-[var(--warning)]/50 bg-[var(--warning)]/10 text-[var(--warning)]'
-        : 'border-[var(--accent)]/40 bg-[var(--accent)]/10 text-[#C7D2FE]';
+        : 'border-[var(--accent)]/40 bg-[var(--accent)]/10 text-[var(--accent-text)]';
   const Icon = tone === 'info' ? Info : AlertTriangle;
   return (
     <div role={tone === 'info' ? 'note' : 'alert'} className={`flex gap-2 border rounded-md px-3 py-2 text-xs ${cls}`}>
@@ -327,11 +327,17 @@ export function SeriesSelect({
   );
 }
 
+const STALE_BAR_DAYS = 7;
+
 /** Data-integrity notices for one loaded series (shown above any computed numbers). */
 export function SeriesIntegrity({ s, returnBased = true }: { s: LoadedSeries; returnBased?: boolean }) {
   const t = useT();
   const r = s.response;
   const prov = r.provenance;
+  const lastBarTs = s.closes.length > 0 ? s.closes[s.closes.length - 1].t : null;
+  const lastBarMs = lastBarTs ? Date.parse(lastBarTs) : NaN;
+  // Same rule as server classifyHistoricalSeriesFreshness: D1 bars older than 7 calendar days are STALE.
+  const lastBarAgeDays = Number.isFinite(lastBarMs) ? (Date.now() - lastBarMs) / 86_400_000 : null;
   return (
     <div className="space-y-2">
       {r.status === 'UNAVAILABLE' && <Notice tone="warn">{r.reason ?? t('an.noCandles')}</Notice>}
@@ -356,6 +362,11 @@ export function SeriesIntegrity({ s, returnBased = true }: { s: LoadedSeries; re
         </Notice>
       )}
       {s.excludedIncomplete > 0 && <Notice tone="info">{t('an.incompleteExcluded', { n: fmtInt(s.excludedIncomplete) })}</Notice>}
+      {lastBarAgeDays !== null && lastBarAgeDays > STALE_BAR_DAYS ? (
+        <Notice tone="warn">{t('hon.staleBar', { date: fmtDate(lastBarTs), n: fmtInt(Math.floor(lastBarAgeDays)) })}</Notice>
+      ) : lastBarTs ? (
+        <p className="text-[11px] text-[var(--text)]/50 font-mono">{t('hon.asOfBar', { date: fmtDate(lastBarTs) })}</p>
+      ) : null}
       {prov.length > 0 && (
         <p className="text-[11px] text-[var(--text)]/50 font-mono">
           {t('an.provenance', {
