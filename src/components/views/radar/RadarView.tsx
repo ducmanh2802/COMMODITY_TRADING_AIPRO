@@ -1,5 +1,5 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
-import { BellOff, Copy, Info, RefreshCw } from 'lucide-react';
+import { Copy, Info, RefreshCw } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { reportText } from '../../../shared/radar/notify';
 import type { RadarItem, RadarRating, RadarSetup } from '../../../shared/types/radar';
@@ -12,6 +12,7 @@ import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
 import { LineChart } from '../../ui/viz/LineChart';
 import { useT } from '../../../i18n';
+import { TopPickCard } from './TopPickCard';
 import { SourceChip } from '../../common/SourceChip';
 
 type SortMode = 'rating' | 'activity';
@@ -157,66 +158,38 @@ function ScoreBar({ score }: { score: number }) {
   );
 }
 
-function ItemCard({ item, rank, muted, onOpen }: { item: RadarItem; rank: number; muted: boolean; onOpen: () => void }) {
+function ItemDetail({ item }: { item: RadarItem }) {
   const t = useT();
   const active = item.signals.filter((s) => s.active);
-  const up = (item.changePct ?? 0) >= 0;
   return (
-    <Card>
-      <div className="space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <button type="button" onClick={onOpen} className="text-left">
-            <span className="text-xs text-[var(--text)]/50">{t('rd.rankPrefix').replace('{rank}', String(rank))}</span>
-            <span className="text-base font-semibold text-[var(--text-strong)] hover:underline">{item.name}</span>
-            <span className="text-xs text-[var(--text)]/60"> {item.symbol} · {item.category}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => toggleMute(item.id)}
-            aria-pressed={muted}
-            title={muted ? t('rd.unmute') : t('rd.mute')}
-            className={`shrink-0 inline-flex items-center gap-1 min-h-10 sm:min-h-0 text-xs ${muted ? 'text-[var(--warning)]' : 'text-[var(--text)]/60 hover:text-[var(--text-strong)]'}`}
-          >
-            <BellOff className="w-3.5 h-3.5" aria-hidden="true" />
-            {muted ? t('rd.muted') : t('rd.mute')}
-          </button>
-        </div>
-        <RatingBlock rating={item.rating} />
-        <ScoreBar score={item.score} />
-        <div className="text-xs text-[var(--text)]/70 tabular-nums">
-          {t('rd.price')} {fmt(item.lastClose)}
-          {item.changePct !== null && (
-            <span className={up ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}>
-              {up ? ` (+${fmt(item.changePct)}%)` : ` (${fmt(item.changePct)}%)`}
-            </span>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {active.length === 0 && <span className="text-xs text-[var(--text)]/50">{t('rd.item.noSignals')}</span>}
-          {active.map((s) => (
-            <span key={s.id} title={s.reason ?? ''} className="px-2 py-0.5 rounded-full text-[11px] bg-[var(--accent)]/15 border border-[var(--accent)]/30 text-[var(--accent-text)]">
-              {s.label} +{s.points}
-            </span>
-          ))}
-        </div>
-        <LineChart points={item.spark.map((v, i) => ({ t: String(i), v }))} ariaLabel={t('rd.sparkAria', { name: item.name })} height={64} formatValue={fmt} />
-        {item.reasons.length > 0 && (
-          <details className="text-xs">
-            <summary className="cursor-pointer inline-flex min-h-10 items-center text-[var(--accent-text)]">{t('rd.item.reasons', { n: item.reasons.length })}</summary>
-            <ul className="list-disc pl-4 text-[var(--text)] space-y-0.5">
-              {item.reasons.map((r) => (
-                <li key={r}>{r}</li>
-              ))}
-            </ul>
-          </details>
-        )}
-        <p className="text-[11px] text-[var(--text)]/50 flex items-center gap-2">
-          <span>{t('rd.session', { d: item.asOf })}</span>
-          <SourceChip sources={item.source ? [item.source] : []} />
-          {item.quality ? <span className="text-[var(--muted)]">({item.quality})</span> : null}
-        </p>
+    <>
+      <RatingBlock rating={item.rating} />
+      <ScoreBar score={item.score} />
+      <div className="flex flex-wrap gap-1.5">
+        {active.length === 0 && <span className="text-xs text-[var(--text)]/50">{t('rd.item.noSignals')}</span>}
+        {active.map((s) => (
+          <span key={s.id} title={s.reason ?? ''} className="px-2 py-0.5 rounded-full text-[11px] bg-[var(--accent)]/15 border border-[var(--accent)]/30 text-[var(--accent-text)]">
+            {s.label} +{s.points}
+          </span>
+        ))}
       </div>
-    </Card>
+      <LineChart points={item.spark.map((v, i) => ({ t: String(i), v }))} ariaLabel={t('rd.sparkAria', { name: item.name })} height={64} formatValue={fmt} />
+      {item.reasons.length > 0 && (
+        <details className="text-xs">
+          <summary className="cursor-pointer inline-flex min-h-10 items-center text-[var(--accent-text)]">{t('rd.item.reasons', { n: item.reasons.length })}</summary>
+          <ul className="list-disc pl-4 text-[var(--text)] space-y-0.5">
+            {item.reasons.map((r) => (
+              <li key={r}>{r}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+      <p className="text-[11px] text-[var(--text)]/50 flex items-center gap-2">
+        <span>{t('rd.session', { d: item.asOf })}</span>
+        <SourceChip sources={item.source ? [item.source] : []} />
+        {item.quality ? <span className="text-[var(--muted)]">({item.quality})</span> : null}
+      </p>
+    </>
   );
 }
 
@@ -336,7 +309,9 @@ export function RadarView() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {top.map((i, idx) => (
-              <ItemCard key={i.id} item={i} rank={idx + 1} muted={radar.settings.muted.includes(i.id)} onOpen={() => openInstrumentIn(i.symbol, 'instrument')} />
+              <TopPickCard key={i.id} item={i} rank={idx + 1} muted={radar.settings.muted.includes(i.id)} onOpen={() => openInstrumentIn(i.symbol, 'instrument')} onToggleMute={() => toggleMute(i.id)}>
+                <ItemDetail item={i} />
+              </TopPickCard>
             ))}
           </div>
         )}
