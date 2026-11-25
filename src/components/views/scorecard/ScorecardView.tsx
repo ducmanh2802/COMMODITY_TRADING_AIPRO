@@ -5,13 +5,12 @@ import type { Scorecard, ScorecardListResponse } from '../../../shared/types/sco
 import type { DataQualityStatus } from '../../../shared/types/market';
 import { safeReadJson } from '../../../shared/utils/http';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
-import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { EmptyState } from '../../ui/EmptyState';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { SkeletonCards } from '../../ui/Skeleton';
 import { ScorecardDrawer } from './ScorecardDrawer';
-import { DimBadge, LEVEL_TONE, dimOf } from './shared';
+import { DimBadge, DimBar, QualityDots, ScoreBar, dimOf } from './shared';
 
 type SortKey = 'name' | 'trend' | 'momentum' | 'volatility' | 'cot' | 'clarity' | 'risk' | 'quality';
 const QUALITY_RANK: Record<string, number> = { GOOD: 3, LIMITED: 2, POOR: 1, UNAVAILABLE: 0 };
@@ -98,6 +97,14 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: key === 'name' ? 'asc' : 'desc' }));
 
+  const legendDims = useMemo(() => {
+    const ids = ['trend', 'momentum', 'volatility', 'cot'] as const;
+    return ids.flatMap((id) => {
+      const dim = (data?.scorecards ?? []).map((c) => dimOf(c, id)).find((d) => d && d.status === 'OK' && d.explanation);
+      return dim ? [{ id, dim }] : [];
+    });
+  }, [data]);
+
   const open = data?.scorecards.find((c) => c.instrumentId === openId) ?? null;
 
   return (
@@ -105,7 +112,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
       <SectionHeader
         level={1}
         title={t('sc.title')}
-        subtitle={t('sc.subtitle')}
+        subtitle={t('sc2.intro')}
         actions={
           <button
             type="button"
@@ -135,6 +142,23 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
         ))}
       </div>
 
+
+      <details className="text-xs text-[var(--muted)]">
+        <summary className="cursor-pointer select-none text-[var(--accent-text)]">{t('sc2.explain')}</summary>
+        <div className="mt-2 space-y-2 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3">
+          <p>{t('sc2.subtitleFull')}</p>
+          <p className="font-medium text-[var(--text-strong)]">{t('sc2.legend.title')}</p>
+          <ul className="space-y-1">
+            {legendDims.map(({ id, dim }) => (
+              <li key={id}><b className="text-[var(--text)]">{t(`sc.dim.${id}` as TKey)}:</b> {dim.explanation[lang]}</li>
+            ))}
+          </ul>
+          <p>{t('sc2.legend.bar')}</p>
+          <p>{t('sc2.legend.quality')}</p>
+          <p>{t('sc2.legend.hint')}</p>
+        </div>
+      </details>
+
       {error && (
         <Card tone="warning" className="flex flex-wrap items-center justify-between gap-2">
           <span>{t('sc.error', { msg: error })}</span>
@@ -155,14 +179,16 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
             const name = lang === 'vi' && c.vietnameseName ? c.vietnameseName : c.productName;
             const cot = dimOf(c, 'cot');
             const none = <span className="text-xs text-[var(--faint)]">{t('sc.noValue')}</span>;
+            const clar = c.overall.trendClarity;
+            const risk = c.overall.volatilityRisk;
             const pairs: Array<[string, React.ReactNode]> = [
               [t('sc.col.trend'), <DimBadge dim={dimOf(c, 'trend')} />],
-              [t('sc.col.momentum'), <DimBadge dim={dimOf(c, 'momentum')} />],
-              [t('sc.col.volatility'), <DimBadge dim={dimOf(c, 'volatility')} />],
-              [t('sc.col.cot'), cot?.status === 'OK' ? <DimBadge dim={cot} /> : none],
-              [t('sc.col.clarity'), c.overall.trendClarity.level ? <Badge tone={LEVEL_TONE[c.overall.trendClarity.level]}>{c.overall.trendClarity.label[lang]} · {c.overall.trendClarity.score}</Badge> : none],
-              [t('sc.col.risk'), c.overall.volatilityRisk.level ? <Badge tone={LEVEL_TONE[c.overall.volatilityRisk.level]}>{c.overall.volatilityRisk.label[lang]} · {c.overall.volatilityRisk.score}</Badge> : none],
-              [t('sc.col.quality'), <Badge tone={LEVEL_TONE[c.dataQuality.level]} title={c.dataQuality.historySource ?? undefined}>{t(`sc.quality.${c.dataQuality.level}` as TKey)}</Badge>],
+              [t('sc.col.momentum'), <DimBar dim={dimOf(c, 'momentum')} />],
+              [t('sc.col.volatility'), <DimBar dim={dimOf(c, 'volatility')} />],
+              [t('sc.col.cot'), cot?.status === 'OK' ? <DimBar dim={cot} /> : none],
+              [t('sc.col.clarity'), <ScoreBar score={clar.level ? clar.score : null} level={clar.level} label={clar.label[lang]} />],
+              [t('sc.col.risk'), <ScoreBar score={risk.level ? risk.score : null} level={risk.level} label={risk.label[lang]} />],
+              [t('sc.col.quality'), <QualityDots level={c.dataQuality.level} label={t(`sc.quality.${c.dataQuality.level}` as TKey)} hint={c.dataQuality.historySource ?? undefined} />],
             ];
             return (
               <li key={c.instrumentId}>
@@ -200,11 +226,11 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
           })}
         </ul>
         <Card padded={false} className="overflow-x-auto hidden sm:block">
-          <table className="w-full text-sm min-w-[900px]">
+          <table className="w-full text-sm min-w-[760px]">
             <thead>
               <tr className="text-left text-xs text-[var(--muted)] border-b border-[var(--border)]">
                 {COLS.map((c) => (
-                  <th key={c.key} scope="col" aria-sort={sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'} className="px-3 py-2 font-medium">
+                  <th key={c.key} scope="col" title={t(c.label)} aria-sort={sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'} className="px-3 py-2 font-medium">
                     <button type="button" onClick={() => toggleSort(c.key)} title={t('sc.sortBy', { col: t(c.label) })} className="inline-flex items-center gap-1 hover:text-[var(--text-strong)]">
                       {t(c.label)}
                       {sort.key === c.key && (sort.dir === 'asc' ? <ArrowUp className="w-3 h-3" aria-hidden="true" /> : <ArrowDown className="w-3 h-3" aria-hidden="true" />)}
@@ -236,16 +262,12 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
                       <div className="text-[11px] font-mono text-[var(--faint)]">{c.exchangeSymbol} · {c.instrumentId.split(':')[0]}</div>
                     </td>
                     <td className="px-3 py-2"><DimBadge dim={dimOf(c, 'trend')} /></td>
-                    <td className="px-3 py-2"><DimBadge dim={dimOf(c, 'momentum')} /></td>
-                    <td className="px-3 py-2"><DimBadge dim={dimOf(c, 'volatility')} /></td>
-                    <td className="px-3 py-2">{cot?.status === 'OK' ? <DimBadge dim={cot} /> : <span className="text-xs text-[var(--faint)]">{t('sc.noValue')}</span>}</td>
-                    <td className="px-3 py-2">
-                      {c.overall.trendClarity.level ? <Badge tone={LEVEL_TONE[c.overall.trendClarity.level]}>{c.overall.trendClarity.label[lang]} · {c.overall.trendClarity.score}</Badge> : <span className="text-xs text-[var(--faint)]">{t('sc.noValue')}</span>}
-                    </td>
-                    <td className="px-3 py-2">
-                      {c.overall.volatilityRisk.level ? <Badge tone={LEVEL_TONE[c.overall.volatilityRisk.level]}>{c.overall.volatilityRisk.label[lang]} · {c.overall.volatilityRisk.score}</Badge> : <span className="text-xs text-[var(--faint)]">{t('sc.noValue')}</span>}
-                    </td>
-                    <td className="px-3 py-2"><Badge tone={LEVEL_TONE[c.dataQuality.level]} title={c.dataQuality.historySource ?? undefined}>{t(`sc.quality.${c.dataQuality.level}` as TKey)}</Badge></td>
+                    <td className="px-3 py-2"><DimBar dim={dimOf(c, 'momentum')} /></td>
+                    <td className="px-3 py-2"><DimBar dim={dimOf(c, 'volatility')} /></td>
+                    <td className="px-3 py-2"><DimBar dim={cot} /></td>
+                    <td className="px-3 py-2"><ScoreBar score={c.overall.trendClarity.level ? c.overall.trendClarity.score : null} level={c.overall.trendClarity.level} label={c.overall.trendClarity.label[lang]} /></td>
+                    <td className="px-3 py-2"><ScoreBar score={c.overall.volatilityRisk.level ? c.overall.volatilityRisk.score : null} level={c.overall.volatilityRisk.level} label={c.overall.volatilityRisk.label[lang]} /></td>
+                    <td className="px-3 py-2"><QualityDots level={c.dataQuality.level} label={t(`sc.quality.${c.dataQuality.level}` as TKey)} hint={c.dataQuality.historySource ?? undefined} /></td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="tabular-nums text-[var(--text-strong)]">{fmtPrice(c.price.value)}</div>
                       <DataStatusBadge status={c.price.status as DataQualityStatus} sourceQuality={c.price.sourceQuality ?? undefined} compact />
@@ -261,7 +283,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
 
       {data && (
         <p className="text-[11px] text-[var(--faint)]">
-          {t('sc.summary', { shown: rows.length, total: data.count, time: fmtDateTime(data.generatedAt) })}
+          {t('sc.summary', { shown: rows.length, total: data.count, time: fmtDateTime(data.generatedAt) })} · {t('sc2.disclaimer')}
         </p>
       )}
 

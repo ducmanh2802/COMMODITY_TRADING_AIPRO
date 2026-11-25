@@ -133,7 +133,7 @@ test('level 1 exam: locked below 80% and a failed attempt shows the fail result 
   await open(page);
   await nav(page, /Học viện/);
   const section = page.locator(`section[aria-labelledby="h-${level1.id}"]`);
-  await expect(section.getByText(/Mở khoá khi hoàn thành ít nhất 80%/)).toBeVisible();
+  await expect(section.getByText(/Thi: cần 80% số bài/)).toBeVisible();
   await expect(section.getByRole('button', { name: 'Làm bài kiểm tra' })).toHaveCount(0);
 
   await page.reload();

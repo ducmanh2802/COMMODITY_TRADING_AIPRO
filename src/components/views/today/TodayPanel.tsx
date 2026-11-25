@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, CalendarClock, ChevronRight, Minus, Sparkles, TrendingDown, TrendingUp, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, CalendarClock, ChevronDown, ChevronRight, Clock, Minus, Sparkles, TrendingDown, TrendingUp, Zap } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { useI18n } from '../../../i18n';
 import type { CycleMarketOverview } from '../../../shared/types/cycle';
@@ -17,6 +17,7 @@ import { EmptyState } from '../../ui/EmptyState';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
 import { FundamentalNewsFeed } from './FundamentalNewsFeed';
+import { InfoTip } from './InfoTip';
 import { TodayWeekCard } from '../program/TodayWeekCard';
 
 const FLAT = 0.002; // |change| below 0.2% counts as "flat"
@@ -44,6 +45,7 @@ export function TodayPanel() {
   const [score, setScore] = useState<ScorecardListResponse | null>(cached?.scorecard ?? null);
   const [cycle, setCycle] = useState<CycleMarketOverview | null>(cached?.cycle ?? null);
   const [loading, setLoading] = useState(!cached);
+  const [showAllEvents, setShowAllEvents] = useState(false);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -231,7 +233,7 @@ export function TodayPanel() {
             <Card as="section" aria-label={t('n2.td.sec.reports')}>
               <CardTitle title={t('n2.td.sec.reports')} hint={t('n2.td.reportsHint')} />
               <ol className="space-y-2">
-                {view.events.map((e) => (
+                {(showAllEvents ? view.events : view.events.slice(0, 4)).map((e) => (
                   <li key={e.id}>
                     <button
                       type="button"
@@ -254,6 +256,11 @@ export function TodayPanel() {
                   </li>
                 ))}
               </ol>
+              {view.events.length > 4 && (
+                <button type="button" onClick={() => setShowAllEvents((v) => !v)} className="mt-2 text-xs font-medium text-[var(--accent-text)] hover:underline">
+                  {showAllEvents ? t('n2.tdv.less') : t('n2.tdv.more', { n: view.events.length - 4 })}
+                </button>
+              )}
             </Card>
           )}
         </div>
@@ -282,8 +289,7 @@ export function TodayPanel() {
                       {x.dirLabel || '—'}
                     </span>
                   </div>
-                  <div className="mt-3 flex items-center justify-between text-xs text-[var(--muted)]">
-                    <span>{t('n2.td.clarity')}</span>
+                  <div className="mt-3 flex items-center justify-end text-xs text-[var(--muted)]" title={t('n2.td.clarity')}>
                     <span className="font-semibold text-[var(--text)] tabular-nums">{x.clarity}/100</span>
                   </div>
                   <div className="mt-1 h-2 w-full rounded-full bg-[var(--surface-2)]">
@@ -293,8 +299,8 @@ export function TodayPanel() {
                     />
                   </div>
                   {x.volHigh && (
-                    <span className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--warning)]">
-                      <AlertTriangle className="w-3.5 h-3.5" /> {t('n2.td.volHighShort')}
+                    <span className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--warning)]" title={t('n2.td.volHighShort')} aria-label={t('n2.td.volHighShort')}>
+                      <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
                     </span>
                   )}
                 </button>
@@ -379,7 +385,16 @@ export function TodayPanel() {
       />
       <TodayWeekCard />
       {body}
-      <SessionCountdownTimer variant="dashboard" onOpenWorldMarkets={() => setActiveModule('world')} />
+      <details className="group rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-semibold text-[var(--text-strong)] [&::-webkit-details-marker]:hidden">
+          <Clock className="h-4 w-4 text-[var(--accent-text)]" aria-hidden="true" />
+          <span className="flex-1">{t('wd.timer.title')}</span>
+          <ChevronDown className="h-4 w-4 text-[var(--muted)] transition-transform group-open:rotate-180" aria-hidden="true" />
+        </summary>
+        <div className="px-3 pb-3">
+          <SessionCountdownTimer variant="dashboard" onOpenWorldMarkets={() => setActiveModule('world')} />
+        </div>
+      </details>
       <FundamentalNewsFeed />
     </div>
   );
@@ -388,8 +403,10 @@ export function TodayPanel() {
 function CardTitle({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="mb-3">
-      <h3 className="text-base font-semibold text-[var(--text-strong)]">{title}</h3>
-      {hint && <p className="text-xs text-[var(--muted)] mt-0.5">{hint}</p>}
+      <h3 className="flex items-center gap-1 text-base font-semibold text-[var(--text-strong)]">
+        {title}
+        {hint && <InfoTip text={hint} />}
+      </h3>
     </div>
   );
 }

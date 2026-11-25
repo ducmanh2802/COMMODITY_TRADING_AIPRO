@@ -1,0 +1,38 @@
+// Section dictionary: visual calendar tab (Tin & vĩ mô > Lịch). Keys prefixed 'calv.'.
+export const vi = {
+  'calv.sessions.title': 'Phiên giao dịch (ICT)',
+  'calv.events.title': 'Lịch sự kiện',
+  'calv.intro': 'Giờ ICT (UTC+7). Chạm một sự kiện để xem chi tiết.',
+  'calv.explain': 'Xem giải thích',
+  'calv.filters': 'Bộ lọc',
+  'calv.more': 'Xem thêm {n}',
+  'calv.less': 'Thu gọn',
+  'calv.detail': 'Chi tiết',
+  'calv.impactAria': 'Mức tác động: {level}',
+  'calv.src': 'Nguồn',
+  'calv.cadence': 'Chu kỳ',
+  'calv.session': 'Phiên',
+  'calv.related': 'Hợp đồng liên quan',
+  'calv.note': 'Vì sao quan trọng',
+  'calv.verifiedShort': 'Thực tế: {value} {unit}',
+  'calv.hoursReason': 'Chi tiết phiên',
+};
+
+export const en = {
+  'calv.sessions.title': 'Trading sessions (ICT)',
+  'calv.events.title': 'Event calendar',
+  'calv.intro': 'ICT time (UTC+7). Tap an event for details.',
+  'calv.explain': 'Show explanation',
+  'calv.filters': 'Filters',
+  'calv.more': 'Show {n} more',
+  'calv.less': 'Collapse',
+  'calv.detail': 'Details',
+  'calv.impactAria': 'Impact level: {level}',
+  'calv.src': 'Source',
+  'calv.cadence': 'Cadence',
+  'calv.session': 'Session',
+  'calv.related': 'Related contracts',
+  'calv.note': 'Why it matters',
+  'calv.verifiedShort': 'Actual: {value} {unit}',
+  'calv.hoursReason': 'Session details',
+};

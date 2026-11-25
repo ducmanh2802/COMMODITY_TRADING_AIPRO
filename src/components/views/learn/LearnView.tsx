@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { AlertTriangle, Award, Bookmark, BookOpen, Calculator, CheckCircle2, ChevronDown, ChevronRight, FileText, GraduationCap, Lock, Search, X } from 'lucide-react';
+import { AlertTriangle, Award, Bookmark, BookOpen, Calculator, CheckCircle2, ChevronDown, ChevronRight, FileText, GraduationCap, Info, ListChecks, Lock, Search, ShieldAlert, X } from 'lucide-react';
 import { useI18n, type TKey } from '../../../i18n';
 import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
 import { Card } from '../../ui/Card';
@@ -223,6 +223,25 @@ function shortLevelTitle(title: string): string {
   return title.replace(/^Cấp\s*\d+\s*[—–:·.-]\s*/i, '');
 }
 
+/** First three words of a level name for compact tiles (full name stays in the tooltip / aria-label). */
+function clipWords(text: string, n = 3): string {
+  const w = text.split(/\s+/);
+  return w.length <= n ? text : `${w.slice(0, n).join(' ')}…`;
+}
+
+/** Long explanatory text kept one click away. */
+function Explain({ children, label, className = '' }: { children: ReactNode; label: string; className?: string }) {
+  return (
+    <details className={`text-xs group ${className}`}>
+      <summary className="cursor-pointer select-none inline-flex items-center gap-1 text-[var(--accent-text)] hover:underline">
+        <Info className="w-3.5 h-3.5" aria-hidden="true" />
+        {label}
+      </summary>
+      <div className="mt-1.5 space-y-1.5 text-[var(--text)] leading-relaxed max-w-2xl">{children}</div>
+    </details>
+  );
+}
+
 /** Small SVG progress ring; the centre carries a number or icon. Colour never stands alone (count is in the label). */
 function ProgressRing({ pct, size = 40, stroke = 3.5, tone = 'var(--accent)', children }: { pct: number; size?: number; stroke?: number; tone?: string; children?: ReactNode }) {
   const r = (size - stroke) / 2;
@@ -248,13 +267,18 @@ const EXAM_BADGE: Record<ExamState, { Icon: typeof Lock; cls: string; key: TKey 
 };
 
 /** Exam state as a lock / award / check pill (icon + text, never colour alone). */
-function ExamBadge({ state }: { state: ExamState }) {
+function ExamBadge({ state, iconOnly = false }: { state: ExamState; iconOnly?: boolean }) {
   const { t } = useI18n();
   const { Icon, cls, key } = EXAM_BADGE[state];
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ${cls}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ${cls}`}
+      title={iconOnly ? t(key) : undefined}
+      role={iconOnly ? 'img' : undefined}
+      aria-label={iconOnly ? t(key) : undefined}
+    >
       <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-      {t(key)}
+      {!iconOnly && t(key)}
     </span>
   );
 }
@@ -330,7 +354,9 @@ function LevelExamRow({ level, doneCount, exams, onStart }: { level: Level; done
       {state === 'locked' ? (
         <>
           <Lock className="w-4 h-4 shrink-0 text-[var(--muted)]" aria-hidden="true" />
-          <p className="text-xs text-[var(--muted)] flex-1 min-w-0">{t('exam.card.locked', { d: doneCount, t: level.lessons.length })}</p>
+          <p className="text-xs text-[var(--muted)] flex-1 min-w-0" title={t('exam.card.locked', { d: doneCount, t: level.lessons.length })}>
+            {t('acl.examNeed', { p: EXAM_PASS_PCT, d: doneCount, t: level.lessons.length })}
+          </p>
         </>
       ) : (
         <>
@@ -416,17 +442,19 @@ function MoneyWayCard({ way }: { way: MoneyWay }) {
         <h3 className="text-sm font-semibold text-[var(--text-strong)] min-w-0">{way.name}</h3>
         <RiskMeter level={way.riskLevel} />
       </div>
-      <p className="text-xs text-[var(--text)]">{way.description}</p>
-      <dl className="text-[11px] leading-relaxed space-y-0.5">
-        <div>
-          <dt className="inline font-semibold text-[var(--muted)]">{t('ac.risk.fit')}: </dt>
-          <dd className="inline text-[var(--text)]">{way.fit}</dd>
-        </div>
-        <div>
-          <dt className="inline font-semibold text-[var(--muted)]">{t('ac.risk.caution')}: </dt>
-          <dd className="inline text-[var(--text)]">{way.risk}</dd>
-        </div>
-      </dl>
+      <Explain label={t('acl.explain')}>
+        <p>{way.description}</p>
+        <dl className="text-[11px] leading-relaxed space-y-0.5">
+          <div>
+            <dt className="inline font-semibold text-[var(--muted)]">{t('ac.risk.fit')}: </dt>
+            <dd className="inline text-[var(--text)]">{way.fit}</dd>
+          </div>
+          <div>
+            <dt className="inline font-semibold text-[var(--muted)]">{t('ac.risk.caution')}: </dt>
+            <dd className="inline text-[var(--text)]">{way.risk}</dd>
+          </div>
+        </dl>
+      </Explain>
     </Card>
   );
 }
@@ -450,7 +478,10 @@ function ExamsAndRiskSection({
   return (
     <div className="space-y-6" data-testid="academy-exams-risk">
       <section className="space-y-3">
-        <SectionHeader title={t('ac.examsHub.title')} subtitle={t('ac.examsHub.subtitle')} />
+        <SectionHeader title={t('ac.examsHub.title')} />
+        <Explain label={t('acl.explain')}>
+          <p>{t('ac.examsHub.subtitle')}</p>
+        </Explain>
         <ExamCard
           target={{ kind: 'final' }}
           doneLessons={doneAll}
@@ -482,7 +513,7 @@ function ExamsAndRiskSection({
                       <Icon className="w-3.5 h-3.5" aria-hidden="true" />
                     </span>
                   </span>
-                  <span className="block text-[11px] text-[var(--muted)] truncate">{shortLevelTitle(lvl.title)}</span>
+                  <span className="block text-[11px] text-[var(--muted)] truncate" title={shortLevelTitle(lvl.title)}>{clipWords(shortLevelTitle(lvl.title))}</span>
                   <span className="block text-[10px] font-mono tabular-nums text-[var(--muted)]">{t('ac.levels.count', { d: done, t: lvl.lessons.length })}</span>
                 </button>
               </li>
@@ -517,20 +548,27 @@ function ExamsAndRiskSection({
             <MoneyWayCard key={w.name} way={w} />
           ))}
         </div>
-        <p className="text-[11px] text-[var(--muted)]">{t('ac.risk.meterNote')}</p>
+        <Explain label={t('acl.explain')}>
+          <p className="text-[11px] text-[var(--muted)]">{t('ac.risk.meterNote')}</p>
+        </Explain>
         <Card tone="warning" className="!p-3">
-          <h2 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-            <AlertTriangle className="w-4 h-4" aria-hidden="true" />
-            {t('ac.risk.warnTitle')}
-          </h2>
-          <ul className="list-disc pl-4 space-y-1.5 text-xs">
-            {otherWarnings.map((w) => (
-              <li key={w.text}>
-                {w.text}
-                {w.sources && <SourceLinks sources={w.sources} />}
-              </li>
-            ))}
-          </ul>
+          <details>
+            <summary className="cursor-pointer select-none flex items-center gap-1.5 text-sm font-semibold">
+              <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <h2 className="inline">{t('ac.risk.warnTitle')}</h2>
+              <span className="ml-auto rounded-full border border-[var(--warning)]/40 px-2 py-0.5 text-[11px] font-medium whitespace-nowrap">
+                {t('acl.warnCount', { n: otherWarnings.length })}
+              </span>
+            </summary>
+            <ul className="list-disc pl-4 space-y-1.5 text-xs mt-2">
+              {otherWarnings.map((w) => (
+                <li key={w.text}>
+                  {w.text}
+                  {w.sources && <SourceLinks sources={w.sources} />}
+                </li>
+              ))}
+            </ul>
+          </details>
         </Card>
       </section>
     </div>
@@ -583,6 +621,7 @@ function LessonCard({
       <button
         type="button"
         data-testid={`lesson-card-${lesson.id}`}
+        aria-description={trimmedQuery ? undefined : lesson.objective}
         onClick={onOpen}
         className="w-full p-3 pr-11 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
       >
@@ -597,9 +636,18 @@ function LessonCard({
             </span>
           )}
         </span>
-        <span title={trimmedQuery ? undefined : lesson.objective} className={`text-xs text-[var(--muted)] mt-1 ${trimmedQuery ? 'block' : 'line-clamp-1'}`}>
-          {trimmedQuery ? renderHighlightedSegments(highlightTextSegments(lesson.objective, trimmedQuery)) : lesson.objective}
-        </span>
+        {trimmedQuery ? (
+          <span className="block text-xs text-[var(--muted)] mt-1">
+            {renderHighlightedSegments(highlightTextSegments(lesson.objective, trimmedQuery))}
+          </span>
+        ) : (
+          <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-[var(--muted)]" title={lesson.objective}>
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] px-1.5 py-0.5 tabular-nums" aria-label={t('acl.quizCount', { n: lesson.quiz.length })}>
+              <ListChecks className="w-3 h-3" aria-hidden="true" />
+              {lesson.quiz.length}
+            </span>
+          </span>
+        )}
         {noteMatch?.hasMatch && (
           <span
             data-testid="lesson-card-note-match"
@@ -763,8 +811,11 @@ export default function LearnView() {
       <SectionHeader
         level={1}
         title={t('ac.title')}
-        subtitle={t('ac.subtitle')}
       />
+      <Explain label={t('acl.explain')} className="-mt-3">
+        <p>{t('ac.subtitle')}</p>
+        <p>{t('ac.disclaimer')}</p>
+      </Explain>
 
       {/* KPI Strip */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
@@ -1045,13 +1096,18 @@ export default function LearnView() {
 
           {!query.trim() && (
             <>
-              <AiLessonRecommendations onOpenLesson={(id) => go({ kind: 'lesson', id })} />
               <ReviewCard />
-              <LearnGoalCard
-                lessons={progress.lessons}
-                onOpen={(id) => go({ kind: 'lesson', id })}
-                onGoalChange={setGoal}
-              />
+              <details className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2" data-testid="academy-suggest">
+                <summary className="cursor-pointer select-none text-sm font-medium text-[var(--text-strong)]">{t('acl.suggest')}</summary>
+                <div className="mt-3 space-y-4">
+                  <AiLessonRecommendations onOpenLesson={(id) => go({ kind: 'lesson', id })} />
+                  <LearnGoalCard
+                    lessons={progress.lessons}
+                    onOpen={(id) => go({ kind: 'lesson', id })}
+                    onGoalChange={setGoal}
+                  />
+                </div>
+              </details>
               <ProgramCard onOpenLesson={(id) => go({ kind: 'lesson', id })} onOpenExam={(target) => go({ kind: 'exam', target })} />
 
               {/* Quick Resume Banner */}
@@ -1074,8 +1130,9 @@ export default function LearnView() {
                 )}
               </Card>
 
-              <Card tone="warning">
-                <p className="text-xs">{t('ac.disclaimer')}</p>
+              <Card tone="warning" className="!p-2.5 flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <p className="text-xs">{t('acl.disclaimerShort')}</p>
               </Card>
             </>
           )}
@@ -1144,24 +1201,27 @@ export default function LearnView() {
                       </span>
                     </button>
                     </h2>
-                    <ExamBadge state={examState} />
+                    <ExamBadge state={examState} iconOnly />
                   </div>
 
                   {isOpen && (
                     <div id={bodyId} className="space-y-2.5">
-                      <div className="flex items-start gap-1.5 text-xs text-[var(--muted)]">
-                        <p id={goalId} className={`min-w-0 flex-1 max-w-2xl ${goalExpanded ? '' : 'line-clamp-1'}`}>
-                          {level.goal}
-                        </p>
+                      <div className="text-xs text-[var(--muted)]">
                         <button
                           type="button"
                           aria-expanded={goalExpanded}
                           aria-controls={goalId}
                           onClick={() => toggleGoal(level.id)}
-                          className="shrink-0 text-[var(--accent-text)] hover:underline whitespace-nowrap"
+                          className="inline-flex items-center gap-1 text-[var(--accent-text)] hover:underline whitespace-nowrap"
                         >
-                          {goalExpanded ? t('ac.levels.less') : t('ac.levels.more')}
+                          <Info className="w-3.5 h-3.5" aria-hidden="true" />
+                          {t('acl.levelGoal')}
                         </button>
+                        {goalExpanded && (
+                          <p id={goalId} className="mt-1 max-w-2xl">
+                            {level.goal}
+                          </p>
+                        )}
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2">
                         {lessons.map((l) => (

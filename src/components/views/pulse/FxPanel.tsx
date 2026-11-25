@@ -7,6 +7,7 @@ import { Sparkline } from '../../ui/viz/Sparkline';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { Skeleton } from '../../ui/Skeleton';
 import { Badge } from '../../ui/Badge';
+import { Delta, Fold, RangeBar } from './tileBits';
 
 export interface FxRate {
   pair: string;
@@ -41,30 +42,34 @@ function FxCard({ rate, lang }: { rate: FxRate; lang: 'vi' | 'en' }) {
   const chUnit = '%';
 
   return (
-    <Card className="space-y-2">
+    <Card className="space-y-1.5">
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs text-[var(--muted)]">{label}</p>
         <Badge tone="positive" title={rate.source}>{rate.quality}</Badge>
       </div>
-      <p className="text-2xl font-semibold tabular-nums text-[var(--text-strong)]">
-        {rate.value === null ? <span className="text-sm text-[var(--faint)]">{t('pulse.unavailable')}</span> : `${fmtFixed(rate.value, 4)} ${unit}`}
-      </p>
-      <Sparkline points={rate.spark.map((q) => ({ label: fmtDate(q.date), value: q.value }))} format={(v) => fmtFixed(v, 4)} />
-      <div className="flex gap-4 text-xs tabular-nums">
-        <span>
-          <span className="text-[var(--faint)]">{t('fx.change1w')} </span>
-          <span className={tone(rate.change1w)}>{signed(rate.change1w, 2, chUnit)}</span>
-        </span>
-        <span>
-          <span className="text-[var(--faint)]">{t('fx.change1m')} </span>
-          <span className={tone(rate.change1m)}>{signed(rate.change1m, 2, chUnit)}</span>
-        </span>
+      <div className="flex items-end justify-between gap-2">
+        <p className="text-xl font-semibold tabular-nums text-[var(--text-strong)]">
+          {rate.value === null ? <span className="text-sm text-[var(--faint)]">{t('pulse.unavailable')}</span> : `${fmtFixed(rate.value, 4)}`}
+          {rate.value !== null && <span className="ml-1 text-xs font-normal text-[var(--muted)]">{unit}</span>}
+        </p>
+        <div className="w-14 shrink-0">
+          <Sparkline className="h-6" points={rate.spark.map((q) => ({ label: fmtDate(q.date), value: q.value }))} format={(v) => fmtFixed(v, 4)} />
+        </div>
       </div>
-      <p className="text-[11px] text-[var(--faint)]">{note}</p>
-      <p className="text-[11px] text-[var(--faint)]">
-        {rate.asOf ? `${t('pulse.asOf', { v: fmtDate(rate.asOf) })} · ` : ''}
-        <a href={rate.sourceUrl} target="_blank" rel="noreferrer" className="underline">{rate.source} (OFFICIAL)</a>
-      </p>
+      <RangeBar value={rate.value} values={rate.spark.map((q) => q.value)} ariaLabel={t('mv.range')} />
+      <div className="text-xs">
+        <Delta v={rate.change1w} text={signed(rate.change1w, 2, chUnit)} label={t('fx.change1w')} />
+      </div>
+      <Fold summary={t('pulse.mc.details')}>
+        <p className="tabular-nums">
+          {t('fx.change1m')} <span className={tone(rate.change1m)}>{signed(rate.change1m, 2, chUnit)}</span>
+        </p>
+        <p>{note}</p>
+        <p>
+          {rate.asOf ? `${t('pulse.asOf', { v: fmtDate(rate.asOf) })} · ` : ''}
+          <a href={rate.sourceUrl} target="_blank" rel="noreferrer" className="underline">{rate.source} (OFFICIAL)</a>
+        </p>
+      </Fold>
     </Card>
   );
 }
@@ -100,7 +105,6 @@ export function FxPanel() {
   const header = (
     <SectionHeader
       title={t('fx.title')}
-      subtitle={t('fx.subtitle')}
       actions={
         <button
           type="button"
@@ -135,7 +139,10 @@ export function FxPanel() {
   return (
     <div className="space-y-5 max-w-6xl">
       {header}
-      <p className="text-xs text-[var(--faint)]">{t('fx.generatedAt', { v: fmtDate(data.retrievedAt) })}</p>
+      <Fold summary={t('mv.explain')}>
+        <p>{t('fx.subtitle')}</p>
+        <p>{t('fx.generatedAt', { v: fmtDate(data.retrievedAt) })}</p>
+      </Fold>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {(data.rates ?? []).map((r) => <FxCard key={r.pair} rate={r} lang={l} />)}

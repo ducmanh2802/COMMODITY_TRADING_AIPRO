@@ -12,6 +12,7 @@ import { Heatmap } from '../../ui/viz/Heatmap';
 import { SourceChip } from '../../common/SourceChip';
 import { FxPanel } from './FxPanel';
 import { providerOf } from './provider';
+import { Delta, Fold, RangeBar } from './tileBits';
 
 const signed = (v: number | null, d = 2, suffix = ''): string => (v === null ? '-' : `${v > 0 ? '+' : ''}${fmtFixed(v, d)}${suffix}`);
 const tone = (v: number | null): string =>
@@ -22,30 +23,33 @@ function IndicatorCard({ ind, lang }: { ind: PulseIndicator; lang: 'vi' | 'en' }
   const unit = ind.unit === 'index' ? '' : ind.unit === 'pp' ? ' pp' : '%';
   const chUnit = ind.changeKind === 'pct' ? '%' : ' pp';
   return (
-    <Card className="space-y-2">
+    <Card className="space-y-1.5">
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs text-[var(--muted)]">{ind.label[lang]}</p>
         <Badge tone="positive" title={ind.source}>{ind.quality}</Badge>
       </div>
-      <p className="text-2xl font-semibold tabular-nums text-[var(--text-strong)]">
-        {ind.value === null ? <span className="text-sm text-[var(--faint)]">{t('pulse.unavailable')}</span> : `${fmtFixed(ind.value, 2)}${unit}`}
-      </p>
-      <Sparkline points={ind.spark.map((q) => ({ label: (q as { date?: string }).date, value: q.value }))} format={(v) => fmtFixed(v, 2)} />
-      <div className="flex gap-4 text-xs tabular-nums">
-        <span>
-          <span className="text-[var(--faint)]">{t('pulse.change1m')} </span>
-          <span className={tone(ind.change1m)}>{signed(ind.change1m, 2, chUnit)}</span>
-        </span>
-        <span>
-          <span className="text-[var(--faint)]">{t('pulse.change3m')} </span>
-          <span className={tone(ind.change3m)}>{signed(ind.change3m, 2, chUnit)}</span>
-        </span>
+      <div className="flex items-end justify-between gap-2">
+        <p className="text-2xl font-semibold tabular-nums text-[var(--text-strong)]">
+          {ind.value === null ? <span className="text-sm text-[var(--faint)]">{t('pulse.unavailable')}</span> : `${fmtFixed(ind.value, 2)}${unit}`}
+        </p>
+        <div className="w-16 shrink-0">
+          <Sparkline className="h-6" points={ind.spark.map((q) => ({ label: (q as { date?: string }).date, value: q.value }))} format={(v) => fmtFixed(v, 2)} />
+        </div>
       </div>
-      {ind.formula && <p className="text-[11px] text-[var(--faint)]">{t('pulse.formula', { v: ind.formula[lang] })}</p>}
-      <p className="text-[11px] text-[var(--faint)]">
-        {ind.asOf ? `${t('pulse.asOf', { v: ind.asOf })} · ` : ''}
-        <a href={ind.sourceUrl} target="_blank" rel="noreferrer" className="underline">{ind.source}</a>
-      </p>
+      <RangeBar value={ind.value} values={ind.spark.map((q) => q.value)} ariaLabel={t('mv.range')} />
+      <div className="text-xs">
+        <Delta v={ind.change1m} text={signed(ind.change1m, 2, chUnit)} label={t('pulse.change1m')} />
+      </div>
+      <Fold summary={t('pulse.mc.details')}>
+        <p className="tabular-nums">
+          {t('pulse.change3m')} <span className={tone(ind.change3m)}>{signed(ind.change3m, 2, chUnit)}</span>
+        </p>
+        {ind.formula && <p>{t('pulse.formula', { v: ind.formula[lang] })}</p>}
+        <p>
+          {ind.asOf ? `${t('pulse.asOf', { v: ind.asOf })} · ` : ''}
+          <a href={ind.sourceUrl} target="_blank" rel="noreferrer" className="underline">{ind.source}</a>
+        </p>
+      </Fold>
     </Card>
   );
 }
@@ -74,7 +78,7 @@ function VolGauge({ g, lang }: { g: PulseGroupStats; lang: 'vi' | 'en' }) {
   const { t } = useI18n();
   const p = g.volPercentile;
   return (
-    <div className="space-y-1">
+    <div className="space-y-1" title={g.volLevel ? t(`pulse.vol.${g.volLevel}` as 'pulse.vol.HIGH') : t('pulse.vol.none')}>
       <div className="flex justify-between text-xs">
         <span className="text-[var(--text)]">{g.label[lang]}</span>
         <span className="text-[var(--muted)] tabular-nums">{p === null ? '-' : t('pulse.percentile', { v: fmtFixed(p, 0) })}</span>
@@ -82,7 +86,6 @@ function VolGauge({ g, lang }: { g: PulseGroupStats; lang: 'vi' | 'en' }) {
       <div className="relative h-2 rounded bg-[var(--surface-2)]">
         {p !== null && <div className="absolute top-[-2px] h-3 w-1 rounded bg-[var(--accent)]" style={{ left: `calc(${p}% - 2px)` }} />}
       </div>
-      <p className="text-[11px] text-[var(--faint)]">{g.volLevel ? t(`pulse.vol.${g.volLevel}` as 'pulse.vol.HIGH') : t('pulse.vol.none')}</p>
     </div>
   );
 }
@@ -193,7 +196,6 @@ export function MarketPulsePanel() {
   const header = (
     <SectionHeader
       title={t('pulse.title')}
-      subtitle={t('pulse.subtitle')}
       actions={
         <button
           type="button"
@@ -234,10 +236,18 @@ export function MarketPulsePanel() {
   return (
     <div className="space-y-5 max-w-6xl">
       {header}
-      <p className="text-xs text-[var(--faint)]">{t('pulse.generatedAt', { v: fmtDateTime(data.generatedAt) })}</p>
+      <Fold summary={t('mv.explain')}>
+        <p>{t('pulse.subtitle')}</p>
+        <p>{t('pulse.generatedAt', { v: fmtDateTime(data.generatedAt) })}</p>
+      </Fold>
 
       <Card tone="accent" className="space-y-2">
-        <h3 className="text-sm font-semibold text-[var(--text-strong)]">{t('pulse.summaryTitle')}</h3>
+        <details>
+          <summary className="cursor-pointer flex items-center gap-2 text-sm font-semibold text-[var(--text-strong)]">
+            <ChevronDown className="w-4 h-4" aria-hidden="true" />
+            {t('pulse.summaryTitle')}
+          </summary>
+          <div className="mt-2">
         {data.summary.length === 0 ? (
           <p className="text-sm text-[var(--muted)]">{t('pulse.summaryEmpty')}</p>
         ) : (
@@ -255,6 +265,8 @@ export function MarketPulsePanel() {
               ))}
           </ul>
         )}
+          </div>
+        </details>
       </Card>
 
       <section className="space-y-3">
@@ -262,10 +274,13 @@ export function MarketPulsePanel() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {rates.map((i) => <IndicatorCard key={i.id} ind={i} lang={l} />)}
         </div>
-        <Card className="text-sm">
-          <span className="font-medium text-[var(--text)]">{t('pulse.fomcTitle')}: </span>
-          <span className="text-[var(--muted)]">{text(data.fomc.note, l)} </span>
-          <a href={data.fomc.calendarUrl} target="_blank" rel="noreferrer" className="underline text-[var(--accent-text)]">{t('pulse.fomcLink')}</a>
+        <Card className="text-sm py-1">
+          <Fold summary={t('pulse.fomcTitle')}>
+            <p>
+              <span className="text-[var(--muted)]">{text(data.fomc.note, l)} </span>
+              <a href={data.fomc.calendarUrl} target="_blank" rel="noreferrer" className="underline text-[var(--accent-text)]">{t('pulse.fomcLink')}</a>
+            </p>
+          </Fold>
         </Card>
       </section>
 
@@ -279,7 +294,7 @@ export function MarketPulsePanel() {
 
       <section className="space-y-3">
         <h3 className="text-sm font-semibold text-[var(--text-strong)]">{t('pulse.commTitle')}</h3>
-        {c.note && <Card tone="warning" className="text-sm">{text(c.note, l)}</Card>}
+        {c.note && <Card tone="warning" className="py-1"><Fold summary={t('mv.sourcesNote')}><p>{text(c.note, l)}</p></Fold></Card>}
         <div className="grid gap-3 lg:grid-cols-2">
           <Card className="space-y-3">
             <div className="flex items-center justify-between">
@@ -288,14 +303,17 @@ export function MarketPulsePanel() {
             </div>
             <BreadthBar up={c.breadth.up1d} down={c.breadth.down1d} flat={c.breadth.flat1d} label={t('pulse.breadthToday')} />
             <BreadthBar up={c.breadth.up5d} down={c.breadth.down5d} flat={c.breadth.flat5d} label={t('pulse.breadth5d')} />
-            <SourcesRow n={c.breadth.instrumentsWithData} asOf={c.breadth.asOf} sources={c.historySources} />
+            <Fold summary={t('mv.sourcesNote')}>
+              <SourcesRow n={c.breadth.instrumentsWithData} asOf={c.breadth.asOf} sources={c.historySources} />
+            </Fold>
             <div className="grid grid-cols-2 gap-3 pt-1">
               <MoverList title={t('pulse.moversUp')} items={c.moversUp} />
               <MoverList title={t('pulse.moversDown')} items={c.moversDown} />
             </div>
           </Card>
           <Card className="space-y-3">
-            <h4 className="text-sm font-medium text-[var(--text)]">{t('pulse.groupTitle')}</h4>
+            
+            <Fold summary={t('pulse.groupTitle')}>
             <div className="overflow-x-auto" tabIndex={0}>
               <table className="w-full text-xs tabular-nums">
                 <thead className="text-[var(--faint)]">
@@ -320,6 +338,7 @@ export function MarketPulsePanel() {
                 </tbody>
               </table>
             </div>
+            </Fold>
             <h4 className="text-sm font-medium text-[var(--text)] pt-2">{t('sm.heat.title')}</h4>
             <Heatmap
               ariaLabel={t('sm.heat.aria')}
@@ -327,18 +346,21 @@ export function MarketPulsePanel() {
               formatPct={(p) => signed(p, 1, '%')}
               tiles={c.groups.map((g) => ({ id: g.group, label: g.label[l], pct: g.avg1d, sub: `(${g.count})` }))}
             />
-            <p className="text-[11px] text-[var(--faint)]">{t('sm.heat.note')}</p>
+            <Fold summary={t('mv.explain')}><p>{t('sm.heat.note')}</p></Fold>
             <h4 className="text-sm font-medium text-[var(--text)] pt-2">{t('pulse.volTitle')}</h4>
             <div className="space-y-3">
               {c.groups.map((g) => (
-                <div key={g.group}>
-                  <VolGauge g={g} lang={l} />
-                  {g.corrUsd60d !== null && (
-                    <p className="text-[11px] text-[var(--faint)] mt-0.5">{t('pulse.corr', { v: fmtFixed(g.corrUsd60d, 2), n: g.corrObservations })}</p>
-                  )}
-                </div>
+                <VolGauge key={g.group} g={g} lang={l} />
               ))}
             </div>
+            <Fold summary={t('mv.volDetails')}>
+              {c.groups.map((g) => (
+                <p key={g.group}>
+                  <span className="text-[var(--text)]">{g.label[l]}</span>: {g.volLevel ? t(`pulse.vol.${g.volLevel}` as 'pulse.vol.HIGH') : t('pulse.vol.none')}
+                  {g.corrUsd60d !== null && <> · {t('pulse.corr', { v: fmtFixed(g.corrUsd60d, 2), n: g.corrObservations })}</>}
+                </p>
+              ))}
+            </Fold>
           </Card>
         </div>
       </section>
@@ -358,10 +380,9 @@ export function MarketPulsePanel() {
           </ul>
         </details>
       )}
-      <p className="text-[11px] leading-snug text-[var(--muted)]">
-        <span className="font-medium">{t('pulse.disclaimerLabel')}: </span>
-        {text(data.disclaimer, l)}
-      </p>
+      <Fold summary={t('pulse.disclaimerLabel')}>
+        <p className="leading-snug">{text(data.disclaimer, l)}</p>
+      </Fold>
     </div>
   );
 }

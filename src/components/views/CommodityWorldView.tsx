@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowUpRight, RefreshCw, Search } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, RefreshCw, Search } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
 import {
   COMMODITY_GROUP_LABELS_VI,
@@ -82,24 +82,28 @@ export function CommodityWorldView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-[var(--text-strong)] tracking-tight text-balance">
-            Thế giới Hàng hóa Sống (Living Commodity World)
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-xl font-semibold text-[var(--text-strong)] tracking-tight text-balance">
+            Giá hàng hóa
           </h2>
-          <p className="text-sm text-[var(--muted)] mt-1">
-            Danh mục {overview?.commodities.length ?? 21} hàng hóa phái sinh MXV &amp; quốc tế · tự động xếp các hàng hóa tiềm năng (điểm cơ hội &amp; chu kỳ cao) lên đầu danh sách.
-          </p>
+          <details className="mt-1 text-xs text-[var(--muted)]">
+            <summary className="cursor-pointer select-none text-[var(--accent)]">Xem giải thích</summary>
+            <p className="mt-1 max-w-prose">
+              Thế giới Hàng hóa Sống (Living Commodity World): danh mục {overview?.commodities.length ?? 21} hàng hóa phái sinh MXV &amp; quốc tế · tự động xếp các hàng hóa tiềm năng (điểm cơ hội &amp; chu kỳ cao) lên đầu danh sách.
+            </p>
+          </details>
         </div>
 
         <button
           type="button"
           onClick={() => void fetchWorld()}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 px-3 py-2 bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--border)] rounded-md text-xs font-medium text-[var(--text)] whitespace-nowrap self-start lg:self-auto"
+          title="Làm mới Chu kỳ"
+          aria-label="Làm mới Chu kỳ"
+          className="inline-flex items-center px-3 py-2 bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--border)] rounded-md text-xs font-medium text-[var(--text)] whitespace-nowrap shrink-0"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
-          <span>Làm mới Chu kỳ</span>
         </button>
       </div>
 
@@ -151,7 +155,7 @@ export function CommodityWorldView() {
                 : 'bg-[var(--bg)] border-[var(--border)] text-[var(--muted)] hover:text-[var(--text-strong)]'
             }`}
           >
-            {mxvOnly ? 'Đang lọc: Liên thông MXV' : 'Chỉ hiện hàng hóa MXV'}
+            {mxvOnly ? 'Đang lọc MXV' : 'Chỉ MXV'}
           </button>
         </div>
       </section>
@@ -171,7 +175,7 @@ export function CommodityWorldView() {
 
       {/* Hero Cards Grid */}
       {loading && !overview ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {Array.from({ length: 6 }).map((_, idx) => (
             <div
               key={idx}
@@ -184,7 +188,7 @@ export function CommodityWorldView() {
           Không tìm thấy hàng hóa nào khớp bộ lọc hiện tại.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {filteredItems.map((item, idx) => (
             <CommodityWorldCard
               key={item.instrument.id}
@@ -212,14 +216,17 @@ function CommodityWorldCard({
   const visual = getCommodityVisual(instrument.id);
   const nameVi = visual?.nameVi ?? instrument.commodityProfile?.vietnameseName ?? instrument.productName;
   const mxvCode = instrument.mxvMapping?.mxvSymbol;
+  const m1 = returns.m1;
+  // Change bar: |1M| capped at 30% fills half the track; blue = up, apricot = down.
+  const barPct = m1 === null ? 0 : Math.min(Math.abs(m1) / 30, 1) * 50;
+  const fmt = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
 
   return (
     <div
       onClick={onSelect}
-      className="group relative text-left cursor-pointer shadow-[var(--shadow-card)] hover:-translate-y-0.5 bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)]/70 rounded-[var(--radius-md)] overflow-hidden transition-all duration-200 focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] flex flex-col"
+      className="group relative text-left cursor-pointer shadow-[var(--shadow-card)] hover:border-[var(--accent)]/70 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] overflow-hidden transition-colors flex flex-col"
     >
-      {/* Photographic 16:9 Canvas with measured contrast scrim */}
-      <div className="relative aspect-video w-full overflow-hidden">
+      <div className="relative h-20 w-full overflow-hidden">
         <CommodityHeroImage
           symbol={instrument.id}
           name={nameVi}
@@ -228,97 +235,83 @@ function CommodityWorldCard({
           className="w-full h-full"
           imgClassName="transition-transform duration-300 group-hover:scale-[1.04]"
         />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/60 to-[var(--bg)]/50"
-        />
-
-        {/* Top overlay row: exchange/MXV + status */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-          <span className="text-[11px] font-mono text-[var(--text-strong)]/95 bg-[var(--bg)]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15 truncate">
-            {instrument.exchange}:{instrument.exchangeSymbol}
-            {mxvCode ? ` · MXV ${mxvCode}` : ''}
-          </span>
-          <span className="inline-flex items-center shrink-0 bg-[var(--bg)]/85 backdrop-blur-sm px-2 py-0.5 rounded border border-white/15 shadow-sm">
+        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/60 to-[var(--bg)]/40" />
+        <div className="absolute top-2 right-2">
+          <span className="inline-flex items-center bg-[var(--bg)]/85 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/15">
             <DataStatusBadge status={quote.status} compact />
           </span>
         </div>
-
-        {/* Bottom overlay row inside image: Title & Live Price */}
-        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] text-[var(--text)] truncate">
-              {visual?.groupVi ?? instrument.category} · {visual?.originTag ?? instrument.exchange}
-            </p>
-            <h2 className="text-lg font-semibold text-[var(--text-strong)] tracking-tight truncate">
-              {nameVi} <span className="text-xs font-normal text-[var(--muted)]">({instrument.productName})</span>
-            </h2>
-          </div>
-
-          <div className="text-right shrink-0">
-            <p
-              title={quote.price === null ? 'DATA_UNAVAILABLE' : undefined}
-              className={`font-semibold tabular-nums ${
-                quote.price !== null ? 'text-sm sm:text-base text-[var(--text-strong)]' : 'text-xs sm:text-sm text-[var(--text)]/85'
-              }`}
-            >
-              {quote.price !== null ? quote.price.toFixed(2) : 'Chưa có giá'}
-            </p>
-            <p className="text-[11px] font-mono text-[var(--muted)]">
-              {quote.price !== null ? quote.unit : 'Chưa có feed'}
-            </p>
-          </div>
+        <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between gap-3">
+          <h3 className="text-base font-semibold text-[var(--text-strong)] tracking-tight truncate min-w-0">{nameVi}</h3>
+          <p
+            title={quote.price === null ? 'DATA_UNAVAILABLE' : undefined}
+            className={`shrink-0 font-semibold tabular-nums text-right ${quote.price !== null ? 'text-base text-[var(--text-strong)]' : 'text-xs text-[var(--text)]/85'}`}
+          >
+            {quote.price !== null ? quote.price.toFixed(2) : 'Chưa có giá'}
+          </p>
         </div>
       </div>
 
-      {/* Crisp Cycle & Bottom Detection Telemetry Footer */}
-      <div className="p-4 space-y-3 flex-1 flex flex-col justify-between bg-[var(--surface)]">
+      <div className="px-3 py-2.5 space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <span
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
+          <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
             <CyclePhaseBadge phase={cyclePhase} compact />
           </span>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onSelect(); }}
-            aria-label={`Hồ sơ chu kỳ: ${nameVi}`}
-            className="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent)] group-hover:translate-x-0.5 transition-transform whitespace-nowrap shrink-0 rounded focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+          <span
+            title={`Bottom Score: ${bottomScore !== null ? `${bottomScore}/100` : 'Chưa chấm'}`}
+            className={`text-xs font-semibold tabular-nums ${getBottomScoreAccent(bottomClassification)}`}
           >
-            <span aria-hidden="true">Hồ sơ chu kỳ</span>
-            <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
+            {bottomScore !== null ? bottomScore : '—'}
+          </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 pt-2.5 border-t border-[var(--border)] text-xs">
-          <div className="min-w-0">
-            <span className="block text-[11px] text-[var(--faint)] truncate">Bottom Score</span>
-            <span className={`block font-semibold tabular-nums truncate ${getBottomScoreAccent(bottomClassification)}`}>
-              {bottomScore !== null ? `${bottomScore}/100` : 'Chưa chấm'}
-            </span>
+        <div className="flex items-center gap-2" title="Biến động 1 tháng">
+          <div
+            className="relative h-1.5 flex-1 rounded-full bg-[var(--surface-3)]"
+            role="img"
+            aria-label={m1 === null ? 'Biến động 1M: chưa có' : `Biến động 1M ${fmt(m1)}`}
+          >
+            <span aria-hidden="true" className="absolute -top-0.5 -bottom-0.5 left-1/2 w-px bg-[var(--border)]" />
+            {m1 !== null && (
+              <span
+                aria-hidden="true"
+                className={`absolute inset-y-0 rounded-full ${m1 >= 0 ? 'bg-[var(--positive)]' : 'bg-[var(--negative)]'}`}
+                style={m1 >= 0 ? { left: '50%', width: `${barPct}%` } : { right: '50%', width: `${barPct}%` }}
+              />
+            )}
           </div>
-          <div className="min-w-0 text-center">
-            <span className="block text-[11px] text-[var(--faint)] truncate">Biến động 1M</span>
-            <span
-              className={`block font-semibold tabular-nums truncate ${
-                returns.m1 === null
-                  ? 'text-[var(--text)]/45'
-                  : returns.m1 >= 0
-                    ? 'text-[var(--positive)]'
-                    : 'text-[var(--negative)]'
-              }`}
-            >
-              {returns.m1 !== null ? `${returns.m1 >= 0 ? '+' : ''}${returns.m1.toFixed(2)}%` : '—'}
-            </span>
-          </div>
-          <div className="min-w-0 text-right">
-            <span className="block text-[11px] text-[var(--faint)] truncate">Cung–Cầu</span>
-            <span className="block text-[var(--text)] tabular-nums truncate">
-              {item.supplyDemandBias === 'DATA_UNAVAILABLE' ? '—' : item.supplyDemandBias}
-            </span>
-          </div>
+          <span className={`text-xs font-semibold tabular-nums w-16 text-right ${m1 === null ? 'text-[var(--muted)]' : m1 >= 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>
+            {m1 !== null ? fmt(m1) : '—'}
+          </span>
         </div>
+
+        <details onClick={(e) => e.stopPropagation()} className="text-[11px] text-[var(--muted)]">
+          <summary
+            aria-label={`Chi tiết ${nameVi}`}
+            className="cursor-pointer select-none text-[var(--faint)] hover:text-[var(--text)] list-none flex justify-center"
+          >
+            <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
+          </summary>
+          <dl className="mt-1.5 space-y-0.5">
+            <div><dt className="inline text-[var(--faint)]">Sàn: </dt><dd className="inline font-mono">{instrument.exchange}:{instrument.exchangeSymbol}{mxvCode ? ` · MXV ${mxvCode}` : ''}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">Tên: </dt><dd className="inline">{instrument.productName}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">Nhóm: </dt><dd className="inline">{visual?.groupVi ?? instrument.category} · {visual?.originTag ?? instrument.exchange}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">Đơn vị: </dt><dd className="inline">{quote.price !== null ? quote.unit : 'Chưa có feed'}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">Bottom Score: </dt><dd className="inline">{bottomScore !== null ? `${bottomScore}/100` : 'Chưa chấm'}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">Biến động 1M: </dt><dd className="inline">{m1 !== null ? fmt(m1) : '—'}</dd></div>
+            <div><dt className="inline text-[var(--faint)]">Cung–Cầu: </dt><dd className="inline">{item.supplyDemandBias === 'DATA_UNAVAILABLE' ? '—' : item.supplyDemandBias}</dd></div>
+            <div>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onSelect(); }}
+                aria-label={`Hồ sơ chu kỳ: ${nameVi}`}
+                className="inline-flex items-center gap-1 pt-1 font-medium text-[var(--accent)]"
+              >
+                <span aria-hidden="true">Hồ sơ chu kỳ</span> <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
+              </button>
+            </div>
+          </dl>
+        </details>
       </div>
     </div>
   );

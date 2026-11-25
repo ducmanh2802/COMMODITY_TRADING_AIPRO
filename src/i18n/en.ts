@@ -12,8 +12,11 @@ import * as macro from './dict/macro';
 import * as friendly from './dict/friendly';
 import * as brief from './dict/brief';
 import * as scorecard from './dict/scorecard';
+import * as scorecard2 from './dict/scorecard2';
 import * as fedpulse from './dict/fedpulse';
+import * as macrovisual from './dict/macrovisual';
 import * as nav2 from './dict/nav2';
+import * as todayvisual from './dict/todayvisual';
 import * as papertrade from './dict/papertrade';
 import * as simple from './dict/simple';
 import * as drivers from './dict/drivers';
@@ -36,6 +39,7 @@ import * as compare from './dict/compare';
 import * as drawing from './dict/drawing';
 import * as weather from './dict/weather';
 import * as news2 from './dict/news2';
+import * as calviz from './dict/calviz';
 import * as pwa from './dict/pwa';
 import * as replay from './dict/replay';
 import * as uipolish from './dict/uipolish';
@@ -51,6 +55,7 @@ import * as program from './dict/program';
 import * as discipline from './dict/discipline';
 import * as papercoach from './dict/papercoach';
 import * as academy from './dict/academy';
+import * as academyLite from './dict/academyLite';
 import * as cyclescan from './dict/cyclescan';
 import * as radartiles from './dict/radartiles';
 import * as toppick from './dict/toppick';
@@ -72,8 +77,11 @@ export const en: Record<TKey, string> = {
   ...friendly.en,
   ...brief.en,
   ...scorecard.en,
+  ...scorecard2.en,
   ...fedpulse.en,
+  ...macrovisual.en,
   ...nav2.en,
+  ...todayvisual.en,
   ...papertrade.en,
   ...simple.en,
   ...drivers.en,
@@ -96,6 +104,7 @@ export const en: Record<TKey, string> = {
   ...chain.en,
   ...weather.en,
   ...news2.en,
+  ...calviz.en,
   ...pwa.en,
   ...replay.en,
   ...uipolish.en,
@@ -111,6 +120,7 @@ export const en: Record<TKey, string> = {
   ...discipline.en,
   ...papercoach.en,
   ...academy.en,
+  ...academyLite.en,
   ...cyclescan.en,
   ...radartiles.en,
   ...toppick.en,

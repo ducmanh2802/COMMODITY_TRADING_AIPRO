@@ -236,7 +236,11 @@ function StartForm({ model }: { model: ProgramModel }) {
   return (
     <Card tone="accent" data-testid="program-card">
       <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('prog.title')}</h2>
-      <p className="text-xs text-[var(--muted)] mt-0.5 max-w-2xl">{t('prog.intro')}</p>
+      <details className="text-xs mt-0.5">
+        <summary className="cursor-pointer select-none text-[var(--accent-text)]">{t('acl.explain')}</summary>
+        <p className="text-[var(--muted)] mt-1 max-w-2xl">{t('prog.intro')}</p>
+        <p className="text-[11px] text-[var(--muted)] mt-1">{t('prog.start.note')}</p>
+      </details>
       <div className="flex flex-wrap items-end gap-3 mt-3">
         <label className="text-xs text-[var(--muted)] flex flex-col gap-1">
           {t('prog.start.date')}
@@ -246,7 +250,6 @@ function StartForm({ model }: { model: ProgramModel }) {
           {t('prog.start.btn')}
         </button>
       </div>
-      <p className="text-[11px] text-[var(--muted)] mt-2">{t('prog.start.note')}</p>
     </Card>
   );
 }

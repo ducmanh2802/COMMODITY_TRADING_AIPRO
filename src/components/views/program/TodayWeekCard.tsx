@@ -3,6 +3,7 @@ import { useTerminal } from '../../../contexts/TerminalContext';
 import { useI18n } from '../../../i18n';
 import { loadProgram } from '../../../shared/program/threeMonth';
 import { Card } from '../../ui/Card';
+import { InfoTip } from '../today/InfoTip';
 
 // The full weekly card needs the whole curriculum + the paper-trade store (Firestore). Load it only when the
 // programme has been started, so the Today entry chunk stays free of Academy / Firestore code.
@@ -16,8 +17,10 @@ export function TodayWeekCta({ title, hint }: { title?: string; hint?: string })
     <Card as="section" aria-label={title ?? t('prog.title')} data-testid="today-week-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-[var(--text-strong)]">{title ?? t('prog.title')}</h2>
-          <p className="text-xs text-[var(--muted)]">{hint ?? t('prog.today.cta')}</p>
+          <h2 className="flex items-center gap-1 text-sm font-semibold text-[var(--text-strong)]">
+            {title ?? t('prog.title')}
+            {(hint ?? t('prog.today.cta')).trim() && <InfoTip text={hint ?? t('prog.today.cta')} />}
+          </h2>
         </div>
         <button type="button" onClick={() => setActiveModule('learn')} className="text-xs px-3 py-1.5 rounded-md border border-[var(--border)] hover:border-[var(--accent)]">
           {t('prog.today.go')}

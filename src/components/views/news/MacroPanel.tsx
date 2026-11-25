@@ -8,6 +8,7 @@ import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { MacroRecordCards } from '../../common/MacroRecordCards';
 import { SourceChip } from '../../common/SourceChip';
 import { providerOf } from '../pulse/provider';
+import { Delta, Fold } from '../pulse/tileBits';
 import { Sparkline } from '../../ui/viz/Sparkline';
 import { FeedHeader } from './FeedHeader';
 import { RecordForm } from './RecordForm';
@@ -50,9 +51,7 @@ function DatapointTile({ d }: { d: MacroDatapoint }) {
               <span className="text-xs font-normal text-[var(--muted)]">{d.unit}</span>
             </p>
             {change !== null && (
-              <span className={`tabular-nums ${toneCls}`}>
-                {`${change > 0 ? '+' : ''}${fmtNum(change, { maximumFractionDigits: digits })}`} <span className="text-[var(--faint)]">{t('pulse.mc.vsPrev')}</span>
-              </span>
+              <Delta v={change} text={`${change > 0 ? '+' : ''}${fmtNum(change, { maximumFractionDigits: digits })}`} label={t('pulse.mc.vsPrev')} />
             )}
           </div>
           {prev !== null && (
@@ -69,13 +68,13 @@ function DatapointTile({ d }: { d: MacroDatapoint }) {
       ) : (
         <span className="inline-flex rounded-full border border-[var(--border)] px-2 py-0.5 text-[var(--faint)]">{t('pulse.mc.noData')}</span>
       )}
-      <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--faint)]">
-        {d.asOf && <span className="tabular-nums">{fmtWhen(d.asOf)}</span>}
-        <SourceChip sources={[d.sourceName, d.sourceUrl]}>{providerOf(d.sourceName)}</SourceChip>
-      </div>
       <details>
         <summary className={SUMMARY_CLS}>{t('pulse.mc.details')}</summary>
         <div className="mt-1 space-y-0.5 text-[11px] text-[var(--muted)] break-words">
+          <div className="flex flex-wrap items-center gap-2 text-[var(--faint)]">
+            {d.asOf && <span className="tabular-nums">{fmtWhen(d.asOf)}</span>}
+            <SourceChip sources={[d.sourceName, d.sourceUrl]}>{providerOf(d.sourceName)}</SourceChip>
+          </div>
           {prev !== null && <p className="tabular-nums">{t('macro.prev', { period: fmtWhen(d.previousAsOf), v: fmtNum(prev) })}</p>}
           {d.details && (
             <p className="tabular-nums">
@@ -167,13 +166,10 @@ function MacroOverviewPanel() {
             <Globe2 className="w-4 h-4 text-[var(--accent)]" aria-hidden="true" />
             {t('macro.title')}
           </h2>
-          <details className="mt-0.5">
-            <summary className={SUMMARY_CLS}>{t('pulse.mc.about')}</summary>
-            <div className="mt-1 space-y-1 text-[11px] text-[var(--muted)]">
-              <p>{t('macro.subtitle')}</p>
-              <p>{t('macro.keys')}</p>
-            </div>
-          </details>
+          <Fold summary={t('mv.explain')}>
+            <p>{t('macro.subtitle')}</p>
+            <p>{t('macro.keys')}</p>
+          </Fold>
         </div>
         <button
           type="button"
@@ -258,11 +254,16 @@ export function MacroPanel() {
     <div className="space-y-6">
       <FeedHeader title={t('news.title.fundamental')} status={status} onSynced={refetch} />
       <MacroOverviewPanel />
-      <RecordForm initialKind="MACRO" onSaved={refetch} />
-      <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-[var(--border)]">
-          <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('news.macro.title', { n: records.length })}</h2>
+      <details className="bg-[var(--surface)] border border-[var(--border)] rounded-lg px-4">
+        <summary className="inline-flex min-h-10 cursor-pointer items-center text-sm font-medium text-[var(--text-strong)]">{t('mv.recordForm')}</summary>
+        <div className="pb-3">
+          <RecordForm initialKind="MACRO" onSaved={refetch} />
         </div>
+      </details>
+      <details className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
+        <summary className="px-4 min-h-10 inline-flex w-full cursor-pointer items-center text-sm font-semibold text-[var(--text-strong)]">
+          {t('news.macro.title', { n: records.length })}
+        </summary>
         {loading ? (
           <div className="p-6 text-xs font-mono text-[var(--text)]/60">{t('news.macro.loading')}</div>
         ) : records.length === 0 ? (
@@ -270,7 +271,7 @@ export function MacroPanel() {
         ) : (
           <MacroRecordCards records={records} />
         )}
-      </section>
+      </details>
     </div>
   );
 }

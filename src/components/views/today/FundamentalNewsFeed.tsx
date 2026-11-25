@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { InfoTip } from './InfoTip';
 import {
   ArrowRight,
   CloudDownload,
@@ -36,7 +37,7 @@ import {
   type FundamentalFeedKindFilter,
 } from './fundamentalFeedUtils';
 
-const INITIAL_LIMIT = 6;
+const INITIAL_LIMIT = 3;
 const SUMMARY_COLLAPSE_THRESHOLD = 160;
 
 function DirectionIndicator({ direction, label }: { direction: MarketDirection; label: string }) {
@@ -191,8 +192,9 @@ export function FundamentalNewsFeed() {
               label={t(`n2.td.feed.stream.${streamState}`)}
             />
             <DataStatusBadge status={status} compact />
+            <InfoTip text={t('n2.td.feed.hint')} />
           </div>
-          <p className="text-xs text-[var(--muted)] mt-1">{t('n2.td.feed.hint')}</p>
+
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -232,8 +234,12 @@ export function FundamentalNewsFeed() {
         </div>
       </div>
 
-      {/* Filter toolbar */}
-      <div className="px-4 py-2.5 border-b border-[var(--border)] bg-[var(--bg)]/40 flex flex-wrap items-center justify-between gap-2.5">
+      {/* Filter toolbar (collapsed) */}
+      <details className="border-b border-[var(--border)]">
+      <summary className="cursor-pointer list-none px-4 py-2 text-xs font-medium text-[var(--muted)] hover:text-[var(--text-strong)] [&::-webkit-details-marker]:hidden">
+        {t('n2.tdv.filters')}{hasActiveFilters ? ' •' : ''}
+      </summary>
+      <div className="px-4 py-2.5 bg-[var(--bg)]/40 flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex flex-wrap items-center gap-2">
           <div
             role="group"
@@ -313,6 +319,8 @@ export function FundamentalNewsFeed() {
           </div>
         </div>
       </div>
+
+      </details>
 
       {/* Body */}
       {error && summary.total === 0 && !loading && (
