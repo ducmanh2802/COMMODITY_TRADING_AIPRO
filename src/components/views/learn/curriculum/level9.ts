@@ -138,6 +138,9 @@ export const LEVEL9: Level = {
     },
     {
       id: 'l9-mtf',
+      videos: [
+        { title: 'Multiple Timeframe Analysis', url: 'https://www.youtube.com/watch?v=c0RzWfSUR-o', source: 'FXCM', lang: 'en', note: 'Video tiếng Anh của FXCM: dùng khung lớn để xác định xu hướng, khung nhỏ để tìm điểm vào.' },
+      ],
       figures: ['c-mtf-ladder'],
       title: 'Phân tích đa khung thời gian',
       objective: 'Dùng khung lớn để chọn hướng, khung vừa để tìm setup, khung nhỏ để tinh chỉnh điểm vào.',

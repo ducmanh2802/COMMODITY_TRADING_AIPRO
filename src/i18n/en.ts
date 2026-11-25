@@ -52,6 +52,7 @@ import * as discipline from './dict/discipline';
 import * as papercoach from './dict/papercoach';
 import * as academy from './dict/academy';
 import * as cyclescan from './dict/cyclescan';
+import * as radartiles from './dict/radartiles';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
@@ -110,4 +111,5 @@ export const en: Record<TKey, string> = {
   ...papercoach.en,
   ...academy.en,
   ...cyclescan.en,
+  ...radartiles.en,
 };

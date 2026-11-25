@@ -37,6 +37,9 @@ export const LEVEL7: Level = {
     },
     {
       id: 'l7-backtest',
+      videos: [
+        { title: 'What is Backtesting｜Explained For Beginners', url: 'https://www.youtube.com/watch?v=JGxxXSCerXU', source: 'Binance Academy', lang: 'en', note: 'Video tiếng Anh: backtest là chạy quy tắc trên dữ liệu quá khứ; nhớ tính phí, trượt giá và tránh overfit.' },
+      ],
       figures: ['c-backtest-flow', 'c-overfit', 'd-bt-dashboard', 'd-bt-flags'],
       figureAt: { 'd-bt-dashboard': 4, 'd-bt-flags': 5 },
       title: 'Kiểm thử khung này bằng công cụ backtest',

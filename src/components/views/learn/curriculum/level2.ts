@@ -78,6 +78,9 @@ export const LEVEL2: Level = {
     },
     {
       id: 'l2-fx-fees',
+      videos: [
+        { title: 'Exchange rate primer | AP Macroeconomics | Khan Academy', url: 'https://www.youtube.com/watch?v=-5x6j_P1OSI', source: 'Khan Academy', lang: 'en', note: 'Bài giảng tiếng Anh của Khan Academy: tỷ giá là gì và vì sao đổi tiền tệ làm thay đổi giá trị quy đổi.' },
+      ],
       figures: ['a-fx-flow', 'a-fee-list'],
       title: 'Quy đổi USD/VND và phí',
       objective: 'Hiểu lãi lỗ tính bằng USD nhưng ký quỹ bằng VND, và biết các loại phí cần hỏi.',
@@ -125,6 +128,9 @@ export const LEVEL2: Level = {
     },
     {
       id: 'l2-legal',
+      videos: [
+        { title: 'VTV1: MXV và đầu tư hàng hoá theo hình thức giao dịch điện tử | MXV', url: 'https://www.youtube.com/watch?v=Q4tpmJ8TJ7Q', source: 'Sở Giao dịch Hàng hóa Việt Nam (MXV)', lang: 'vi', note: 'Phóng sự VTV1 tiếng Việt giới thiệu sàn giao dịch hàng hoá trong nước; chỉ là bối cảnh, vẫn cần đọc văn bản pháp lý gốc.' },
+      ],
       figures: ['d-decree-timeline'],
       figureAt: { 'd-decree-timeline': 1 },
       title: 'Pháp lý: những điều có thể kiểm chứng',

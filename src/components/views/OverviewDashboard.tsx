@@ -14,6 +14,7 @@ import { CommodityHeroImage } from '../common/CommodityHeroImage';
 import { CyclePhaseBadge, getBottomScoreAccent } from '../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { Term } from '../common/Term';
+import { RadarTiles } from './overview/RadarTiles';
 import { fmtClock, fmtPrice, friendlyQuoteReason, hasPrice, plainUnit } from '../common/quoteFormat';
 import { fmtFixed, fmtNum, hasKey, useT } from '../../i18n';
 import { fetchJsonWithRetry } from '../../shared/utils/http';
@@ -609,7 +610,6 @@ export function OverviewDashboard() {
               <Radar className="w-4 h-4 text-[var(--accent-text)] mt-0.5 shrink-0" aria-hidden="true" />
               <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('fr.ov2.radarTitle')}</h2>
-                <p className="text-xs text-[var(--text)]/55">{t('fr.ov2.radarSub')}</p>
               </div>
             </div>
             <button
@@ -622,78 +622,10 @@ export function OverviewDashboard() {
             </button>
           </div>
 
-          <div className="overflow-x-auto" tabIndex={0}>
-            <table className="w-full text-left border-collapse min-w-[560px]">
-              <thead>
-                <tr className="border-b border-[var(--border)] text-xs text-[var(--text)]/55">
-                  <th className="py-2.5 px-4 font-medium">{t('fr.ov2.colName')}</th>
-                  <th className="py-2.5 px-3 font-medium">
-                    <Term k="cyclePhase">{t('fr.ov2.colPhase')}</Term>
-                  </th>
-                  <th className="py-2.5 px-3 font-medium text-right">
-                    <Term k="bottomScore">{t('fr.ov2.colBottom')}</Term>
-                  </th>
-                  <th className="py-2.5 px-3 font-medium text-right">
-                    <Term k="percentile">{t('fr.ov2.colPct')}</Term>
-                  </th>
-                  <th className="py-2.5 px-4 font-medium text-right">{t('fr.ov2.colPrice')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border)]/70 text-xs">
-                {(cycleOverview?.opportunityRadar ?? []).length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-6 px-4 text-center text-[var(--text)]/55">
-                      {t('fr.ov2.radarEmpty')}
-                    </td>
-                  </tr>
-                ) : (
-                  (cycleOverview?.opportunityRadar ?? []).map((item) => {
-                    const nameVi = getCommodityVisual(item.instrument.id)?.nameVi ?? item.instrument.productName;
-                    return (
-                      <tr
-                        key={item.instrument.id}
-                        onClick={() => openInstrumentIn(item.instrument.exchangeSymbol, 'commodity-profile')}
-                        className="hover:bg-[var(--surface-2)]/50 transition-colors cursor-pointer"
-                      >
-                        <td className="py-2.5 px-4">
-                          <div className="font-medium text-[var(--text-strong)]">{nameVi}</div>
-                          <div className="text-[11px] text-[var(--text)]/50">
-                            {item.instrument.exchange} · {item.instrument.exchangeSymbol}
-                            {item.instrument.mxvMapping?.mxvSymbol ? ` · MXV ${item.instrument.mxvMapping.mxvSymbol}` : ''}
-                          </div>
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <CyclePhaseBadge phase={item.cyclePhase} compact />
-                        </td>
-                        <td className={`py-2.5 px-3 text-right font-semibold tabular-nums ${getBottomScoreAccent(item.bottomClassification)}`}>
-                          {item.bottomScore !== null ? `${item.bottomScore}/100` : '—'}
-                        </td>
-                        <td className="py-2.5 px-3 text-right text-[var(--text)]/75 tabular-nums">
-                          {item.percentile10Y !== null ? `${fmtFixed(item.percentile10Y, 0)}%` : '—'}
-                        </td>
-                        <td className="py-2.5 px-4 text-right tabular-nums">
-                          {hasPrice(item.quote) ? (
-                            <span className="text-[var(--text)]/90">{fmtPrice(item.quote.price)}</span>
-                          ) : (
-                            <span className="text-[var(--text)]/45">{t('fr.ov.noPrice')}</span>
-                          )}
-                          <div className="mt-0.5 inline-flex justify-end w-full">
-                            <DataStatusBadge
-                              status={item.quote.status}
-                              compact
-                              sourceQuality={item.quote.sourceQuality}
-                              delayMinutes={item.quote.delayMinutes}
-                              kind={item.quote.kind}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          <RadarTiles
+            items={cycleOverview?.opportunityRadar ?? []}
+            onOpen={(sym) => openInstrumentIn(sym, 'commodity-profile')}
+          />
         </section>
 
         <section aria-label={t('fr.ov2.macroTitle')} className={`${card} space-y-3`}>

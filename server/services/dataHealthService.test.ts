@@ -116,13 +116,16 @@ test('FredMacroAdapter parses official Public CSV without API key and handles HT
 });
 
 test('FredMacroAdapter.syncPublicCommodityBenchmarks syncs daily DCOILBRENTEU quote for BRN and IMF GLOBAL_SD benchmarks', async () => {
+  // Dates relative to today so the daily quote stays fresh (fixed dates turned it STALE over time).
+  const dayIso = (back: number) => new Date(Date.now() - back * 86_400_000).toISOString().slice(0, 10);
+  const [d1, d2, d3] = [dayIso(3), dayIso(2), dayIso(1)];
   const { fundamentalStore } = await import('./fundamentalService.ts');
   fundamentalStore.clearAll();
 
   const mockCsvFetch = async (url: string | URL | Request): Promise<Response> => {
     const s = String(url);
     if (s.includes('DCOILBRENTEU')) {
-      return new Response('observation_date,DCOILBRENTEU\n2026-11-16,91.80\n2026-11-17,.\n2026-11-18,92.94\n', { status: 200 });
+      return new Response(`observation_date,DCOILBRENTEU\n${d1},91.80\n${d2},.\n${d3},92.94\n`, { status: 200 });
     }
     if (s.includes('PCOFFROBUSDM')) {
       return new Response('observation_date,PCOFFROBUSDM\n2026-08-01,162.10\n2026-09-01,167.51\n', { status: 200 });
@@ -147,7 +150,7 @@ test('FredMacroAdapter.syncPublicCommodityBenchmarks syncs daily DCOILBRENTEU qu
   assert.equal(brnQuote.unit, 'USD/barrel');
   assert.equal(brnQuote.status, 'HISTORICAL');
   assert.equal(brnQuote.sourceQuality, 'OFFICIAL');
-  assert.equal(brnQuote.timestamp, '2026-11-18T00:00:00.000Z');
+  assert.equal(brnQuote.timestamp, `${d3}T00:00:00.000Z`);
 
   // Monthly IMF benchmarks are labelled benchmarks: never CURRENT/DELAYED, never a futures quote.
   const rc = fred.getBenchmarkQuote('RC');

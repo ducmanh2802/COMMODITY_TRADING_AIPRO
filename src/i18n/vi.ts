@@ -52,6 +52,7 @@ import * as discipline from './dict/discipline';
 import * as papercoach from './dict/papercoach';
 import * as academy from './dict/academy';
 import * as cyclescan from './dict/cyclescan';
+import * as radartiles from './dict/radartiles';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
@@ -109,6 +110,7 @@ export const vi = {
   ...papercoach.vi,
   ...academy.vi,
   ...cyclescan.vi,
+  ...radartiles.vi,
 };
 
 export type TKey = keyof typeof vi;
