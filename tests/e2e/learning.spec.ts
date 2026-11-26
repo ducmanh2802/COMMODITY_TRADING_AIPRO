@@ -288,6 +288,12 @@ test('paper trading (signed out, local): place order with stop, see position, cl
 
   await page.locator('#pt-inst').selectOption(usable.id);
   await expect(page.getByText(/Giá mới nhất/)).toContainText(/1\D?000\D00/);
+  // Risk-based sizing: stop 10 ticks away, 100% risk budget -> a suggestion appears and fills the quantity.
+  await page.locator('#pt-sl').fill(String(price - 10 * (usable.specification.minimumTickSize ?? 1)));
+  await page.locator('#pt-rsz-pct').fill('100');
+  await expect(page.getByTestId('rsz-result')).toBeVisible();
+  await page.getByRole('button', { name: 'Dùng số lượng này' }).click();
+  expect(Number(await page.locator('#pt-qty').inputValue())).toBeGreaterThan(1);
   await page.locator('#pt-qty').fill('1');
   await page.locator('#pt-sl').fill(String(price * 0.9));
   await page.getByRole('button', { name: /Xem lại & đặt lệnh/ }).click();

@@ -39,6 +39,7 @@ import * as chain from './dict/chain';
 import * as instrument from './dict/instrument';
 import * as checklist from './dict/checklist';
 import * as paperstats from './dict/paperstats';
+import * as risksize from './dict/risksize';
 import * as journal from './dict/journal';
 import * as contest from './dict/contest';
 import * as compare from './dict/compare';
@@ -111,6 +112,7 @@ export const en: Record<TKey, string> = {
   ...instrument.en,
   ...checklist.en,
   ...paperstats.en,
+  ...risksize.en,
   ...journal.en,
   ...contest.en,
   ...compare.en,

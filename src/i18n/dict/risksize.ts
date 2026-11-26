@@ -1,0 +1,33 @@
+// Section dictionary: risk-based position sizing in the paper order ticket (rsz.). `en` is typed against `vi`.
+export const vi = {
+  'rsz.title': 'Tính số lượng theo rủi ro (toán luyện tập)',
+  'rsz.badge': 'Ví dụ minh họa',
+  'rsz.maxRisk': 'Rủi ro tối đa (% tài khoản thử)',
+  'rsz.perContract': 'Rủi ro mỗi hợp đồng: {usd} USD ≈ {vnd} ({ticks} tick)',
+  'rsz.budget': 'Ngân sách rủi ro: {vnd}',
+  'rsz.result': 'Số lượng gợi ý để luyện tập: {n} hợp đồng',
+  'rsz.use': 'Dùng số lượng này',
+  'rsz.zero': 'Điểm dừng lỗ quá xa so với quy mô tài khoản này: 1 hợp đồng đã vượt mức rủi ro tối đa. Thử thu hẹp điểm dừng lỗ hoặc tăng % rủi ro.',
+  'rsz.hint': 'Nhập giá dừng lỗ để xem số lượng gợi ý.',
+  'rsz.err.BAD_INPUT': 'Chưa đủ dữ liệu hợp lệ để tính.',
+  'rsz.err.STOP_WRONG_SIDE': 'Giá dừng lỗ nằm sai phía so với giá vào.',
+  'rsz.err.ZERO_DISTANCE': 'Giá dừng lỗ quá gần giá vào (dưới 1 tick).',
+  'rsz.explain': 'Xem giải thích',
+  'rsz.explainBody': 'Rủi ro mỗi hợp đồng = |giá vào − giá dừng lỗ| ÷ tick × giá trị mỗi tick (đổi sang VND theo tỷ giá như lãi/lỗ giao dịch thử). Số lượng = làm tròn xuống (vốn tài khoản thử × % rủi ro ÷ rủi ro mỗi hợp đồng). Chưa tính phí, trượt giá khi dừng lỗ hay khoảng trống giá. Đây là phép tính luyện tập, không phải lời khuyên mua/bán.',
+};
+export const en: Record<keyof typeof vi, string> = {
+  'rsz.title': 'Risk-based sizing (practice math)',
+  'rsz.badge': 'Illustrative example',
+  'rsz.maxRisk': 'Max risk (% of paper account)',
+  'rsz.perContract': 'Risk per contract: {usd} USD ≈ {vnd} ({ticks} ticks)',
+  'rsz.budget': 'Risk budget: {vnd}',
+  'rsz.result': 'Practice size: {n} contracts',
+  'rsz.use': 'Use this quantity',
+  'rsz.zero': 'The stop is too wide for this account size: even 1 contract exceeds the max risk. Try a tighter stop or a higher risk %.',
+  'rsz.hint': 'Enter a stop price to see a sample size.',
+  'rsz.err.BAD_INPUT': 'Not enough valid data to calculate.',
+  'rsz.err.STOP_WRONG_SIDE': 'Stop is on the wrong side of the entry price.',
+  'rsz.err.ZERO_DISTANCE': 'Stop is closer than 1 tick to entry.',
+  'rsz.explain': 'Show explanation',
+  'rsz.explainBody': 'Risk per contract = |entry − stop| ÷ tick × tick value (converted to VND with the same FX as paper P&L). Quantity = floor(paper equity × risk % ÷ risk per contract). Fees, slippage on the stop and price gaps are not included. This is practice math, not buy/sell advice.',
+};

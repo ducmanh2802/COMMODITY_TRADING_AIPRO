@@ -39,6 +39,7 @@ import * as chain from './dict/chain';
 import * as instrument from './dict/instrument';
 import * as checklist from './dict/checklist';
 import * as paperstats from './dict/paperstats';
+import * as risksize from './dict/risksize';
 import * as journal from './dict/journal';
 import * as contest from './dict/contest';
 import * as compare from './dict/compare';
@@ -110,6 +111,7 @@ export const vi = {
   ...instrument.vi,
   ...checklist.vi,
   ...paperstats.vi,
+  ...risksize.vi,
   ...journal.vi,
   ...contest.vi,
   ...compare.vi,

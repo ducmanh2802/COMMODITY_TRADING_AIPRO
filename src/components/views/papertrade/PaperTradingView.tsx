@@ -51,6 +51,7 @@ import { ExpiryCalendar, RollReminderChip } from './ExpiryCalendar';
 import { fieldErrorProps, paperBadNumberFields, paperOrderReasonFields, type PaperOrderField, type PaperSessionField } from '../../common/fieldErrors';
 import { Stat, bigBtn, cardCls, fmtPct, fmtVnd, inputCls, labelCls, pnlColor, signedVnd } from './paperUi';
 import { usePaperStore } from './usePaperStore';
+import { RiskSizingCard } from './RiskSizingCard';
 import { CoolOffBanner, CoolOffToggle } from './CoolOffBanner';
 import { coolOffNow } from './coolOffPrefs';
 import { OrderCalculator } from '../learn/OrderCalculator';
@@ -706,6 +707,17 @@ export function PaperTradingView() {
                   </div>
                 </div>
                 <p className="text-[11px] text-[var(--text)]/60">{t('pt.order.marginAssumed')}</p>
+                {specRes?.ok && gate?.ok && snap && (
+                  <RiskSizingCard
+                    spec={specRes.spec}
+                    side={side}
+                    entry={fillPrice(specRes.spec, side, gate.price, session.settings.slippageTicks, true)}
+                    stop={typeof slNow === 'number' ? slNow : null}
+                    equityVnd={snap.equityVnd}
+                    fx={fx}
+                    onUse={(n) => setQty(String(n))}
+                  />
+                )}
                 <EventRiskBanner symbol={inst?.exchangeSymbol} upcoming={wasdeKnown ? upcoming : null} />
                 <PreTradeChecklist
                   answers={answers}
