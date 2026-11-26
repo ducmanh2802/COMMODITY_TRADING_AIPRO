@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, CalendarClock, ChevronDown, ChevronRight, Clock, Minus, Sparkles, TrendingDown, TrendingUp, Zap } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { useI18n } from '../../../i18n';
@@ -19,6 +19,8 @@ import { Skeleton } from '../../ui/Skeleton';
 import { FundamentalNewsFeed } from './FundamentalNewsFeed';
 import { InfoTip } from './InfoTip';
 import { TodayWeekCard } from '../program/TodayWeekCard';
+// Lazy: pulls the curriculum index (~20 kB) which must not grow the Today/main chunk.
+const ContinueLearningCard = lazy(() => import('./ContinueLearningCard').then((m) => ({ default: m.ContinueLearningCard })));
 
 const FLAT = 0.002; // |change| below 0.2% counts as "flat"
 
@@ -383,6 +385,9 @@ export function TodayPanel() {
           </button>
         }
       />
+      <Suspense fallback={<Skeleton className="h-24" />}>
+        <ContinueLearningCard />
+      </Suspense>
       <TodayWeekCard />
       {body}
       <details className="group rounded-xl border border-[var(--border)] bg-[var(--surface)]">

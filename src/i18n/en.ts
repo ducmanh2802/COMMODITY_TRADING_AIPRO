@@ -32,6 +32,7 @@ import * as push from './dict/push';
 import * as world from './dict/world';
 import * as ordercalc from './dict/ordercalc';
 import * as practice from './dict/practice';
+import * as tdcont from './dict/tdcont';
 import * as benchmark from './dict/benchmark';
 import * as domestic from './dict/domestic';
 import * as chain from './dict/chain';
@@ -106,6 +107,7 @@ export const en: Record<TKey, string> = {
   ...world.en,
   ...ordercalc.en,
   ...practice.en,
+  ...tdcont.en,
   ...instrument.en,
   ...checklist.en,
   ...paperstats.en,

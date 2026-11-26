@@ -1,7 +1,7 @@
 /** Hand-off from the palette to the Academy view (which may not be mounted yet). */
 export interface AcademyIntent {
   lessonId?: string;
-  tab?: 'glossary' | 'sandbox';
+  tab?: 'glossary' | 'sandbox' | 'lessons';
   /** Glossary term (GLOSSARY[].term) to scroll to and highlight; implies tab 'glossary'. */
   term?: string;
 }
