@@ -7,6 +7,7 @@ import { ROLL_YIELD_FORMULA, type CurveShape } from '../../../shared/contracts/t
 import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { CURVE_TIMEFRAME, groupContractDatasets, loadCurveSnapshot, type CurveSnapshot } from './curveData';
 import { LineChartSvg, type ChartSeries } from './LineChartSvg';
+import { CarryCard } from './CarryCard';
 import { SpreadHistoryPanel } from './SpreadHistoryPanel';
 import { YahooCurvePanel } from './YahooCurvePanel';
 import { FuturesChainPanel } from './FuturesChainPanel';
@@ -344,6 +345,7 @@ export default function TermStructureView() {
           </section>
 
           {primary.state === 'ok' && <SnapshotDetails snap={primary.data} title={t('ts.curveAsOf')} />}
+          {primary.state === 'ok' && primary.data.result?.status === 'OK' && <CarryCard points={primary.data.result.points} />}
           {compareOn && secondary.state === 'ok' && <SnapshotDetails snap={secondary.data} title={t('ts.compareCurveAsOf')} />}
           {compareOn && secondary.state === 'error' && <ErrorNote error={secondary.error} className="text-xs" />}
 

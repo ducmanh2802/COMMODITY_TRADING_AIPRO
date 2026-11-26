@@ -69,6 +69,7 @@ import * as cyclescan from './dict/cyclescan';
 import * as toppick from './dict/toppick';
 import * as hardcoded from './dict/hardcoded';
 import * as errors2 from './dict/errors2';
+import * as carry from './dict/carry';
 import * as honesty from './dict/honesty';
 import * as badges2 from './dict/badges2';
 
@@ -147,6 +148,7 @@ export const vi = {
   ...badges2.vi,
   ...hardcoded.vi,
   ...errors2.vi,
+  ...carry.vi,
 };
 
 export type TKey = keyof typeof vi;
