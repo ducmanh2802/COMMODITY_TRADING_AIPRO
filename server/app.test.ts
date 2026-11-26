@@ -143,12 +143,12 @@ test('security headers are set and X-Powered-By is disabled', async () => {
     const res = await fetch(`${baseUrl}/api/architecture`);
     assert.equal(res.status, 200);
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
-    assert.equal(res.headers.get('x-frame-options'), 'SAMEORIGIN');
+    assert.equal(res.headers.get('x-frame-options'), null);
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(res.headers.get('x-powered-by'), null);
     assert.equal(
       res.headers.get('content-security-policy'),
-      "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'"
+      "frame-ancestors 'self' https://*.google.com https://localhost.corp.google.com:26001; base-uri 'self'; object-src 'none'; form-action 'self'"
     );
   });
 });

@@ -23,7 +23,6 @@ import * as papertrade from './dict/papertrade';
 import * as simple from './dict/simple';
 import * as drivers from './dict/drivers';
 import * as hedge from './dict/hedge';
-import * as cotpx from './dict/cotpx';
 import * as onboarding from './dict/onboarding';
 import * as onboard2 from './dict/onboard2';
 import * as radar from './dict/radar';
@@ -76,7 +75,8 @@ import * as seasonwin from './dict/seasonwin';
 import * as carry from './dict/carry';
 import * as honesty from './dict/honesty';
 import * as badges2 from './dict/badges2';
-import * as newlesson from './dict/newlesson';
+import * as tradeperf from './dict/tradeperf';
+import * as advanced from './dict/advanced';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
@@ -106,7 +106,6 @@ export const en: Record<TKey, string> = {
   ...simple.en,
   ...drivers.en,
   ...hedge.en,
-  ...cotpx.en,
   ...onboarding.en,
   ...onboard2.en,
   ...radar.en,
@@ -153,11 +152,12 @@ export const en: Record<TKey, string> = {
   ...toppick.en,
   ...honesty.en,
   ...badges2.en,
-  ...newlesson.en,
   ...hardcoded.en,
   ...errors2.en,
   ...margincall.en,
   ...crushcard.en,
   ...seasonwin.en,
   ...carry.en,
+  ...tradeperf.en,
+  ...advanced.en,
 };

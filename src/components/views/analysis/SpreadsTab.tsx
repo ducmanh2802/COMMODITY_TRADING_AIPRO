@@ -12,6 +12,8 @@ import type { SeriesOption } from '../../../api/analysisApi';
 import { type SeriesPoint, interCommoditySpread, spreadZScore } from '../../../shared/analytics';
 import { CrushCard } from './CrushCard';
 import { CHART_COLORS, type ChartLine, TimeSeriesChart } from './TimeSeriesChart';
+import { InsightBox } from '../../common/ToolGuideAndInsight';
+import { interpretSpreadZScore } from '../../../shared/utils/advancedInsights';
 import {
   Notice,
   NumberField,
@@ -66,7 +68,7 @@ const zFmt = (v: number) => v.toFixed(2);
 let uidCounter = 1;
 
 export function SpreadsTab({ options }: { options: SeriesOption[] }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const byKey = useOptionMap(options);
   const [legs, setLegs] = useState<LegDraft[]>([
     { uid: uidCounter++, seriesKey: '', coefficient: 1, priceUnit: '' },
@@ -271,6 +273,19 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
         ))}
         {!ready && <Notice tone="info">{t('sweep.spreads.needLegs')}</Notice>}
       </Panel>
+
+      {spread && spread.status === 'OK' && (
+        <InsightBox
+          insight={interpretSpreadZScore(
+            latestValue(spread.timestamps, spread.values)?.v ?? null,
+            z && z.status === 'OK' ? latestValue(z.timestamps, z.values)?.v ?? null : null,
+            spread.outputUnit,
+            zWindow,
+            lang,
+          )}
+          testId="spreads-insight"
+        />
+      )}
 
       {spread && (
         <Panel title={t('sweep.spreads.panelSpread')} subtitle={t('sweep.spreads.outputUnit', { unit: spread.outputUnit || '—' })}>

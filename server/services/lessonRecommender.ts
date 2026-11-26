@@ -29,9 +29,78 @@ export interface RecommenderModelClient {
   generate(req: RecommenderModelRequest): Promise<string>;
 }
 
+export interface LessonRecommendationCache {
+  get(key: string, nowMs: number): LessonRecommendationResult | null;
+  set(key: string, result: LessonRecommendationResult, nowMs: number): void;
+  getInFlight(key: string): Promise<LessonRecommendationResult> | undefined;
+  setInFlight(key: string, promise: Promise<LessonRecommendationResult>): void;
+  deleteInFlight(key: string): void;
+}
+
+export function buildRecommendationCacheKey(req: LessonRecommendationRequest): string {
+  const searched = Array.from(
+    new Set(req.searchedCommodities.map((s) => s.symbol.trim().toUpperCase()).filter(Boolean))
+  )
+    .sort()
+    .join(',');
+  const positions = req.openPositions
+    .map((p) => `${p.symbol.trim().toUpperCase()}:${p.side}`)
+    .sort()
+    .join(',');
+  const candidates = req.candidates
+    .map((c) => `${c.id}:${c.done ? 1 : 0}`)
+    .sort()
+    .join(',');
+  const maxResults = Math.min(Math.max(req.maxResults ?? 4, 1), 6);
+  return `${req.language}|max=${maxResults}|S[${searched}]|P[${positions}]|C[${candidates}]`;
+}
+
+export function createLessonRecommendationCache(
+  ttlMs = 10 * 60_000,
+  maxEntries = 100
+): LessonRecommendationCache {
+  const entries = new Map<string, { result: LessonRecommendationResult; cachedAt: number }>();
+  const inFlight = new Map<string, Promise<LessonRecommendationResult>>();
+
+  return {
+    get(key, nowMs) {
+      const hit = entries.get(key);
+      if (!hit) return null;
+      if (nowMs - hit.cachedAt >= ttlMs) {
+        entries.delete(key);
+        return null;
+      }
+      // Refresh LRU insertion order
+      entries.delete(key);
+      entries.set(key, hit);
+      return hit.result;
+    },
+    set(key, result, nowMs) {
+      if (result.status !== 'OK') return;
+      if (entries.has(key)) entries.delete(key);
+      while (entries.size >= maxEntries) {
+        const oldestKey = entries.keys().next().value;
+        if (oldestKey === undefined) break;
+        entries.delete(oldestKey);
+      }
+      entries.set(key, { result, cachedAt: nowMs });
+    },
+    getInFlight(key) {
+      return inFlight.get(key);
+    },
+    setInFlight(key, promise) {
+      inFlight.set(key, promise);
+    },
+    deleteInFlight(key) {
+      inFlight.delete(key);
+    },
+  };
+}
+
 export interface LessonRecommenderDeps {
   apiKey?: string | null;
   modelClient?: RecommenderModelClient;
+  cache?: LessonRecommendationCache;
   timeoutMs?: number;
   maxAttempts?: number;
   retryBaseMs?: number;
@@ -267,14 +336,25 @@ export async function generateLessonRecommendations(
     return unavailableResult('NO_API_KEY', req.language, now);
   }
 
-  const client = deps.modelClient ?? createLessonRecommenderClient(trimmedKey || null);
-  const timeoutMs = deps.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const maxAttempts = resolveMaxAttempts(deps);
-  const retryBaseMs = deps.retryBaseMs ?? 500;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const cache = deps.cache;
+  const cacheKey = cache ? buildRecommendationCacheKey(req) : '';
 
-  let rawText = '';
+  if (cache && !req.forceRefresh) {
+    const cached = cache.get(cacheKey, now.getTime());
+    if (cached) return cached;
+    const pending = cache.getInFlight(cacheKey);
+    if (pending) return pending;
+  }
+
+  const runGeneration = async (): Promise<LessonRecommendationResult> => {
+    const client = deps.modelClient ?? createLessonRecommenderClient(trimmedKey || null);
+    const timeoutMs = deps.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    const maxAttempts = resolveMaxAttempts(deps);
+    const retryBaseMs = deps.retryBaseMs ?? 500;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    let rawText = '';
   try {
     const { systemInstruction, prompt } = buildPrompts(req, maxResults);
     let lastErr: unknown;
@@ -354,12 +434,25 @@ export async function generateLessonRecommendations(
     return unavailableResult('INVALID_MODEL_OUTPUT', req.language, now);
   }
 
-  return {
-    status: 'OK',
-    headline: stripRecommendationLanguage(validated.data.headline.trim()).text.trim(),
-    recommendations: filtered,
-    generatedAt: now.toISOString(),
-    model: client.model,
-    language: req.language,
+    const okResult: LessonRecommendationResult = {
+      status: 'OK',
+      headline: stripRecommendationLanguage(validated.data.headline.trim()).text.trim(),
+      recommendations: filtered,
+      generatedAt: now.toISOString(),
+      model: client.model,
+      language: req.language,
+    };
+    cache?.set(cacheKey, okResult, now.getTime());
+    return okResult;
   };
+
+  if (!cache) {
+    return runGeneration();
+  }
+
+  const inFlightPromise = runGeneration().finally(() => {
+    cache.deleteInFlight(cacheKey);
+  });
+  cache.setInFlight(cacheKey, inFlightPromise);
+  return inFlightPromise;
 }

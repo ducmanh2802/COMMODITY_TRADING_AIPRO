@@ -23,7 +23,6 @@ import * as papertrade from './dict/papertrade';
 import * as simple from './dict/simple';
 import * as drivers from './dict/drivers';
 import * as hedge from './dict/hedge';
-import * as cotpx from './dict/cotpx';
 import * as onboarding from './dict/onboarding';
 import * as onboard2 from './dict/onboard2';
 import * as radar from './dict/radar';
@@ -76,7 +75,8 @@ import * as seasonwin from './dict/seasonwin';
 import * as carry from './dict/carry';
 import * as honesty from './dict/honesty';
 import * as badges2 from './dict/badges2';
-import * as newlesson from './dict/newlesson';
+import * as tradeperf from './dict/tradeperf';
+import * as advanced from './dict/advanced';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
@@ -105,7 +105,6 @@ export const vi = {
   ...simple.vi,
   ...drivers.vi,
   ...hedge.vi,
-  ...cotpx.vi,
   ...onboarding.vi,
   ...onboard2.vi,
   ...radar.vi,
@@ -152,13 +151,14 @@ export const vi = {
   ...toppick.vi,
   ...honesty.vi,
   ...badges2.vi,
-  ...newlesson.vi,
   ...hardcoded.vi,
   ...errors2.vi,
   ...margincall.vi,
   ...crushcard.vi,
   ...seasonwin.vi,
   ...carry.vi,
+  ...tradeperf.vi,
+  ...advanced.vi,
 };
 
 export type TKey = keyof typeof vi;

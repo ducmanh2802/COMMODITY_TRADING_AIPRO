@@ -8,14 +8,16 @@ import { useMemo, useState } from 'react';
 import type { SeriesOption } from '../../../api/analysisApi';
 import { cumulativeReturn, drawdown, totalReturn } from '../../../shared/analytics';
 import { CHART_COLORS, type ChartLine, TimeSeriesChart } from './TimeSeriesChart';
-import { fmtFixed, fmtInt, useT } from '../../../i18n';
+import { fmtFixed, fmtInt, useI18n } from '../../../i18n';
 import { Notice, Panel, SeriesIntegrity, SeriesSelect, StatusBlock, fmtDate, fmtNum, fmtPct, useLoadedSeries, useOptionMap } from './shared';
+import { InsightBox } from '../../common/ToolGuideAndInsight';
+import { interpretDrawdownSnapshot } from '../../../shared/utils/advancedInsights';
 
 const pctFmt = (v: number) => `${fmtFixed(v, 1)}%`;
 const ZERO = [0];
 
 export function DrawdownTab({ options }: { options: SeriesOption[] }) {
-  const t = useT();
+  const { t, lang } = useI18n();
   const byKey = useOptionMap(options);
   const [key, setKey] = useState('');
   const option = byKey.get(key);
@@ -58,6 +60,22 @@ export function DrawdownTab({ options }: { options: SeriesOption[] }) {
 
       {res && (
         <>
+          {(res.total.status === 'OK' || m !== null) && (
+            <InsightBox
+              insight={interpretDrawdownSnapshot(
+                {
+                  label: option?.label ?? key,
+                  totalReturn: res.total.status === 'OK' ? res.total.value : null,
+                  maxDrawdown: m ? m.maxDrawdown : null,
+                  peakDate: m?.peakT ?? null,
+                  troughDate: m?.troughT ?? null,
+                  recoveryDate: m?.recoveryT ?? null,
+                },
+                lang,
+              )}
+              testId="dd-insight"
+            />
+          )}
           <Panel title={t('an.summary')}>
             <div className="grid gap-3 md:grid-cols-3">
               <StatusBlock label={t('an.dd.cumulative')} status={res.cum.status} reason={res.cum.reason} warnings={res.cum.warnings} />

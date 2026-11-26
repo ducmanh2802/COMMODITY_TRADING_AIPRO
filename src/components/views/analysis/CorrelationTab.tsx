@@ -22,9 +22,11 @@ import {
   useLoadedSeries,
   useOptionMap,
 } from './shared';
-import { fmtFixed, fmtInt, useT } from '../../../i18n';
+import { fmtFixed, fmtInt, useI18n } from '../../../i18n';
 import { divergingFill } from '../../../shared/theme/chartScale';
 import { ScaleLegend } from '../../ui/viz/ScaleLegend';
+import { InsightBox } from '../../common/ToolGuideAndInsight';
+import { interpretCorrelationMatrix } from '../../../shared/utils/advancedInsights';
 
 const MAX_SERIES = 8;
 const ZERO_LINE = [0];
@@ -34,7 +36,7 @@ const numFmt = (v: number) => fmtFixed(v, 2);
 const heatColor = (r: number) => divergingFill(r, 1);
 
 export function CorrelationTab({ options }: { options: SeriesOption[] }) {
-  const t = useT();
+  const { t, lang } = useI18n();
   const byKey = useOptionMap(options);
   const [keys, setKeys] = useState<string[]>([]);
   const [kind, setKind] = useState<ReturnKind>('log');
@@ -151,7 +153,9 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
           </div>
           <StatusBlock label={t('an.corr.matrixLabel')} status={matrix.status} reason={matrix.reason} warnings={matrix.warnings} />
           {matrix.status === 'OK' && (
-            <div className="overflow-x-auto" tabIndex={0}>
+            <div className="space-y-4">
+              <InsightBox insight={interpretCorrelationMatrix(matrix.labels, matrix.matrix, lang)} testId="corr-insight" />
+              <div className="overflow-x-auto" tabIndex={0}>
               <table className="text-xs font-mono border-collapse">
                 <thead>
                   <tr>
@@ -184,6 +188,7 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <ScaleLegend kind="diverging" low="-1" mid="0" high="+1" />
                 <p className="text-[11px] text-[var(--muted)]">{t('an.corr.legend')}</p>
+              </div>
               </div>
             </div>
           )}

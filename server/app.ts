@@ -68,6 +68,7 @@ import {
   type AiCotQueryLike,
 } from './services/aiAnalyst.ts';
 import {
+  createLessonRecommendationCache,
   generateLessonRecommendations,
   type LessonRecommenderDeps,
 } from './services/lessonRecommender.ts';
@@ -285,6 +286,7 @@ const RecommendLessonsRequestSchema = z.object({
     .min(1)
     .max(30),
   maxResults: z.number().int().min(1).max(6).optional(),
+  forceRefresh: z.boolean().optional(),
 });
 
 const FundamentalCategoryEnum = z.enum([
@@ -468,6 +470,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   app.use('/api', express.json({ limit: '256kb' }));
 
   const aiRateLimiter = createAiRateLimiter(12, 60_000);
+  const lessonRecCache = options.lessonRecommender?.modelClient ? undefined : createLessonRecommendationCache();
   // Separate per-IP budget for each CPU-heavy compute route (the global limiter allows 300 writes/min).
   const computeOpts = options.computeRateLimit ?? {};
   const computeLimiter = () =>
@@ -1231,6 +1234,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
       }
 
       const result = await generateLessonRecommendations(parsed.data, {
+        cache: lessonRecCache,
         ...(options.lessonRecommender ?? {}),
         // The route answers 200 with status UNAVAILABLE, so this is not a 5xx: warn-log only, no error metric.
         logError: (msg, err) => {

@@ -1,9 +1,9 @@
 import { ErrorNote } from '../common/ErrorNote';
 import { toUserError, type UserError } from '../common/friendlyError';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowUpRight, ChevronDown, RefreshCw, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpRight, ChevronDown, RefreshCw, Search } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
-import { useT } from '../../i18n';
+import { useI18n } from '../../i18n';
 import {
   COMMODITY_GROUP_LABELS_VI,
   getCommodityVisual,
@@ -13,11 +13,20 @@ import type {
   CommodityGroupFilter,
   CycleMarketOverview,
 } from '../../shared/types/cycle';
+import type { Scorecard, ScorecardListResponse } from '../../shared/types/scorecard';
 import { CommodityHeroImage } from '../common/CommodityHeroImage';
 import { CyclePhaseBadge, getBottomScoreAccent } from '../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { TrendDirectionIcon } from '../common/TrendDirectionIcon';
+import { TrendDirectionFilter } from '../common/TrendDirectionFilter';
 import { fetchJsonWithRetry } from '../../shared/utils/http';
 import { sortCommoditiesByPotential } from '../../shared/utils/commoditySort';
+import {
+  countTrendDirections,
+  matchesTrendFilter,
+  resolveInstrumentTrend,
+  type TrendFilter,
+} from '../../shared/utils/trendDirection';
 
 const GROUP_FILTERS: CommodityGroupFilter[] = [
   'ALL',
@@ -28,24 +37,42 @@ const GROUP_FILTERS: CommodityGroupFilter[] = [
 ];
 
 export function CommodityWorldView() {
-  const t = useT();
+  const { t, lang } = useI18n();
   const { openInstrumentIn, datasets, quotesBySymbol } = useTerminal();
   const pricedQuotesCount = useMemo(
     () => Object.values(quotesBySymbol).filter((q) => q?.price !== null).length,
     [quotesBySymbol]
   );
   const [overview, setOverview] = useState<CycleMarketOverview | null>(null);
+  const [scorecardsById, setScorecardsById] = useState<Record<string, Scorecard>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<UserError | null>(null);
   const [groupFilter, setGroupFilter] = useState<CommodityGroupFilter>('ALL');
   const [mxvOnly, setMxvOnly] = useState(false);
+  const [trendFilter, setTrendFilter] = useState<TrendFilter>('ALL');
   const [query, setQuery] = useState('');
 
   const fetchWorld = async (signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
     try {
-      const json = await fetchJsonWithRetry<CycleMarketOverview>('/api/cycle/overview', { signal });
+      const [cycleRes, scoreRes] = await Promise.allSettled([
+        fetchJsonWithRetry<CycleMarketOverview>('/api/cycle/overview', { signal }),
+        fetchJsonWithRetry<ScorecardListResponse>('/api/scorecard', { signal }),
+      ]);
+      if (signal?.aborted) return;
+      if (scoreRes.status === 'fulfilled' && Array.isArray(scoreRes.value?.scorecards)) {
+        const map: Record<string, Scorecard> = {};
+        for (const sc of scoreRes.value.scorecards) {
+          map[sc.instrumentId] = sc;
+          map[sc.exchangeSymbol] = sc;
+        }
+        setScorecardsById(map);
+      }
+      if (cycleRes.status === 'rejected') {
+        throw cycleRes.reason;
+      }
+      const json = cycleRes.value;
       // Empty/malformed payload (e.g. {}): normalise to an empty list, never crash.
       setOverview({ ...json, commodities: Array.isArray(json?.commodities) ? json.commodities : [] });
     } catch (err) {
@@ -62,7 +89,7 @@ export function CommodityWorldView() {
     return () => controller.abort();
   }, [datasets.length, pricedQuotesCount]);
 
-  const filteredItems = useMemo(() => {
+  const baseFilteredItems = useMemo(() => {
     const items = overview?.commodities ?? [];
     const q = query.trim().toLowerCase();
     const filtered = items.filter((item) => {
@@ -84,6 +111,26 @@ export function CommodityWorldView() {
     });
     return sortCommoditiesByPotential(filtered);
   }, [overview, groupFilter, mxvOnly, query]);
+
+  const trendCounts = useMemo(
+    () =>
+      countTrendDirections(
+        baseFilteredItems.map((item) => {
+          const scorecard = scorecardsById[item.instrument.id] ?? scorecardsById[item.instrument.exchangeSymbol];
+          return resolveInstrumentTrend({ scorecard, returns: item.returns }).direction;
+        })
+      ),
+    [baseFilteredItems, scorecardsById]
+  );
+
+  const filteredItems = useMemo(() => {
+    if (trendFilter === 'ALL') return baseFilteredItems;
+    return baseFilteredItems.filter((item) => {
+      const scorecard = scorecardsById[item.instrument.id] ?? scorecardsById[item.instrument.exchangeSymbol];
+      const trend = resolveInstrumentTrend({ scorecard, returns: item.returns });
+      return matchesTrendFilter(trend.direction, trendFilter);
+    });
+  }, [baseFilteredItems, scorecardsById, trendFilter]);
 
   return (
     <div className="space-y-6">
@@ -115,53 +162,59 @@ export function CommodityWorldView() {
       {/* Filter Toolbar */}
       <section
         aria-label={t('hc.cw.filterLabel')}
-        className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4"
+        className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-4 flex flex-col gap-3"
       >
-        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[var(--bg)] border border-[var(--border)] rounded-md">
-          {GROUP_FILTERS.map((group) => {
-            const active = groupFilter === group;
-            return (
-              <button
-                key={group}
-                type="button"
-                onClick={() => setGroupFilter(group)}
-                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
-                  active
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
-                }`}
-              >
-                {group === 'ALL' ? t('hc.cw.all', { n: overview?.commodities.length ?? 21 }) : COMMODITY_GROUP_LABELS_VI[group]}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 text-[var(--faint)] absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('hc.cw.searchPlaceholder')}
-              aria-label={t('hc.cw.searchLabel')}
-              className="w-full sm:w-64 pl-8 pr-3 py-1.5 bg-[var(--bg)] border border-[var(--border)] rounded-md text-xs text-[var(--text-strong)] placeholder:text-[var(--faint)] focus:outline-none focus:border-[var(--accent)]"
-            />
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[var(--bg)] border border-[var(--border)] rounded-md">
+            {GROUP_FILTERS.map((group) => {
+              const active = groupFilter === group;
+              return (
+                <button
+                  key={group}
+                  type="button"
+                  onClick={() => setGroupFilter(group)}
+                  className={`px-3 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+                    active
+                      ? 'bg-[var(--accent)] text-white'
+                      : 'text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
+                  }`}
+                >
+                  {group === 'ALL' ? t('hc.cw.all', { n: overview?.commodities.length ?? 21 }) : COMMODITY_GROUP_LABELS_VI[group]}
+                </button>
+              );
+            })}
           </div>
 
-          <button
-            type="button"
-            onClick={() => setMxvOnly((prev) => !prev)}
-            aria-pressed={mxvOnly}
-            className={`px-3 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
-              mxvOnly
-                ? 'bg-[var(--accent)]/20 border-[var(--accent)] text-[var(--text-strong)]'
-                : 'bg-[var(--bg)] border-[var(--border)] text-[var(--muted)] hover:text-[var(--text-strong)]'
-            }`}
-          >
-            {mxvOnly ? t('hc.cw.mxvOn') : t('hc.cw.mxvOnly')}
-          </button>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-[var(--faint)] absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t('hc.cw.searchPlaceholder')}
+                aria-label={t('hc.cw.searchLabel')}
+                className="w-full sm:w-64 pl-8 pr-3 py-1.5 bg-[var(--bg)] border border-[var(--border)] rounded-md text-xs text-[var(--text-strong)] placeholder:text-[var(--faint)] focus:outline-none focus:border-[var(--accent)]"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMxvOnly((prev) => !prev)}
+              aria-pressed={mxvOnly}
+              className={`px-3 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+                mxvOnly
+                  ? 'bg-[var(--accent)]/20 border-[var(--accent)] text-[var(--text-strong)]'
+                  : 'bg-[var(--bg)] border-[var(--border)] text-[var(--muted)] hover:text-[var(--text-strong)]'
+              }`}
+            >
+              {mxvOnly ? t('hc.cw.mxvOn') : t('hc.cw.mxvOnly')}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-[var(--border)]/60">
+          <TrendDirectionFilter value={trendFilter} onChange={setTrendFilter} counts={trendCounts} />
         </div>
       </section>
 
@@ -189,8 +242,17 @@ export function CommodityWorldView() {
           ))}
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-8 text-center text-sm text-[var(--muted)]">
-          {t('hc.cw.empty')}
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-8 text-center text-sm text-[var(--muted)] space-y-3">
+          <p>{t('hc.cw.empty')}</p>
+          {trendFilter !== 'ALL' && (
+            <button
+              type="button"
+              onClick={() => setTrendFilter('ALL')}
+              className="px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--surface-2)] text-xs font-medium text-[var(--text-strong)] hover:border-[var(--accent)]"
+            >
+              {t('hc.cw.trendEmptyReset')}
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -198,6 +260,8 @@ export function CommodityWorldView() {
             <CommodityWorldCard
               key={item.instrument.id}
               item={item}
+              scorecard={scorecardsById[item.instrument.id] ?? scorecardsById[item.instrument.exchangeSymbol]}
+              lang={lang}
               priority={idx < 6}
               onSelect={() => openInstrumentIn(item.instrument.exchangeSymbol, 'commodity-profile')}
             />
@@ -210,19 +274,24 @@ export function CommodityWorldView() {
 
 function CommodityWorldCard({
   item,
+  scorecard,
+  lang,
   priority,
   onSelect,
 }: {
   item: CommodityCycleSummary;
+  scorecard?: Scorecard;
+  lang: 'vi' | 'en';
   priority: boolean;
   onSelect: () => void;
 }) {
-  const t = useT();
+  const { t } = useI18n();
   const { instrument, quote, cyclePhase, bottomScore, bottomClassification, returns } = item;
   const visual = getCommodityVisual(instrument.id);
   const nameVi = visual?.nameVi ?? instrument.commodityProfile?.vietnameseName ?? instrument.productName;
   const mxvCode = instrument.mxvMapping?.mxvSymbol;
   const m1 = returns.m1;
+  const trend = resolveInstrumentTrend({ scorecard, returns });
   // Change bar: |1M| capped at 30% fills half the track; blue = up, apricot = down.
   const barPct = m1 === null ? 0 : Math.min(Math.abs(m1) / 30, 1) * 50;
   const fmt = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
@@ -249,12 +318,15 @@ function CommodityWorldCard({
         </div>
         <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between gap-3">
           <h3 className="text-base font-semibold text-[var(--text-strong)] tracking-tight truncate min-w-0">{nameVi}</h3>
-          <p
-            title={quote.price === null ? 'DATA_UNAVAILABLE' : undefined}
-            className={`shrink-0 font-semibold tabular-nums text-right ${quote.price !== null ? 'text-base text-[var(--text-strong)]' : 'text-xs text-[var(--text)]/85'}`}
-          >
-            {quote.price !== null ? quote.price.toFixed(2) : t('hc.cw.noPrice')}
-          </p>
+          <div className="shrink-0 flex items-center gap-1.5">
+            <TrendDirectionIcon trend={trend} size="md" />
+            <p
+              title={quote.price === null ? 'DATA_UNAVAILABLE' : undefined}
+              className={`font-semibold tabular-nums text-right ${quote.price !== null ? 'text-base text-[var(--text-strong)]' : 'text-xs text-[var(--text)]/85'}`}
+            >
+              {quote.price !== null ? quote.price.toFixed(2) : t('hc.cw.noPrice')}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -286,8 +358,9 @@ function CommodityWorldCard({
               />
             )}
           </div>
-          <span className={`text-xs font-semibold tabular-nums w-16 text-right ${m1 === null ? 'text-[var(--muted)]' : m1 >= 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>
-            {m1 !== null ? fmt(m1) : '—'}
+          <span className={`inline-flex items-center justify-end gap-0.5 text-xs font-semibold tabular-nums w-20 text-right ${m1 === null ? 'text-[var(--muted)]' : m1 >= 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}>
+            {m1 !== null && (m1 >= 0 ? <ArrowUp className="w-3 h-3 shrink-0" aria-hidden="true" /> : <ArrowDown className="w-3 h-3 shrink-0" aria-hidden="true" />)}
+            <span>{m1 !== null ? fmt(m1) : '—'}</span>
           </span>
         </div>
 
@@ -303,6 +376,9 @@ function CommodityWorldCard({
             <div><dt className="inline text-[var(--faint)]">{t('hc.cw.name')}: </dt><dd className="inline">{instrument.productName}</dd></div>
             <div><dt className="inline text-[var(--faint)]">{t('hc.cw.group')}: </dt><dd className="inline">{visual?.groupVi ?? instrument.category} · {visual?.originTag ?? instrument.exchange}</dd></div>
             <div><dt className="inline text-[var(--faint)]">{t('hc.cw.unit')}: </dt><dd className="inline">{quote.price !== null ? quote.unit : t('hc.cw.noFeed')}</dd></div>
+            {trend.direction !== 'unavailable' && (
+              <div><dt className="inline text-[var(--faint)]">{lang === 'vi' ? 'Xu hướng' : 'Trend'}: </dt><dd className="inline">{lang === 'vi' ? trend.labelVi : trend.labelEn}</dd></div>
+            )}
             <div><dt className="inline text-[var(--faint)]">Bottom Score: </dt><dd className="inline">{bottomScore !== null ? `${bottomScore}/100` : t('hc.cw.unscored')}</dd></div>
             <div><dt className="inline text-[var(--faint)]">{t('hc.cw.change1m')}: </dt><dd className="inline">{m1 !== null ? fmt(m1) : '—'}</dd></div>
             <div><dt className="inline text-[var(--faint)]">{t('hc.cw.supplyDemand')}: </dt><dd className="inline">{item.supplyDemandBias === 'DATA_UNAVAILABLE' ? '—' : item.supplyDemandBias}</dd></div>

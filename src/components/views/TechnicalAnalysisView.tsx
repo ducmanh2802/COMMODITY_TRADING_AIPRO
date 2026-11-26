@@ -8,8 +8,10 @@ import { formatTimestampInZone } from '../../shared/utils/time';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { InstrumentToolbar } from '../common/InstrumentToolbar';
 import { SessionHistoryTable } from '../common/SessionHistoryTable';
-import { fmtFixed, tr, useT } from '../../i18n';
+import { fmtFixed, tr, useI18n } from '../../i18n';
 import { ErrorNote } from '../common/ErrorNote';
+import { InsightBox, ToolPurposeBanner } from '../common/ToolGuideAndInsight';
+import { interpretTechnicalSnapshot } from '../../shared/utils/advancedInsights';
 
 interface TechnicalSnapshotPayload {
   symbol: string;
@@ -85,7 +87,7 @@ function fmt(val: number | null | undefined, digits = 4): string {
 
 export function TechnicalAnalysisView() {
   const { instruments, selectedSymbol, timeframe, datasets, setActiveModule } = useTerminal();
-  const t = useT();
+  const { t, lang } = useI18n();
   const [snapshot, setSnapshot] = useState<TechnicalSnapshotPayload | null>(null);
   const [candles, setCandles] = useState<MarketCandle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,6 +148,8 @@ export function TechnicalAnalysisView() {
         <DataStatusBadge status={snapshot?.status ?? 'UNAVAILABLE'} />
       </div>
 
+      <ToolPurposeBanner toolKey="technical" />
+
       <InstrumentToolbar />
 
       {error && (
@@ -174,6 +178,8 @@ export function TechnicalAnalysisView() {
         </div>
       ) : (
         <>
+          <InsightBox insight={interpretTechnicalSnapshot(snapshot, lang)} testId="ta-insight" />
+
           {/* Regime & Structure Strip */}
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-1">

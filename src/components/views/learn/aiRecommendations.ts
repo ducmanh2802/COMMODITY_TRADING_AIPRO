@@ -313,3 +313,144 @@ export function buildSignalsSignature(
     .join(',');
   return `${language}|S[${sPart}]|P[${pPart}]`;
 }
+
+/**
+ * Stable activity key ignoring search-count ticks (1× → 2×) and contract-count tweaks
+ * so repeated lookups or tab switches reuse cached AI recommendations cleanly.
+ */
+export function buildStableSignalsKey(
+  searched: readonly SearchedCommoditySignalPayload[],
+  openPositions: readonly OpenPositionSignalPayload[],
+  language: LessonRecommendationLanguage
+): string {
+  const sPart = Array.from(
+    new Set(searched.map((s) => normalizeActivitySymbol(s.symbol)).filter(Boolean))
+  )
+    .sort()
+    .join(',');
+  const pPart = Array.from(
+    new Set(
+      openPositions
+        .map((p) => `${normalizeActivitySymbol(p.symbol)}:${p.side}`)
+        .filter((s) => !s.startsWith(':'))
+    )
+  )
+    .sort()
+    .join(',');
+  return `${language}|S[${sPart}]|P[${pPart}]`;
+}
+
+export const AI_REC_CACHE_STORAGE_KEY = 'commodity_ai_lesson_rec_v1';
+export const AI_REC_COOLDOWN_STORAGE_KEY = 'commodity_ai_lesson_rec_cooldown_v1';
+export const AI_REC_CACHE_TTL_MS = 15 * 60_000;
+export const AI_REC_COOLDOWN_MS = 30_000;
+
+interface CachedRecommendationEnvelope {
+  key: string;
+  cachedAt: number;
+  result: import('../../../shared/types/lessonRecommendation').LessonRecommendationResult;
+}
+
+function defaultSessionStorage(): Storage | undefined {
+  try {
+    return typeof window !== 'undefined' ? window.sessionStorage : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function loadCachedAiRecommendation(
+  key: string,
+  storage: Storage | undefined = defaultSessionStorage(),
+  nowMs: number = Date.now()
+): import('../../../shared/types/lessonRecommendation').LessonRecommendationResult | null {
+  if (!storage || !key) return null;
+  try {
+    const raw = storage.getItem(AI_REC_CACHE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<CachedRecommendationEnvelope>;
+    if (
+      parsed.key !== key ||
+      typeof parsed.cachedAt !== 'number' ||
+      nowMs - parsed.cachedAt >= AI_REC_CACHE_TTL_MS ||
+      parsed.result?.status !== 'OK'
+    ) {
+      return null;
+    }
+    return parsed.result;
+  } catch {
+    return null;
+  }
+}
+
+export function saveCachedAiRecommendation(
+  key: string,
+  result: import('../../../shared/types/lessonRecommendation').LessonRecommendationResult,
+  storage: Storage | undefined = defaultSessionStorage(),
+  nowMs: number = Date.now()
+): void {
+  if (!storage || !key || result.status !== 'OK') return;
+  try {
+    const payload: CachedRecommendationEnvelope = { key, cachedAt: nowMs, result };
+    storage.setItem(AI_REC_CACHE_STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    // Ignore storage quota or private-mode failures.
+  }
+}
+
+export function clearCachedAiRecommendation(
+  storage: Storage | undefined = defaultSessionStorage()
+): void {
+  if (!storage) return;
+  try {
+    storage.removeItem(AI_REC_CACHE_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+export function getRateLimitCooldownMs(
+  storage: Storage | undefined = defaultSessionStorage(),
+  nowMs: number = Date.now()
+): number {
+  if (!storage) return 0;
+  try {
+    const raw = storage.getItem(AI_REC_COOLDOWN_STORAGE_KEY);
+    if (!raw) return 0;
+    const until = Number(raw);
+    if (!Number.isFinite(until) || until <= nowMs) {
+      storage.removeItem(AI_REC_COOLDOWN_STORAGE_KEY);
+      return 0;
+    }
+    return until - nowMs;
+  } catch {
+    return 0;
+  }
+}
+
+export function recordRateLimitCooldown(
+  durationMs: number = AI_REC_COOLDOWN_MS,
+  storage: Storage | undefined = defaultSessionStorage(),
+  nowMs: number = Date.now()
+): number {
+  const until = nowMs + Math.max(1000, durationMs);
+  if (storage) {
+    try {
+      storage.setItem(AI_REC_COOLDOWN_STORAGE_KEY, String(until));
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+  return until;
+}
+
+export function clearRateLimitCooldown(
+  storage: Storage | undefined = defaultSessionStorage()
+): void {
+  if (!storage) return;
+  try {
+    storage.removeItem(AI_REC_COOLDOWN_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}

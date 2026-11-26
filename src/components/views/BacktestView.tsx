@@ -5,12 +5,14 @@ import { useTerminal } from '../../contexts/TerminalContext';
 import type { StrategyDefinition, StrategyId } from '../../shared/types/analysis';
 import type { Timeframe } from '../../shared/types/instrument';
 import { formatTimestampInZone } from '../../shared/utils/time';
-import { fmtFixed, fmtNum, hasKey, tr, useT, type TKey } from '../../i18n';
+import { fmtFixed, fmtNum, hasKey, tr, useI18n, type TKey } from '../../i18n';
 import { Badge } from '../ui/Badge';
 import { EquityChart } from '../ui/viz/EquityChart';
 import { MonteCarloSection, StrategyParamsPanel, WalkForwardSection } from './backtest/LabPanels';
 import { defaultsOf, type ParamDef } from './backtest/labGrid';
 import { ErrorNote } from '../common/ErrorNote';
+import { InsightBox, ToolPurposeBanner } from '../common/ToolGuideAndInsight';
+import { interpretBacktestMetrics } from '../../shared/utils/advancedInsights';
 
 type StrategyWithParams = StrategyDefinition & { params?: ParamDef[] };
 type RollMode = 'NONE' | 'CALENDAR' | 'INTERVAL';
@@ -90,7 +92,7 @@ function EquityCurveSvg({ points }: { points: Array<{ equity: number }> }) {
 export function BacktestView() {
   const { instruments, selectedSymbol, setSelectedSymbol, timeframe, setTimeframe, setActiveModule } =
     useTerminal();
-  const t = useT();
+  const { t, lang } = useI18n();
 
   const [strategies, setStrategies] = useState<StrategyWithParams[]>([]);
   const [strategyId, setStrategyId] = useState<StrategyId>('TREND_FOLLOWING');
@@ -193,6 +195,8 @@ export function BacktestView() {
           {t('bt.subtitle')}
         </p>
       </div>
+
+      <ToolPurposeBanner toolKey="backtest" />
 
       <form
         onSubmit={(e) => void handleRun(e)}
@@ -420,6 +424,17 @@ export function BacktestView() {
             </span>
             <span className="text-[var(--faint)]">{t('b2.bt.note')}</span>
           </p>
+          <InsightBox
+            insight={interpretBacktestMetrics(
+              result.metrics,
+              selectedSymbol,
+              hasKey(`trf2.label.${result.strategyId}`)
+                ? t(`trf2.label.${result.strategyId}` as TKey)
+                : strategies.find((s) => s.id === result.strategyId)?.name ?? result.strategyId,
+              lang,
+            )}
+            testId="bt-insight"
+          />
           <section className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 text-xs font-mono tabular-nums">
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
               <span className="text-[var(--text)]/55 font-sans block">{t('bt.netProfit')}</span>

@@ -37,6 +37,7 @@ export const vi = {
   'n2.an.scorecard': 'So sánh các mã',
   'n2.an.cycle': 'Săn chu kỳ',
   'n2.an.report': 'Báo cáo AI',
+  'n2.an.performance': 'Hiệu suất giao dịch',
 
   'n2.in.back': 'Quay lại bảng so sánh',
   'n2.in.pick': 'Chọn mã',
@@ -153,6 +154,7 @@ export const en: Record<keyof typeof vi, string> = {
   'n2.an.scorecard': 'Compare instruments',
   'n2.an.cycle': 'Cycle hunter',
   'n2.an.report': 'AI report',
+  'n2.an.performance': 'Trade performance',
 
   'n2.in.back': 'Back to comparison table',
   'n2.in.pick': 'Pick instrument',

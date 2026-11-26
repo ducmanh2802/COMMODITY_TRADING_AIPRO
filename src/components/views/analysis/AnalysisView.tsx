@@ -17,6 +17,7 @@ import { SpreadsTab } from './SpreadsTab';
 import { VolatilityTab } from './VolatilityTab';
 import { Notice, clearCandleCache, useSeriesOptions } from './shared';
 import { useT, type TKey } from '../../../i18n';
+import { ToolPurposeBanner } from '../../common/ToolGuideAndInsight';
 
 const TABS: readonly { id: 'volatility' | 'correlation' | 'seasonality' | 'spreads' | 'drawdown'; label: TKey }[] = [
   { id: 'volatility', label: 'an.tab.volatility' },
@@ -55,6 +56,8 @@ export default function AnalysisView() {
           <span>{t('an.reload')}</span>
         </button>
       </div>
+
+      <ToolPurposeBanner toolKey="analysis" />
 
       <div role="tablist" ref={tablistRef} onKeyDown={onTablistKeyDown} aria-label={t('an.tabsAria')} className="flex flex-wrap items-center gap-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-1.5 w-fit">
         {TABS.map((tb) => (

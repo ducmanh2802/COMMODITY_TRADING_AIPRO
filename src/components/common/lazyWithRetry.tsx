@@ -11,6 +11,37 @@ interface ModuleErrorBoundaryState {
   error: Error | null;
 }
 
+const CHUNK_RELOAD_KEY = 'ctap.chunkReloadAt';
+const CHUNK_RELOAD_COOLDOWN_MS = 10_000;
+
+function isStaleModuleGraphError(error: Error | null): boolean {
+  if (!error) return false;
+  const msg = error.message || '';
+  return (
+    /Cannot read properties of null \(reading ['"]use(Memo|State|Effect|Callback|Ref|Context|Reducer|LayoutEffect|Id)['"]\)/.test(msg) ||
+    /Failed to fetch dynamically imported module/i.test(msg) ||
+    /Outdated Optimize Dep/i.test(msg) ||
+    /Importing a module script failed/i.test(msg) ||
+    /Loading chunk [\w-]+ failed/i.test(msg)
+  );
+}
+
+function tryAutoReloadOnce(error: Error): boolean {
+  if (!isStaleModuleGraphError(error)) return false;
+  try {
+    const prev = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) || '0');
+    const now = Date.now();
+    if (Number.isFinite(prev) && now - prev < CHUNK_RELOAD_COOLDOWN_MS) {
+      return false;
+    }
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, String(now));
+    window.location.reload();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 class ModuleErrorBoundary extends Component<ModuleErrorBoundaryProps, ModuleErrorBoundaryState> {
   state: ModuleErrorBoundaryState = { error: null };
 
@@ -20,10 +51,12 @@ class ModuleErrorBoundary extends Component<ModuleErrorBoundaryProps, ModuleErro
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
     console.error('Module load error:', error, info);
+    tryAutoReloadOnce(error);
   }
 
   render(): React.ReactNode {
     if (this.state.error) {
+      const staleGraph = isStaleModuleGraphError(this.state.error);
       return (
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 max-w-lg mx-auto my-8 space-y-4">
           <div className="flex items-center gap-2.5 text-[var(--warning)]">
@@ -43,6 +76,10 @@ class ModuleErrorBoundary extends Component<ModuleErrorBoundaryProps, ModuleErro
             <button
               type="button"
               onClick={() => {
+                if (staleGraph) {
+                  window.location.reload();
+                  return;
+                }
                 this.setState({ error: null });
                 this.props.onRetry();
               }}

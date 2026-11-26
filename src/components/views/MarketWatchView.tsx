@@ -7,10 +7,19 @@ import { EmptyState } from '../ui/EmptyState';
 import { useTerminal } from '../../contexts/TerminalContext';
 import type { ProductCategory } from '../../shared/types/instrument';
 import type { CommodityCycleSummary, CycleMarketOverview } from '../../shared/types/cycle';
+import type { Scorecard, ScorecardListResponse } from '../../shared/types/scorecard';
 import { formatTimestampInZone } from '../../shared/utils/time';
 import { fetchJsonWithRetry } from '../../shared/utils/http';
 import { sortCommoditiesByPotential } from '../../shared/utils/commoditySort';
+import {
+  countTrendDirections,
+  matchesTrendFilter,
+  resolveInstrumentTrend,
+  type TrendFilter,
+} from '../../shared/utils/trendDirection';
 import { DataStatusBadge } from '../common/DataStatusBadge';
+import { TrendDirectionIcon } from '../common/TrendDirectionIcon';
+import { TrendDirectionFilter } from '../common/TrendDirectionFilter';
 import { fmtNum, useT } from '../../i18n';
 import { fmtPrice, friendlyQuoteReason, hasPrice, plainUnit } from '../common/quoteFormat';
 
@@ -35,7 +44,9 @@ export function MarketWatchView() {
   } = useTerminal();
   const t = useT();
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | ProductCategory>('ALL');
+  const [trendFilter, setTrendFilter] = useState<TrendFilter>('ALL');
   const [cycleOverview, setCycleOverview] = useState<CycleMarketOverview | null>(null);
+  const [scorecardList, setScorecardList] = useState<Scorecard[]>([]);
 
   const pricedCount = useMemo(
     () => Object.values(quotesBySymbol).filter((q) => hasPrice(q)).length,
@@ -44,28 +55,36 @@ export function MarketWatchView() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchJsonWithRetry<CycleMarketOverview>('/api/cycle/overview', { signal: controller.signal })
-      .then((json) => {
-        if (!controller.signal.aborted) setCycleOverview(json);
-      })
-      .catch(() => {
-        // Fail-soft: table falls back to price-first + MVX sorting when cycle overview is unavailable
-      });
+    Promise.allSettled([
+      fetchJsonWithRetry<CycleMarketOverview>('/api/cycle/overview', { signal: controller.signal }),
+      fetchJsonWithRetry<ScorecardListResponse>('/api/scorecard', { signal: controller.signal }),
+    ]).then(([cycleRes, scoreRes]) => {
+      if (controller.signal.aborted) return;
+      if (cycleRes.status === 'fulfilled') setCycleOverview(cycleRes.value);
+      if (scoreRes.status === 'fulfilled' && Array.isArray(scoreRes.value?.scorecards)) {
+        setScorecardList(scoreRes.value.scorecards);
+      }
+    });
     return () => controller.abort();
   }, [datasets.length, pricedCount]);
 
-  const { rankById, summaryById } = useMemo(() => {
+  const { rankById, summaryById, scorecardById } = useMemo(() => {
     const ranks = new Map<string, number>();
     const summaries = new Map<string, CommodityCycleSummary>();
+    const scorecards = new Map<string, Scorecard>();
     const sorted = sortCommoditiesByPotential(cycleOverview?.commodities ?? []);
     sorted.forEach((item, index) => {
       ranks.set(item.instrument.id, index);
       summaries.set(item.instrument.id, item);
     });
-    return { rankById: ranks, summaryById: summaries };
-  }, [cycleOverview]);
+    for (const sc of scorecardList) {
+      scorecards.set(sc.instrumentId, sc);
+      scorecards.set(sc.exchangeSymbol, sc);
+    }
+    return { rankById: ranks, summaryById: summaries, scorecardById: scorecards };
+  }, [cycleOverview, scorecardList]);
 
-  const filtered = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const list = instruments.filter((inst) => {
       if (marketScope === 'MXV' && !inst.isMvxListed) return false;
@@ -90,6 +109,37 @@ export function MarketWatchView() {
       return a.exchangeSymbol.localeCompare(b.exchangeSymbol);
     });
   }, [instruments, marketScope, categoryFilter, searchQuery, rankById, quotesBySymbol]);
+
+  const trendByInstId = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof resolveInstrumentTrend>>();
+    for (const inst of baseFiltered) {
+      const quote = quotesBySymbol[inst.exchangeSymbol];
+      const cycleSummary = summaryById.get(inst.id);
+      const scorecard = scorecardById.get(inst.id) ?? scorecardById.get(inst.exchangeSymbol);
+      map.set(
+        inst.id,
+        resolveInstrumentTrend({
+          scorecard,
+          returns: cycleSummary?.returns,
+          changePct: quote?.changePct ?? null,
+        })
+      );
+    }
+    return map;
+  }, [baseFiltered, quotesBySymbol, summaryById, scorecardById]);
+
+  const trendCounts = useMemo(
+    () => countTrendDirections(Array.from(trendByInstId.values()).map((tr) => tr.direction)),
+    [trendByInstId]
+  );
+
+  const filtered = useMemo(() => {
+    if (trendFilter === 'ALL') return baseFiltered;
+    return baseFiltered.filter((inst) => {
+      const trend = trendByInstId.get(inst.id);
+      return matchesTrendFilter(trend?.direction ?? 'unavailable', trendFilter);
+    });
+  }, [baseFiltered, trendByInstId, trendFilter]);
 
   return (
     <div className="space-y-5">
@@ -117,22 +167,26 @@ export function MarketWatchView() {
           </div>
         }
       />
-      {/* Category Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-1 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-1 w-fit max-w-full">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            type="button"
-            onClick={() => setCategoryFilter(cat)}
-            className={`h-8 px-3.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
-              categoryFilter === cat
-                ? 'bg-[var(--accent)] text-white shadow-sm'
-                : 'text-[var(--text)]/70 hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
-            }`}
-          >
-            {t(`dash.cat.${cat}`)}
-          </button>
-        ))}
+      {/* Category & Trend Filter Tabs */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-1 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] p-1 w-fit max-w-full">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setCategoryFilter(cat)}
+              className={`h-8 px-3.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
+                categoryFilter === cat
+                  ? 'bg-[var(--accent)] text-white shadow-sm'
+                  : 'text-[var(--text)]/70 hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
+              }`}
+            >
+              {t(`dash.cat.${cat}`)}
+            </button>
+          ))}
+        </div>
+
+        <TrendDirectionFilter value={trendFilter} onChange={setTrendFilter} counts={trendCounts} />
       </div>
 
       {/* High-Density Market Watch Data Grid */}
@@ -172,13 +226,35 @@ export function MarketWatchView() {
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={12} className="p-4">
-                    <EmptyState title={t('dash.mw.noMatch')} icon={<SearchX className="w-6 h-6" aria-hidden="true" />} />
+                    <EmptyState
+                      title={t('dash.mw.noMatch')}
+                      icon={<SearchX className="w-6 h-6" aria-hidden="true" />}
+                      action={
+                        trendFilter !== 'ALL' ? (
+                          <button
+                            type="button"
+                            onClick={() => setTrendFilter('ALL')}
+                            className="mt-1 px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--surface-2)] text-xs font-medium text-[var(--text-strong)] hover:border-[var(--accent)]"
+                          >
+                            {t('hc.cw.trendEmptyReset')}
+                          </button>
+                        ) : undefined
+                      }
+                    />
                   </td>
                 </tr>
               ) : (
                 filtered.map((inst) => {
                   const quote = quotesBySymbol[inst.exchangeSymbol];
                   const cycleSummary = summaryById.get(inst.id);
+                  const scorecard = scorecardById.get(inst.id) ?? scorecardById.get(inst.exchangeSymbol);
+                  const trend =
+                    trendByInstId.get(inst.id) ??
+                    resolveInstrumentTrend({
+                      scorecard,
+                      returns: cycleSummary?.returns,
+                      changePct: quote?.changePct ?? null,
+                    });
                   return (
                     <tr key={inst.id} className="hover:bg-[var(--surface-2)]/50 transition-colors">
                       <td className="py-3 px-3 sm:px-4 md:whitespace-nowrap">
@@ -222,13 +298,19 @@ export function MarketWatchView() {
                       <td className="py-2.5 px-2 md:px-3 text-right tabular-nums md:whitespace-nowrap max-w-[9rem] md:max-w-none">
                         {hasPrice(quote) ? (
                           <>
-                            <div className="text-sm font-semibold text-[var(--text-strong)]">{fmtPrice(quote.price)}</div>
+                            <div className="inline-flex items-center justify-end gap-1.5 text-sm font-semibold text-[var(--text-strong)]">
+                              <TrendDirectionIcon trend={trend} size="sm" />
+                              <span>{fmtPrice(quote.price)}</span>
+                            </div>
                             <div className="text-[11px] text-[var(--text)]/50">{plainUnit(t, quote)}</div>
                           </>
                         ) : (
-                          <span className="text-[var(--text)]/45" title={`${friendlyQuoteReason(t, quote) ?? t('fr.status.UNAVAILABLE.desc')}${quote?.statusReason ? ` (${quote.statusReason})` : ''}`}>
-                            {t('fr.status.UNAVAILABLE')}
-                          </span>
+                          <div className="inline-flex items-center justify-end gap-1.5">
+                            <TrendDirectionIcon trend={trend} size="sm" showFlat={false} />
+                            <span className="text-[var(--text)]/45" title={`${friendlyQuoteReason(t, quote) ?? t('fr.status.UNAVAILABLE.desc')}${quote?.statusReason ? ` (${quote.statusReason})` : ''}`}>
+                              {t('fr.status.UNAVAILABLE')}
+                            </span>
+                          </div>
                         )}
                       </td>
                       <td className="hidden md:table-cell py-2.5 px-3 text-right tabular-nums text-[var(--text)]/70 whitespace-nowrap">

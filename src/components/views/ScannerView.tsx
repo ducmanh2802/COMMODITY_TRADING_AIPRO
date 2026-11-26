@@ -4,9 +4,11 @@ import { useTerminal } from '../../contexts/TerminalContext';
 import type { TradeScannerOpportunity } from '../../shared/types/analysis';
 import type { ExchangeCode, ProductCategory, Timeframe, TradingStyle } from '../../shared/types/instrument';
 import { DataStatusBadge } from '../common/DataStatusBadge';
-import { fmtFixed, useT } from '../../i18n';
+import { fmtFixed, useI18n } from '../../i18n';
 import { toUserError, type UserError } from '../common/friendlyError';
 import { ErrorNote } from '../common/ErrorNote';
+import { InsightBox, ToolPurposeBanner } from '../common/ToolGuideAndInsight';
+import { interpretScannerSummary } from '../../shared/utils/advancedInsights';
 
 interface ScannerApiResponse {
   scannedAt: string;
@@ -18,7 +20,7 @@ interface ScannerApiResponse {
 
 export function ScannerView() {
   const { instruments, timeframe, tradingStyle, openInstrumentIn } = useTerminal();
-  const t = useT();
+  const { t, lang } = useI18n();
 
   const [category, setCategory] = useState<'ALL' | ProductCategory>('ALL');
   const [exchange, setExchange] = useState<'ALL' | ExchangeCode>('ALL');
@@ -72,6 +74,8 @@ export function ScannerView() {
           {t('scan.subtitle', { n: instruments.length })}
         </p>
       </div>
+
+      <ToolPurposeBanner toolKey="scanner" />
 
       {/* Scanner Configuration Bar */}
       <form
@@ -215,6 +219,16 @@ export function ScannerView() {
 
       {result && (
         <div className="space-y-6">
+          <InsightBox
+            insight={interpretScannerSummary(
+              result.opportunities,
+              result.unavailableInstruments.length,
+              result.tradingStyle,
+              result.timeframe,
+              lang,
+            )}
+            testId="scan-insight"
+          />
           <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
               <h2 className="text-sm font-semibold text-[var(--text-strong)]">

@@ -30,6 +30,7 @@ const InstrumentOverview = lazyWithRetry<typeof import('../instrument/Instrument
   'InstrumentOverview'
 );
 const DomesticPricesPanel = lazyWithRetry(() => import('../domestic/DomesticPricesPanel'), (m) => m.DomesticPricesPanel, undefined, 'DomesticPricesPanel');
+const TradePerformanceChart = lazyWithRetry(() => import('../analysis/TradePerformanceChart'), (m) => m.TradePerformanceChart, undefined, 'TradePerformanceChart');
 
 interface HubProps {
   tab?: string;
@@ -150,6 +151,7 @@ export function AnalysisHub({ tab }: HubProps) {
           note: '',
           render: () => <LegacyModule id="scorecard" onOpenInstrument={(s) => openInstrumentIn(s, 'instrument')} />,
         },
+        { id: 'performance', label: t('n2.an.performance'), note: '', render: () => <TradePerformanceChart /> },
         { id: 'report', label: t('n2.an.report'), note: '', render: () => <LegacyModule id="research-report" /> },
       ]}
     />

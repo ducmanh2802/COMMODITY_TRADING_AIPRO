@@ -60,4 +60,5 @@ export interface LessonRecommendationRequest {
   openPositions: OpenPositionSignalPayload[];
   candidates: CandidateLessonSummary[];
   maxResults?: number;
+  forceRefresh?: boolean;
 }

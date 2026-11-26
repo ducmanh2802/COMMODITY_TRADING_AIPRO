@@ -13,7 +13,9 @@ import {
   realizedVolatility,
 } from '../../../shared/analytics';
 import { CHART_COLORS, type ChartLine, TimeSeriesChart } from './TimeSeriesChart';
-import { fmtFixed, fmtNum as fmtLocaleNum, useT } from '../../../i18n';
+import { fmtFixed, fmtNum as fmtLocaleNum, useI18n } from '../../../i18n';
+import { InsightBox } from '../../common/ToolGuideAndInsight';
+import { interpretVolatilitySnapshot } from '../../../shared/utils/advancedInsights';
 import {
   Notice,
   NumberField,
@@ -33,7 +35,7 @@ import {
 const pctFmt = (v: number) => `${fmtFixed(v, 1)}%`;
 
 export function VolatilityTab({ options }: { options: SeriesOption[] }) {
-  const t = useT();
+  const { t, lang } = useI18n();
   const byKey = useOptionMap(options);
   const [key, setKey] = useState('');
   const [windowLen, setWindowLen] = useState(20);
@@ -111,6 +113,18 @@ export function VolatilityTab({ options }: { options: SeriesOption[] }) {
 
       {results && (
         <>
+          <InsightBox
+            insight={interpretVolatilitySnapshot(
+              {
+                label: option?.label ?? key,
+                realizedAnn: results.realized.status === 'OK' ? (latestValue(results.realized.timestamps, results.realized.values)?.v ?? null) : null,
+                parkinsonAnn: results.parkinson.status === 'OK' ? (latestValue(results.parkinson.timestamps, results.parkinson.values)?.v ?? null) : null,
+                atrPct: results.atr.status === 'OK' ? (latestValue(results.atr.timestamps, results.atr.values)?.v ?? null) : null,
+              },
+              lang,
+            )}
+            testId="vol-insight"
+          />
           <Panel title={t('an.vol.latest')} subtitle={t('an.vol.latestSub', { w: windowLen, af: Number.isFinite(af) ? af : '—' })}>
             <div className="overflow-x-auto" tabIndex={0}>
               <table className="w-full text-left text-xs min-w-[560px]">

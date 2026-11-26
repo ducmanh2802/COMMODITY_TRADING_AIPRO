@@ -4,9 +4,11 @@ import type { StrategyDefinition } from '../../shared/types/analysis';
 import type { DataQualityStatus } from '../../shared/types/market';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { InstrumentToolbar } from '../common/InstrumentToolbar';
-import { fmtFixed, useT } from '../../i18n';
+import { fmtFixed, useI18n } from '../../i18n';
 import { toUserError, type UserError } from '../common/friendlyError';
 import { ErrorNote } from '../common/ErrorNote';
+import { InsightBox, ToolPurposeBanner } from '../common/ToolGuideAndInsight';
+import { interpretSignalsSummary } from '../../shared/utils/advancedInsights';
 
 interface DeterministicSignalPayload {
   strategyId: string;
@@ -26,7 +28,7 @@ interface DeterministicSignalPayload {
 
 export function SignalsView() {
   const { selectedSymbol, timeframe, datasets, setActiveModule } = useTerminal();
-  const t = useT();
+  const { t, lang } = useI18n();
   const [strategies, setStrategies] = useState<Array<StrategyDefinition & { minCandlesRequired: number }>>([]);
   const [signals, setSignals] = useState<DeterministicSignalPayload[]>([]);
   const [dataStatus, setDataStatus] = useState<DataQualityStatus>('UNAVAILABLE');
@@ -79,6 +81,8 @@ export function SignalsView() {
         <DataStatusBadge status={dataStatus} />
       </div>
 
+      <ToolPurposeBanner toolKey="signals" />
+
       <InstrumentToolbar />
 
       {error && (
@@ -99,7 +103,9 @@ export function SignalsView() {
             {t('sig.none')}
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <InsightBox insight={interpretSignalsSummary(signals, selectedSymbol, timeframe, lang)} testId="sig-insight" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {signals.map((sig) => {
               const statusColor =
                 sig.confirmationStatus === 'CONFIRMED'
@@ -166,6 +172,7 @@ export function SignalsView() {
                 </div>
               );
             })}
+            </div>
           </div>
         )}
       </section>

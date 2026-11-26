@@ -21,9 +21,11 @@ import {
   useLoadedSeries,
   useOptionMap,
 } from './shared';
-import { fmtFixed, fmtInt, useT } from '../../../i18n';
+import { fmtFixed, fmtInt, useI18n } from '../../../i18n';
 import { SeasonalWindowCard } from './SeasonalWindowCard';
 import { ChartTooltip, useChartTooltip } from '../../ui/viz/ChartTooltip';
+import { InsightBox } from '../../common/ToolGuideAndInsight';
+import { interpretSeasonalityMonths } from '../../../shared/utils/advancedInsights';
 
 const MONTH_NUMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 const MONTH_START_IDX = [1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336];
@@ -92,7 +94,7 @@ function PathChart({ path }: { path: PathPoint[] }) {
 }
 
 export function SeasonalityTab({ options }: { options: SeriesOption[] }) {
-  const t = useT();
+  const { t, lang } = useI18n();
   const byKey = useOptionMap(options);
   const [key, setKey] = useState('');
   const [minYears, setMinYears] = useState(5);
@@ -174,6 +176,10 @@ export function SeasonalityTab({ options }: { options: SeriesOption[] }) {
 
           {res.status === 'OK' && (
             <>
+              <InsightBox
+                insight={interpretSeasonalityMonths(res.months, option?.label ?? key, minYears, lang)}
+                testId="seas-insight"
+              />
               <Panel title={t('an.seas.stats')}>
                 <div className="overflow-x-auto" tabIndex={0}>
                   <table className="w-full text-xs font-mono min-w-[640px]">

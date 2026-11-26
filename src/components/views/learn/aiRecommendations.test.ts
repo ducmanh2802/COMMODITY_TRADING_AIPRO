@@ -2,10 +2,18 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { INITIAL_INSTRUMENTS } from '../../../../server/data/instruments.ts';
 import {
+  AI_REC_CACHE_TTL_MS,
   buildDirectFallbackRecommendations,
   buildSignalsSignature,
+  buildStableSignalsKey,
+  clearCachedAiRecommendation,
+  clearRateLimitCooldown,
+  getRateLimitCooldownMs,
+  loadCachedAiRecommendation,
   normalizeOpenPositions,
   rankCandidateLessons,
+  recordRateLimitCooldown,
+  saveCachedAiRecommendation,
 } from './aiRecommendations.ts';
 import { CURRICULUM } from './curriculum/index.ts';
 import type { LearnProgress } from './progress.ts';
@@ -146,4 +154,56 @@ test('buildDirectFallbackRecommendations produces factual fallback items and det
   const sig1 = buildSignalsSignature(searched, openPositions, 'vi');
   const sig2 = buildSignalsSignature(searched, openPositions, 'vi');
   assert.equal(sig1, sig2);
+});
+
+test('buildStableSignalsKey ignores search count bumps and sessionStorage cache/cooldown respect TTL', () => {
+  const k1 = buildStableSignalsKey(
+    [{ symbol: 'RC', name: 'Robusta', count: 1 }],
+    [{ symbol: 'ZC', name: 'Corn', side: 'LONG', contracts: 1 }],
+    'vi'
+  );
+  const k2 = buildStableSignalsKey(
+    [{ symbol: 'ICE:RC', name: 'Robusta', count: 7 }],
+    [{ symbol: 'CBOT:ZC', name: 'Corn', side: 'LONG', contracts: 5 }],
+    'vi'
+  );
+  assert.equal(k1, k2);
+
+  const map = new Map<string, string>();
+  const mockStorage = {
+    get length() {
+      return map.size;
+    },
+    clear: () => map.clear(),
+    key: (i: number) => Array.from(map.keys())[i] ?? null,
+    getItem: (k: string) => map.get(k) ?? null,
+    setItem: (k: string, v: string) => {
+      map.set(k, v);
+    },
+    removeItem: (k: string) => {
+      map.delete(k);
+    },
+  } as Storage;
+
+  const sampleResult = {
+    status: 'OK' as const,
+    headline: 'Cached headline',
+    recommendations: [],
+    generatedAt: '2026-11-26T00:00:00.000Z',
+    language: 'vi' as const,
+  };
+  saveCachedAiRecommendation(k1, sampleResult, mockStorage, 10_000);
+  assert.deepEqual(loadCachedAiRecommendation(k1, mockStorage, 20_000), sampleResult);
+  assert.equal(loadCachedAiRecommendation('other-key', mockStorage, 20_000), null);
+  assert.equal(loadCachedAiRecommendation(k1, mockStorage, 10_000 + AI_REC_CACHE_TTL_MS), null);
+
+  clearCachedAiRecommendation(mockStorage);
+  assert.equal(loadCachedAiRecommendation(k1, mockStorage, 20_000), null);
+
+  recordRateLimitCooldown(15_000, mockStorage, 50_000);
+  assert.equal(getRateLimitCooldownMs(mockStorage, 55_000), 10_000);
+  assert.equal(getRateLimitCooldownMs(mockStorage, 66_000), 0);
+  recordRateLimitCooldown(15_000, mockStorage, 70_000);
+  clearRateLimitCooldown(mockStorage);
+  assert.equal(getRateLimitCooldownMs(mockStorage, 71_000), 0);
 });

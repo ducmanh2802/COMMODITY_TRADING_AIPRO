@@ -70,6 +70,7 @@ export default defineConfig(() => {
       },
     ],
     resolve: {
+      dedupe: ['react', 'react-dom'],
       alias: {
         '@': path.resolve(import.meta.dirname, '.'),
       },
@@ -118,7 +119,7 @@ export default defineConfig(() => {
               },
               {
                 name: 'vendor-charts',
-                test: /[\\/]node_modules[\\/]lightweight-charts[\\/]/,
+                test: /[\\/]node_modules[\\/](lightweight-charts|recharts)[\\/]/,
                 priority: 44,
               },
               {
@@ -137,7 +138,7 @@ export default defineConfig(() => {
       },
     },
     optimizeDeps: {
-      include: ['lightweight-charts', 'lucide-react', 'zod'],
+      include: ['react', 'react-dom', 'react/jsx-runtime', 'recharts', 'lightweight-charts', 'lucide-react', 'zod'],
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

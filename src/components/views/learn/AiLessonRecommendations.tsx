@@ -16,10 +16,17 @@ import {
 import { Card } from '../../ui/Card';
 import { usePaperStore } from '../papertrade/usePaperStore';
 import {
+  AI_REC_COOLDOWN_MS,
   buildDirectFallbackRecommendations,
-  buildSignalsSignature,
+  buildStableSignalsKey,
+  clearCachedAiRecommendation,
+  clearRateLimitCooldown,
+  getRateLimitCooldownMs,
+  loadCachedAiRecommendation,
   normalizeOpenPositions,
   rankCandidateLessons,
+  recordRateLimitCooldown,
+  saveCachedAiRecommendation,
   toSearchedSignalPayloads,
   type ManualOpenPositionInput,
 } from './aiRecommendations';
@@ -43,8 +50,9 @@ export function AiLessonRecommendations({
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<LessonRecommendationResult | null>(null);
   const [networkError, setNetworkError] = useState(false);
+  const [cooldownSec, setCooldownSec] = useState(() => Math.ceil(getRateLimitCooldownMs() / 1000));
 
-  const lastFetchedSignatureRef = useRef<string | null>(null);
+  const lastFetchedKeyRef = useRef<string | null>(null);
   const requestSeqRef = useRef(0);
   const activeAbortRef = useRef<AbortController | null>(null);
 
@@ -129,8 +137,8 @@ export function AiLessonRecommendations({
     [hasSignals, progress, instruments, searchedPayloads, openPositions]
   );
 
-  const signature = useMemo(
-    () => buildSignalsSignature(searchedPayloads, openPositions, language),
+  const stableKey = useMemo(
+    () => buildStableSignalsKey(searchedPayloads, openPositions, language),
     [searchedPayloads, openPositions, language]
   );
 
@@ -142,61 +150,130 @@ export function AiLessonRecommendations({
 
   const bookmarkedSet = useMemo(() => new Set(bookmarked), [bookmarked]);
 
-  const fetchRecommendations = useCallback(async () => {
-    if (!hasSignals || candidates.length === 0) return;
+  useEffect(() => {
+    if (cooldownSec <= 0) return;
+    const id = window.setInterval(() => {
+      const rem = Math.ceil(getRateLimitCooldownMs() / 1000);
+      setCooldownSec(rem);
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [cooldownSec]);
 
-    activeAbortRef.current?.abort();
-    const controller = new AbortController();
-    activeAbortRef.current = controller;
-    const seq = ++requestSeqRef.current;
+  const fetchRecommendations = useCallback(
+    async (forceRefresh = false) => {
+      if (!hasSignals || candidates.length === 0) return;
 
-    lastFetchedSignatureRef.current = signature;
-    setLoading(true);
-    setNetworkError(false);
-
-    try {
-      const res = await fetch('/api/ai/recommend-lessons', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          language,
-          searchedCommodities: searchedPayloads,
-          openPositions,
-          candidates,
-          maxResults: 4,
-        }),
-      });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+      if (!forceRefresh) {
+        const cached = loadCachedAiRecommendation(stableKey);
+        if (cached) {
+          lastFetchedKeyRef.current = stableKey;
+          setNetworkError(false);
+          setResult(cached);
+          return;
+        }
+        const remainingMs = getRateLimitCooldownMs();
+        if (remainingMs > 0) {
+          lastFetchedKeyRef.current = stableKey;
+          setCooldownSec(Math.ceil(remainingMs / 1000));
+          setNetworkError(false);
+          setResult({
+            status: 'UNAVAILABLE',
+            unavailableReason: 'MODEL_RATE_LIMITED',
+            headline: '',
+            recommendations: [],
+            generatedAt: new Date().toISOString(),
+            language,
+          });
+          return;
+        }
+      } else {
+        clearCachedAiRecommendation();
       }
-      const data = (await res.json()) as { result: LessonRecommendationResult };
-      if (seq !== requestSeqRef.current) return;
-      setResult(data.result);
-    } catch (err) {
-      if (controller.signal.aborted || seq !== requestSeqRef.current) return;
-      if ((err as { name?: string })?.name === 'AbortError') return;
-      setNetworkError(true);
-      setResult(null);
-    } finally {
-      if (seq === requestSeqRef.current) {
-        setLoading(false);
+
+      activeAbortRef.current?.abort();
+      const controller = new AbortController();
+      activeAbortRef.current = controller;
+      const seq = ++requestSeqRef.current;
+
+      lastFetchedKeyRef.current = stableKey;
+      setLoading(true);
+      setNetworkError(false);
+
+      try {
+        const res = await fetch('/api/ai/recommend-lessons', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            language,
+            searchedCommodities: searchedPayloads,
+            openPositions,
+            candidates,
+            maxResults: 4,
+            ...(forceRefresh ? { forceRefresh: true } : {}),
+          }),
+        });
+        if (res.status === 429) {
+          if (seq !== requestSeqRef.current) return;
+          recordRateLimitCooldown(AI_REC_COOLDOWN_MS);
+          setCooldownSec(Math.ceil(AI_REC_COOLDOWN_MS / 1000));
+          setResult({
+            status: 'UNAVAILABLE',
+            unavailableReason: 'MODEL_RATE_LIMITED',
+            headline: '',
+            recommendations: [],
+            generatedAt: new Date().toISOString(),
+            language,
+          });
+          return;
+        }
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = (await res.json()) as { result: LessonRecommendationResult };
+        if (seq !== requestSeqRef.current) return;
+        if (data.result.status === 'OK') {
+          clearRateLimitCooldown();
+          setCooldownSec(0);
+          saveCachedAiRecommendation(stableKey, data.result);
+        } else if (data.result.unavailableReason === 'MODEL_RATE_LIMITED') {
+          recordRateLimitCooldown(AI_REC_COOLDOWN_MS);
+          setCooldownSec(Math.ceil(AI_REC_COOLDOWN_MS / 1000));
+        }
+        setResult(data.result);
+      } catch (err) {
+        if (controller.signal.aborted || seq !== requestSeqRef.current) return;
+        if ((err as { name?: string })?.name === 'AbortError') return;
+        setNetworkError(true);
+        setResult(null);
+      } finally {
+        if (seq === requestSeqRef.current) {
+          setLoading(false);
+        }
       }
-    }
-  }, [hasSignals, candidates, signature, language, searchedPayloads, openPositions]);
+    },
+    [hasSignals, candidates, stableKey, language, searchedPayloads, openPositions]
+  );
 
   // Auto-fetch recommendations when signals appear or change, once server health reports Gemini availability.
   useEffect(() => {
     if (!hasSignals) {
-      lastFetchedSignatureRef.current = null;
+      lastFetchedKeyRef.current = null;
       setResult(null);
       setNetworkError(false);
       return;
     }
+    const cached = loadCachedAiRecommendation(stableKey);
+    if (cached) {
+      lastFetchedKeyRef.current = stableKey;
+      setNetworkError(false);
+      setResult(cached);
+      return;
+    }
     if (!health?.capabilities.geminiServerKeyConfigured) return;
-    if (lastFetchedSignatureRef.current === signature) return;
-    void fetchRecommendations();
-  }, [hasSignals, health, signature, fetchRecommendations]);
+    if (lastFetchedKeyRef.current === stableKey) return;
+    void fetchRecommendations(false);
+  }, [hasSignals, health, stableKey, fetchRecommendations]);
 
   useEffect(() => {
     return () => {
@@ -254,8 +331,8 @@ export function AiLessonRecommendations({
           <button
             type="button"
             data-testid="ai-recommend-btn"
-            disabled={loading}
-            onClick={() => void fetchRecommendations()}
+            disabled={loading || cooldownSec > 0}
+            onClick={() => void fetchRecommendations(true)}
             className="min-h-8 px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--surface-2)] text-xs font-medium text-[var(--text-strong)] hover:border-[var(--accent)] disabled:opacity-60 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors"
           >
             {loading ? (
@@ -263,7 +340,11 @@ export function AiLessonRecommendations({
             ) : (
               <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
             )}
-            {result ? t('ac.aiRec.refresh') : t('ac.aiRec.fetch')}
+            {cooldownSec > 0
+              ? t('ac.aiRec.retryCooldown', { s: cooldownSec })
+              : result
+                ? t('ac.aiRec.refresh')
+                : t('ac.aiRec.fetch')}
           </button>
         )}
       </div>

@@ -34,8 +34,8 @@ export const YAHOO_CONTRACT_LABEL = 'CONTINUOUS (front month as defined by Yahoo
 export const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart/';
 /** Batch endpoint: one request returns 1m closes for many symbols (no crumb needed; no exchange metadata). */
 export const YAHOO_SPARK_BASE = 'https://query1.finance.yahoo.com/v8/finance/spark';
-/** Max |spark last - chart regularMarketPrice| / chart before a quote is refused as INVALID. */
-const YAHOO_CROSSCHECK_MAX_DEVIATION = 0.02;
+/** Max |spark last - chart regularMarketPrice| / chart before a quote is refused as INVALID (6% allows continuous futures contract-roll spreads while catching severe/unit anomalies). */
+const YAHOO_CROSSCHECK_MAX_DEVIATION = 0.06;
 /** Generic client identification; contains no personal or project information. */
 export const YAHOO_USER_AGENT = 'Mozilla/5.0 (compatible; market-data-client/1.0)';
 /** Margin added on top of the exchange delay before a quote is considered STALE. */
@@ -418,8 +418,8 @@ export class YahooFinanceAdapter implements MarketDataProvider {
   /**
    * One spark request refreshes every supported symbol. Price = last non-null 1m close, timestamp = that
    * bar's time. Exchange/currency are validated through chart metadata at most once per metaTtlMs; when
-   * the chart is fetched in the same cycle its regularMarketPrice cross-checks the spark price (>2%
-   * apart => refused as INVALID and logged). Concurrent callers share one in-flight refresh. On any batch
+   * the chart is fetched in the same cycle its regularMarketPrice cross-checks the spark price (>6%
+   * apart => refused as INVALID). Concurrent callers share one in-flight refresh. On any batch
    * failure the caller falls back to the per-symbol chart path.
    */
   refreshQuotesBatch(): Promise<void> {
@@ -504,7 +504,6 @@ export class YahooFinanceAdapter implements MarketDataProvider {
         const dev = Math.abs(last.price - chartPrice) / chartPrice;
         if (dev > YAHOO_CROSSCHECK_MAX_DEVIATION) {
           const reason = `Yahoo ${sym} cross-check failed: spark ${last.price} vs chart ${chartPrice} (${(dev * 100).toFixed(1)}% apart); refused.`;
-          console.warn(`[yahoo] ${reason}`);
           this.lastError = reason;
           this.refused.set(sym, { reason, expiresAtMs: this.now() + this.quoteTtlMs });
           this.quoteCache.delete(sym);

@@ -556,13 +556,15 @@ test('batch: one spark request refreshes all symbols; metadata validated once an
   });
 });
 
-test('batch: spark vs chart deviation >2% is INVALID (no price), within tolerance is accepted', async () => {
+test('batch: spark vs chart deviation >6% is INVALID (no price), within tolerance is accepted', async () => {
   await withEnv({ YAHOO_ENABLED: 'true' }, async () => {
-    const bad = sparkHarness({ chartPrice: 500 }); // spark 450.5 vs 500 = ~10%
+    const bad = sparkHarness({ chartPrice: 500 }); // spark 450.5 vs 500 = ~9.9%
     const q = await new YahooFinanceAdapter(bad.options).getQuote('ZC');
     assert.equal(q.status, 'INVALID');
     assert.equal(q.price, null);
     assert.match(q.statusReason ?? '', /cross-check/);
+    const roll = sparkHarness({ chartPrice: 433 }); // ~4.0% continuous futures roll spread
+    assert.equal((await new YahooFinanceAdapter(roll.options).getQuote('ZC')).price, 450.5);
     const ok = sparkHarness({ chartPrice: 452 }); // 0.3%
     assert.equal((await new YahooFinanceAdapter(ok.options).getQuote('ZC')).price, 450.5);
   });

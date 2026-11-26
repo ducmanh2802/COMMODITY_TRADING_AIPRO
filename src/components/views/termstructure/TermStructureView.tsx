@@ -12,7 +12,9 @@ import { SpreadHistoryPanel } from './SpreadHistoryPanel';
 import { YahooCurvePanel } from './YahooCurvePanel';
 import { FuturesChainPanel } from './FuturesChainPanel';
 import { VolumeProfilePanel } from './VolumeProfilePanel';
-import { fmtDate, fmtFixed, fmtNum, tr, useT, type TFunction } from '../../../i18n';
+import { fmtDate, fmtFixed, fmtNum, tr, useI18n, useT, type TFunction } from '../../../i18n';
+import { InsightBox, ToolPurposeBanner } from '../../common/ToolGuideAndInsight';
+import { interpretTermStructure } from '../../../shared/utils/advancedInsights';
 
 type Loadable<T> = { state: 'idle' } | { state: 'loading' } | { state: 'ok'; data: T } | { state: 'error'; error: UserError };
 
@@ -201,7 +203,7 @@ function daysAgo(date: string, days: number): string {
 
 export default function TermStructureView() {
   const { instruments, loading } = useTerminal();
-  const t = useT();
+  const { t, lang } = useI18n();
   const [instrumentId, setInstrumentId] = useState<string | null>(null);
   const [asOf, setAsOf] = useState('');
   const [compareOn, setCompareOn] = useState(false);
@@ -271,6 +273,8 @@ export default function TermStructureView() {
         </details>
       </div>
 
+      <ToolPurposeBanner toolKey="term-structure" />
+
       <div className="flex flex-wrap items-end gap-3 text-xs text-[var(--text)]/65">
         <label className="space-y-1">
           <span className="block">{t('ts.instrument')}</span>
@@ -322,6 +326,16 @@ export default function TermStructureView() {
         <ErrorNote error={datasets.error} className="text-xs" />
       ) : (
         <>
+          {primary.state === 'ok' && primary.data.result?.status === 'OK' && (
+            <InsightBox
+              insight={interpretTermStructure(
+                primary.data.result,
+                instrument ? `${instrument.id} — ${instrument.productName}` : '',
+                lang,
+              )}
+              testId="ts-insight"
+            />
+          )}
           <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-2">
             <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('ts.curveTitle')}</h2>
             {primary.state === 'loading' ? (

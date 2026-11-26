@@ -3,6 +3,7 @@ import test from 'node:test';
 import type { LessonRecommendationRequest } from '../../src/shared/types/lessonRecommendation.ts';
 import {
   buildPrompts,
+  createLessonRecommendationCache,
   generateLessonRecommendations,
   resolveMaxAttempts,
   type RecommenderModelClient,
@@ -219,4 +220,80 @@ test('resolveMaxAttempts: chain-backed default client gets a single attempt', ()
   const c: RecommenderModelClient = { model: 'm', generate: async () => '' };
   assert.equal(resolveMaxAttempts({ modelClient: c }), 3);
   assert.equal(resolveMaxAttempts({ modelClient: c, maxAttempts: 9 }), 4);
+});
+
+test('createLessonRecommendationCache hits across count bumps, coalesces concurrent calls, respects forceRefresh, and skips caching UNAVAILABLE', async () => {
+  const cache = createLessonRecommendationCache(60_000, 10);
+  let calls = 0;
+  let nowMs = 1_000_000;
+  const fakeClient: RecommenderModelClient = {
+    model: 'gemini-flash-lite-latest',
+    async generate() {
+      calls += 1;
+      await new Promise((r) => setTimeout(r, 10));
+      return JSON.stringify({
+        headline: `Gợi ý lần ${calls}.`,
+        recommendations: [
+          {
+            lessonId: 'l3-coffee',
+            reason: 'Khớp vị thế RC.',
+            matchedSymbols: ['RC'],
+            priority: 'HIGH',
+          },
+        ],
+      });
+    },
+  };
+
+  // Concurrent requests coalesce to a single upstream call
+  const [r1, r2] = await Promise.all([
+    generateLessonRecommendations(SAMPLE_REQ, { modelClient: fakeClient, cache, now: () => new Date(nowMs) }),
+    generateLessonRecommendations(SAMPLE_REQ, { modelClient: fakeClient, cache, now: () => new Date(nowMs) }),
+  ]);
+  assert.equal(calls, 1);
+  assert.equal(r1.status, 'OK');
+  assert.equal(r2.headline, r1.headline);
+
+  // Search count bump (count: 4 -> 9) still hits cache
+  const bumpedReq = {
+    ...SAMPLE_REQ,
+    searchedCommodities: [{ ...SAMPLE_REQ.searchedCommodities[0], count: 9 }],
+  };
+  const r3 = await generateLessonRecommendations(bumpedReq, {
+    modelClient: fakeClient,
+    cache,
+    now: () => new Date(nowMs + 5_000),
+  });
+  assert.equal(calls, 1);
+  assert.equal(r3.headline, r1.headline);
+
+  // forceRefresh bypasses cached result
+  const r4 = await generateLessonRecommendations(
+    { ...SAMPLE_REQ, forceRefresh: true },
+    { modelClient: fakeClient, cache, now: () => new Date(nowMs + 5_000) }
+  );
+  assert.equal(calls, 2);
+  assert.equal(r4.headline, 'Gợi ý lần 2.');
+
+  // UNAVAILABLE responses must never be cached
+  const rateClient: RecommenderModelClient = {
+    model: 'm',
+    async generate() {
+      throw Object.assign(new Error('429 rate limit'), { status: 429 });
+    },
+  };
+  const failCache = createLessonRecommendationCache(60_000, 10);
+  const failRes = await generateLessonRecommendations(SAMPLE_REQ, {
+    modelClient: rateClient,
+    cache: failCache,
+    now: () => new Date(nowMs),
+  });
+  assert.equal(failRes.status, 'UNAVAILABLE');
+  assert.equal(failRes.unavailableReason, 'MODEL_RATE_LIMITED');
+  const recoveredRes = await generateLessonRecommendations(SAMPLE_REQ, {
+    modelClient: fakeClient,
+    cache: failCache,
+    now: () => new Date(nowMs + 1000),
+  });
+  assert.equal(recoveredRes.status, 'OK');
 });

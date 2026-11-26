@@ -72,8 +72,25 @@ async function startServer(): Promise<void> {
       server: {
         middlewareMode: true,
         hmr: false,
+        ws: false,
       },
       appType: 'spa',
+    });
+    // HMR is disabled in this environment; keep @vite/client exports intact while preventing
+    // browser WebSocket attempts to :24678 and unhandled rejections.
+    app.get('/@vite/client', async (_req, res, next) => {
+      try {
+        const result = await vite.transformRequest('/@vite/client');
+        if (!result) return next();
+        const patched = result.code.replace(
+          /createConnection:\s*\(\)\s*=>\s*new WebSocket\([^)]*\)/g,
+          'createConnection: () => ({ readyState: 1, OPEN: 1, addEventListener() {}, send() {}, close() {} })',
+        );
+        res.setHeader('Content-Type', 'application/javascript');
+        res.end(patched);
+      } catch {
+        next();
+      }
     });
     app.use(vite.middlewares);
   }

@@ -13,7 +13,9 @@ import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { ContractChainTable } from './ContractChainTable';
 import { TickCalculator } from './TickCalculator';
 import { SourceLink, VerificationBadge } from './VerificationBadge';
-import { fmtNum, useT } from '../../../i18n';
+import { fmtNum, useI18n, useT } from '../../../i18n';
+import { InsightBox, ToolPurposeBanner } from '../../common/ToolGuideAndInsight';
+import { interpretContractSpec } from '../../../shared/utils/advancedInsights';
 
 type Filter<T> = 'ALL' | T;
 type Loadable<T> = { state: 'idle' } | { state: 'loading' } | { state: 'ok'; data: T } | { state: 'error'; message: string };
@@ -50,7 +52,7 @@ function num(v: number | null, unit?: string): ReactNode {
 
 export default function ContractExplorerView() {
   const { instruments, loading } = useTerminal();
-  const t = useT();
+  const { t, lang } = useI18n();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<Filter<ProductCategory>>('ALL');
   const [exchange, setExchange] = useState<Filter<ExchangeCode>>('ALL');
@@ -115,6 +117,8 @@ export default function ContractExplorerView() {
           {t('exp.subtitle')}
         </p>
       </div>
+
+      <ToolPurposeBanner toolKey="explorer" />
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-full sm:w-64">
@@ -199,6 +203,7 @@ export default function ContractExplorerView() {
         {/* Detail */}
         {selected ? (
           <div className="space-y-4 min-w-0">
+            <InsightBox insight={interpretContractSpec(selected, lang)} testId="exp-insight" />
             <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div>
