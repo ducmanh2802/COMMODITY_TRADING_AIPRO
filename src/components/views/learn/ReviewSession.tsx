@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useT } from '../../../i18n';
 import { Card } from '../../ui/Card';
-import { CURRICULUM } from './curriculum';
-import type { QuizQuestion } from './curriculum';
+import type { QuizQuestion } from './curriculum/types';
+import { loadLevels } from './curriculum/loader';
+import { LESSON_META_BY_ID } from './curriculum/meta';
 import { BOX_DAYS, dueItems, hashQuestion, loadReview, recordAnswerStored } from './review';
 
 interface Entry {
@@ -10,16 +11,27 @@ interface Entry {
   question: QuizQuestion;
 }
 
-/** Resolve due review items to live curriculum questions; stale ids (edited/removed questions) are skipped. */
-function resolveDue(now: number): Entry[] {
+/** Due items whose lesson still exists (cheap: only the light index is needed). */
+function dueKnown(now: number) {
+  return dueItems(loadReview(), now).filter((it) => LESSON_META_BY_ID.has(it.lessonId));
+}
+
+/**
+ * Resolve due review items to live curriculum questions; stale ids (edited/removed questions) are skipped.
+ * Loads only the levels that actually have due items.
+ */
+async function resolveDue(now: number): Promise<Entry[]> {
+  const due = dueKnown(now);
+  const levelIds = [...new Set(due.map((it) => LESSON_META_BY_ID.get(it.lessonId)!.level.id))];
+  const levels = await loadLevels(levelIds);
   const index = new Map<string, QuizQuestion>();
-  for (const level of CURRICULUM) {
+  for (const level of levels) {
     for (const lesson of level.lessons) {
       for (const qu of lesson.quiz) index.set(`${lesson.id}:${hashQuestion(qu.q)}`, qu);
     }
   }
   const out: Entry[] = [];
-  for (const it of dueItems(loadReview(), now)) {
+  for (const it of due) {
     const question = index.get(it.id);
     if (question) out.push({ lessonId: it.lessonId, question });
   }
@@ -110,8 +122,19 @@ function Session({ entries, onExit }: { entries: Entry[]; onExit: () => void }) 
 export function ReviewCard() {
   const t = useT();
   const [entries, setEntries] = useState<Entry[] | null>(null);
-  const due = useMemo(() => resolveDue(Date.now()), []);
-  const [live, setLive] = useState(due);
+  const [dueCount, setDueCount] = useState(() => dueKnown(Date.now()).length);
+  const [loading, setLoading] = useState(false);
+
+  const start = async () => {
+    setLoading(true);
+    try {
+      const list = await resolveDue(Date.now());
+      setDueCount(list.length);
+      if (list.length > 0) setEntries(list);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (entries) {
     return (
@@ -119,12 +142,12 @@ export function ReviewCard() {
         entries={entries}
         onExit={() => {
           setEntries(null);
-          setLive(resolveDue(Date.now()));
+          setDueCount(dueKnown(Date.now()).length);
         }}
       />
     );
   }
-  if (live.length === 0) {
+  if (dueCount === 0) {
     return (
       <Card>
         <p className="text-xs text-[var(--muted)]">{t('review.empty')}</p>
@@ -135,11 +158,11 @@ export function ReviewCard() {
     <Card tone="accent">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold">{t('review.card.title', { n: live.length })}</p>
+          <p className="text-sm font-semibold">{t('review.card.title', { n: dueCount })}</p>
           <p className="text-xs text-[var(--muted)]">{t('review.card.hint')}</p>
         </div>
-        <button type="button" onClick={() => setEntries(live)} className="text-xs px-3 py-1.5 rounded-md bg-[var(--accent)] text-white">
-          {t('review.card.start')}
+        <button type="button" onClick={start} disabled={loading} className="text-xs px-3 py-1.5 rounded-md bg-[var(--accent)] text-white disabled:opacity-60">
+          {loading ? t('review.loading') : t('review.card.start')}
         </button>
       </div>
     </Card>

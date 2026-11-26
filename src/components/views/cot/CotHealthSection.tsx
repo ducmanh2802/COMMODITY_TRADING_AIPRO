@@ -1,3 +1,5 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 /**
  * COT sync health panel for the Data Health view (GET /api/cot/health).
  * Shows the overall COT data status and, per instrument / report type: stored row count, report-date
@@ -12,7 +14,7 @@ import { tr, useT } from '../../../i18n';
 export function CotHealthSection() {
   const t = useT();
   const [health, setHealth] = useState<CotHealthResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(async () => {
@@ -21,7 +23,7 @@ export function CotHealthSection() {
     try {
       setHealth(await fetchCotHealth());
     } catch (e) {
-      setError(e instanceof Error ? e.message : tr('cot.h.loadFailed'));
+      setError(toUserError(e, tr('cot.h.loadFailed')));
     } finally {
       setLoading(false);
     }
@@ -61,7 +63,7 @@ export function CotHealthSection() {
           </button>
         </div>
       </div>
-      {error && <p className="px-4 py-3 text-xs text-[var(--warning)]">{t('cot.h.unavailable', { error })}</p>}
+      {error && <ErrorNote error={error} text={t('cot.h.unavailable', { error: error.message })} className="px-4 py-3" />}
       {health && (
         <div className="overflow-x-auto" tabIndex={0}>
           <table className="w-full text-left border-collapse min-w-[900px]">

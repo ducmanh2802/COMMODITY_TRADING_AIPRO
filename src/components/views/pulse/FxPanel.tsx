@@ -1,3 +1,5 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { fmtDate, fmtFixed, tr, useI18n, useT } from '../../../i18n';
@@ -80,7 +82,7 @@ export function FxPanel() {
   const l = (lang === 'en' ? 'en' : 'vi') as 'vi' | 'en';
   const [data, setData] = useState<FxResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
 
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -90,7 +92,7 @@ export function FxPanel() {
       setData(await safeReadJson<FxResponse>(res));
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : String(err));
+      setError(toUserError(err));
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
@@ -130,7 +132,7 @@ export function FxPanel() {
     return (
       <div className="space-y-4 max-w-6xl">
         {header}
-        <Card tone="warning">{t('fx.error', { msg: error })}</Card>
+        <Card tone="warning"><ErrorNote error={error} text={t('fx.error', { msg: error.message })} /></Card>
       </div>
     );
   }

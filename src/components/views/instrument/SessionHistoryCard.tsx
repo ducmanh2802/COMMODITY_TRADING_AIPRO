@@ -1,8 +1,10 @@
+import { ErrorNote } from '../../common/ErrorNote';
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { fmtDate, fmtFixed, fmtInt, useT } from '../../../i18n';
 import { fetchJsonWithRetry } from '../../../shared/utils/http';
+import { toUserError, type UserError } from '../../common/friendlyError';
 
 interface SessionRow {
   sessionDate: string;
@@ -46,7 +48,7 @@ export function SessionHistoryCard() {
   const { selectedSymbol } = useTerminal();
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<SessionsResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export function SessionHistoryCard() {
     )
       .then((r) => setData(r))
       .catch((err: unknown) => {
-        if (!ctrl.signal.aborted) setError(err instanceof Error ? err.message : 'error');
+        if (!ctrl.signal.aborted) setError(toUserError(err));
       })
       .finally(() => {
         if (!ctrl.signal.aborted) setLoading(false);
@@ -103,7 +105,7 @@ export function SessionHistoryCard() {
       {open && (
         <div id="ins-sessions" className="border-t border-[var(--border)] p-4 space-y-3 min-w-0">
           {loading && <p className="text-sm text-[var(--muted)]">{t('ses.loading')}</p>}
-          {error && <p className="text-sm text-[var(--warning)]">{t('ses.error', { msg: error })}</p>}
+          {error && <ErrorNote error={error} text={t('ses.error', { msg: error.message })} className="text-sm text-[var(--warning)]" />}
           {data && rows.length === 0 && <p className="text-sm text-[var(--muted)]">{t('ses.empty')}</p>}
           {data && stats && (
             <>

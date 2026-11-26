@@ -1,3 +1,4 @@
+import { ErrorNote } from '../../common/ErrorNote';
 /**
  * Spreads tab: inter-commodity spread builder. spread[t] = Σ coefficient_k · price_k[t] on the timestamp
  * intersection of all legs, followed by a rolling z-score. No exchange constants are built in: the user
@@ -262,7 +263,7 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
           </Notice>
         )}
         {loading && <p className="text-xs text-[var(--text)]/55">{t('sweep.spreads.loading')}</p>}
-        {error && <Notice tone="error">{error}</Notice>}
+        {error && <Notice tone="error"><ErrorNote error={error} className="text-inherit" /></Notice>}
         {data.map((d) => (
           <SeriesIntegrity key={d.option.key} s={d} returnBased={false} />
         ))}

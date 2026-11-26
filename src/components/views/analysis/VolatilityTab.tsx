@@ -1,3 +1,4 @@
+import { ErrorNote } from '../../common/ErrorNote';
 /**
  * Volatility tab: close-to-close realized vol, Parkinson, Garman–Klass (all annualized by the shown
  * factor) and ATR% (not annualized) for one series. See `src/shared/analytics/volatility.ts`.
@@ -104,7 +105,7 @@ export function VolatilityTab({ options }: { options: SeriesOption[] }) {
           <Notice tone="warn">{t('an.vol.noAf', { tf: option.timeframe })}</Notice>
         )}
         {loading && <p className="text-xs text-[var(--text)]/55">{t('an.loadingCandles')}</p>}
-        {error && <Notice tone="error">{error}</Notice>}
+        {error && <Notice tone="error"><ErrorNote error={error} className="text-inherit" /></Notice>}
         {s && <SeriesIntegrity s={s} />}
       </Panel>
 

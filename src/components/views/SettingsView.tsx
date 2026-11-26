@@ -9,6 +9,7 @@ import { ThemeSwitch } from '../common/ThemeSwitch';
 import { ReadabilitySwitch } from '../common/ReadabilitySwitch';
 import { useUiMode } from '../../contexts/UiModeContext';
 import { BackupCard } from './BackupCard';
+import { friendlyMessage } from '../common/friendlyError';
 
 export function SettingsView() {
   const {
@@ -105,7 +106,7 @@ export function SettingsView() {
       });
       setSaveMessage(t('dash.st.saved'));
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : t('dash.st.saveFailed'));
+      setSaveError(friendlyMessage(err, t('dash.st.saveFailed')));
     } finally {
       setSaving(false);
     }

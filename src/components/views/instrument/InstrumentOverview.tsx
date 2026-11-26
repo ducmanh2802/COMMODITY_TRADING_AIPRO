@@ -1,3 +1,4 @@
+import { ErrorNote } from '../../common/ErrorNote';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ObvReadout } from './ObvLine';
 import { AlertTriangle, ChevronDown, CircleAlert, CircleCheck, CircleSlash, ExternalLink, HelpCircle } from 'lucide-react';
@@ -34,6 +35,7 @@ import {
   type ContextLight,
   type LightTone,
 } from './contextLights';
+import { toUserError, type UserError } from '../../common/friendlyError';
 
 type RangeKey = '1M' | '6M' | '1Y' | 'ALL';
 const RANGE_DAYS: Record<RangeKey, number> = { '1M': 31, '6M': 183, '1Y': 366, ALL: 365 * 60 };
@@ -287,7 +289,7 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
   const [benchmark, setBenchmark] = useState<OverviewBenchmarkSeries | null>(null);
   const [drivers, setDrivers] = useState<DriversResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
   const [range, setRange] = useState<RangeKey>('6M');
   const [nonce, setNonce] = useState(0);
   const retry = useCallback(() => setNonce((n) => n + 1), []);
@@ -306,7 +308,7 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
       .catch((e) => {
         if (!ctrl.signal.aborted) {
           setDossier(null);
-          setError(e instanceof Error ? e.message : 'error');
+          setError(toUserError(e));
         }
       })
       .finally(() => {
@@ -390,7 +392,7 @@ export function InstrumentOverview({ cycleSlot }: { cycleSlot?: ReactNode } = {}
   if (error || !dossier) {
     return (
       <Card className="space-y-2 text-sm">
-        <p className="text-[var(--warning)]">{t('ins.error', { msg: error ?? '—' })}</p>
+        {error ? <ErrorNote error={error} text={t('ins.error', { msg: error.message })} /> : <p className="text-[var(--warning)]">{t('ins.error', { msg: '—' })}</p>}
         <button type="button" onClick={retry} className="underline text-[var(--accent-text)]">
           {t('drv.retry')}
         </button>

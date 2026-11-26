@@ -1,3 +1,4 @@
+import { friendlyMessage } from '../common/friendlyError';
 import { useState } from 'react';
 import { ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -169,7 +170,7 @@ export function RiskManagementView() {
       }
       setOutput(json);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('risk.failed'));
+      setError(friendlyMessage(err, t('risk.failed')));
     } finally {
       setLoading(false);
     }

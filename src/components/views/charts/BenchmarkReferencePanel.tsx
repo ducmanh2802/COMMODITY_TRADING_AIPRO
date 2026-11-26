@@ -1,3 +1,5 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 import { useEffect, useRef, useState } from 'react';
 import { LineSeries, createChart, type UTCTimestamp } from 'lightweight-charts';
 import { ArrowRight, ExternalLink, Info } from 'lucide-react';
@@ -73,7 +75,7 @@ export function BenchmarkReferencePanel() {
   const [selected, setSelected] = useState('');
   const [series, setSeries] = useState<BenchmarkSeries | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -84,7 +86,7 @@ export function BenchmarkReferencePanel() {
         setSelected((cur) => cur || j.items[0]?.instrumentId || '');
       })
       .catch((e: unknown) => {
-        if (!ctrl.signal.aborted) setError(e instanceof Error ? e.message : String(e));
+        if (!ctrl.signal.aborted) setError(toUserError(e));
       });
     return () => ctrl.abort();
   }, []);
@@ -100,7 +102,7 @@ export function BenchmarkReferencePanel() {
       .catch((e: unknown) => {
         if (!ctrl.signal.aborted) {
           setSeries(null);
-          setError(e instanceof Error ? e.message : String(e));
+          setError(toUserError(e));
         }
       })
       .finally(() => {
@@ -142,7 +144,7 @@ export function BenchmarkReferencePanel() {
         </span>
       </div>
 
-      {error && <p role="alert" className="text-xs text-[var(--warning)]">{t('bm.error', { msg: error })}</p>}
+      {error && <ErrorNote error={error} text={t('bm.error', { msg: error.message })} className="text-xs text-[var(--warning)]" />}
 
       {loading ? (
         <p className="h-[340px] flex items-center justify-center text-xs text-[var(--text)]/55">{t('bm.loading')}</p>

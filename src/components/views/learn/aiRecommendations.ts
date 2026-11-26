@@ -8,7 +8,7 @@ import type {
 } from '../../../shared/types/lessonRecommendation';
 import { normalizeActivitySymbol, type SearchedCommoditySignal } from '../../../shared/utils/commodityActivity';
 import type { PaperPosition } from '../papertrade/paperModel';
-import type { Level } from './curriculum/types';
+import type { LevelLike } from './academyUtils';
 import type { LearnProgress } from './progress';
 
 export interface ManualOpenPositionInput {
@@ -128,7 +128,7 @@ export function toSearchedSignalPayloads(
 }
 
 export function rankCandidateLessons(
-  curriculum: readonly Level[],
+  curriculum: readonly LevelLike[],
   progress: LearnProgress,
   instruments: readonly InstrumentDefinition[],
   searched: readonly SearchedCommoditySignalPayload[],

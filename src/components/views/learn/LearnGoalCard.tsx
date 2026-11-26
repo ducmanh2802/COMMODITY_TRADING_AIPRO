@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { Card } from '../../ui/Card';
 import { useI18n } from '../../../i18n';
-import { CURRICULUM } from './curriculum';
+import { LESSON_TITLES as TITLES } from './curriculum/meta';
 import { LEARN_GOALS, loadGoal, nextLesson, saveGoal, type LearnGoal } from './learnPaths';
-
-const TITLES = new Map(CURRICULUM.flatMap((l) => l.lessons.map((x) => [x.id, x.title] as const)));
 
 interface Props {
   lessons: Record<string, { done?: boolean } | undefined>;

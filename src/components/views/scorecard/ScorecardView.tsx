@@ -1,3 +1,5 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, RefreshCw } from 'lucide-react';
 import { fmtDateTime, useI18n, type TKey } from '../../../i18n';
@@ -50,7 +52,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
   const { t, lang } = useI18n();
   const [data, setData] = useState<ScorecardListResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
   const [category, setCategory] = useState<string>('ALL');
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'name', dir: 'asc' });
   const [openId, setOpenId] = useState<string | null>(null);
@@ -70,7 +72,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
       setData({ ...body, scorecards: Array.isArray(body?.scorecards) ? body.scorecards : [], count: body?.count ?? 0 });
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : String(err));
+      setError(toUserError(err));
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
@@ -163,7 +165,7 @@ export function ScorecardView({ onOpenInstrument }: { onOpenInstrument?: (exchan
 
       {error && (
         <Card tone="warning" className="flex flex-wrap items-center justify-between gap-2">
-          <span>{t('sc.error', { msg: error })}</span>
+          <ErrorNote error={error} text={t('sc.error', { msg: error.message })} />
           <button type="button" onClick={() => void load()} className="text-xs underline">
             {t('sc.retry')}
           </button>

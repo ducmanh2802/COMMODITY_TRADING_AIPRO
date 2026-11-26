@@ -1,3 +1,4 @@
+import { toUserError, type UserError } from '../common/friendlyError';
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, ChevronRight, Filter, Info, Radar } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
@@ -12,6 +13,7 @@ import { InfoTip } from './today/InfoTip';
 import { ScaleLegend } from '../ui/viz/ScaleLegend';
 import { fetchJsonWithRetry } from '../../shared/utils/http';
 import { sortCommoditiesByPotential } from '../../shared/utils/commoditySort';
+import { ErrorNote } from '../common/ErrorNote';
 
 /** Rows shown as visual cards; the full ranked table stays in a collapsed <details>. */
 const TOP_N = 5;
@@ -81,7 +83,7 @@ export function CycleScannerView({ embedded = false }: { embedded?: boolean } = 
   const [mxvOnly, setMxvOnly] = useState<boolean>(false);
   const [results, setResults] = useState<CommodityCycleSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
 
   const runScan = async () => {
     setLoading(true);
@@ -96,7 +98,7 @@ export function CycleScannerView({ embedded = false }: { embedded?: boolean } = 
       const json = await fetchJsonWithRetry<{ commodities?: CommodityCycleSummary[] }>(`/api/cycle/scanner?${qs.toString()}`);
       setResults(Array.isArray(json.commodities) ? sortCommoditiesByPotential(json.commodities) : []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('cs.error'));
+      setError(toUserError(err, t('cs.error')));
     } finally {
       setLoading(false);
     }
@@ -178,7 +180,7 @@ export function CycleScannerView({ embedded = false }: { embedded?: boolean } = 
 
       {error && (
         <div role="alert" className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-lg p-4 text-xs text-[var(--negative)]">
-          {error}
+          <ErrorNote error={error} />
         </div>
       )}
 

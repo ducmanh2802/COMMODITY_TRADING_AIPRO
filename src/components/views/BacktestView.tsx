@@ -1,3 +1,4 @@
+import { toUserError, type UserError } from '../common/friendlyError';
 import { useEffect, useMemo, useState } from 'react';
 import { History } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
@@ -9,6 +10,7 @@ import { Badge } from '../ui/Badge';
 import { EquityChart } from '../ui/viz/EquityChart';
 import { MonteCarloSection, StrategyParamsPanel, WalkForwardSection } from './backtest/LabPanels';
 import { defaultsOf, type ParamDef } from './backtest/labGrid';
+import { ErrorNote } from '../common/ErrorNote';
 
 type StrategyWithParams = StrategyDefinition & { params?: ParamDef[] };
 type RollMode = 'NONE' | 'CALENDAR' | 'INTERVAL';
@@ -104,7 +106,7 @@ export function BacktestView() {
 
   const [result, setResult] = useState<BacktestResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
 
   useEffect(() => {
     void fetch('/api/strategies')
@@ -175,7 +177,7 @@ export function BacktestView() {
       if (!res.ok) throw new Error(json.message ?? t('bt.failed'));
       setResult(json);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('bt.execError'));
+      setError(toUserError(err, t('bt.execError')));
     } finally {
       setLoading(false);
     }
@@ -370,7 +372,7 @@ export function BacktestView() {
 
       {error && (
         <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-lg p-4 text-xs font-mono text-[var(--negative)]">
-          {error}
+          <ErrorNote error={error} />
         </div>
       )}
 

@@ -61,6 +61,7 @@ import * as academyLite from './dict/academyLite';
 import * as cyclescan from './dict/cyclescan';
 import * as toppick from './dict/toppick';
 import * as hardcoded from './dict/hardcoded';
+import * as errors2 from './dict/errors2';
 import * as honesty from './dict/honesty';
 import * as badges2 from './dict/badges2';
 import type { TKey } from './vi';
@@ -132,4 +133,5 @@ export const en: Record<TKey, string> = {
   ...honesty.en,
   ...badges2.en,
   ...hardcoded.en,
+  ...errors2.en,
 };

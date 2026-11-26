@@ -1,3 +1,4 @@
+import { ErrorNote } from '../../common/ErrorNote';
 /**
  * Drawdown / returns tab: cumulative simple return from the first observation, drawdown series and
  * maximum drawdown with peak / trough / recovery dates. Requires strictly positive prices
@@ -51,7 +52,7 @@ export function DrawdownTab({ options }: { options: SeriesOption[] }) {
           <SeriesSelect id="dd-series" label={t('an.series')} options={options} value={key} onChange={setKey} />
         </div>
         {loading && <p className="text-xs text-[var(--text)]/55">{t('an.loadingCandles')}</p>}
-        {error && <Notice tone="error">{error}</Notice>}
+        {error && <Notice tone="error"><ErrorNote error={error} className="text-inherit" /></Notice>}
         {s && <SeriesIntegrity s={s} />}
       </Panel>
 

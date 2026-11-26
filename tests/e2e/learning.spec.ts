@@ -34,6 +34,9 @@ async function nav(page: Page, name: RegExp) {
   await page.locator('nav:visible li > button:visible').filter({ hasText: name }).first().click();
 }
 
+// Re-reads localStorage each call (use inside expect.poll for values the app writes asynchronously).
+const stored = (page: Page, k: string) => page.evaluate((key) => JSON.parse(window.localStorage.getItem(key) ?? '{}'), k);
+
 const level1 = CURRICULUM[0];
 const lesson1 = level1.lessons[0];
 
@@ -64,8 +67,7 @@ test('Học viện: open a lesson, answer its quiz, lesson gets marked done', as
   await expect(page.getByText('Điểm cao nhất: 100%')).toBeVisible();
 
   // Passing the quiz stores the lesson as done.
-  const stored = await page.evaluate((k) => JSON.parse(window.localStorage.getItem(k) ?? '{}'), PROGRESS_KEY);
-  expect(stored.lessons[lesson1.id]).toMatchObject({ done: true, best: 100 });
+  await expect.poll(() => stored(page, PROGRESS_KEY)).toMatchObject({ lessons: { [lesson1.id]: { done: true, best: 100 } } });
 
   // And it shows on the home list.
   await page.getByRole('button', { name: /Về danh sách bài/ }).click();
@@ -84,11 +86,9 @@ test('Học viện: all-wrong quiz answers show 0%, do not mark done and feed sp
   await page.getByRole('button', { name: 'Nộp bài' }).click();
   await expect(page.getByText(`Điểm: 0/${lesson1.quiz.length} (0%)`)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Làm lại' })).toBeVisible();
-  const stored = await page.evaluate((k) => JSON.parse(window.localStorage.getItem(k) ?? '{}'), PROGRESS_KEY);
-  expect(stored.lessons[lesson1.id]?.done).not.toBe(true);
+  expect((await stored(page, PROGRESS_KEY)).lessons?.[lesson1.id]?.done).not.toBe(true);
   // Wrong answers feed spaced review.
-  const review = await page.evaluate((k) => JSON.parse(window.localStorage.getItem(k) ?? '{}'), REVIEW_KEY);
-  expect(Object.keys(review.items ?? {}).length).toBe(lesson1.quiz.length);
+  await expect.poll(async () => Object.keys((await stored(page, REVIEW_KEY)).items ?? {}).length).toBe(lesson1.quiz.length);
 });
 
 test('level 1 exam: unlocked at 80%, answer all, pass, certificate PDF downloads', async ({ page }) => {
@@ -125,8 +125,7 @@ test('level 1 exam: unlocked at 80%, answer all, pass, certificate PDF downloads
   expect(download.suggestedFilename()).toContain(level1.id);
 
   // Result persisted: the level card reports it as passed.
-  const exams = await page.evaluate(() => JSON.parse(window.localStorage.getItem('ctap.exams.v1') ?? '{}'));
-  expect(exams.exams[level1.id]).toMatchObject({ passed: true, best: 100 });
+  await expect.poll(() => stored(page, 'ctap.exams.v1')).toMatchObject({ exams: { [level1.id]: { passed: true, best: 100 } } });
 });
 
 test('level 1 exam: locked below 80% and a failed attempt shows the fail result without a certificate', async ({ page }) => {
@@ -137,8 +136,10 @@ test('level 1 exam: locked below 80% and a failed attempt shows the fail result 
   await expect(section.getByRole('button', { name: 'Làm bài kiểm tra' })).toHaveCount(0);
 
   await page.reload();
+  await expect(page.locator('main').first()).toBeVisible();
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [PROGRESS_KEY, allDone()]);
   await page.reload();
+  await expect(page.locator('main').first()).toBeVisible();
   await nav(page, /Học viện/);
   await section.getByRole('button', { name: 'Làm bài kiểm tra' }).click();
   const questions = drawExam(level1, 0);

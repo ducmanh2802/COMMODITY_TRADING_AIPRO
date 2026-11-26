@@ -1,5 +1,7 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 import { useEffect, useState } from 'react';
-import { errorMessage, fetchYahooCurve, type YahooCurveResponseDto } from '../../../api/contractsApi';
+import { fetchYahooCurve, type YahooCurveResponseDto } from '../../../api/contractsApi';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { fmtDate, fmtNum, useT } from '../../../i18n';
@@ -76,7 +78,7 @@ export function YahooCurvePanel({ instrumentId }: { instrumentId: string }) {
   const t = useT();
   const { setActiveModule } = useTerminal();
   const [state, setState] = useState<
-    { s: 'loading' } | { s: 'error'; message: string } | { s: 'ok'; data: YahooCurveResponseDto }
+    { s: 'loading' } | { s: 'error'; error: UserError } | { s: 'ok'; data: YahooCurveResponseDto }
   >({ s: 'loading' });
 
   useEffect(() => {
@@ -85,7 +87,7 @@ export function YahooCurvePanel({ instrumentId }: { instrumentId: string }) {
     fetchYahooCurve(instrumentId, 8, ctl.signal)
       .then((data) => setState({ s: 'ok', data }))
       .catch((err) => {
-        if (!ctl.signal.aborted) setState({ s: 'error', message: errorMessage(err) });
+        if (!ctl.signal.aborted) setState({ s: 'error', error: toUserError(err) });
       });
     return () => ctl.abort();
   }, [instrumentId]);
@@ -100,7 +102,7 @@ export function YahooCurvePanel({ instrumentId }: { instrumentId: string }) {
         <li className="rounded-full border border-[var(--border)] px-2 py-0.5 font-mono text-[var(--text)]/75">D1</li>
       </ul>
       {state.s === 'loading' && <p className="text-xs text-[var(--text)]/55">{t('ts.yc.loading')}</p>}
-      {state.s === 'error' && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{state.message}</p>}
+      {state.s === 'error' && <ErrorNote error={state.error} className="text-xs" />}
       {state.s === 'ok' && state.data.status === 'UNAVAILABLE' && (
         <div className="flex items-start gap-2 text-xs">
           <DataStatusBadge status="UNAVAILABLE" />

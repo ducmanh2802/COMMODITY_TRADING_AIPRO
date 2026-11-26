@@ -1,3 +1,5 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronDown, RefreshCw } from 'lucide-react';
 import { fmtDateTime, fmtFixed, useI18n } from '../../../i18n';
@@ -171,7 +173,7 @@ export function MarketPulsePanel() {
   const l = (lang === 'en' ? 'en' : 'vi') as 'vi' | 'en';
   const [data, setData] = useState<MarketPulse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
 
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -181,7 +183,7 @@ export function MarketPulsePanel() {
       setData(await safeReadJson<MarketPulse>(res));
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : String(err));
+      setError(toUserError(err));
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
@@ -221,7 +223,7 @@ export function MarketPulsePanel() {
     return (
       <div className="space-y-4 max-w-6xl">
         {header}
-        <Card tone="warning">{t('pulse.error', { msg: error })}</Card>
+        <Card tone="warning"><ErrorNote error={error} text={t('pulse.error', { msg: error.message })} /></Card>
       </div>
     );
   }

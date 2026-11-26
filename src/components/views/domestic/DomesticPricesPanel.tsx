@@ -1,3 +1,5 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { friendlyMessage, toUserError, type UserError } from '../../common/friendlyError';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fmtDate, fmtFixed, fmtInt, useI18n } from '../../../i18n';
 import type { TKey } from '../../../i18n/vi';
@@ -218,7 +220,7 @@ function EntryForm({ onSaved }: { onSaved: () => void }) {
       setMsg({ ok: true, text: t('dm.entry.saved', { n: data.total ?? 0 }) });
       onSaved();
     } catch (e) {
-      setMsg({ ok: false, text: t('dm.entry.failed', { msg: e instanceof Error ? e.message : String(e) }) });
+      setMsg({ ok: false, text: t('dm.entry.failed', { msg: friendlyMessage(e) }) });
     }
   };
 
@@ -297,7 +299,7 @@ function EntryForm({ onSaved }: { onSaved: () => void }) {
 export function DomesticPricesPanel() {
   const { t } = useI18n();
   const [data, setData] = useState<Overview | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
   const [loading, setLoading] = useState(true);
   const [nonce, setNonce] = useState(0);
   const reload = useCallback(() => setNonce((n) => n + 1), []);
@@ -311,7 +313,7 @@ export function DomesticPricesPanel() {
         setData(d);
         setError(null);
       })
-      .catch((e) => !ctrl.signal.aborted && setError(e instanceof Error ? e.message : String(e)))
+      .catch((e) => !ctrl.signal.aborted && setError(toUserError(e)))
       .finally(() => !ctrl.signal.aborted && setLoading(false));
     return () => ctrl.abort();
   }, [nonce]);
@@ -323,7 +325,7 @@ export function DomesticPricesPanel() {
       {loading && !data ? (
         <Skeleton className="h-40 w-full" />
       ) : error && !data ? (
-        <p className="text-sm text-[var(--warning)]">{t('dm.error', { msg: error })}</p>
+        <ErrorNote error={error} text={t('dm.error', { msg: error.message })} className="text-sm text-[var(--warning)]" />
       ) : data ? (
         <>
           <p className="text-xs text-[var(--muted)]">

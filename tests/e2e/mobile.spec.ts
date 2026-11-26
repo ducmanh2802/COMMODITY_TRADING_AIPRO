@@ -32,14 +32,12 @@ test('mobile: no horizontal overflow on main pages and tabs', async ({ page }) =
     await page.getByRole('button', { name: 'Mở menu điều hướng' }).click();
     await page.locator('aside nav ul').first().locator('button').nth(i).click();
     await expect(page.locator('aside')).toHaveJSProperty('inert', true);
-    await page.waitForTimeout(400);
-    expect(await noOverflow(page), `section #${i}`).toBe(true);
+    await expect.poll(() => noOverflow(page), { message: `section #${i}` }).toBe(true);
     const tabs = page.locator('main [role="tab"]:visible');
     const n = Math.min(await tabs.count(), 8);
     for (let j = 0; j < n; j++) {
-      await page.locator('main [role="tab"]:visible').nth(j).click().catch(() => {});
-      await page.waitForTimeout(300);
-      expect(await noOverflow(page), `section #${i} tab #${j}`).toBe(true);
+      await page.locator('main [role="tab"]:visible').nth(j).click({ timeout: 10_000 }).catch(() => {});
+      await expect.poll(() => noOverflow(page), { message: `section #${i} tab #${j}` }).toBe(true);
     }
   }
 });

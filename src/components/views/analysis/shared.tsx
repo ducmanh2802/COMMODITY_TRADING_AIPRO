@@ -1,3 +1,4 @@
+import { toUserError, type UserError } from '../../common/friendlyError';
 /**
  * Shared building blocks for the Analysis module tabs.
  *
@@ -237,7 +238,7 @@ export function clearCandleCache(): void {
 export function useSeriesOptions(reloadToken: number) {
   const [options, setOptions] = useState<SeriesOption[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
   useEffect(() => {
     const ac = new AbortController();
     setLoading(true);
@@ -245,7 +246,7 @@ export function useSeriesOptions(reloadToken: number) {
     fetchSeriesOptions(ac.signal)
       .then((o) => setOptions(o))
       .catch((e: unknown) => {
-        if (!ac.signal.aborted) setError(e instanceof Error ? e.message : tr('an.loadDatasetsFailed'));
+        if (!ac.signal.aborted) setError(toUserError(e, tr('an.loadDatasetsFailed')));
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoading(false);
@@ -257,7 +258,7 @@ export function useSeriesOptions(reloadToken: number) {
 
 /** Loads candles for every selected series (cached per series key). */
 export function useLoadedSeries(selected: SeriesOption[]) {
-  const [state, setState] = useState<{ data: LoadedSeries[]; loading: boolean; error: string | null }>({
+  const [state, setState] = useState<{ data: LoadedSeries[]; loading: boolean; error: UserError | null }>({
     data: [],
     loading: false,
     error: null,
@@ -275,7 +276,7 @@ export function useLoadedSeries(selected: SeriesOption[]) {
         if (!cancelled) setState({ data, loading: false, error: null });
       })
       .catch((e: unknown) => {
-        if (!cancelled) setState({ data: [], loading: false, error: e instanceof Error ? e.message : tr('an.loadCandlesFailed') });
+        if (!cancelled) setState({ data: [], loading: false, error: toUserError(e, tr('an.loadCandlesFailed')) });
       });
     return () => {
       cancelled = true;

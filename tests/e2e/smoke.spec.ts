@@ -56,7 +56,7 @@ async function walk(page: Page, mode: 'simple' | 'pro') {
       if (!(await t.count())) break;
       const tl = ((await t.innerText().catch(() => '')) || `#${j}`).trim().replace(/\s+/g, ' ').slice(0, 30);
       current = `${mode}:${label.replace(/\s+/g, ' ')} > ${tl}`;
-      await t.click({ timeout: 5000 }).catch(() => {});
+      await t.click({ timeout: 15_000 }).catch(() => {});
       await settle();
     }
   }

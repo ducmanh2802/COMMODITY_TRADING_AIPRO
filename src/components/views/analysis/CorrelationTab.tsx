@@ -1,3 +1,4 @@
+import { ErrorNote } from '../../common/ErrorNote';
 /**
  * Correlation tab: correlation matrix of RETURNS (never price levels) for 2..8 series aligned on the
  * common timestamp intersection, plus rolling correlation and rolling beta for one pair.
@@ -125,7 +126,7 @@ export function CorrelationTab({ options }: { options: SeriesOption[] }) {
           <NumberField id="corr-minobs" label={t('an.corr.minObs')} value={minObs} onChange={setMinObs} min={2} />
         </div>
         {loading && <p className="text-xs text-[var(--text)]/55">{t('an.loadingCandles')}</p>}
-        {error && <Notice tone="error">{error}</Notice>}
+        {error && <Notice tone="error"><ErrorNote error={error} className="text-inherit" /></Notice>}
         {data.map((s) => (
           <SeriesIntegrity key={s.option.key} s={s} />
         ))}

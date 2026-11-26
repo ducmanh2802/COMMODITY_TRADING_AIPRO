@@ -70,6 +70,25 @@ export interface Level {
   lessons: Lesson[];
 }
 
+/** Light lesson record kept in the Academy index (no body / quiz / figures). Generated, see genIndex.ts. */
+export interface LessonMeta {
+  id: string;
+  title: string;
+  objective: string;
+  quizCount: number;
+  /** Estimated reading time in minutes (same formula as estimateLessonReadMinutes). */
+  minutes: number;
+  instrumentIds?: string[];
+}
+
+export interface LevelMeta {
+  id: string;
+  number: number;
+  title: string;
+  goal: string;
+  lessons: LessonMeta[];
+}
+
 /**
  * Quiz helper. Authors list the correct option anywhere (usually first); the options are then shuffled
  * deterministically (seeded by the question text) so the right answer is not always in the same place,

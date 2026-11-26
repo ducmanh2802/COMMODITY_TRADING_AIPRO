@@ -1,4 +1,4 @@
-import type { CalculatorId, Lesson, Level } from './curriculum/types';
+import type { CalculatorId, Lesson } from './curriculum/types';
 import type { ExamStore } from './exam/examLogic';
 import { FINAL_ID } from './exam/examLogic';
 import type { GlossaryTerm } from './glossary';
@@ -38,9 +38,33 @@ export interface AcademyStats {
   recommendedLessonId: string | null;
 }
 
-export interface FilteredLevel {
-  level: Level;
-  lessons: Lesson[];
+/**
+ * Minimal lesson/level shapes the Academy helpers need. Both the light index (LessonMeta / LevelMeta) and the
+ * full curriculum (Lesson / Level) satisfy them; the optional body fields only widen search when present.
+ */
+export interface LessonLike {
+  id: string;
+  title: string;
+  objective: string;
+  instrumentIds?: string[];
+  remember?: string[];
+  body?: string[];
+  textExample?: string;
+  examples?: { title: string; text: string }[];
+  uncertain?: string[];
+}
+
+export interface LevelLike<L extends LessonLike = LessonLike> {
+  id: string;
+  number: number;
+  title: string;
+  goal: string;
+  lessons: L[];
+}
+
+export interface FilteredLevel<V extends LevelLike = LevelLike> {
+  level: V;
+  lessons: V['lessons'];
   doneCount: number;
 }
 
@@ -183,7 +207,7 @@ export function estimateLessonReadMinutes(lesson: Lesson): number {
 }
 
 export function computeAcademyStats(
-  curriculum: readonly Level[],
+  curriculum: readonly LevelLike[],
   progress: LearnProgress,
   exams: ExamStore,
   activeGoal: LearnGoal | null = null
@@ -234,8 +258,8 @@ export function computeAcademyStats(
   };
 }
 
-export function filterCurriculum(
-  curriculum: readonly Level[],
+export function filterCurriculum<V extends LevelLike>(
+  curriculum: readonly V[],
   progress: LearnProgress,
   options: {
     query?: string;
@@ -244,13 +268,13 @@ export function filterCurriculum(
     goalOnly?: boolean;
     bookmarkedOnly?: boolean;
   }
-): FilteredLevel[] {
+): FilteredLevel<V>[] {
   const q = normalizeText(options.query ?? '');
   const status = options.status ?? 'ALL';
   const goalSet = options.goalOnly && options.goal ? new Set(LEARN_PATHS[options.goal]) : null;
   const bookmarkedSet = options.bookmarkedOnly ? new Set(progress.bookmarked ?? []) : null;
 
-  const result: FilteredLevel[] = [];
+  const result: FilteredLevel<V>[] = [];
 
   for (const level of curriculum) {
     const doneCount = level.lessons.filter((l) => progress.lessons[l.id]?.done).length;
@@ -271,8 +295,8 @@ export function filterCurriculum(
           lesson.title,
           lesson.objective,
           ...(lesson.instrumentIds ?? []),
-          ...lesson.remember,
-          ...lesson.body,
+          ...(lesson.remember ?? []),
+          ...(lesson.body ?? []),
           lesson.textExample ?? '',
           ...(lesson.examples ?? []).flatMap((e) => [e.title, e.text]),
           ...(lesson.uncertain ?? []),

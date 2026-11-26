@@ -5,6 +5,8 @@ import type { TradeScannerOpportunity } from '../../shared/types/analysis';
 import type { ExchangeCode, ProductCategory, Timeframe, TradingStyle } from '../../shared/types/instrument';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { fmtFixed, useT } from '../../i18n';
+import { toUserError, type UserError } from '../common/friendlyError';
+import { ErrorNote } from '../common/ErrorNote';
 
 interface ScannerApiResponse {
   scannedAt: string;
@@ -28,7 +30,7 @@ export function ScannerView() {
 
   const [result, setResult] = useState<ScannerApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +58,7 @@ export function ScannerView() {
       if (!res.ok) throw new Error(json.message ?? t('scan.err.exec'));
       setResult(json);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('scan.err.run'));
+      setError(toUserError(err, t('scan.err.run')));
     } finally {
       setLoading(false);
     }
@@ -207,7 +209,7 @@ export function ScannerView() {
 
       {error && (
         <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-lg p-4 text-xs font-mono text-[var(--negative)]">
-          {error}
+          <ErrorNote error={error} />
         </div>
       )}
 

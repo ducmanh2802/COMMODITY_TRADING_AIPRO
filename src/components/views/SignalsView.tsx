@@ -5,6 +5,8 @@ import type { DataQualityStatus } from '../../shared/types/market';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import { InstrumentToolbar } from '../common/InstrumentToolbar';
 import { fmtFixed, useT } from '../../i18n';
+import { toUserError, type UserError } from '../common/friendlyError';
+import { ErrorNote } from '../common/ErrorNote';
 
 interface DeterministicSignalPayload {
   strategyId: string;
@@ -29,7 +31,7 @@ export function SignalsView() {
   const [signals, setSignals] = useState<DeterministicSignalPayload[]>([]);
   const [dataStatus, setDataStatus] = useState<DataQualityStatus>('UNAVAILABLE');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,7 +54,7 @@ export function SignalsView() {
           setDataStatus(sigJson.dataStatus ?? 'UNAVAILABLE');
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : t('sig.err.load'));
+        if (!cancelled) setError(toUserError(err, t('sig.err.load')));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -81,7 +83,7 @@ export function SignalsView() {
 
       {error && (
         <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-lg p-4 text-xs font-mono text-[var(--negative)]">
-          {error}
+          <ErrorNote error={error} />
         </div>
       )}
 

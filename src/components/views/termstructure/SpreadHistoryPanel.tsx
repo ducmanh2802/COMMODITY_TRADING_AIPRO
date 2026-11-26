@@ -1,5 +1,7 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 import { useEffect, useMemo, useState } from 'react';
-import { errorMessage, fetchCandles, type CandlesResponse } from '../../../api/contractsApi';
+import { fetchCandles, type CandlesResponse } from '../../../api/contractsApi';
 import { calendarSpread, spreadZScore, type SeriesPoint } from '../../../shared/analytics';
 import type { InstrumentDefinition } from '../../../shared/types/instrument';
 import { CURVE_TIMEFRAME, type ContractDataset } from './curveData';
@@ -13,7 +15,7 @@ type LegsState =
   | { state: 'idle' }
   | { state: 'loading' }
   | { state: 'ok'; near: CandlesResponse; far: CandlesResponse }
-  | { state: 'error'; message: string };
+  | { state: 'error'; error: UserError };
 
 const toSeries = (r: CandlesResponse): SeriesPoint[] => r.candles.map((c) => ({ t: c.timestamp, v: c.close }));
 const fmtDate = (ms: number) => fmtDisplayDate(new Date(ms).toISOString().slice(0, 10));
@@ -50,7 +52,7 @@ export function SpreadHistoryPanel({
     Promise.all([q(nearCode), q(farCode)])
       .then(([near, far]) => setLegs({ state: 'ok', near, far }))
       .catch((err) => {
-        if (!ctl.signal.aborted) setLegs({ state: 'error', message: errorMessage(err) });
+        if (!ctl.signal.aborted) setLegs({ state: 'error', error: toUserError(err) });
       });
     return () => ctl.abort();
   }, [instrument.id, nearCode, farCode]);
@@ -134,7 +136,7 @@ export function SpreadHistoryPanel({
       ) : legs.state === 'loading' || legs.state === 'idle' ? (
         <p className="text-xs text-[var(--text)]/55">{t('ts.sp.loadingLegs')}</p>
       ) : legs.state === 'error' ? (
-        <p className="text-xs font-mono text-[var(--negative)]">{legs.message}</p>
+        <ErrorNote error={legs.error} className="text-xs" />
       ) : !computed || !computed.ok ? (
         <p className="text-xs font-mono text-[var(--warning)]">{computed && !computed.ok ? computed.error : t('ts.sp.unavailable')}</p>
       ) : (

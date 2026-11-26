@@ -9,15 +9,17 @@ try { axeSrc = fs.readFileSync(require_.resolve('axe-core/axe.min.js'), 'utf8');
 
 const NAV = 'nav:visible li > button:visible';
 
+const frames = (page: Page) => page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
+
 async function scan(page: Page, label: string, bad: string[]) {
-  await page.waitForTimeout(500);
+  await frames(page);
   const run = () => page.evaluate(async () => {
     const r = await (window as unknown as { axe: { run: (c: Document, o: object) => Promise<{ violations: { id: string; impact: string; nodes: { target: string[] }[] }[] }> } }).axe.run(document, { resultTypes: ['violations'] });
     return r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => `${v.impact} ${v.id} x${v.nodes.length} ${v.nodes[0].target.join(' ').slice(0, 100)}`);
   });
   for (const v of await run()) bad.push(`${label}: ${v}`);
   const opened = await page.evaluate(() => { const d = [...document.querySelectorAll('main details:not([open])')] as HTMLDetailsElement[]; d.forEach((x) => { x.open = true; }); return d.length; });
-  if (opened) { await page.waitForTimeout(300); for (const v of await run()) bad.push(`${label} [open]: ${v}`); }
+  if (opened) { await frames(page); for (const v of await run()) bad.push(`${label} [open]: ${v}`); }
 }
 
 for (const theme of ['dark', 'light'] as const) {
@@ -29,20 +31,20 @@ for (const theme of ['dark', 'light'] as const) {
     }, theme);
     await page.goto('/');
     await expect(page.locator('main').first()).toBeVisible();
-    await page.waitForTimeout(1500);
+    await expect.poll(async () => ((await page.locator('main').first().innerText()) ?? '').trim().length).toBeGreaterThan(20);
     await page.addScriptTag({ content: axeSrc });
     const nav = page.locator(NAV);
     const labels = (await nav.allInnerTexts()).map((s) => s.trim());
     const bad: string[] = [];
     for (let i = 0; i < labels.length; i++) {
       await page.locator(NAV).nth(i).click();
-      await page.waitForTimeout(400);
+      await expect.poll(async () => ((await page.locator('main').first().innerText()) ?? '').trim().length).toBeGreaterThan(20);
       if (!(await page.evaluate(() => !!(window as unknown as { axe?: unknown }).axe))) await page.addScriptTag({ content: axeSrc });
       await scan(page, `${theme} ${labels[i]}`, bad);
       const tabs = page.locator('main [role="tab"]:visible');
       const tn = await tabs.count();
       for (let t = 0; t < tn; t++) {
-        try { await tabs.nth(t).click({ timeout: 2000 }); } catch { continue; }
+        try { await tabs.nth(t).click({ timeout: 10_000 }); } catch { continue; }
         await scan(page, `${theme} ${labels[i]}/tab${t}`, bad);
       }
     }

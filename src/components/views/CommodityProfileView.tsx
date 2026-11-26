@@ -1,3 +1,5 @@
+import { ErrorNote } from '../common/ErrorNote';
+import { toUserError, type UserError } from '../common/friendlyError';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { chartPalette, useThemeKey, withAlpha } from '../../shared/theme/chartColors';
 import {
@@ -109,7 +111,7 @@ export function CommodityProfileView() {
   const [candles, setCandles] = useState<MarketCandle[]>([]);
   const [horizon, setHorizon] = useState<ChartHorizon>('1Y');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
 
   const [verdict, setVerdict] = useState<EightQuestionVerdict | null>(null);
   const [verdictLoading, setVerdictLoading] = useState(false);
@@ -139,7 +141,7 @@ export function CommodityProfileView() {
         setCandles(Array.isArray(candleJson?.candles) ? candleJson.candles : []);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : tr('hc.cp.loadFail'));
+          setError(toUserError(err, tr('hc.cp.loadFail')));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -227,7 +229,7 @@ export function CommodityProfileView() {
         generatedAt: new Date().toISOString(),
         model: 'Gemini',
         status: 'AI_ERROR',
-        message: err instanceof Error ? err.message : tr('hc.cp.verdictFail'),
+        message: toUserError(err, tr('hc.cp.verdictFail')).message,
         answers: null,
       });
     } finally {
@@ -246,7 +248,7 @@ export function CommodityProfileView() {
   if (error || !dossier) {
     return (
       <div className="bg-[var(--surface)] border border-[var(--warning)]/40 rounded-[var(--radius-md)] p-6 space-y-3">
-        <p className="text-sm text-[var(--warning)]">{error ?? t('hc.cp.notFound')}</p>
+        {error ? <ErrorNote error={error} className="text-sm" /> : <p className="text-sm text-[var(--warning)]">{t('hc.cp.notFound')}</p>}
         <button
           type="button"
           onClick={() => setActiveModule('commodity-world')}

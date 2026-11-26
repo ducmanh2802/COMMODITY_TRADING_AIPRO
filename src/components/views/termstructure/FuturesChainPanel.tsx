@@ -1,5 +1,6 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 import { useEffect, useMemo, useState } from 'react';
-import { errorMessage } from '../../../api/contractsApi';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { fmtDate, fmtInt, fmtNum, useT } from '../../../i18n';
 import { deriveChain, liquidityMovedAway } from './chainMath';
@@ -43,7 +44,7 @@ function Bar({ share }: { share: number | null }) {
 /** T95: per-contract-month chain table (price, change, volume, OI, spread vs nearest) with liquidity hint. */
 export function FuturesChainPanel({ instrumentId }: { instrumentId: string }) {
   const t = useT();
-  const [state, setState] = useState<{ s: 'loading' } | { s: 'error'; message: string } | { s: 'ok'; data: ChainDto }>({ s: 'loading' });
+  const [state, setState] = useState<{ s: 'loading' } | { s: 'error'; error: UserError } | { s: 'ok'; data: ChainDto }>({ s: 'loading' });
 
   useEffect(() => {
     const ctl = new AbortController();
@@ -55,7 +56,7 @@ export function FuturesChainPanel({ instrumentId }: { instrumentId: string }) {
         setState({ s: 'ok', data: body });
       })
       .catch((err) => {
-        if (!ctl.signal.aborted) setState({ s: 'error', message: errorMessage(err) });
+        if (!ctl.signal.aborted) setState({ s: 'error', error: toUserError(err) });
       });
     return () => ctl.abort();
   }, [instrumentId]);
@@ -68,7 +69,7 @@ export function FuturesChainPanel({ instrumentId }: { instrumentId: string }) {
       <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('chain.title')}</h2>
       <p className="text-[11px] text-[var(--text)]/55">{t('chain.note')}</p>
       {state.s === 'loading' && <p className="text-xs text-[var(--text)]/55">{t('chain.loading')}</p>}
-      {state.s === 'error' && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{state.message}</p>}
+      {state.s === 'error' && <ErrorNote error={state.error} className="text-xs" />}
       {state.s === 'ok' && state.data.status === 'UNAVAILABLE' && (
         <div className="flex items-start gap-2 text-xs">
           <DataStatusBadge status="UNAVAILABLE" />

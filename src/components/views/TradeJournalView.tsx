@@ -7,6 +7,7 @@ import { getFirestoreModules, handleFirestoreError, OperationType } from '../../
 import type { ExchangeCode, InstrumentDefinition, Timeframe } from '../../shared/types/instrument';
 import { computeJournalExit, localDateTimeToIso, type JournalExitResult } from './journal/journalMath';
 import { fmtFixed, fmtNum, useT } from '../../i18n';
+import { friendlyMessage } from '../common/friendlyError';
 
 /** One-line subtitle + (i) button revealing the full text (popover pattern copied from InstrumentOverview ContextCard). */
 function OneLineSubtitle({ id, text, helpLabel }: { id: string; text: string; helpLabel: string }) {
@@ -325,7 +326,7 @@ export function TradeJournalView() {
       try {
         handleFirestoreError(err, OperationType.CREATE, docPath);
       } catch (wrapped) {
-        setError(wrapped instanceof Error ? wrapped.message : t('jr.logFailed'));
+        setError(friendlyMessage(wrapped, t('jr.logFailed')));
       }
     } finally {
       setSaving(false);
@@ -381,7 +382,7 @@ export function TradeJournalView() {
       try {
         handleFirestoreError(err, OperationType.UPDATE, docPath);
       } catch (wrapped) {
-        setClosing((c) => (c ? { ...c, busy: false, error: wrapped instanceof Error ? wrapped.message : t('jr.closeFailed') } : c));
+        setClosing((c) => (c ? { ...c, busy: false, error: friendlyMessage(wrapped, t('jr.closeFailed')) } : c));
       }
     }
   };

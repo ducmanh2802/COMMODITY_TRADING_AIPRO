@@ -1,3 +1,4 @@
+import { ErrorNote } from '../../common/ErrorNote';
 /**
  * Seasonality tab: monthly return statistics and the average-year path for one DAILY series.
  * Conventions (minYears, final-month exclusion, leap-calendar path) are in
@@ -128,7 +129,7 @@ export function SeasonalityTab({ options }: { options: SeriesOption[] }) {
         </div>
         {option && option.timeframe !== 'D1' && <Notice tone="warn">{t('an.seas.needD1', { tf: option.timeframe })}</Notice>}
         {loading && <p className="text-xs text-[var(--text)]/55">{t('an.loadingCandles')}</p>}
-        {error && <Notice tone="error">{error}</Notice>}
+        {error && <Notice tone="error"><ErrorNote error={error} className="text-inherit" /></Notice>}
         {s && <SeriesIntegrity s={s} />}
       </Panel>
 

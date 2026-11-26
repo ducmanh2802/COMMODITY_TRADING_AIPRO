@@ -1,3 +1,4 @@
+import { friendlyMessage } from '../common/friendlyError';
 import { useEffect, useState } from 'react';
 import { Briefcase, LogIn, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -225,7 +226,7 @@ export function PortfolioView() {
       try {
         handleFirestoreError(err, OperationType.CREATE, posPath);
       } catch (wrapped) {
-        setError(wrapped instanceof Error ? wrapped.message : t('pf.saveFailed'));
+        setError(friendlyMessage(wrapped, t('pf.saveFailed')));
       }
     } finally {
       setSaving(false);

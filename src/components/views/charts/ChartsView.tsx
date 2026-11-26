@@ -1,3 +1,5 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 import { useEffect, useMemo, useState } from 'react';
 
 /** "ICE:KC" -> "KC"; plain roots pass through. */
@@ -120,12 +122,12 @@ export function ChartsView() {
   const { instruments, setActiveModule, selectedSymbol, setSelectedSymbol, quotesBySymbol } = useTerminal();
   const t = useT();
   const [datasets, setDatasets] = useState<DatasetRecord[]>([]);
-  const [datasetsError, setDatasetsError] = useState<string | null>(null);
+  const [datasetsError, setDatasetsError] = useState<UserError | null>(null);
   const [datasetsLoading, setDatasetsLoading] = useState(true);
   const [contractCode, setContractCode] = useState('');
   const [timeframe, setTimeframe] = useState('');
   const [data, setData] = useState<CandlesResponse | null>(null);
-  const [candlesError, setCandlesError] = useState<string | null>(null);
+  const [candlesError, setCandlesError] = useState<UserError | null>(null);
   const [candlesLoading, setCandlesLoading] = useState(false);
   const [settings, setSettings] = useState<IndicatorSettings>(DEFAULT_SETTINGS);
   const [reloadKey, setReloadKey] = useState(0);
@@ -139,7 +141,7 @@ export function ChartsView() {
     fetchDatasets(ctrl.signal)
       .then(setDatasets)
       .catch((err: unknown) => {
-        if (!ctrl.signal.aborted) setDatasetsError(err instanceof Error ? err.message : t('chart.err.datasets'));
+        if (!ctrl.signal.aborted) setDatasetsError(toUserError(err, t('chart.err.datasets')));
       })
       .finally(() => {
         if (!ctrl.signal.aborted) setDatasetsLoading(false);
@@ -189,7 +191,7 @@ export function ChartsView() {
       .then(setData)
       .catch((err: unknown) => {
         if (ctrl.signal.aborted) return;
-        setCandlesError(err instanceof ApiError || err instanceof Error ? err.message : t('chart.err.candles'));
+        setCandlesError(toUserError(err, t('chart.err.candles')));
       })
       .finally(() => {
         if (!ctrl.signal.aborted) setCandlesLoading(false);
@@ -403,8 +405,8 @@ export function ChartsView() {
         </div>
       </div>
 
-      {datasetsError && <p role="alert" className="text-xs text-[var(--warning)]">{datasetsError}</p>}
-      {candlesError && <p role="alert" className="text-xs text-[var(--warning)]">{candlesError}</p>}
+      {datasetsError && <ErrorNote error={datasetsError} className="text-xs text-[var(--warning)]" />}
+      {candlesError && <ErrorNote error={candlesError} className="text-xs text-[var(--warning)]" />}
 
       {/* Provenance banner */}
       {contractSeries.resolved.source === 'CONTRACT' && (

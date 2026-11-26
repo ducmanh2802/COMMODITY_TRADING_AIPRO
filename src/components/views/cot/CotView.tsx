@@ -1,3 +1,5 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 /**
  * COT module (`cot`): CFTC Commitments of Traders positioning for one instrument.
  *
@@ -62,14 +64,14 @@ function fmtSigned(x: number | null | undefined): string {
 export default function CotView() {
   const t = useT();
   const [markets, setMarkets] = useState<CotMarketMapping[]>([]);
-  const [marketsError, setMarketsError] = useState<string | null>(null);
+  const [marketsError, setMarketsError] = useState<UserError | null>(null);
   const [instrumentId, setInstrumentId] = useState('');
   const [reportType, setReportType] = useState<CotReportType>('DISAGGREGATED');
   const [lookback, setLookback] = useState(DEFAULT_COT_LOOKBACK_WEEKS);
   const [maxMissing, setMaxMissing] = useState(0);
   const [data, setData] = useState<CotQueryResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
@@ -81,7 +83,7 @@ export default function CotView() {
         if (first) setInstrumentId((cur) => cur || first.instrumentId);
       })
       .catch((e: unknown) => {
-        if (!ac.signal.aborted) setMarketsError(e instanceof Error ? e.message : tr('cot.err.markets'));
+        if (!ac.signal.aborted) setMarketsError(toUserError(e, tr('cot.err.markets')));
       });
     return () => ac.abort();
   }, []);
@@ -112,7 +114,7 @@ export default function CotView() {
       .catch((e: unknown) => {
         if (ac.signal.aborted) return;
         setData(null);
-        setError(e instanceof ApiError ? `${e.code} (HTTP ${e.httpStatus}): ${e.message}` : e instanceof Error ? e.message : tr('cot.err.data'));
+        setError(toUserError(e, tr('cot.err.data')));
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoading(false);
@@ -143,7 +145,7 @@ export default function CotView() {
         </button>
       </div>
 
-      {marketsError && <Notice tone="error">{t('cot.marketsError', { error: marketsError })}</Notice>}
+      {marketsError && <Notice tone="error"><ErrorNote error={marketsError} text={t('cot.marketsError', { error: marketsError.message })} className="text-inherit" /></Notice>}
 
       <Panel title={t('cot.selection')}>
         <div className="flex flex-wrap items-end gap-4">
@@ -228,7 +230,7 @@ export default function CotView() {
       </Panel>
 
       {loading && <p className="text-xs text-[var(--text)]/55">{t('cot.loading')}</p>}
-      {error && <Notice tone="error">{error}</Notice>}
+      {error && <Notice tone="error"><ErrorNote error={error} className="text-inherit" /></Notice>}
       {data && <CotResults data={data} />}
 
       {/* Admin-only tool: collapsed unless an admin token is already stored in this tab (sessionStorage). */}
@@ -253,7 +255,7 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
   const [from, setFrom] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<CotSyncResult | null>(null);
-  const [err, setErr] = useState<{ tone: 'error' | 'warn'; text: string } | null>(null);
+  const [err, setErr] = useState<{ tone: 'error' | 'warn'; text: string; detail: string } | null>(null);
 
   const run = useCallback(async () => {
     setBusy(true);
@@ -269,13 +271,14 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
           tone: 'warn',
           text:
             e.httpStatus === 401
-              ? tr('cot.sync.401', { msg: e.message })
-              : tr('cot.sync.403', { msg: e.message }),
+              ? tr('cot.sync.401', { msg: '' }).trim()
+              : tr('cot.sync.403', { msg: '' }).trim(),
+          detail: e.message,
         });
       } else if (e instanceof ApiError) {
-        setErr({ tone: 'error', text: `${e.code} (HTTP ${e.httpStatus}): ${e.message}` });
+        { const u = toUserError(e); setErr({ tone: 'error', text: u.message, detail: `${e.code} (HTTP ${e.httpStatus}): ${u.detail}` }); }
       } else {
-        setErr({ tone: 'error', text: e instanceof Error ? e.message : tr('cot.sync.failed') });
+        { const u = toUserError(e, tr('cot.sync.failed')); setErr({ tone: 'error', text: u.message, detail: u.detail }); }
       }
     } finally {
       setBusy(false);
@@ -318,7 +321,7 @@ function SyncPanel({ instrumentId, onSynced }: { instrumentId: string; onSynced:
           {busy ? t('cot.sync.syncing') : t('cot.sync.btn', { id: instrumentId })}
         </button>
       </div>
-      {err && <Notice tone={err.tone}>{err.text}</Notice>}
+      {err && <Notice tone={err.tone}><ErrorNote error={{ kind: 'unknown', message: err.text, detail: err.detail }} className="text-inherit" /></Notice>}
       {result && (
         <div className="space-y-2 text-xs">
           <p className="font-mono">

@@ -1,3 +1,5 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useTerminal } from '../../../contexts/TerminalContext';
@@ -180,7 +182,7 @@ export function DriversPanel() {
   const l: L = lang === 'en' ? 'en' : 'vi';
   const { selectedSymbol } = useTerminal();
   const [data, setData] = useState<DriversResponse | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const [err, setErr] = useState<UserError | null>(null);
   const [nonce, setNonce] = useState(0);
   const retry = useCallback(() => setNonce((n) => n + 1), []);
   useEffect(() => {
@@ -189,13 +191,13 @@ export function DriversPanel() {
     setErr(null);
     fetchJsonWithRetry<DriversResponse>(`/api/drivers/${encodeURIComponent(selectedSymbol)}`, { signal: ctrl.signal })
       .then((d) => !ctrl.signal.aborted && setData(d))
-      .catch((e) => !ctrl.signal.aborted && setErr(e instanceof Error ? e.message : 'error'));
+      .catch((e) => !ctrl.signal.aborted && setErr(toUserError(e)));
     return () => ctrl.abort();
   }, [selectedSymbol, nonce]);
   if (err)
     return (
       <Card className="space-y-2 text-sm">
-        <p className="text-[var(--warning)]">{t('drv.error', { msg: err })}</p>
+        <ErrorNote error={err} text={t('drv.error', { msg: err.message })} className="text-[var(--warning)]" />
         <button type="button" onClick={retry} className="underline text-[var(--accent-text)]">{t('drv.retry')}</button>
       </Card>
     );

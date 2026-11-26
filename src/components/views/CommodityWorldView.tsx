@@ -1,3 +1,5 @@
+import { ErrorNote } from '../common/ErrorNote';
+import { toUserError, type UserError } from '../common/friendlyError';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, ChevronDown, RefreshCw, Search } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
@@ -34,7 +36,7 @@ export function CommodityWorldView() {
   );
   const [overview, setOverview] = useState<CycleMarketOverview | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
   const [groupFilter, setGroupFilter] = useState<CommodityGroupFilter>('ALL');
   const [mxvOnly, setMxvOnly] = useState(false);
   const [query, setQuery] = useState('');
@@ -48,7 +50,7 @@ export function CommodityWorldView() {
       setOverview({ ...json, commodities: Array.isArray(json?.commodities) ? json.commodities : [] });
     } catch (err) {
       if (signal?.aborted) return;
-      setError(err instanceof Error ? err.message : t('hc.cw.loadFail'));
+      setError(toUserError(err, t('hc.cw.loadFail')));
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
@@ -165,7 +167,7 @@ export function CommodityWorldView() {
 
       {error && (
         <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-[var(--radius-md)] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[var(--negative)]">
-          <span>{t('hc.cw.loadFailBanner', { error })}</span>
+          <ErrorNote error={error} text={t('hc.cw.loadFailBanner', { error: error.message })} />
           <button
             type="button"
             onClick={() => void fetchWorld()}

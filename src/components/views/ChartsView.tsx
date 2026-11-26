@@ -1,3 +1,4 @@
+import { toUserError, type UserError } from '../common/friendlyError';
 import { useEffect, useRef, useState } from 'react';
 import { chartPalette, useThemeKey, withAlpha } from '../../shared/theme/chartColors';
 import { LINE_WIDTH, lwBase, seriesColor, seriesVar } from '../../shared/theme/chartTheme';
@@ -17,6 +18,7 @@ import { DataStatusBadge } from '../common/DataStatusBadge';
 import { InstrumentToolbar } from '../common/InstrumentToolbar';
 import { SessionHistoryTable } from '../common/SessionHistoryTable';
 import { fmtFixed, fmtNum, useT } from '../../i18n';
+import { ErrorNote } from '../common/ErrorNote';
 
 interface CandleApiResponse {
   status: DataQualityStatus;
@@ -36,7 +38,7 @@ export function ChartsView() {
 
   const [candleData, setCandleData] = useState<CandleApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
   const [showEma20, setShowEma20] = useState(true);
   const [showEma50, setShowEma50] = useState(true);
   const [showEma200, setShowEma200] = useState(false);
@@ -63,7 +65,7 @@ export function ChartsView() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : t('chart.err.candles'));
+          setError(toUserError(err, t('chart.err.candles')));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -256,7 +258,7 @@ export function ChartsView() {
 
       {error && (
         <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-lg p-4 text-xs text-[var(--negative)] font-mono">
-          {error}
+          <ErrorNote error={error} />
         </div>
       )}
 

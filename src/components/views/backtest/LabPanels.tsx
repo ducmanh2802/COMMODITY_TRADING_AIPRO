@@ -1,3 +1,5 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 import { useMemo, useState } from 'react';
 import { FlaskConical, Shuffle } from 'lucide-react';
 import { fmtFixed, fmtNum, useT } from '../../../i18n';
@@ -144,7 +146,7 @@ export function WalkForwardSection({
   const [mode, setMode] = useState<'ROLLING' | 'ANCHORED'>('ROLLING');
   const [scan, setScan] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
   const [res, setRes] = useState<WalkForwardResponse | null>(null);
   const [scanned, setScanned] = useState<string[]>([]);
 
@@ -168,7 +170,7 @@ export function WalkForwardSection({
       setScanned(Object.keys(grid));
       setRes(json);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('lab.error'));
+      setError(toUserError(e, t('lab.error')));
     } finally {
       setLoading(false);
     }
@@ -231,7 +233,7 @@ export function WalkForwardSection({
         </p>
       </fieldset>
 
-      {error && <p role="alert" className="text-xs font-mono text-[var(--warning)] break-words">{error}</p>}
+      {error && <ErrorNote error={error} className="text-xs text-[var(--warning)] break-words" />}
 
       {res && !res.valid && <p role="alert" className="text-xs text-[var(--warning)]">{res.error}</p>}
 
@@ -361,7 +363,7 @@ export function MonteCarloSection({
   const [ddThreshold, setDdThreshold] = useState('20');
   const [seed, setSeed] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
   const [res, setRes] = useState<MonteCarloResponse | null>(null);
 
   const run = async () => {
@@ -378,7 +380,7 @@ export function MonteCarloSection({
       if (seed.trim() !== '' && Number.isInteger(Number(seed)) && Number(seed) >= 0) payload.seed = Number(seed);
       setRes(await postLab<MonteCarloResponse>('/api/backtest/monte-carlo', payload, t('lab.error')));
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('lab.error'));
+      setError(toUserError(e, t('lab.error')));
     } finally {
       setLoading(false);
     }
@@ -424,7 +426,7 @@ export function MonteCarloSection({
         </button>
       </div>
 
-      {error && <p role="alert" className="text-xs font-mono text-[var(--warning)] break-words">{error}</p>}
+      {error && <ErrorNote error={error} className="text-xs text-[var(--warning)] break-words" />}
       {res && !res.valid && <p role="alert" className="text-xs text-[var(--warning)]">{t('lab.mc.tooFew')}</p>}
 
       {res && res.valid && (

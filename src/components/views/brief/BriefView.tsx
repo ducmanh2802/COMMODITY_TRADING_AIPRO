@@ -1,3 +1,4 @@
+import { ErrorNote } from '../../common/ErrorNote';
 import { useCallback, useEffect, useState } from 'react';
 import { Layers, ListChecks, RefreshCw } from 'lucide-react';
 import { useTerminal } from '../../../contexts/TerminalContext';
@@ -10,6 +11,7 @@ import { SectionHeader } from '../../ui/SectionHeader';
 import { Card } from '../../ui/Card';
 import { Skeleton } from '../../ui/Skeleton';
 import { EmptyState } from '../../ui/EmptyState';
+import { toUserError, type UserError } from '../../common/friendlyError';
 
 function decimalsForTick(tick: number | null | undefined): number {
   if (!tick || tick <= 0) return 2;
@@ -30,7 +32,7 @@ export function BriefView({ embedded = false }: { embedded?: boolean } = {}) {
   const { t, lang } = useI18n();
   const [brief, setBrief] = useState<AnalysisBrief | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
 
   const load = useCallback(async (symbol: string, signal?: AbortSignal) => {
     setLoading(true);
@@ -41,7 +43,7 @@ export function BriefView({ embedded = false }: { embedded?: boolean } = {}) {
       setBrief(data);
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : String(err));
+      setError(toUserError(err));
       setBrief(null);
     } finally {
       if (!signal?.aborted) setLoading(false);
@@ -64,7 +66,7 @@ export function BriefView({ embedded = false }: { embedded?: boolean } = {}) {
         {loading && !isCurrent && <Skeleton className="h-8" />}
         {error && (
           <Card tone="warning" className="flex flex-wrap items-center justify-between gap-2">
-            <span>{t('brief.error', { msg: error })}</span>
+            <ErrorNote error={error} text={t('brief.error', { msg: error.message })} />
             <button type="button" onClick={() => void load(selectedSymbol)} className="text-xs underline">
               {t('brief.retry')}
             </button>
@@ -144,7 +146,7 @@ export function BriefView({ embedded = false }: { embedded?: boolean } = {}) {
 
       {error && (
         <Card tone="warning" className="flex flex-wrap items-center justify-between gap-2">
-          <span>{t('brief.error', { msg: error })}</span>
+          <ErrorNote error={error} text={t('brief.error', { msg: error.message })} />
           <button type="button" onClick={() => void load(selectedSymbol)} className="text-xs underline">
             {t('brief.retry')}
           </button>

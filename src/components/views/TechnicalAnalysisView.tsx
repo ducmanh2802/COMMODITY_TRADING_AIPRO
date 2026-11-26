@@ -1,3 +1,4 @@
+import { toUserError, type UserError } from '../common/friendlyError';
 import { useEffect, useState } from 'react';
 import { ObvReadout } from './instrument/ObvLine';
 import type { ObvSummary } from '../../shared/types/cycle';
@@ -8,6 +9,7 @@ import { DataStatusBadge } from '../common/DataStatusBadge';
 import { InstrumentToolbar } from '../common/InstrumentToolbar';
 import { SessionHistoryTable } from '../common/SessionHistoryTable';
 import { fmtFixed, tr, useT } from '../../i18n';
+import { ErrorNote } from '../common/ErrorNote';
 
 interface TechnicalSnapshotPayload {
   symbol: string;
@@ -87,7 +89,7 @@ export function TechnicalAnalysisView() {
   const [snapshot, setSnapshot] = useState<TechnicalSnapshotPayload | null>(null);
   const [candles, setCandles] = useState<MarketCandle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
 
   const selectedInst = instruments.find(
     (i) => i.exchangeSymbol.toUpperCase() === selectedSymbol.toUpperCase() || i.id === selectedSymbol
@@ -117,7 +119,7 @@ export function TechnicalAnalysisView() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : t('ta.err.load'));
+          setError(toUserError(err, t('ta.err.load')));
           setCandles([]);
         }
       } finally {
@@ -148,7 +150,7 @@ export function TechnicalAnalysisView() {
 
       {error && (
         <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-lg p-4 text-xs font-mono text-[var(--negative)]">
-          {error}
+          <ErrorNote error={error} />
         </div>
       )}
 

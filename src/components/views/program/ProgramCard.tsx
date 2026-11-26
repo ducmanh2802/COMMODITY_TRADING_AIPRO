@@ -18,7 +18,7 @@ import {
 } from '../../../shared/program/threeMonth';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
-import { CURRICULUM } from '../learn/curriculum';
+import { LESSON_TITLES } from '../learn/curriculum/meta';
 import type { ExamTarget } from '../learn/exam/ExamView';
 import { useProgram, type ProgramModel } from './useProgram';
 
@@ -226,8 +226,6 @@ function WeekDetail({ model, wp, onOpenLesson, onOpenExam }: { model: ProgramMod
     </div>
   );
 }
-
-const LESSON_TITLES = new Map(CURRICULUM.flatMap((l) => l.lessons.map((x) => [x.id, x.title] as const)));
 
 function StartForm({ model }: { model: ProgramModel }) {
   const { t } = useI18n();

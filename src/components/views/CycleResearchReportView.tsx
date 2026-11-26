@@ -1,3 +1,4 @@
+import { toUserError, type UserError } from '../common/friendlyError';
 import { useEffect, useState } from 'react';
 import { Bot, CalendarClock, FileText, ShieldAlert } from 'lucide-react';
 import { useI18n } from '../../i18n';
@@ -8,6 +9,7 @@ import { CyclePhaseBadge } from '../common/CyclePhaseBadge';
 import { DataStatusBadge } from '../common/DataStatusBadge';
 import type { CommodityCycleSummary } from '../../shared/types/cycle';
 import { fetchJsonWithRetry, safeReadJson } from '../../shared/utils/http';
+import { ErrorNote } from '../common/ErrorNote';
 
 export function CycleResearchReportView() {
   const { t } = useI18n();
@@ -15,7 +17,7 @@ export function CycleResearchReportView() {
   const [report, setReport] = useState<DailyResearchReportPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [generatingAi, setGeneratingAi] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UserError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +32,7 @@ export function CycleResearchReportView() {
         if (!cancelled) setReport(json);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Không thể tải báo cáo nghiên cứu.');
+          setError(toUserError(err, 'Không thể tải báo cáo nghiên cứu.'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -51,7 +53,7 @@ export function CycleResearchReportView() {
       const json = await safeReadJson<DailyResearchReportPayload>(res);
       setReport(json);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi gọi Gemini Research Report.');
+      setError(toUserError(err, 'Lỗi gọi Gemini Research Report.'));
     } finally {
       setGeneratingAi(false);
     }
@@ -131,7 +133,7 @@ export function CycleResearchReportView() {
 
       {error && (
         <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-lg p-4 text-xs text-[var(--negative)]">
-          {error}
+          <ErrorNote error={error} />
         </div>
       )}
 

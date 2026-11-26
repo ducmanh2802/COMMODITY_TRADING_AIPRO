@@ -1,3 +1,4 @@
+import { ErrorNote } from '../../common/ErrorNote';
 import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
 /**
  * Analysis module (`analysis`): research screens over imported historical series —
@@ -72,7 +73,7 @@ export default function AnalysisView() {
         ))}
       </div>
 
-      {error && <Notice tone="error">{t('an.loadError', { error })}</Notice>}
+      {error && <Notice tone="error"><ErrorNote error={error} text={t('an.loadError', { error: error.message })} className="text-inherit" /></Notice>}
       {!loading && !error && options.length === 0 && (
         <Notice tone="warn">{t('an.noDatasets')}</Notice>
       )}

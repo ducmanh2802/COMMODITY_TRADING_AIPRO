@@ -1,6 +1,8 @@
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 import { useEffect, useMemo, useState } from 'react';
 import { useTerminal } from '../../../contexts/TerminalContext';
-import { errorMessage, fetchDatasets, type DatasetSummary } from '../../../api/contractsApi';
+import { fetchDatasets, type DatasetSummary } from '../../../api/contractsApi';
 import { ROLL_YIELD_FORMULA, type CurveShape } from '../../../shared/contracts/termStructure';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { CURVE_TIMEFRAME, groupContractDatasets, loadCurveSnapshot, type CurveSnapshot } from './curveData';
@@ -11,7 +13,7 @@ import { FuturesChainPanel } from './FuturesChainPanel';
 import { VolumeProfilePanel } from './VolumeProfilePanel';
 import { fmtDate, fmtFixed, fmtNum, tr, useT, type TFunction } from '../../../i18n';
 
-type Loadable<T> = { state: 'idle' } | { state: 'loading' } | { state: 'ok'; data: T } | { state: 'error'; message: string };
+type Loadable<T> = { state: 'idle' } | { state: 'loading' } | { state: 'ok'; data: T } | { state: 'error'; error: UserError };
 
 const inputClass =
   'bg-[var(--surface)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)]';
@@ -47,7 +49,7 @@ function useSnapshot(instrumentKey: string | null, datasets: DatasetSummary[] | 
     loadCurveSnapshot(inst, datasets, asOf, ctl.signal)
       .then((data) => setSnap({ state: 'ok', data }))
       .catch((err) => {
-        if (!ctl.signal.aborted) setSnap({ state: 'error', message: errorMessage(err) });
+        if (!ctl.signal.aborted) setSnap({ state: 'error', error: toUserError(err) });
       });
     return () => ctl.abort();
   }, [instruments, instrumentKey, datasets, asOf, enabled]);
@@ -214,7 +216,7 @@ export default function TermStructureView() {
     fetchDatasets(instrument.id, ctl.signal)
       .then((data) => setDatasets({ state: 'ok', data }))
       .catch((err) => {
-        if (!ctl.signal.aborted) setDatasets({ state: 'error', message: errorMessage(err) });
+        if (!ctl.signal.aborted) setDatasets({ state: 'error', error: toUserError(err) });
       });
     return () => ctl.abort();
   }, [instrument?.id]);
@@ -316,7 +318,7 @@ export default function TermStructureView() {
       {instrument && <VolumeProfilePanel instrumentId={instrument.id} />}
 
       {datasets.state === 'error' ? (
-        <p className="text-xs font-mono text-[var(--negative)]">{datasets.message}</p>
+        <ErrorNote error={datasets.error} className="text-xs" />
       ) : (
         <>
           <section className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 space-y-2">
@@ -324,7 +326,7 @@ export default function TermStructureView() {
             {primary.state === 'loading' ? (
               <p className="text-xs text-[var(--text)]/55">{t('ts.loadingCurve')}</p>
             ) : primary.state === 'error' ? (
-              <p className="text-xs font-mono text-[var(--negative)]">{primary.message}</p>
+              <ErrorNote error={primary.error} className="text-xs" />
             ) : chartSeries.length === 0 ? (
               <div className="flex items-center gap-2 text-xs">
                 <DataStatusBadge status="UNAVAILABLE" />
@@ -343,7 +345,7 @@ export default function TermStructureView() {
 
           {primary.state === 'ok' && <SnapshotDetails snap={primary.data} title={t('ts.curveAsOf')} />}
           {compareOn && secondary.state === 'ok' && <SnapshotDetails snap={secondary.data} title={t('ts.compareCurveAsOf')} />}
-          {compareOn && secondary.state === 'error' && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{secondary.message}</p>}
+          {compareOn && secondary.state === 'error' && <ErrorNote error={secondary.error} className="text-xs" />}
 
           {instrument && datasets.state === 'ok' && <SpreadHistoryPanel instrument={instrument} contracts={contracts} />}
         </>

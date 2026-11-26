@@ -5,6 +5,7 @@ import { invalidate } from '../../../shared/utils/http';
 import type { FundamentalMacroRecord, MarketDirection } from '../../../shared/types/analysis';
 import { hasKey, tr, useT } from '../../../i18n';
 import { fieldErrorProps } from '../../common/fieldErrors';
+import { friendlyMessage } from '../../common/friendlyError';
 
 /** Code plus Vietnamese/English label, e.g. "BULLISH · Tăng giá"; unknown codes are shown as-is. */
 export function codeLabel(prefix: 'news.dir.' | 'news.rev.', code: string): string {
@@ -100,7 +101,7 @@ export function RecordForm({ initialKind, onSaved }: { initialKind: 'MACRO' | 'N
       setDataPeriod('');
       await onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('news.err.store'));
+      setError(friendlyMessage(err, t('news.err.store')));
     } finally {
       setSubmitting(false);
     }

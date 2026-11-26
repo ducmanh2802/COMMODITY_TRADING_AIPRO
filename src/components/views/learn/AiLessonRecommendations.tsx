@@ -23,8 +23,8 @@ import {
   toSearchedSignalPayloads,
   type ManualOpenPositionInput,
 } from './aiRecommendations';
-import { CURRICULUM } from './curriculum';
-import type { Lesson } from './curriculum/types';
+import { CURRICULUM_INDEX, LESSON_META_BY_ID } from './curriculum/meta';
+import type { LessonMeta } from './curriculum/types';
 import { useAcademyProgress } from './progress';
 
 export function AiLessonRecommendations({
@@ -124,7 +124,7 @@ export function AiLessonRecommendations({
   const candidates = useMemo(
     () =>
       hasSignals
-        ? rankCandidateLessons(CURRICULUM, progress, instruments, searchedPayloads, openPositions, 18)
+        ? rankCandidateLessons(CURRICULUM_INDEX, progress, instruments, searchedPayloads, openPositions, 18)
         : [],
     [hasSignals, progress, instruments, searchedPayloads, openPositions]
   );
@@ -135,12 +135,8 @@ export function AiLessonRecommendations({
   );
 
   const lessonLookup = useMemo(() => {
-    const map = new Map<string, { lesson: Lesson; levelNumber: number }>();
-    for (const lvl of CURRICULUM) {
-      for (const l of lvl.lessons) {
-        map.set(l.id, { lesson: l, levelNumber: lvl.number });
-      }
-    }
+    const map = new Map<string, { lesson: LessonMeta; levelNumber: number }>();
+    for (const [id, e] of LESSON_META_BY_ID) map.set(id, { lesson: e.lesson, levelNumber: e.level.number });
     return map;
   }, []);
 

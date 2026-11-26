@@ -1,3 +1,4 @@
+import { friendlyMessage } from './friendlyError';
 import React, { useState } from 'react';
 import { FileSpreadsheet, Trash2, Upload } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
@@ -93,7 +94,7 @@ export function CsvImportPanel({
     } catch (err) {
       setFeedback({
         type: 'err',
-        text: err instanceof Error ? err.message : t('data.csv.networkError'),
+        text: friendlyMessage(err, t('data.csv.networkError')),
       });
     } finally {
       setSubmitting(false);
@@ -114,7 +115,7 @@ export function CsvImportPanel({
     } catch (err) {
       setFeedback({
         type: 'err',
-        text: err instanceof Error ? err.message : t('data.csv.clearFailedShort'),
+        text: friendlyMessage(err, t('data.csv.clearFailedShort')),
       });
     } finally {
       setClearing(false);

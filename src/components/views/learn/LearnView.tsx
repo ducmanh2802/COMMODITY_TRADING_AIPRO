@@ -1,24 +1,17 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useMemo, useState, type ReactNode } from 'react';
 import { AlertTriangle, Award, Bookmark, BookOpen, Calculator, CheckCircle2, ChevronDown, ChevronRight, FileText, GraduationCap, Info, ListChecks, Lock, Search, ShieldAlert, X } from 'lucide-react';
 import { useI18n, type TKey } from '../../../i18n';
 import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
 import { Card } from '../../ui/Card';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { ProgramCard } from '../program/ProgramCard';
-import {
-  computeAcademyStats,
-  extractHighlightedSnippet,
-  filterCurriculum,
-  highlightTextSegments,
-  type AcademyTab,
-  type HighlightSegment,
-  type LessonStatusFilter,
-} from './academyUtils';
+import { computeAcademyStats, extractHighlightedSnippet, filterCurriculum, highlightTextSegments, type AcademyTab, type HighlightSegment, type LessonStatusFilter } from './academyUtils';
 import { AiLessonRecommendations } from './AiLessonRecommendations';
 import { SourceLinks } from './Calculators';
-import { CURRICULUM } from './curriculum';
-import type { Lesson, Level } from './curriculum/types';
-import { ExamCard, ExamRunner, type ExamTarget } from './exam/ExamView';
+import { ALL_LESSON_META, CURRICULUM_INDEX } from './curriculum/meta';
+import { loadLevel } from './curriculum/loader';
+import type { LessonMeta, LevelMeta } from './curriculum/types';
+import { ExamCard, type ExamTarget } from './exam/ExamView';
 import { EXAM_PASS_PCT, examUnlocked, LEVEL_EXAM_SIZE, loadExams, type ExamStore } from './exam/examLogic';
 import { FlashcardDeck } from './FlashcardDeck';
 import { GLOSSARY } from './glossary';
@@ -26,10 +19,12 @@ import { filterSlang, SLANG, SLANG_TAGS, type SlangTag } from './glossarySlang';
 import { MONEY_WAYS, RISK_WARNINGS, type MoneyWay, type RiskStat } from './learnContent';
 import { LearnGoalCard } from './LearnGoalCard';
 import { loadGoal, type LearnGoal } from './learnPaths';
-import { LessonPage } from './LessonPage';
 import { PracticeSandbox } from './PracticeSandbox';
 import { useAcademyProgress, type LearnProgress, type LessonProgress } from './progress';
 import { ReviewCard } from './ReviewSession';
+
+const LessonRoute = lazy(() => import('./LessonRoute'));
+const ExamRunner = lazy(() => import('./exam/ExamRunner').then((m) => ({ default: m.ExamRunner })));
 
 type Page = { kind: 'home' } | { kind: 'lesson'; id: string } | { kind: 'exam'; target: ExamTarget };
 
@@ -47,9 +42,7 @@ const segBtn = (active: boolean) =>
 
 const filterBtn = (active: boolean) =>
   `min-h-8 px-2.5 py-1 rounded-md border text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
-    active
-      ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text-strong)]'
-      : 'border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--text-strong)]'
+    active ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text-strong)]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--text-strong)]'
   }`;
 
 function SlangList() {
@@ -213,7 +206,7 @@ function GlossarySection() {
 
 type ExamState = 'locked' | 'ready' | 'passed';
 
-function levelExamState(level: Level, doneCount: number, exams: ExamStore): ExamState {
+function levelExamState(level: LevelMeta, doneCount: number, exams: ExamStore): ExamState {
   if (exams[level.id]?.passed) return 'passed';
   return examUnlocked(doneCount, level.lessons.length) ? 'ready' : 'locked';
 }
@@ -251,9 +244,7 @@ function ProgressRing({ pct, size = 40, stroke = 3.5, tone = 'var(--accent)', ch
     <span className="relative inline-flex shrink-0 items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke} />
-        {p > 0 && (
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={tone} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${(p / 100) * c} ${c}`} />
-        )}
+        {p > 0 && <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={tone} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${(p / 100) * c} ${c}`} />}
       </svg>
       <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold font-mono tabular-nums text-[var(--text-strong)]">{children}</span>
     </span>
@@ -261,9 +252,21 @@ function ProgressRing({ pct, size = 40, stroke = 3.5, tone = 'var(--accent)', ch
 }
 
 const EXAM_BADGE: Record<ExamState, { Icon: typeof Lock; cls: string; key: TKey }> = {
-  locked: { Icon: Lock, cls: 'text-[var(--muted)] border-[var(--border)] bg-[var(--surface-2)]', key: 'ac.exam.badge.locked' },
-  ready: { Icon: Award, cls: 'text-[var(--accent-text)] border-[var(--accent)]/40 bg-[var(--accent-soft)]', key: 'ac.exam.badge.ready' },
-  passed: { Icon: CheckCircle2, cls: 'text-[var(--positive)] border-[var(--positive)]/40 bg-[var(--positive)]/10', key: 'ac.exam.badge.passed' },
+  locked: {
+    Icon: Lock,
+    cls: 'text-[var(--muted)] border-[var(--border)] bg-[var(--surface-2)]',
+    key: 'ac.exam.badge.locked',
+  },
+  ready: {
+    Icon: Award,
+    cls: 'text-[var(--accent-text)] border-[var(--accent)]/40 bg-[var(--accent-soft)]',
+    key: 'ac.exam.badge.ready',
+  },
+  passed: {
+    Icon: CheckCircle2,
+    cls: 'text-[var(--positive)] border-[var(--positive)]/40 bg-[var(--positive)]/10',
+    key: 'ac.exam.badge.passed',
+  },
 };
 
 /** Exam state as a lock / award / check pill (icon + text, never colour alone). */
@@ -287,22 +290,12 @@ function ExamBadge({ state, iconOnly = false }: { state: ExamState; iconOnly?: b
  * Level stepper: one progress ring per level (from saved lesson progress) plus exam state. Clicking a step opens
  * that level and scrolls to it. Not a tablist (the academy tabs above are the page's tablist).
  */
-function LevelStepper({
-  progress,
-  exams,
-  currentLevelId,
-  onPick,
-}: {
-  progress: LearnProgress;
-  exams: ExamStore;
-  currentLevelId: string | null;
-  onPick: (levelId: string) => void;
-}) {
+function LevelStepper({ progress, exams, currentLevelId, onPick }: { progress: LearnProgress; exams: ExamStore; currentLevelId: string | null; onPick: (levelId: string) => void }) {
   const { t } = useI18n();
   return (
     <nav aria-label={t('ac.levels.stepperAria')} data-testid="academy-level-stepper">
       <ol className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
-        {CURRICULUM.map((lvl) => {
+        {CURRICULUM_INDEX.map((lvl) => {
           const done = lvl.lessons.filter((l) => progress.lessons[l.id]?.done).length;
           const total = lvl.lessons.length;
           const pct = total ? Math.round((done / total) * 100) : 0;
@@ -323,16 +316,13 @@ function LevelStepper({
               >
                 <span className="sr-only">{`${t('ac.levels.stepLabel', { n: lvl.number, title: shortLevelTitle(lvl.title), d: done, t: total })}, ${t(EXAM_BADGE[state].key)}${current ? `, ${t('ac.levels.stepCurrent')}` : ''}`}</span>
                 <span aria-hidden="true" className="contents">
-                <ProgressRing pct={pct} size={36} tone={complete ? 'var(--positive)' : 'var(--accent)'}>
-                  {complete ? <CheckCircle2 className="w-4 h-4 text-[var(--positive)]" aria-hidden="true" /> : lvl.number}
-                </ProgressRing>
-                <span className="flex items-center gap-0.5 text-[10px] font-mono tabular-nums text-[var(--muted)]">
-                  <StateIcon
-                    className={`w-3 h-3 ${state === 'passed' ? 'text-[var(--positive)]' : state === 'ready' ? 'text-[var(--accent-text)]' : ''}`}
-                    aria-hidden="true"
-                  />
-                  {done}/{total}
-                </span>
+                  <ProgressRing pct={pct} size={36} tone={complete ? 'var(--positive)' : 'var(--accent)'}>
+                    {complete ? <CheckCircle2 className="w-4 h-4 text-[var(--positive)]" aria-hidden="true" /> : lvl.number}
+                  </ProgressRing>
+                  <span className="flex items-center gap-0.5 text-[10px] font-mono tabular-nums text-[var(--muted)]">
+                    <StateIcon className={`w-3 h-3 ${state === 'passed' ? 'text-[var(--positive)]' : state === 'ready' ? 'text-[var(--accent-text)]' : ''}`} aria-hidden="true" />
+                    {done}/{total}
+                  </span>
                 </span>
               </button>
             </li>
@@ -344,7 +334,7 @@ function LevelStepper({
 }
 
 /** Compact one-line exam row at the end of an open level (passed levels keep the full card: certificate download). */
-function LevelExamRow({ level, doneCount, exams, onStart }: { level: Level; doneCount: number; exams: ExamStore; onStart: () => void }) {
+function LevelExamRow({ level, doneCount, exams, onStart }: { level: LevelMeta; doneCount: number; exams: ExamStore; onStart: () => void }) {
   const { t } = useI18n();
   const state = levelExamState(level, doneCount, exams);
   if (state === 'passed') {
@@ -356,8 +346,18 @@ function LevelExamRow({ level, doneCount, exams, onStart }: { level: Level; done
       {state === 'locked' ? (
         <>
           <Lock className="w-4 h-4 shrink-0 text-[var(--muted)]" aria-hidden="true" />
-          <p className="text-xs text-[var(--muted)] flex-1 min-w-0" title={t('exam.card.locked', { d: doneCount, t: level.lessons.length })}>
-            {t('acl.examNeed', { p: EXAM_PASS_PCT, d: doneCount, t: level.lessons.length })}
+          <p
+            className="text-xs text-[var(--muted)] flex-1 min-w-0"
+            title={t('exam.card.locked', {
+              d: doneCount,
+              t: level.lessons.length,
+            })}
+          >
+            {t('acl.examNeed', {
+              p: EXAM_PASS_PCT,
+              d: doneCount,
+              t: level.lessons.length,
+            })}
           </p>
         </>
       ) : (
@@ -396,20 +396,23 @@ function StatDonut({ stat, size = 72 }: { stat: RiskStat; size?: number }) {
 }
 
 function fmtPct(n: number, lang: string) {
-  return n.toLocaleString(lang === 'en' ? 'en-US' : 'vi-VN', { maximumFractionDigits: 1 });
+  return n.toLocaleString(lang === 'en' ? 'en-US' : 'vi-VN', {
+    maximumFractionDigits: 1,
+  });
 }
 
 /** Headline-number tile for a warning; the full warning text + sources stay one click away. */
 function RiskStatTile({ stat, text, sources }: { stat: RiskStat; text: string; sources?: { label: string; url: string }[] }) {
   const { t, lang } = useI18n();
-  const value =
-    stat.high !== undefined ? `${fmtPct(stat.low, lang)}–${fmtPct(stat.high, lang)}%` : `${stat.id === 'mxvRetail' ? '~' : ''}${fmtPct(stat.low, lang)}%`;
+  const value = stat.high !== undefined ? `${fmtPct(stat.low, lang)}–${fmtPct(stat.high, lang)}%` : `${stat.id === 'mxvRetail' ? '~' : ''}${fmtPct(stat.low, lang)}%`;
   return (
     <Card className="!p-3 space-y-2" data-testid={`risk-stat-${stat.id}`}>
       <div className="flex items-center gap-3">
         <StatDonut stat={stat} />
         <div className="min-w-0">
-          <p className="text-2xl font-semibold tabular-nums leading-tight" style={{ color: statTone(stat) }}>{value}</p>
+          <p className="text-2xl font-semibold tabular-nums leading-tight" style={{ color: statTone(stat) }}>
+            {value}
+          </p>
           <p className="text-xs text-[var(--text-strong)]">{t(`ac.risk.stat.${stat.id}` as TKey)}</p>
           <p className="text-[11px] text-[var(--muted)]">{t(`ac.risk.stat.${stat.id}Note` as TKey)}</p>
         </div>
@@ -461,19 +464,13 @@ function MoneyWayCard({ way }: { way: MoneyWay }) {
   );
 }
 
-function ExamsAndRiskSection({
-  progress,
-  onStartExam,
-}: {
-  progress: LearnProgress;
-  onStartExam: (target: ExamTarget) => void;
-}) {
+function ExamsAndRiskSection({ progress, onStartExam }: { progress: LearnProgress; onStartExam: (target: ExamTarget) => void }) {
   const { t } = useI18n();
-  const allLessons = useMemo(() => CURRICULUM.flatMap((l) => l.lessons), []);
+  const allLessons = useMemo(() => CURRICULUM_INDEX.flatMap((l) => l.lessons), []);
   const doneAll = allLessons.filter((l) => progress.lessons[l.id]?.done).length;
   const exams = useMemo(() => loadExams(), []);
   const [picked, setPicked] = useState<string | null>(null);
-  const pickedLevel = CURRICULUM.find((l) => l.id === picked);
+  const pickedLevel = CURRICULUM_INDEX.find((l) => l.id === picked);
   const statWarnings = RISK_WARNINGS.filter((w) => w.stat);
   const otherWarnings = RISK_WARNINGS.filter((w) => !w.stat);
 
@@ -484,14 +481,9 @@ function ExamsAndRiskSection({
         <Explain label={t('acl.explain')}>
           <p>{t('ac.examsHub.subtitle')}</p>
         </Explain>
-        <ExamCard
-          target={{ kind: 'final' }}
-          doneLessons={doneAll}
-          totalLessons={allLessons.length}
-          onStart={() => onStartExam({ kind: 'final' })}
-        />
+        <ExamCard target={{ kind: 'final' }} doneLessons={doneAll} totalLessons={allLessons.length} onStart={() => onStartExam({ kind: 'final' })} />
         <ul aria-label={t('ac.examsHub.gridAria')} className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-          {CURRICULUM.map((lvl) => {
+          {CURRICULUM_INDEX.map((lvl) => {
             const done = lvl.lessons.filter((l) => progress.lessons[l.id]?.done).length;
             const state = levelExamState(lvl, done, exams);
             const { Icon, cls, key } = EXAM_BADGE[state];
@@ -508,16 +500,26 @@ function ExamsAndRiskSection({
                     active ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)]'
                   }`}
                 >
-                  <span className="sr-only">{t('ac.examsHub.tileLabel', { n: lvl.number, title: shortLevelTitle(lvl.title), d: done, t: lvl.lessons.length, status: t(key) })}</span>
-                  <span aria-hidden="true" className="contents">
-                  <span className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold text-[var(--text-strong)]">{t('ac.lesson.levelTag', { n: lvl.number })}</span>
-                    <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full border ${cls}`}>
-                      <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-                    </span>
+                  <span className="sr-only">
+                    {t('ac.examsHub.tileLabel', {
+                      n: lvl.number,
+                      title: shortLevelTitle(lvl.title),
+                      d: done,
+                      t: lvl.lessons.length,
+                      status: t(key),
+                    })}
                   </span>
-                  <span className="block text-[11px] text-[var(--muted)] truncate" title={shortLevelTitle(lvl.title)}>{clipWords(shortLevelTitle(lvl.title))}</span>
-                  <span className="block text-[10px] font-mono tabular-nums text-[var(--muted)]">{t('ac.levels.count', { d: done, t: lvl.lessons.length })}</span>
+                  <span aria-hidden="true" className="contents">
+                    <span className="flex items-center justify-between gap-1">
+                      <span className="text-xs font-semibold text-[var(--text-strong)]">{t('ac.lesson.levelTag', { n: lvl.number })}</span>
+                      <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full border ${cls}`}>
+                        <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                      </span>
+                    </span>
+                    <span className="block text-[11px] text-[var(--muted)] truncate" title={shortLevelTitle(lvl.title)}>
+                      {clipWords(shortLevelTitle(lvl.title))}
+                    </span>
+                    <span className="block text-[10px] font-mono tabular-nums text-[var(--muted)]">{t('ac.levels.count', { d: done, t: lvl.lessons.length })}</span>
                   </span>
                 </button>
               </li>
@@ -544,9 +546,7 @@ function ExamsAndRiskSection({
 
       <section className="space-y-3">
         <SectionHeader title={t('ac.risk.title')} />
-        <div className="grid gap-3 sm:grid-cols-2">
-          {statWarnings.map((w) => w.stat && <RiskStatTile key={w.stat.id} stat={w.stat} text={w.text} sources={w.sources} />)}
-        </div>
+        <div className="grid gap-3 sm:grid-cols-2">{statWarnings.map((w) => w.stat && <RiskStatTile key={w.stat.id} stat={w.stat} text={w.text} sources={w.sources} />)}</div>
         <div className="grid gap-2 sm:grid-cols-2" data-testid="money-ways">
           {MONEY_WAYS.map((w) => (
             <MoneyWayCard key={w.name} way={w} />
@@ -560,9 +560,7 @@ function ExamsAndRiskSection({
             <summary className="cursor-pointer select-none flex items-center gap-1.5 text-sm font-semibold">
               <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
               <h2 className="inline">{t('ac.risk.warnTitle')}</h2>
-              <span className="ml-auto rounded-full border border-[var(--warning)]/40 px-2 py-0.5 text-[11px] font-medium whitespace-nowrap">
-                {t('acl.warnCount', { n: otherWarnings.length })}
-              </span>
+              <span className="ml-auto rounded-full border border-[var(--warning)]/40 px-2 py-0.5 text-[11px] font-medium whitespace-nowrap">{t('acl.warnCount', { n: otherWarnings.length })}</span>
             </summary>
             <ul className="list-disc pl-4 space-y-1.5 text-xs mt-2">
               {otherWarnings.map((w) => (
@@ -582,11 +580,7 @@ function ExamsAndRiskSection({
 function renderHighlightedSegments(segs: HighlightSegment[], highlightTestId?: string) {
   return segs.map((seg, idx) =>
     seg.match ? (
-      <mark
-        key={idx}
-        data-testid={highlightTestId}
-        className="rounded-sm bg-[var(--warning)]/30 text-[var(--text-strong)] px-0.5 font-medium"
-      >
+      <mark key={idx} data-testid={highlightTestId} className="rounded-sm bg-[var(--warning)]/30 text-[var(--text-strong)] px-0.5 font-medium">
         {seg.text}
       </mark>
     ) : (
@@ -604,7 +598,7 @@ function LessonCard({
   onOpen,
   onToggleBookmark,
 }: {
-  lesson: Lesson;
+  lesson: LessonMeta;
   progress?: LessonProgress;
   noteText: string;
   query: string;
@@ -618,10 +612,7 @@ function LessonCard({
   const noteMatch = trimmedQuery && hasNote ? extractHighlightedSnippet(noteText, trimmedQuery, 120) : null;
 
   return (
-    <Card
-      padded={false}
-      className="relative overflow-hidden transition hover:bg-[var(--surface-2)] hover:border-[var(--accent)]/50 hover:-translate-y-px"
-    >
+    <Card padded={false} className="relative overflow-hidden transition hover:bg-[var(--surface-2)] hover:border-[var(--accent)]/50 hover:-translate-y-px">
       <button
         type="button"
         data-testid={`lesson-card-${lesson.id}`}
@@ -630,9 +621,7 @@ function LessonCard({
         className="w-full p-3 pr-11 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
       >
         <span className="flex items-start justify-between gap-2">
-          <span className="text-sm font-medium text-[var(--text-strong)]">
-            {trimmedQuery ? renderHighlightedSegments(highlightTextSegments(lesson.title, trimmedQuery)) : lesson.title}
-          </span>
+          <span className="text-sm font-medium text-[var(--text-strong)]">{trimmedQuery ? renderHighlightedSegments(highlightTextSegments(lesson.title, trimmedQuery)) : lesson.title}</span>
           {progress?.done && (
             <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--positive)] shrink-0 whitespace-nowrap">
               <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -641,14 +630,12 @@ function LessonCard({
           )}
         </span>
         {trimmedQuery ? (
-          <span className="block text-xs text-[var(--muted)] mt-1">
-            {renderHighlightedSegments(highlightTextSegments(lesson.objective, trimmedQuery))}
-          </span>
+          <span className="block text-xs text-[var(--muted)] mt-1">{renderHighlightedSegments(highlightTextSegments(lesson.objective, trimmedQuery))}</span>
         ) : (
           <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-[var(--muted)]" title={lesson.objective}>
-            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] px-1.5 py-0.5 tabular-nums" aria-label={t('acl.quizCount', { n: lesson.quiz.length })}>
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] px-1.5 py-0.5 tabular-nums" aria-label={t('acl.quizCount', { n: lesson.quizCount })}>
               <ListChecks className="w-3 h-3" aria-hidden="true" />
-              {lesson.quiz.length}
+              {lesson.quizCount}
             </span>
           </span>
         )}
@@ -676,9 +663,7 @@ function LessonCard({
         data-testid={`lesson-bookmark-${lesson.id}`}
         onClick={onToggleBookmark}
         className={`absolute top-1 right-1 sm:top-2.5 sm:right-2.5 h-10 w-10 sm:h-7 sm:w-7 inline-flex items-center justify-center rounded-md transition-colors ${
-          bookmarked
-            ? 'text-[var(--warning)] bg-[var(--warning)]/15 hover:bg-[var(--warning)]/25'
-            : 'text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
+          bookmarked ? 'text-[var(--warning)] bg-[var(--warning)]/15 hover:bg-[var(--warning)]/25' : 'text-[var(--muted)] hover:text-[var(--text-strong)] hover:bg-[var(--surface-2)]'
         }`}
       >
         <Bookmark className="w-4 h-4" fill={bookmarked ? 'currentColor' : 'none'} aria-hidden="true" />
@@ -703,18 +688,12 @@ export default function LearnView() {
 
   const exams = useMemo(() => loadExams(), [page]);
 
-  const allEntries = useMemo(
-    () => CURRICULUM.flatMap((lvl) => lvl.lessons.map((lesson) => ({ level: lvl, lesson }))),
-    []
-  );
-  const stats = useMemo(
-    () => computeAcademyStats(CURRICULUM, progress, exams, goal),
-    [progress, exams, goal]
-  );
+  const allEntries = ALL_LESSON_META;
+  const stats = useMemo(() => computeAcademyStats(CURRICULUM_INDEX, progress, exams, goal), [progress, exams, goal]);
 
   const filteredLevels = useMemo(
     () =>
-      filterCurriculum(CURRICULUM, progress, {
+      filterCurriculum(CURRICULUM_INDEX, progress, {
         query,
         status: statusFilter,
         goal,
@@ -725,7 +704,7 @@ export default function LearnView() {
 
   const bookmarkedLevels = useMemo(
     () =>
-      filterCurriculum(CURRICULUM, progress, {
+      filterCurriculum(CURRICULUM_INDEX, progress, {
         query: bookmarkQuery,
         bookmarkedOnly: true,
       }),
@@ -734,23 +713,30 @@ export default function LearnView() {
 
   const bookmarkedSet = useMemo(() => new Set(bookmarked), [bookmarked]);
 
-  const recommendedLesson = useMemo(
-    () => allEntries.find((e) => e.lesson.id === stats.recommendedLessonId)?.lesson ?? null,
-    [allEntries, stats.recommendedLessonId]
-  );
+  const recommendedLesson = useMemo(() => allEntries.find((e) => e.lesson.id === stats.recommendedLessonId)?.lesson ?? null, [allEntries, stats.recommendedLessonId]);
 
   const go = (p: Page) => {
+    // Start fetching the lesson bodies / quizzes right away so they load in parallel with the page chunk.
+    if (p.kind === 'lesson') {
+      const lvl = allEntries.find((e) => e.lesson.id === p.id)?.level;
+      if (lvl) void loadLevel(lvl.id).catch(() => undefined);
+    } else if (p.kind === 'exam' && p.target.kind === 'level') {
+      void loadLevel(p.target.levelId).catch(() => undefined);
+    }
     setPage(p);
     window.scrollTo?.({ top: 0 });
   };
 
   // Current level = first level whose lessons are not all done or whose exam is not passed yet.
-  const currentLevelId =
-    CURRICULUM.find((lvl) => !(lvl.lessons.every((l) => progress.lessons[l.id]?.done) && exams[lvl.id]?.passed))?.id ?? null;
+  const currentLevelId = CURRICULUM_INDEX.find((lvl) => !(lvl.lessons.every((l) => progress.lessons[l.id]?.done) && exams[lvl.id]?.passed))?.id ?? null;
   const isLevelOpen = (id: string) => levelOpen[id] ?? id === currentLevelId;
 
-  const toggleLevel = (id: string) => setLevelOpen((prev) => ({ ...prev, [id]: !(prev[id] ?? id === currentLevelId) }));
-  const setAllLevels = (open: boolean) => setLevelOpen(Object.fromEntries(CURRICULUM.map((l) => [l.id, open])));
+  const toggleLevel = (id: string) =>
+    setLevelOpen((prev) => ({
+      ...prev,
+      [id]: !(prev[id] ?? id === currentLevelId),
+    }));
+  const setAllLevels = (open: boolean) => setLevelOpen(Object.fromEntries(CURRICULUM_INDEX.map((l) => [l.id, open])));
   const toggleGoal = (id: string) =>
     setGoalOpen((prev) => {
       const next = new Set(prev);
@@ -763,42 +749,55 @@ export default function LearnView() {
     requestAnimationFrame(() => document.getElementById(`lvl-${id}`)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }));
   };
 
-  if (page.kind === 'exam') return <ExamRunner target={page.target} onExit={() => go({ kind: 'home' })} />;
+  if (page.kind === 'exam')
+    return (
+      <Suspense fallback={<p className="text-sm text-[var(--muted)]">{t('exam.loading')}</p>}>
+        <ExamRunner target={page.target} onExit={() => go({ kind: 'home' })} />
+      </Suspense>
+    );
   if (page.kind === 'lesson') {
     const idx = allEntries.findIndex((e) => e.lesson.id === page.id);
     const entry = allEntries[idx];
     if (entry) {
       const { lesson, level } = entry;
-      const lvl = CURRICULUM.find((l) => l.lessons[l.lessons.length - 1]?.id === lesson.id);
+      const lvl = CURRICULUM_INDEX.find((l) => l.lessons[l.lessons.length - 1]?.id === lesson.id);
       return (
-        <LessonPage
-          key={lesson.id}
-          lesson={lesson}
-          levelNumber={level.number}
-          progress={progress.lessons[lesson.id]}
-          note={progress.notes?.[lesson.id] ?? ''}
-          highlightQuery={tab === 'bookmarks' ? bookmarkQuery : query}
-          bookmarked={bookmarkedSet.has(lesson.id)}
-          onToggleBookmark={() => toggleBookmark(lesson.id)}
-          onChangeNote={(text) => setLessonNote(lesson.id, text)}
-          onScore={(pct) => recordLessonScore(lesson.id, pct)}
-          onToggleDone={() => toggleLessonDone(lesson.id)}
-          checklist={progress.checklist}
-          onToggleCheck={(key) => toggleChecklist(key)}
-          onBack={() => go({ kind: 'home' })}
-          onPrev={allEntries[idx - 1] ? () => go({ kind: 'lesson', id: allEntries[idx - 1].lesson.id }) : undefined}
-          onNext={allEntries[idx + 1] ? () => go({ kind: 'lesson', id: allEntries[idx + 1].lesson.id }) : undefined}
-          footer={
-            lvl ? (
-              <ExamCard
-                target={{ kind: 'level', levelId: lvl.id }}
-                doneLessons={lvl.lessons.filter((l) => progress.lessons[l.id]?.done).length}
-                totalLessons={lvl.lessons.length}
-                onStart={() => go({ kind: 'exam', target: { kind: 'level', levelId: lvl.id } })}
-              />
-            ) : undefined
-          }
-        />
+        <Suspense fallback={<p className="text-sm text-[var(--muted)]">{t('ac.lesson.loading')}</p>}>
+          <LessonRoute
+            key={lesson.id}
+            levelId={level.id}
+            lessonId={lesson.id}
+            levelNumber={level.number}
+            progress={progress.lessons[lesson.id]}
+            note={progress.notes?.[lesson.id] ?? ''}
+            highlightQuery={tab === 'bookmarks' ? bookmarkQuery : query}
+            bookmarked={bookmarkedSet.has(lesson.id)}
+            onToggleBookmark={() => toggleBookmark(lesson.id)}
+            onChangeNote={(text) => setLessonNote(lesson.id, text)}
+            onScore={(pct) => recordLessonScore(lesson.id, pct)}
+            onToggleDone={() => toggleLessonDone(lesson.id)}
+            checklist={progress.checklist}
+            onToggleCheck={(key) => toggleChecklist(key)}
+            onBack={() => go({ kind: 'home' })}
+            onPrev={allEntries[idx - 1] ? () => go({ kind: 'lesson', id: allEntries[idx - 1].lesson.id }) : undefined}
+            onNext={allEntries[idx + 1] ? () => go({ kind: 'lesson', id: allEntries[idx + 1].lesson.id }) : undefined}
+            footer={
+              lvl ? (
+                <ExamCard
+                  target={{ kind: 'level', levelId: lvl.id }}
+                  doneLessons={lvl.lessons.filter((l) => progress.lessons[l.id]?.done).length}
+                  totalLessons={lvl.lessons.length}
+                  onStart={() =>
+                    go({
+                      kind: 'exam',
+                      target: { kind: 'level', levelId: lvl.id },
+                    })
+                  }
+                />
+              ) : undefined
+            }
+          />
+        </Suspense>
       );
     }
   }
@@ -812,10 +811,7 @@ export default function LearnView() {
 
   return (
     <div className="space-y-6 max-w-4xl" data-testid="academy-root">
-      <SectionHeader
-        level={1}
-        title={t('ac.title')}
-      />
+      <SectionHeader level={1} title={t('ac.title')} />
       <Explain label={t('acl.explain')} className="-mt-3">
         <p>{t('ac.subtitle')}</p>
         <p>{t('ac.disclaimer')}</p>
@@ -840,10 +836,7 @@ export default function LearnView() {
           </span>
           <span className="min-w-0">
             <span className="block text-xs text-[var(--muted)]">{t('ac.kpi.quizAvg')}</span>
-            <span
-              title={stats.averageBestQuizPct === null ? t('ac.kpi.noQuiz') : undefined}
-              className="block text-base font-semibold font-mono tabular-nums text-[var(--text-strong)] truncate"
-            >
+            <span title={stats.averageBestQuizPct === null ? t('ac.kpi.noQuiz') : undefined} className="block text-base font-semibold font-mono tabular-nums text-[var(--text-strong)] truncate">
               {stats.averageBestQuizPct !== null ? `${stats.averageBestQuizPct}%` : '—'}
             </span>
           </span>
@@ -883,21 +876,11 @@ export default function LearnView() {
         {ACADEMY_TABS.map((k) => {
           const active = tab === k;
           return (
-            <button
-              key={k}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              data-testid={`academy-tab-${k}`}
-              onClick={() => setTab(k)}
-              className={segBtn(active)}
-            >
+            <button key={k} type="button" role="tab" aria-selected={active} data-testid={`academy-tab-${k}`} onClick={() => setTab(k)} className={segBtn(active)}>
               {k === 'bookmarks' && <Bookmark className="inline w-3.5 h-3.5 mr-1.5 -mt-0.5" aria-hidden="true" />}
               {k === 'sandbox' && <Calculator className="inline w-3.5 h-3.5 mr-1.5 -mt-0.5" aria-hidden="true" />}
               {t(`ac.tab.${k}` as TKey)}
-              {k === 'bookmarks' && bookmarked.length > 0 && (
-                <span className="ml-1 font-mono tabular-nums opacity-80">({bookmarked.length})</span>
-              )}
+              {k === 'bookmarks' && bookmarked.length > 0 && <span className="ml-1 font-mono tabular-nums opacity-80">({bookmarked.length})</span>}
             </button>
           );
         })}
@@ -905,10 +888,7 @@ export default function LearnView() {
 
       {tab === 'bookmarks' && (
         <div className="space-y-4" data-testid="academy-bookmarks">
-          <SectionHeader
-            title={t('ac.bookmarks.title')}
-            subtitle={t('ac.bookmarks.subtitle', { n: bookmarked.length })}
-          />
+          <SectionHeader title={t('ac.bookmarks.title')} subtitle={t('ac.bookmarks.subtitle', { n: bookmarked.length })} />
 
           {bookmarked.length === 0 ? (
             <Card className="space-y-3 py-6 text-center" data-testid="bookmarks-empty">
@@ -920,11 +900,7 @@ export default function LearnView() {
                 <p className="text-xs text-[var(--muted)] leading-relaxed">{t('ac.bookmarks.emptyDesc')}</p>
               </div>
               <div>
-                <button
-                  type="button"
-                  onClick={() => setTab('lessons')}
-                  className="min-h-9 px-3.5 py-1.5 rounded-md bg-[var(--accent)] text-white text-xs font-medium hover:brightness-110"
-                >
+                <button type="button" onClick={() => setTab('lessons')} className="min-h-9 px-3.5 py-1.5 rounded-md bg-[var(--accent)] text-white text-xs font-medium hover:brightness-110">
                   {t('ac.bookmarks.browse')}
                 </button>
               </div>
@@ -970,9 +946,7 @@ export default function LearnView() {
                       <h2 id={`bm-${level.id}`} className="text-sm font-semibold text-[var(--text-strong)]">
                         {level.title}
                       </h2>
-                      <span className="text-xs font-mono tabular-nums text-[var(--muted)]">
-                        {lessons.length} bài
-                      </span>
+                      <span className="text-xs font-mono tabular-nums text-[var(--muted)]">{lessons.length} bài</span>
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {lessons.map((l) => (
@@ -1000,9 +974,7 @@ export default function LearnView() {
 
       {tab === 'glossary' && <GlossarySection />}
 
-      {tab === 'exams' && (
-        <ExamsAndRiskSection progress={progress} onStartExam={(target) => go({ kind: 'exam', target })} />
-      )}
+      {tab === 'exams' && <ExamsAndRiskSection progress={progress} onStartExam={(target) => go({ kind: 'exam', target })} />}
 
       {tab === 'lessons' && (
         <div className="space-y-6">
@@ -1036,18 +1008,10 @@ export default function LearnView() {
               <div className="flex items-center gap-1.5 flex-wrap">
                 {!hasActiveFilters && (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => setAllLevels(true)}
-                      className={filterBtn(false)}
-                    >
+                    <button type="button" onClick={() => setAllLevels(true)} className={filterBtn(false)}>
                       {t('ac.levels.expandAll')}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setAllLevels(false)}
-                      className={filterBtn(false)}
-                    >
+                    <button type="button" onClick={() => setAllLevels(false)} className={filterBtn(false)}>
                       {t('ac.levels.collapseAll')}
                     </button>
                   </>
@@ -1072,12 +1036,7 @@ export default function LearnView() {
                   ))}
                 </div>
                 {goal && (
-                  <button
-                    type="button"
-                    aria-pressed={goalOnly}
-                    onClick={() => setGoalOnly((v) => !v)}
-                    className={filterBtn(goalOnly)}
-                  >
+                  <button type="button" aria-pressed={goalOnly} onClick={() => setGoalOnly((v) => !v)} className={filterBtn(goalOnly)}>
                     {t('ac.filter.goalOnly')}
                   </button>
                 )}
@@ -1094,9 +1053,7 @@ export default function LearnView() {
             </div>
           </div>
 
-          {!hasActiveFilters && (
-            <LevelStepper progress={progress} exams={exams} currentLevelId={currentLevelId} onPick={jumpToLevel} />
-          )}
+          {!hasActiveFilters && <LevelStepper progress={progress} exams={exams} currentLevelId={currentLevelId} onPick={jumpToLevel} />}
 
           {!query.trim() && (
             <>
@@ -1105,11 +1062,7 @@ export default function LearnView() {
                 <summary className="cursor-pointer select-none text-sm font-medium text-[var(--text-strong)]">{t('acl.suggest')}</summary>
                 <div className="mt-3 space-y-4">
                   <AiLessonRecommendations onOpenLesson={(id) => go({ kind: 'lesson', id })} />
-                  <LearnGoalCard
-                    lessons={progress.lessons}
-                    onOpen={(id) => go({ kind: 'lesson', id })}
-                    onGoalChange={setGoal}
-                  />
+                  <LearnGoalCard lessons={progress.lessons} onOpen={(id) => go({ kind: 'lesson', id })} onGoalChange={setGoal} />
                 </div>
               </details>
               <ProgramCard onOpenLesson={(id) => go({ kind: 'lesson', id })} onOpenExam={(target) => go({ kind: 'exam', target })} />
@@ -1159,111 +1112,111 @@ export default function LearnView() {
             </Card>
           ) : (
             <div className="space-y-2" data-testid="academy-levels">
-            {filteredLevels.map(({ level, lessons, doneCount }) => {
-              const total = level.lessons.length;
-              const complete = doneCount === total;
-              const examState = levelExamState(level, doneCount, exams);
-              const isOpen = hasActiveFilters || isLevelOpen(level.id);
-              const goalExpanded = goalOpen.has(level.id);
-              const bodyId = `lvl-body-${level.id}`;
-              const goalId = `lvl-goal-${level.id}`;
+              {filteredLevels.map(({ level, lessons, doneCount }) => {
+                const total = level.lessons.length;
+                const complete = doneCount === total;
+                const examState = levelExamState(level, doneCount, exams);
+                const isOpen = hasActiveFilters || isLevelOpen(level.id);
+                const goalExpanded = goalOpen.has(level.id);
+                const bodyId = `lvl-body-${level.id}`;
+                const goalId = `lvl-goal-${level.id}`;
 
-              return (
-                <section
-                  key={level.id}
-                  id={`lvl-${level.id}`}
-                  className={`scroll-mt-20 rounded-lg border px-3 py-2 space-y-2.5 ${
-                    level.id === currentLevelId && !hasActiveFilters ? 'border-[var(--accent)]/40 bg-[var(--surface)]' : 'border-[var(--border)]/70'
-                  }`}
-                  aria-labelledby={`h-${level.id}`}
-                >
-                  <div className="flex items-center gap-2">
-                    {/* Heading wraps the toggle button (a heading inside a button is invalid and hides it from heading navigation). */}
-                    <h2 className="min-w-0 flex-1">
-                    <button
-                      type="button"
-                      aria-expanded={isOpen}
-                      aria-controls={bodyId}
-                      onClick={() => toggleLevel(level.id)}
-                      className="w-full min-w-0 text-left flex items-center gap-2.5 group rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-                    >
-                      {isOpen ? (
-                        <ChevronDown className="w-4 h-4 shrink-0 text-[var(--muted)] group-hover:text-[var(--accent-text)]" aria-hidden="true" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4 shrink-0 text-[var(--muted)] group-hover:text-[var(--accent-text)]" aria-hidden="true" />
-                      )}
-                      <ProgressRing pct={total ? (doneCount / total) * 100 : 0} size={34} tone={complete ? 'var(--positive)' : 'var(--accent)'}>
-                        {complete ? <CheckCircle2 className="w-4 h-4 text-[var(--positive)]" aria-hidden="true" /> : level.number}
-                      </ProgressRing>
-                      <span className="min-w-0">
-                        <span id={`h-${level.id}`} className="block text-sm sm:text-base font-semibold text-[var(--text-strong)] group-hover:text-[var(--accent-text)] transition-colors">
-                          {level.title}
-                        </span>
-                        <span className={`block text-xs font-mono tabular-nums ${complete ? 'text-[var(--positive)] font-semibold' : 'text-[var(--muted)] font-normal'}`}>
-                          {t('ac.levels.count', { d: doneCount, t: total })}
-                        </span>
-                      </span>
-                    </button>
-                    </h2>
-                    <ExamBadge state={examState} iconOnly />
-                  </div>
-
-                  {isOpen && (
-                    <div id={bodyId} className="space-y-2.5">
-                      <div className="text-xs text-[var(--muted)]">
+                return (
+                  <section
+                    key={level.id}
+                    id={`lvl-${level.id}`}
+                    className={`scroll-mt-20 rounded-lg border px-3 py-2 space-y-2.5 ${
+                      level.id === currentLevelId && !hasActiveFilters ? 'border-[var(--accent)]/40 bg-[var(--surface)]' : 'border-[var(--border)]/70'
+                    }`}
+                    aria-labelledby={`h-${level.id}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {/* Heading wraps the toggle button (a heading inside a button is invalid and hides it from heading navigation). */}
+                      <h2 className="min-w-0 flex-1">
                         <button
                           type="button"
-                          aria-expanded={goalExpanded}
-                          aria-controls={goalId}
-                          onClick={() => toggleGoal(level.id)}
-                          className="inline-flex items-center gap-1 text-[var(--accent-text)] hover:underline whitespace-nowrap"
+                          aria-expanded={isOpen}
+                          aria-controls={bodyId}
+                          onClick={() => toggleLevel(level.id)}
+                          className="w-full min-w-0 text-left flex items-center gap-2.5 group rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                         >
-                          <Info className="w-3.5 h-3.5" aria-hidden="true" />
-                          {t('acl.levelGoal')}
+                          {isOpen ? (
+                            <ChevronDown className="w-4 h-4 shrink-0 text-[var(--muted)] group-hover:text-[var(--accent-text)]" aria-hidden="true" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 shrink-0 text-[var(--muted)] group-hover:text-[var(--accent-text)]" aria-hidden="true" />
+                          )}
+                          <ProgressRing pct={total ? (doneCount / total) * 100 : 0} size={34} tone={complete ? 'var(--positive)' : 'var(--accent)'}>
+                            {complete ? <CheckCircle2 className="w-4 h-4 text-[var(--positive)]" aria-hidden="true" /> : level.number}
+                          </ProgressRing>
+                          <span className="min-w-0">
+                            <span id={`h-${level.id}`} className="block text-sm sm:text-base font-semibold text-[var(--text-strong)] group-hover:text-[var(--accent-text)] transition-colors">
+                              {level.title}
+                            </span>
+                            <span className={`block text-xs font-mono tabular-nums ${complete ? 'text-[var(--positive)] font-semibold' : 'text-[var(--muted)] font-normal'}`}>
+                              {t('ac.levels.count', { d: doneCount, t: total })}
+                            </span>
+                          </span>
                         </button>
-                        {goalExpanded && (
-                          <p id={goalId} className="mt-1 max-w-2xl">
-                            {level.goal}
-                          </p>
+                      </h2>
+                      <ExamBadge state={examState} iconOnly />
+                    </div>
+
+                    {isOpen && (
+                      <div id={bodyId} className="space-y-2.5">
+                        <div className="text-xs text-[var(--muted)]">
+                          <button
+                            type="button"
+                            aria-expanded={goalExpanded}
+                            aria-controls={goalId}
+                            onClick={() => toggleGoal(level.id)}
+                            className="inline-flex items-center gap-1 text-[var(--accent-text)] hover:underline whitespace-nowrap"
+                          >
+                            <Info className="w-3.5 h-3.5" aria-hidden="true" />
+                            {t('acl.levelGoal')}
+                          </button>
+                          {goalExpanded && (
+                            <p id={goalId} className="mt-1 max-w-2xl">
+                              {level.goal}
+                            </p>
+                          )}
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {lessons.map((l) => (
+                            <LessonCard
+                              key={l.id}
+                              lesson={l}
+                              progress={progress.lessons[l.id]}
+                              noteText={progress.notes?.[l.id] ?? ''}
+                              query={query}
+                              bookmarked={bookmarkedSet.has(l.id)}
+                              onOpen={() => go({ kind: 'lesson', id: l.id })}
+                              onToggleBookmark={() => toggleBookmark(l.id)}
+                            />
+                          ))}
+                        </div>
+                        {!hasActiveFilters && (
+                          <LevelExamRow
+                            level={level}
+                            doneCount={doneCount}
+                            exams={exams}
+                            onStart={() =>
+                              go({
+                                kind: 'exam',
+                                target: { kind: 'level', levelId: level.id },
+                              })
+                            }
+                          />
                         )}
                       </div>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        {lessons.map((l) => (
-                          <LessonCard
-                            key={l.id}
-                            lesson={l}
-                            progress={progress.lessons[l.id]}
-                            noteText={progress.notes?.[l.id] ?? ''}
-                            query={query}
-                            bookmarked={bookmarkedSet.has(l.id)}
-                            onOpen={() => go({ kind: 'lesson', id: l.id })}
-                            onToggleBookmark={() => toggleBookmark(l.id)}
-                          />
-                        ))}
-                      </div>
-                      {!hasActiveFilters && (
-                        <LevelExamRow
-                          level={level}
-                          doneCount={doneCount}
-                          exams={exams}
-                          onStart={() => go({ kind: 'exam', target: { kind: 'level', levelId: level.id } })}
-                        />
-                      )}
-                    </div>
-                  )}
-                </section>
-              );
-            })}
+                    )}
+                  </section>
+                );
+              })}
             </div>
           )}
 
           {!hasActiveFilters && (
-            <ExamCard
-              target={{ kind: 'final' }}
-              doneLessons={stats.doneLessons}
-              totalLessons={stats.totalLessons}
-              onStart={() => go({ kind: 'exam', target: { kind: 'final' } })}
-            />
+            <ExamCard target={{ kind: 'final' }} doneLessons={stats.doneLessons} totalLessons={stats.totalLessons} onStart={() => go({ kind: 'exam', target: { kind: 'final' } })} />
           )}
         </div>
       )}

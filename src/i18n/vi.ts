@@ -61,6 +61,7 @@ import * as academyLite from './dict/academyLite';
 import * as cyclescan from './dict/cyclescan';
 import * as toppick from './dict/toppick';
 import * as hardcoded from './dict/hardcoded';
+import * as errors2 from './dict/errors2';
 import * as honesty from './dict/honesty';
 import * as badges2 from './dict/badges2';
 
@@ -131,6 +132,7 @@ export const vi = {
   ...honesty.vi,
   ...badges2.vi,
   ...hardcoded.vi,
+  ...errors2.vi,
 };
 
 export type TKey = keyof typeof vi;

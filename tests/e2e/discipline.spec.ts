@@ -215,6 +215,8 @@ test('mistake tags: tag a losing trade, persists after reload, counted in "Lỗi
   await open(page, { [PAPER_KEY]: seededState([{ id: 'trd_loss', pnlVnd: -1_500_000, minutesAgo: 5 }]) });
   await openPaper(page);
 
+  // Wait for the lazy paper-trading chunk and the seeded trade before locating the card.
+  await expect(page.getByRole('heading', { name: 'Lệnh đã đóng' })).toBeVisible({ timeout: 30_000 });
   const tradesCard = page.locator('div').filter({ has: page.getByRole('heading', { name: 'Lệnh đã đóng' }) }).last();
   await expect(tradesCard.getByText('Lệnh lỗ — tự xem lại: đã mắc lỗi gì?')).toBeVisible();
   await tradesCard.getByRole('button', { name: 'Gắn lỗi' }).click();
@@ -233,7 +235,9 @@ test('mistake tags: tag a losing trade, persists after reload, counted in "Lỗi
   await expect(tradesCard.getByRole('button', { name: 'Sửa lỗi' })).toBeVisible();
 
   // Persisted in local storage and shown again after a reload.
+  await expect.poll(() => page.evaluate((k) => window.localStorage.getItem(k) ?? '', PAPER_KEY)).toContain('movedStop');
   await page.reload();
+  await expect(page.locator('main').first()).toBeVisible();
   await openPaper(page);
   await expect(page.getByRole('list', { name: 'Lỗi đã gắn' })).toContainText('Dời cắt lỗ');
   await expect(page.getByText('Kéo stop xuống khi giá giảm')).toBeVisible();

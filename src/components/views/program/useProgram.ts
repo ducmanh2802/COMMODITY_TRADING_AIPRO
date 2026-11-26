@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { DEFAULT_CAPITAL_VND } from '../papertrade/paperMath';
 import { usePaperStore } from '../papertrade/usePaperStore';
-import { CURRICULUM } from '../learn/curriculum';
+import { LESSONS_TOTAL } from '../learn/curriculum/meta';
 import { loadExams } from '../learn/exam/examLogic';
 import { useAcademyProgress } from '../learn/progress';
 import { dueItems, loadReview } from '../learn/review';
@@ -21,8 +21,6 @@ import {
   type WeekInfo,
   type WeekProgress,
 } from '../../../shared/program/threeMonth';
-
-const LESSONS_TOTAL = CURRICULUM.reduce((n, l) => n + l.lessons.length, 0);
 
 export interface ProgramModel {
   state: ProgramState;
