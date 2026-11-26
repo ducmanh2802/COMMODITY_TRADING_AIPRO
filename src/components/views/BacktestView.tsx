@@ -363,7 +363,7 @@ export function BacktestView() {
         <button
           type="submit"
           disabled={loading || !paramsValid}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 min-h-10 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-medium rounded-md disabled:opacity-50"
         >
           <History className="w-3.5 h-3.5" aria-hidden="true" />
           <span>{loading ? t('bt.simulating') : t('bt.run')}</span>
