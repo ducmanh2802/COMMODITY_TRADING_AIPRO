@@ -42,7 +42,7 @@ export function TaggedNewsPanel() {
         {state.status === 'ok' && !state.data.aiSummaries && <p className="text-[11px] text-[var(--faint)]">{t('nw.noAi')}</p>}
       </div>
       {state.status === 'loading' ? (
-        <div className="p-4 text-xs text-[var(--muted)]">{t('nw.loading')}</div>
+        <div className="p-4 text-xs text-[var(--muted)] min-h-[24rem]">{t('nw.loading')}</div>
       ) : state.status === 'error' ? (
         <div className="p-4 text-xs text-[var(--warning)]">{t('nw.error')}</div>
       ) : shown.length === 0 ? (

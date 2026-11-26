@@ -101,6 +101,8 @@ interface TerminalContextValue {
   lastSyncSummary: SyncResultSummary | null;
   loadError: string | null;
   refreshBackendData: () => Promise<void>;
+  /** Loads the (slow) full data-health report once; only the Data Health view needs it. */
+  loadDataHealthReport: () => Promise<void>;
   /** Epoch ms of the last successful quotes response (null before the first). */
   lastUpdatedAt: number | null;
   refreshQuotes: () => Promise<void>;
@@ -150,6 +152,23 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const activeModuleRef = useRef<AppModuleId>(activeModule);
   activeModuleRef.current = activeModule;
 
+  const healthReportWantedRef = useRef(false);
+  const healthReportInFlightRef = useRef(false);
+
+  const loadDataHealthReport = useCallback(async () => {
+    healthReportWantedRef.current = true;
+    if (healthReportInFlightRef.current) return;
+    healthReportInFlightRef.current = true;
+    try {
+      const reportJson = await fetchJsonWithRetry<FullDataHealthReport>('/api/data/health-report', undefined, { retries: 0 });
+      if (reportJson && Array.isArray(reportJson.commodities)) setDataHealthReport(reportJson);
+    } catch {
+      // Data Health view shows its placeholder; the next manual refresh retries.
+    } finally {
+      healthReportInFlightRef.current = false;
+    }
+  }, []);
+
   const refreshBackendData = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
@@ -161,9 +180,9 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
         '/api/providers/health',
         '/api/instruments',
         '/api/market/quotes',
-        '/api/architecture',
         '/api/market/datasets',
-        '/api/data/health-report',
+        // The slow full report is only fetched once the Data Health view asked for it (see loadDataHealthReport).
+        ...(healthReportWantedRef.current ? (['/api/data/health-report'] as const) : []),
       ] as const;
       const failures: string[] = [];
       const results = await Promise.all(
@@ -177,12 +196,11 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
           }
         })
       );
-      const [healthJson, provJson, instJson, quotesJson, archJson, dsJson, reportJson] = results as [
+      const [healthJson, provJson, instJson, quotesJson, dsJson, reportJson] = results as [
         BackendHealthPayload | null,
         { providers?: ProviderHealth[] } | null,
         { instruments?: InstrumentDefinition[] } | null,
         { quotes?: MarketQuote[] } | null,
-        { modules?: PhaseModuleDescriptor[]; roadmap?: RoadmapPhase[] } | null,
         { datasets?: CandleDatasetSummary[] } | null,
         FullDataHealthReport | null,
       ];
@@ -204,11 +222,6 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       }
       if (dsJson) setDatasets(dsJson.datasets ?? []);
       if (reportJson && Array.isArray(reportJson.commodities)) setDataHealthReport(reportJson);
-      if (archJson) {
-        setModules(archJson.modules ?? []);
-        setRoadmap(archJson.roadmap ?? []);
-      }
-
       if (failures.length > 0) {
         throw new Error(`Backend sync partially failed: ${failures.join('; ')}`);
       }
@@ -258,9 +271,11 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
           fetchJsonWithRetry<{ providers?: ProviderHealth[] }>('/api/providers/health', undefined, { retries: 0 }).catch(
             () => null
           ),
-          fetchJsonWithRetry<FullDataHealthReport>('/api/data/health-report', undefined, { retries: 0 }).catch(
-            () => null
-          ),
+          healthReportWantedRef.current || activeModuleRef.current === 'data-health'
+            ? fetchJsonWithRetry<FullDataHealthReport>('/api/data/health-report', undefined, { retries: 0 }).catch(
+                () => null
+              )
+            : Promise.resolve(null),
         ]);
         if (provJson) setProviders(provJson.providers ?? []);
         if (reportJson && Array.isArray(reportJson.commodities)) setDataHealthReport(reportJson);
@@ -318,6 +333,21 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       void refreshBackendData();
     });
   }, [refreshBackendData]);
+
+  // Module/roadmap descriptors are not needed for first paint: fetch once, well after the first screen settles.
+  useEffect(
+    () =>
+      afterFirstPaint(() => {
+        void fetchJsonWithRetry<{ modules?: PhaseModuleDescriptor[]; roadmap?: RoadmapPhase[] }>('/api/architecture', undefined, { retries: 0 })
+          .then((archJson) => {
+            if (!archJson) return;
+            setModules(archJson.modules ?? []);
+            setRoadmap(archJson.roadmap ?? []);
+          })
+          .catch(() => undefined);
+      }, 8_000),
+    []
+  );
 
   // When Yahoo delayed feeds are enabled, the polite 1 req/s background queue and 10y warm-up fill
   // quotes/datasets over ~16s after cold start. Poll up to 5 times cleanly so live-delayed prices
@@ -427,6 +457,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
         lastSyncSummary,
         loadError,
         refreshBackendData,
+        loadDataHealthReport,
         lastUpdatedAt,
         refreshQuotes,
         lastHealthUpdatedAt,

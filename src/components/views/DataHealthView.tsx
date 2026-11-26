@@ -1,5 +1,5 @@
 import { onTablistKeyDown, tablistRef } from '../../shared/hooks/tablistKeys';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   CheckCircle2,
@@ -119,6 +119,7 @@ export function DataHealthView() {
     timeframe,
     lastSyncSummary,
     refreshBackendData,
+    loadDataHealthReport,
     syncProviderFeeds,
     openInstrumentIn,
   } = useTerminal();
@@ -129,6 +130,10 @@ export function DataHealthView() {
     return hasKey(k) ? t(k) : v;
   };
   const connectedCount = providers.filter((p) => p.connectionState === 'CONNECTED').length;
+
+  useEffect(() => {
+    void loadDataHealthReport();
+  }, [loadDataHealthReport]);
 
   const [activeTab, setActiveTab] = useState<HealthTab>('COVERAGE');
   const [historicalRange, setHistoricalRange] = useState<'2y' | '5y' | '10y'>('5y');

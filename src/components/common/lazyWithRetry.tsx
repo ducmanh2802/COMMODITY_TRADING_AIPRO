@@ -111,7 +111,7 @@ export function lazyWithRetry<M, P extends object = object>(
       <ModuleErrorBoundary onRetry={handleRetry}>
         <Suspense
           key={retryKey}
-          fallback={<p className="text-xs text-[var(--text)]/55 py-10 text-center">{fallbackText}</p>}
+          fallback={<p className="text-xs text-[var(--text)]/55 py-10 text-center min-h-[60vh]">{fallbackText}</p>}
         >
           <CurrentLazy {...props} />
         </Suspense>
