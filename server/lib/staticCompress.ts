@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import type { NextFunction, Request, Response } from 'express';
+import { staticCacheControl } from './cacheHeaders.ts';
 
 /**
  * Serves pre-compressed (brotli/gzip) copies of the built SPA's text assets (js/css/svg/json/html).
@@ -70,7 +71,7 @@ export function staticCompress(root: string) {
     res.setHeader('Vary', 'Accept-Encoding');
     res.setHeader('ETag', entry.etag + (useBr ? '-br' : '-gz'));
     // Vite emits content-hashed names under /assets: safe to cache forever. Everything else must revalidate.
-    res.setHeader('Cache-Control', rel.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : 'public, max-age=0');
+    res.setHeader('Cache-Control', staticCacheControl(rel));
     if (req.headers['if-none-match'] === res.getHeader('ETag')) {
       res.status(304).end();
       return;

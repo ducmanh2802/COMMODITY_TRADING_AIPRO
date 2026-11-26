@@ -25,6 +25,7 @@ import { logger, errorSummary } from './lib/logger.ts';
 import { isAiConfigured } from './lib/geminiModels.ts';
 import { accessLogMiddleware, installProcessHooks, recordError } from './lib/observability.ts';
 import { apiCompress } from './lib/apiCompress.ts';
+import { apiCacheHints } from './lib/cacheHeaders.ts';
 import { registerStatusRoutes } from './routes/status.ts';
 import { FreshnessTracker, createFreshnessSnapshot, freshnessObserver } from './lib/freshness.ts';
 import { registerBackupRoutes } from './routes/backup.ts';
@@ -419,6 +420,7 @@ export function createApiApp(options: CreateApiAppOptions = {}): express.Express
   app.use(requestIdMiddleware);
   app.use(accessLogMiddleware());
   app.use(apiCompress());
+  app.use(apiCacheHints());
   installProcessHooks();
   app.use(securityHeadersMiddleware);
   const freshnessTracker = new FreshnessTracker();

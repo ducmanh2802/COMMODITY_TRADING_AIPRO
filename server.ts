@@ -47,15 +47,16 @@ async function startServer(): Promise<void> {
     const distPath = path.resolve(__dirname, 'dist');
     const indexHtml = path.join(distPath, 'index.html');
     const { staticCompress } = await import('./server/lib/staticCompress.ts');
+    const { staticSetHeaders, staticCacheControl } = await import('./server/lib/cacheHeaders.ts');
     app.use(staticCompress(distPath));
-    app.use('/fonts', express.static(path.join(distPath, 'fonts'), { maxAge: '30d', immutable: true }));
-    app.use(express.static(distPath, { index: false }));
+    app.use(express.static(distPath, { index: false, setHeaders: staticSetHeaders(distPath) }));
     // SPA fallback (Express 4 compatible): serve index.html for any non-API
     // GET/HEAD request that did not match a static file, so deep links like
     // /markets work. /api/* is left to the API app's JSON 404 handler.
     app.use((req, res, next) => {
       if (req.method !== 'GET' && req.method !== 'HEAD') return next();
       if (req.path === '/api' || req.path.startsWith('/api/')) return next();
+      res.setHeader('Cache-Control', staticCacheControl('/index.html'));
       res.sendFile(indexHtml);
     });
   } else {
