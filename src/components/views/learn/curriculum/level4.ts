@@ -338,6 +338,43 @@ export const LEVEL4: Level = {
       sources: [SRC.cftc],
     },
     {
+      id: 'l4-cot-positioning',
+      links: [{ module: 'cot', label: 'Báo cáo COT: vị thế so với lịch sử' }],
+      title: 'Đọc vị thế COT và áp lực phòng hộ',
+      objective: 'Phân biệt các nhóm trong báo cáo COT, đọc vị thế ròng theo lịch sử của chính nhóm đó (chỉ số COT) thay vì theo dấu âm/dương, và biết giới hạn của cách đọc này.',
+      body: [
+        'Nhắc lại: báo cáo COT của CFTC chốt vị thế vào cuối ngày thứ Ba và thường công bố lúc 15:30 giờ miền Đông Mỹ (ET) ngày thứ Sáu; tuần có ngày lễ liên bang thì lịch dời muộn hơn. Xem lịch chính thức tại trang CFTC.',
+        'Hai cách phân nhóm. Bản legacy chỉ chia hai nhóm lớn: thương mại (commercial) và phi thương mại (non-commercial), cộng nhóm nhỏ không báo cáo. Bản disaggregated (cho nông sản, năng lượng, kim loại) chia chi tiết hơn: producer/merchant/processor/user (doanh nghiệp sản xuất, thương nhân, chế biến), swap dealers, managed money (quỹ, CTA), other reportables, và nonreportable. Thuật ngữ phải khớp với thẻ vị thế trong app.',
+        'Vị thế ròng (net position) = số hợp đồng mua (long) trừ số hợp đồng bán (short) của một nhóm. Nhóm thương mại phần lớn là người phòng hộ: nhà sản xuất bán trước hàng sẽ làm ra nên hay ở trạng thái ròng bán ở nhiều thị trường. Vì vậy dấu âm của họ là bình thường, không phải tín hiệu giá giảm. Cần đọc mức hiện tại so với lịch sử của chính nhóm đó và đọc sự thay đổi.',
+        'Ý tưởng áp lực phòng hộ (hedging pressure): nghiên cứu của de Roon, Nijman và Veld (2000, Journal of Finance) cho rằng khi người phòng hộ có vị thế nghiêng mạnh một phía, nhà đầu tư còn lại có thể được bù đắp rủi ro khi đứng đối ứng, và vị thế phòng hộ có liên quan đến lợi suất kỳ vọng của hợp đồng tương lai. Đây là kết quả thống kê trên dữ liệu quá khứ, không phải quy tắc hay quy luật chắc chắn.',
+        'Chỉ số COT trong app: lấy vị thế ròng của một nhóm trong cửa sổ 3 năm (156 tuần), rồi tính chỉ số COT = (ròng − thấp nhất) / (cao nhất − thấp nhất) × 100. Kết quả từ 0 (thấp nhất 3 năm) đến 100 (cao nhất 3 năm). Phân vị = tỷ lệ tuần trong cửa sổ có vị thế thấp hơn tuần mới nhất. Nếu biên độ bằng 0 thì không tính được; nếu ít tuần dữ liệu app hiển thị nhãn "ít dữ liệu" và con số kém tin cậy.',
+        'Dải cực đoan trong app: chỉ số dưới 10 hoặc trên 90 được đánh dấu là vùng cực đoan so với lịch sử. Đó chỉ là mô tả vị trí. Vị thế cực đoan của quỹ (managed money) có thể kéo dài nhiều tháng, và giá có thể tiếp tục đi cùng chiều suốt thời gian đó, nên không dùng như tín hiệu canh thời điểm vào/ra.',
+        'Cách đọc an toàn: (1) chọn đúng nhóm; (2) nhìn chỉ số COT và nhãn "ít dữ liệu"; (3) so với vài tuần trước để thấy xu hướng; (4) nhớ dữ liệu cũ khoảng 3 ngày; (5) kết hợp với cơ bản, kỳ hạn, rủi ro. Bài này là kiến thức giáo dục, không phải lời khuyên mua/bán.',
+      ],
+      examples: [
+        { title: 'Ví dụ minh họa (số giả định): tính chỉ số COT từ 5 tuần', text: 'Vị thế ròng của một nhóm (nghìn hợp đồng) qua 5 tuần: −20, −35, −50, −42, −28; tuần mới nhất là −28. Thấp nhất −50, cao nhất −20, biên độ 30. Chỉ số COT = (−28 − (−50)) / 30 × 100 = 22 / 30 × 100 ≈ 73. Phân vị: 3 trong 5 tuần (−35, −50, −42) thấp hơn −28; app tính kiểu “mid-rank”, cộng thêm nửa tuần bằng chính nó: (3 + 0,5) / 5 = 70%. Dù ròng vẫn âm, vị thế đã nằm khá cao so với 5 tuần này. Thực tế app dùng cửa sổ 156 tuần; 5 tuần ở đây chỉ để dễ tính tay.' },
+      ],
+      remember: [
+        'Đọc vị thế ròng theo lịch sử của chính nhóm, không theo dấu âm/dương.',
+        'Chỉ số COT = (ròng − thấp nhất) / (cao nhất − thấp nhất) × 100; dưới 10 hoặc trên 90 là vùng cực đoan.',
+        'Thương mại chủ yếu phòng hộ nên thường ròng bán; vị thế quỹ cực đoan có thể kéo dài nhiều tháng.',
+        '"Ít dữ liệu" nghĩa là ít tuần trong cửa sổ, con số kém tin cậy.',
+      ],
+      uncertain: [
+        'Lịch công bố thay đổi theo ngày lễ và có thể bị dời khi CFTC gián đoạn hoạt động: đối chiếu lịch chính thức của CFTC.',
+        'Mối liên hệ giữa áp lực phòng hộ và lợi suất phụ thuộc thị trường, giai đoạn và cách đo; kết quả quá khứ không bảo đảm tương lai.',
+        'COT chỉ gồm hợp đồng niêm yết tại Mỹ; hợp đồng giao dịch qua MXV có thể không có dữ liệu tương ứng.',
+      ],
+      quiz: [
+        q('Dữ liệu COT được chốt vào ngày nào và thường công bố vào ngày nào?', ['Chốt thứ Ba, công bố thứ Sáu', 'Chốt thứ Sáu, công bố thứ Ba', 'Chốt và công bố cùng ngày thứ Hai', 'Công bố theo thời gian thực'], 0, 'Chốt cuối ngày thứ Ba, thường công bố chiều thứ Sáu giờ ET; ngày lễ có thể dời lịch.'),
+        q('Nhóm thương mại hay ròng bán ở nhiều thị trường. Cách hiểu đúng?', ['Phần lớn do phòng hộ, nên nhìn thay đổi và vị trí so với lịch sử của chính họ', 'Chắc chắn giá sẽ giảm', 'Họ luôn dự đoán đúng giá', 'Dấu âm luôn là lỗi dữ liệu'], 0, 'Người sản xuất bán trước hàng nên ròng bán là bình thường, không phải dự báo giá.'),
+        q('Ví dụ minh họa: ròng 5 tuần là −20, −35, −50, −42, −28 (mới nhất −28). Chỉ số COT gần nhất bằng?', ['Khoảng 73', 'Khoảng 27', '60', '−28'], 0, '(−28 + 50) / (−20 + 50) × 100 = 22 / 30 × 100 ≈ 73.'),
+        q('Chỉ số COT của managed money trên 90 có nghĩa gì?', ['Vị thế ròng đang gần mức cao nhất trong cửa sổ 3 năm, nhưng có thể kéo dài nhiều tháng', 'Giá chắc chắn sắp đảo chiều giảm', 'Nên bán ngay', 'Dữ liệu bị lỗi'], 0, 'Chỉ mô tả vị trí so với lịch sử; vị thế cực đoan của quỹ có thể kéo dài, không phải tín hiệu thời điểm.'),
+        q('Nhãn "ít dữ liệu" trên thẻ vị thế cho biết điều gì?', ['Cửa sổ có ít tuần hơn 156 nên phân vị và chỉ số kém tin cậy', 'Thị trường đang đóng cửa', 'Nhóm đó không có vị thế', 'Giá đang biến động mạnh'], 0, 'Ít tuần trong cửa sổ thì min/max và phân vị chưa đại diện đủ cho lịch sử.'),
+      ],
+      sources: [SRC.cftcLegacyNotes, SRC.cftcDisaggNotes, SRC.cftcCotSchedule, SRC.deRoon2000],
+    },
+    {
       id: 'l4-seasonal',
       figures: ['b-season-sketch'],
       videos: [

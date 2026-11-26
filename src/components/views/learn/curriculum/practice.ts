@@ -57,6 +57,7 @@ export const PRACTICE: Readonly<Record<string, readonly PracticeTarget[]>> = {
   'l4-calendar-spread': [m('term-structure')],
   'l4-inter-spreads': [m('analysis')],
   'l4-cot': [m('cot')],
+  'l4-cot-positioning': [m('cot')],
   'l4-seasonal': [m('analysis')],
   'l4-correlation': [m('analysis')],
   'l8-dow': [m('charts')],

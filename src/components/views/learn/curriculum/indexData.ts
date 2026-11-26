@@ -304,6 +304,13 @@ export const CURRICULUM_INDEX: readonly LevelMeta[] = [
     "minutes": 3
    },
    {
+    "id": "l4-cot-positioning",
+    "title": "Đọc vị thế COT và áp lực phòng hộ",
+    "objective": "Phân biệt các nhóm trong báo cáo COT, đọc vị thế ròng theo lịch sử của chính nhóm đó (chỉ số COT) thay vì theo dấu âm/dương, và biết giới hạn của cách đọc này.",
+    "quizCount": 5,
+    "minutes": 6
+   },
+   {
     "id": "l4-seasonal",
     "title": "Mùa vụ",
     "objective": "Dùng mùa vụ như bối cảnh, không phải quy luật chắc chắn.",
