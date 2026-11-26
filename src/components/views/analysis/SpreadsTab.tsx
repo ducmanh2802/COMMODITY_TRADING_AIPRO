@@ -10,6 +10,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { type TKey, useI18n } from '../../../i18n';
 import type { SeriesOption } from '../../../api/analysisApi';
 import { type SeriesPoint, interCommoditySpread, spreadZScore } from '../../../shared/analytics';
+import { CrushCard } from './CrushCard';
 import { CHART_COLORS, type ChartLine, TimeSeriesChart } from './TimeSeriesChart';
 import {
   Notice,
@@ -153,6 +154,7 @@ export function SpreadsTab({ options }: { options: SeriesOption[] }) {
 
   return (
     <div className="space-y-4">
+      <CrushCard options={options} />
       <Panel
         title={t('sweep.spreads.title')}
         subtitle={t('sweep.spreads.subtitle')}
