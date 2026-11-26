@@ -128,6 +128,12 @@ export const SRC = {
   cmeCrush: { label: 'CME Group – Soybean Crush Reference Guide', url: 'https://www.cmegroup.com/education/files/soybean-crush-reference-guide.pdf' },
   cmeCrack: { label: 'CME Group – Crack Spread Handbook (năng lượng)', url: 'https://www.cmegroup.com/trading/energy/files/crack-spread-handbook.pdf' },
   cmeSpreads: { label: 'CME Group – Education (spread và kỳ hạn)', url: 'https://www.cmegroup.com/education.html' },
+  eiaWtiSpot: { label: 'EIA – Giá giao ngay dầu WTI (Cushing) theo ngày', url: 'https://www.eia.gov/dnav/pet/hist/RCLC1D.htm' },
+  reuters: { label: 'Reuters (reuters.com) – tin về sản phẩm dầu thô của Bank of China, 4/2020', url: 'https://www.reuters.com' },
+  lmeNickel: { label: 'LME – Niken (hợp đồng và thông tin thị trường)', url: 'https://www.lme.com/en/metals/non-ferrous/lme-nickel' },
+  lmeNotices: { label: 'LME – Thông báo (notices) và tin sàn', url: 'https://www.lme.com/en/news-and-events' },
+  iceCocoa: { label: 'ICE – Cocoa Futures', url: 'https://www.ice.com/products/7/Cocoa-Futures' },
+  icco: { label: 'ICCO – International Cocoa Organization', url: 'https://www.icco.org' },
   iceDxy: { label: 'ICE – US Dollar Index Futures (DXY)', url: 'https://www.ice.com/products/194/US-Dollar-Index-Futures' },
 } satisfies Record<string, Source>;
 

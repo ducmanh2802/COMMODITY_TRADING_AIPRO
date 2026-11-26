@@ -411,6 +411,27 @@ export const CURRICULUM_INDEX: readonly LevelMeta[] = [
     "minutes": 5
    },
    {
+    "id": "l5-case-wti-negative",
+    "title": "Ca nghiên cứu: dầu WTI giá âm (tháng 4/2020)",
+    "objective": "Hiểu vì sao hợp đồng WTI tháng 5/2020 thanh toán ở giá âm và rút ra kỷ luật đáo hạn, roll và thanh khoản.",
+    "quizCount": 5,
+    "minutes": 4
+   },
+   {
+    "id": "l5-case-lme-nickel",
+    "title": "Ca nghiên cứu: niken LME bị đình chỉ (tháng 3/2022)",
+    "objective": "Hiểu vì sao sàn có thể đình chỉ giao dịch và hủy lệnh, và vì sao điều đó ảnh hưởng mọi người tham gia.",
+    "quizCount": 5,
+    "minutes": 3
+   },
+   {
+    "id": "l5-case-cocoa-rally",
+    "title": "Ca nghiên cứu: ca cao tăng mạnh 2023–2024",
+    "objective": "Hiểu vì sao thiếu hụt nguồn cung và tăng ký quỹ có thể gây áp lực lên cả bên phòng hộ.",
+    "quizCount": 5,
+    "minutes": 3
+   },
+   {
     "id": "l5-scam",
     "title": "Lừa đảo và \"sàn ma\"",
     "objective": "Nhận diện sàn/nhóm không phép và biết cách kiểm tra.",
