@@ -125,6 +125,9 @@ export const SRC = {
   fomc: { label: 'Federal Reserve – lịch họp FOMC', url: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm' },
   blsCpi: { label: 'BLS – lịch công bố CPI', url: 'https://www.bls.gov/schedule/news_release/cpi.htm' },
   sbvRate: { label: 'Ngân hàng Nhà nước Việt Nam (sbv.gov.vn) – tỷ giá trung tâm', url: 'https://www.sbv.gov.vn' },
+  cmeCrush: { label: 'CME Group – Soybean Crush Reference Guide', url: 'https://www.cmegroup.com/education/files/soybean-crush-reference-guide.pdf' },
+  cmeCrack: { label: 'CME Group – Crack Spread Handbook (năng lượng)', url: 'https://www.cmegroup.com/trading/energy/files/crack-spread-handbook.pdf' },
+  cmeSpreads: { label: 'CME Group – Education (spread và kỳ hạn)', url: 'https://www.cmegroup.com/education.html' },
   iceDxy: { label: 'ICE – US Dollar Index Futures (DXY)', url: 'https://www.ice.com/products/194/US-Dollar-Index-Futures' },
 } satisfies Record<string, Source>;
 

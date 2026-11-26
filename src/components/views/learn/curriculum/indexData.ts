@@ -283,6 +283,20 @@ export const CURRICULUM_INDEX: readonly LevelMeta[] = [
     "minutes": 2
    },
    {
+    "id": "l4-calendar-spread",
+    "title": "Calendar spread: mua tháng này, bán tháng kia",
+    "objective": "Hiểu calendar spread (chênh lệch kỳ hạn), liên hệ với contango/backwardation và roll yield, và vì sao spread không phải giao dịch không rủi ro.",
+    "quizCount": 5,
+    "minutes": 5
+   },
+   {
+    "id": "l4-inter-spreads",
+    "title": "Spread liên hàng hoá: crush đậu tương và crack dầu",
+    "objective": "Tính được board crush đậu tương và crack spread 3-2-1 từ giá ví dụ, đổi đúng đơn vị, và biết giới hạn của các spread này.",
+    "quizCount": 5,
+    "minutes": 5
+   },
+   {
     "id": "l4-cot",
     "title": "COT: vị thế của các nhóm lớn",
     "objective": "Hiểu báo cáo COT của CFTC và giới hạn của nó.",

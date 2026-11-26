@@ -54,6 +54,8 @@ export const PRACTICE: Readonly<Record<string, readonly PracticeTarget[]>> = {
   'l4-fx-vnd-pnl': [S, m('risk')],
   'l4-technical': [m('charts')],
   'l4-curve': [m('term-structure')],
+  'l4-calendar-spread': [m('term-structure')],
+  'l4-inter-spreads': [m('analysis')],
   'l4-cot': [m('cot')],
   'l4-seasonal': [m('analysis')],
   'l4-correlation': [m('analysis')],
