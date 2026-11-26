@@ -2,6 +2,8 @@
 export interface AcademyIntent {
   lessonId?: string;
   tab?: 'glossary';
+  /** Glossary term (GLOSSARY[].term) to scroll to and highlight; implies tab 'glossary'. */
+  term?: string;
 }
 
 export const ACADEMY_INTENT_EVENT = 'ctap:academy-intent';

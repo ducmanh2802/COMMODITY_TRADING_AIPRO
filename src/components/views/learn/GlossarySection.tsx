@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../../../i18n';
 import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
 import { Card } from '../../ui/Card';
@@ -112,14 +112,40 @@ function SlangList() {
   );
 }
 
-export default function GlossarySection() {
+/** Stable DOM id for a glossary entry, derived from its term. */
+function termDomId(term: string): string {
+  return 'gloss-' + term.toLowerCase().replace(/đ/g, 'd').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+export default function GlossarySection({ focusTerm }: { focusTerm?: { term: string } | null }) {
   const { t } = useI18n();
+  const [pending, setPending] = useState<string | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
   const [sub, setSub] = useState<'flashcards' | 'formal' | 'slang'>('flashcards');
   const [query, setQuery] = useState('');
   const items = useMemo(() => {
     const n = query.trim().toLowerCase();
     return GLOSSARY.filter((g) => !n || g.term.toLowerCase().includes(n) || g.def.toLowerCase().includes(n)).sort((a, b) => a.term.localeCompare(b.term, 'vi'));
   }, [query]);
+
+  // Palette hand-off: switch to the formal list, clear the filter, then scroll once the entry is rendered.
+  useEffect(() => {
+    if (!focusTerm) return;
+    setSub('formal');
+    setQuery('');
+    setPending(focusTerm.term);
+  }, [focusTerm]);
+  useEffect(() => {
+    if (!pending || sub !== 'formal' || query !== '') return;
+    const el = document.getElementById(termDomId(pending));
+    if (!el) return;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+    setFlash(pending);
+    setPending(null);
+    const id = window.setTimeout(() => setFlash(null), 2200);
+    return () => window.clearTimeout(id);
+  }, [pending, sub, query, items]);
 
   return (
     <div className="space-y-4" data-testid="academy-glossary">
@@ -168,7 +194,12 @@ export default function GlossarySection() {
           {items.length === 0 && <p className="text-sm text-[var(--muted)]">Không có thuật ngữ phù hợp.</p>}
           <dl className="grid gap-2 sm:grid-cols-2">
             {items.map((g) => (
-              <Card key={g.term} className="!p-3">
+              <Card
+                key={g.term}
+                id={termDomId(g.term)}
+                data-term={g.term}
+                className={`!p-3 scroll-mt-24 ${flash === g.term ? 'outline-2 outline-offset-2 outline-[var(--accent)]' : ''}`}
+              >
                 <dt className="text-sm font-semibold text-[var(--text-strong)]">{g.term}</dt>
                 <dd className="text-xs text-[var(--muted)] mt-1 leading-relaxed">{g.def}</dd>
               </Card>

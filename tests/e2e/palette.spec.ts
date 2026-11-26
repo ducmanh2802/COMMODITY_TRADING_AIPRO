@@ -6,6 +6,7 @@ async function load(page: Page) {
   });
   await page.goto('/');
   await expect(page.locator('main').first()).toBeVisible();
+  await expect(page.getByTestId('palette-open')).toBeVisible();
 }
 
 test('Ctrl+K opens palette, diacritic-insensitive search, Enter navigates, Escape restores focus', async ({ page }) => {
@@ -64,4 +65,16 @@ test('Tab stays inside the dialog', async ({ page }) => {
   const inside = await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'));
   expect(inside).toBe(true);
   await expect(dialog).toBeVisible();
+});
+
+test('picking a glossary term scrolls to it and highlights it', async ({ page }) => {
+  await load(page);
+  await page.keyboard.press('Control+k');
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('combobox').fill('Bước giá (Tick)');
+  await dialog.locator('[data-kind="term"]').first().click();
+  await expect(dialog).toHaveCount(0);
+  const entry = page.locator('[data-term="Bước giá (Tick)"]');
+  await expect(entry).toBeVisible();
+  await expect(entry).toBeInViewport();
 });

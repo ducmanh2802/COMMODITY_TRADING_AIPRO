@@ -117,7 +117,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
       sendAcademyIntent({ lessonId: item.lessonId });
     } else if (item.kind === 'term') {
       setActiveModule('learn');
-      sendAcademyIntent({ tab: 'glossary' });
+      sendAcademyIntent({ tab: 'glossary', term: item.label });
     }
   };
 

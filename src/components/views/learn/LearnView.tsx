@@ -521,6 +521,7 @@ export default function LearnView() {
   const { progress, bookmarked, setLessonNote, recordLessonScore, toggleLessonDone, toggleChecklist, toggleBookmark } = useAcademyProgress();
   const [page, setPage] = useState<Page>({ kind: 'home' });
   const [tab, setTab] = useState<AcademyTab>('lessons');
+  const [focusTerm, setFocusTerm] = useState<{ term: string } | null>(null);
   // Quick-search hand-off (palette): open a lesson or the glossary tab, on mount and while mounted.
   useEffect(() => {
     const apply = () => {
@@ -530,9 +531,10 @@ export default function LearnView() {
         const lvl = ALL_LESSON_META.find((e) => e.lesson.id === intent.lessonId)?.level;
         if (lvl) void loadLevel(lvl.id).catch(() => undefined);
         setPage({ kind: 'lesson', id: intent.lessonId });
-      } else if (intent.tab) {
+      } else if (intent.tab || intent.term) {
         setPage({ kind: 'home' });
-        setTab(intent.tab);
+        setTab('glossary');
+        if (intent.term) setFocusTerm({ term: intent.term });
       }
     };
     apply();
@@ -840,7 +842,7 @@ export default function LearnView() {
 
       {tab === 'glossary' && (
         <Suspense fallback={<TabFallback />}>
-          <GlossarySection />
+          <GlossarySection focusTerm={focusTerm} />
         </Suspense>
       )}
 
