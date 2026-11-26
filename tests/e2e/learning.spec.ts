@@ -305,4 +305,8 @@ test('paper trading (signed out, local): place order with stop, see position, cl
   await page.getByRole('button', { name: 'ĐÓNG VỊ THẾ' }).click();
   await expect(page.getByText('Đã đóng vị thế.')).toBeVisible();
   await expect(page.getByText(/Chưa có vị thế nào/)).toBeVisible();
+
+  await page.getByRole('tab', { name: 'Thống kê', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Xuất CSV' })).toBeEnabled();
+  await expect(page.getByText(/Chưa đủ dữ liệu/).first()).toBeVisible();
 });

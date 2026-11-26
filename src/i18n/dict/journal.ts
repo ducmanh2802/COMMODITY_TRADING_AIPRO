@@ -1,0 +1,36 @@
+// Section dictionary: paper-trading journal export + simple stats (jr.). `en` is typed against `vi`.
+export const vi = {
+  'jr.title': 'Nhật ký giao dịch giả lập',
+  'jr.export': 'Xuất CSV',
+  'jr.practice': 'Giao dịch giả lập để luyện tập, không phải kết quả thật và không phải lời khuyên mua/bán.',
+  'jr.tooFew': 'Chưa đủ dữ liệu: mới có {n} lệnh đã đóng, cần từ {min} lệnh để xem thống kê.',
+  'jr.line': '{n} lệnh đã đóng, tỉ lệ thắng {win}, R trung bình {r}.',
+  'jr.bars': 'Biểu đồ cột lãi/lỗ tích lũy sau mỗi lệnh (giả lập)',
+  'jr.explain': 'Xem giải thích',
+  'jr.d.count': 'Số lệnh đã đóng: {n}. Chỉ tính lệnh đã đóng, lệnh còn mở chưa tính.',
+  'jr.d.win': 'Tỉ lệ thắng: {v}. Là phần trăm lệnh có lãi trên tổng số lệnh. Tỉ lệ thắng cao chưa chắc có lãi nếu các lệnh lỗ lớn hơn lệnh lãi.',
+  'jr.d.avgWin': 'Lãi trung bình: {v}. Số tiền lãi trung bình của mỗi lệnh thắng.',
+  'jr.d.avgLoss': 'Lỗ trung bình: {v}. Số tiền lỗ trung bình của mỗi lệnh thua. So với lãi trung bình để biết lãi có bù được lỗ không.',
+  'jr.d.avgR': 'R trung bình: {v} (tính trên {n} lệnh có đặt mức cắt lỗ). R = lãi/lỗ chia cho mức lỗ bạn chấp nhận ban đầu; +1R nghĩa là lãi bằng đúng mức rủi ro dự định.',
+  'jr.d.dd': 'Sụt giảm tối đa: {v}. Mức giảm lớn nhất của lãi/lỗ tích lũy tính từ đỉnh gần nhất xuống đáy, cho thấy chuỗi lệnh tệ nhất từng khiến tài khoản giả lập tụt bao nhiêu.',
+  'jr.d.streak': 'Chuỗi thua dài nhất: {n} lệnh liên tiếp. Giúp bạn biết trước cảm giác khi thua nhiều lệnh liền.',
+  'jr.d.bars': 'Cột xanh dương: tổng lãi/lỗ tích lũy đang dương. Cột cam: đang âm. Hiển thị tối đa 40 lệnh gần nhất.',
+};
+
+export const en: Record<keyof typeof vi, string> = {
+  'jr.title': 'Practice trade journal',
+  'jr.export': 'Export CSV',
+  'jr.practice': 'Simulated practice trades, not real results and not buy/sell advice.',
+  'jr.tooFew': 'Not enough data yet: {n} closed trades, need {min} to show stats.',
+  'jr.line': '{n} closed trades, win rate {win}, average R {r}.',
+  'jr.bars': 'Cumulative P&L bars after each trade (simulated)',
+  'jr.explain': 'Show explanations',
+  'jr.d.count': 'Closed trades: {n}. Only closed trades count; open ones are not included.',
+  'jr.d.win': 'Win rate: {v}. Share of trades that made a profit. A high win rate can still lose money if losses are bigger than wins.',
+  'jr.d.avgWin': 'Average win: {v}. Average profit of a winning trade.',
+  'jr.d.avgLoss': 'Average loss: {v}. Average loss of a losing trade. Compare with the average win to see if wins cover losses.',
+  'jr.d.avgR': 'Average R: {v} (over {n} trades with a stop). R = profit/loss divided by the risk you accepted at the start; +1R means a profit equal to the planned risk.',
+  'jr.d.dd': 'Max drawdown: {v}. Largest fall of cumulative P&L from a peak to the following low: the worst stretch your practice account went through.',
+  'jr.d.streak': 'Longest losing streak: {n} trades in a row. Shows how it can feel to lose several trades in a row.',
+  'jr.d.bars': 'Blue bars: cumulative P&L above zero. Apricot bars: below zero. Up to the last 40 trades.',
+};

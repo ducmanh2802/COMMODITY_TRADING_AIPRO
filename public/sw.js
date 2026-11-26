@@ -1,104 +1,87 @@
-const CACHE_NAME = 'ctap-v1';
-const STATIC_CACHE_NAME = CACHE_NAME + '-static';
-const API_CACHE_NAME = CACHE_NAME + '-api';
+// Service worker: offline shell for learning. Market data (/api/*) is NEVER cached: always network.
+const VERSION = 'ctap-v2';
+const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.svg', '/icons/icon-512.svg'];
 
-const STATIC_ASSET_PATTERNS = [
-  /\.(?:js|css|woff2?|png|svg|ico|webmanifest)$/,
-];
-
-function isStaticAsset(url) {
-  try {
-    const u = new URL(url);
-    return STATIC_ASSET_PATTERNS.some(function(pattern) { return pattern.test(u.pathname); });
-  } catch (e) {
-    return false;
-  }
+function isCacheableStatic(pathname) {
+  return pathname.startsWith('/assets/') || pathname.startsWith('/fonts/') || pathname.startsWith('/icons/');
 }
 
-function isApiGetRequest(request) {
-  try {
-    const u = new URL(request.url);
-    return u.pathname.startsWith('/api/') && request.method === 'GET';
-  } catch (e) {
-    return false;
-  }
+// Cache the hashed bundles referenced by index.html so the shell works offline after one visit.
+async function cacheShellAssets(cache, html) {
+  const urls = new Set();
+  const re = /(?:src|href)="(\/(?:assets|fonts)\/[^"]+)"/g;
+  let m;
+  while ((m = re.exec(html))) urls.add(m[1]);
+  await Promise.all(Array.from(urls).map(function (u) {
+    return cache.match(u).then(function (hit) {
+      return hit || fetch(u).then(function (r) { if (r.ok) return cache.put(u, r); });
+    }).catch(function () {});
+  }));
 }
 
-async function installServiceWorker() {
-  self.skipWaiting();
-}
-
-async function activateServiceWorker() {
-  const cacheNames = await caches.keys();
-  const validCaches = new Set([STATIC_CACHE_NAME, API_CACHE_NAME]);
-  await Promise.all(
-    cacheNames
-      .filter(function(name) { return !validCaches.has(name); })
-      .map(function(name) { return caches.delete(name); })
+self.addEventListener('install', function (event) {
+  // No skipWaiting here: the app asks for it via the in-app update prompt.
+  event.waitUntil(
+    caches.open(VERSION).then(function (cache) {
+      return Promise.all(SHELL.map(function (u) { return cache.add(u).catch(function () {}); })).then(function () {
+        return cache.match('/').then(function (r) {
+          return r ? r.clone().text().then(function (t) { return cacheShellAssets(cache, t); }) : undefined;
+        });
+      });
+    })
   );
-  await self.clients.claim();
-}
-
-async function handleStaticAsset(request) {
-  const cache = await caches.open(STATIC_CACHE_NAME);
-  const cached = await cache.match(request);
-  if (cached) {
-    return cached;
-  }
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch (e) {
-    return new Response('Offline', { status: 503 });
-  }
-}
-
-async function handleApiGet(request) {
-  const cache = await caches.open(API_CACHE_NAME);
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch (e) {
-    const cached = await cache.match(request);
-    if (cached) {
-      return cached;
-    }
-    return new Response(JSON.stringify({ error: 'Offline', cached: false }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-}
-
-self.addEventListener('install', function(event) {
-  event.waitUntil(installServiceWorker());
 });
 
-self.addEventListener('activate', function(event) {
-  event.waitUntil(activateServiceWorker());
+self.addEventListener('activate', function (event) {
+  event.waitUntil(
+    caches.keys().then(function (names) {
+      return Promise.all(names.filter(function (n) { return n !== VERSION; }).map(function (n) { return caches.delete(n); }));
+    }).then(function () { return self.clients.claim(); })
+  );
 });
 
-self.addEventListener('fetch', function(event) {
+self.addEventListener('message', function (event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+self.addEventListener('fetch', function (event) {
   const request = event.request;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/')) return; // always network, never cached
 
-  if (request.method !== 'GET') {
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).then(function (response) {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(VERSION).then(function (cache) {
+            cache.put('/', copy.clone());
+            copy.text().then(function (t) { return cacheShellAssets(cache, t); }).catch(function () {});
+          });
+        }
+        return response;
+      }).catch(function () {
+        return caches.match('/').then(function (r) { return r || new Response('Offline', { status: 503 }); });
+      })
+    );
     return;
   }
 
-  if (isStaticAsset(request.url)) {
-    event.respondWith(handleStaticAsset(request));
-    return;
-  }
-
-  if (isApiGetRequest(request)) {
-    event.respondWith(handleApiGet(request));
-    return;
+  if (isCacheableStatic(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then(function (hit) {
+        if (hit) return hit;
+        return fetch(request).then(function (response) {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(VERSION).then(function (cache) { cache.put(request, copy); });
+          }
+          return response;
+        });
+      })
+    );
   }
 });
 

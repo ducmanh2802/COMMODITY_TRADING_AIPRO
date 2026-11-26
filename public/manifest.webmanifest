@@ -1,23 +1,17 @@
 {
-  "name": "Commodity AI Pro",
+  "name": "Commodity AI Pro - Học & phân tích hàng hóa",
   "short_name": "CTAP",
+  "description": "Học phái sinh hàng hóa và theo dõi thị trường (chỉ để học tập, không phải lời khuyên đầu tư).",
   "lang": "vi",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#15131F",
   "theme_color": "#15131F",
   "icons": [
-    {
-      "src": "/icons/icon-192.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-512.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
   ]
 }

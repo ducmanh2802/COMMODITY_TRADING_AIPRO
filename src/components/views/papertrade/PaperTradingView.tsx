@@ -44,6 +44,7 @@ import {
 import { SessionHistory } from './SessionHistory';
 import { SessionReport, type NoteOption } from './SessionReport';
 import { PaperStatsPanel } from './PaperStatsPanel';
+import { JournalCard } from './JournalCard';
 import { EventRiskBanner } from './EventRiskBanner';
 import { WeeklyReviewCard } from './WeeklyReviewCard';
 import { ExpiryCalendar, RollReminderChip } from './ExpiryCalendar';
@@ -548,6 +549,7 @@ export function PaperTradingView() {
       ) : tab === 'stats' ? (
         <div className="space-y-5">
           <WeeklyReviewCard trades={trades} startingCapitalVnd={session?.startingCapitalVnd ?? 0} instrumentName={instrumentName} />
+          <JournalCard trades={trades} instrumentName={instrumentName} />
           <PaperStatsPanel startingCapitalVnd={session?.startingCapitalVnd ?? 0} trades={trades} instrumentName={instrumentName} />
         </div>
       ) : tab === 'history' ? (

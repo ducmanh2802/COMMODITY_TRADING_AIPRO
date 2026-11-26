@@ -37,6 +37,7 @@ import * as chain from './dict/chain';
 import * as instrument from './dict/instrument';
 import * as checklist from './dict/checklist';
 import * as paperstats from './dict/paperstats';
+import * as journal from './dict/journal';
 import * as contest from './dict/contest';
 import * as compare from './dict/compare';
 import * as drawing from './dict/drawing';
@@ -44,6 +45,7 @@ import * as weather from './dict/weather';
 import * as news2 from './dict/news2';
 import * as calviz from './dict/calviz';
 import * as pwa from './dict/pwa';
+import * as pwaUpdate from './dict/pwaUpdate';
 import * as replay from './dict/replay';
 import * as uipolish from './dict/uipolish';
 import * as sweep from './dict/sweep';
@@ -105,6 +107,7 @@ export const en: Record<TKey, string> = {
   ...instrument.en,
   ...checklist.en,
   ...paperstats.en,
+  ...journal.en,
   ...contest.en,
   ...compare.en,
   ...drawing.en,
@@ -115,6 +118,7 @@ export const en: Record<TKey, string> = {
   ...news2.en,
   ...calviz.en,
   ...pwa.en,
+  ...pwaUpdate.en,
   ...replay.en,
   ...uipolish.en,
   ...sweep.en,
