@@ -355,6 +355,20 @@ export const CURRICULUM_INDEX: readonly LevelMeta[] = [
     "minutes": 6
    },
    {
+    "id": "l5-basis-hedge",
+    "title": "Basis: vì sao giá phòng hộ không khớp giá thực tế",
+    "objective": "Hiểu basis (cơ sở) = giá tiền mặt − giá futures, basis mạnh lên/yếu đi, rủi ro basis, và vì sao vị thế phòng hộ \"lỗ\" ở sàn vẫn có thể bảo vệ biên lợi nhuận.",
+    "quizCount": 5,
+    "minutes": 5
+   },
+   {
+    "id": "l5-hedge-vn-firms",
+    "title": "Phòng hộ cho doanh nghiệp Việt: bán trước và mua trước",
+    "objective": "Phân biệt phòng hộ bán (nhà xuất khẩu cà phê) và phòng hộ mua (nhà nhập khẩu thức ăn chăn nuôi), tính số hợp đồng cơ bản và biết cách tiếp cận qua MXV.",
+    "quizCount": 5,
+    "minutes": 5
+   },
+   {
     "id": "l5-scam",
     "title": "Lừa đảo và \"sàn ma\"",
     "objective": "Nhận diện sàn/nhóm không phép và biết cách kiểm tra.",
