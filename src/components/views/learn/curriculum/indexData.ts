@@ -111,6 +111,20 @@ export const CURRICULUM_INDEX: readonly LevelMeta[] = [
     "objective": "Phân biệt các văn bản pháp lý liên quan và biết điều gì cần kiểm tra lại.",
     "quizCount": 5,
     "minutes": 3
+   },
+   {
+    "id": "l2-limits-slippage",
+    "title": "Giới hạn giá, giá nhảy cóc, trượt giá và thanh khoản",
+    "objective": "Hiểu vì sao lệnh có thể không khớp ở giá mong muốn hoặc không thoát được, và các rủi ro thực thi đi kèm.",
+    "quizCount": 5,
+    "minutes": 4
+   },
+   {
+    "id": "l2-margin-call",
+    "title": "Gọi ký quỹ và thanh lý bắt buộc từng bước",
+    "objective": "Nắm trình tự từ ký quỹ ban đầu đến gọi ký quỹ (call margin) và thanh lý bắt buộc, rồi tự thử bằng bộ mô phỏng.",
+    "quizCount": 5,
+    "minutes": 4
    }
   ]
  },

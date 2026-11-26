@@ -35,6 +35,7 @@ export const PRACTICE: Readonly<Record<string, readonly PracticeTarget[]>> = {
   'l1-expiry-roll': [m('term-structure')],
   'l1-hedger-spec': [m('hedge')],
   'l2-fx-fees': [S],
+  'l2-margin-call': [m('risk')],
   'l3-grains': [m('commodity-profile')],
   'l3-soy': [m('commodity-profile')],
   'l3-coffee': [m('commodity-profile')],
