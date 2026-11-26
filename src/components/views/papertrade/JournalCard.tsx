@@ -64,7 +64,7 @@ export function JournalCard({ trades, instrumentName }: { trades: PaperTrade[]; 
   return (
     <div className={`${cardCls} space-y-3`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('jr.title')}</h2>
+        <h2 className="text-sm font-semibold text-[var(--text-strong)]">{t('jr.cardTitle')}</h2>
         <button
           type="button"
           onClick={exportCsv}

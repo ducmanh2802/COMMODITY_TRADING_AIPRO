@@ -32,3 +32,33 @@ test('PWA: manifest served, SW registers, shell loads offline', async ({ page, c
   expect(keys.some((k) => k.startsWith('/api/'))).toBe(false);
   await context.setOffline(false);
 });
+
+test('PWA: Academy hub and a lesson render offline after one online visit', async ({ page, context }) => {
+  test.setTimeout(180_000);
+  await page.addInitScript(() => { try { localStorage.setItem('ctap.onboardingDone', '1'); } catch { /* ignore */ } });
+  const openAcademy = async () => {
+    await page.locator('nav:visible li > button:visible').filter({ hasText: /Học viện/ }).first().click();
+    await expect(page.getByRole('heading', { name: 'Học viện Hàng hoá' })).toBeVisible({ timeout: 15_000 });
+  };
+  const openLesson = async () => {
+    await page.getByTestId('lesson-card-l1-margin').click();
+    await expect(page.getByRole('button', { name: 'Nộp bài' })).toBeVisible({ timeout: 15_000 });
+  };
+
+  await page.goto('/');
+  await expect(page.locator('main').first()).toBeVisible();
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+  await openAcademy();
+  await openLesson();
+  await page.waitForLoadState('networkidle');
+
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.locator('main').first()).toBeVisible();
+  await openAcademy();
+  await openLesson();
+  await expect(page.locator('main')).toContainText(/ký quỹ/i);
+  await context.setOffline(false);
+});

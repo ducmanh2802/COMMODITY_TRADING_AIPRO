@@ -67,8 +67,6 @@ export function WeeklyReviewCard({ trades, startingCapitalVnd, instrumentName }:
         </div>
         <button
           type="button"
-          aria-pressed={offset === -1}
-          aria-label={t('wr.toggleAria')}
           onClick={() => setOffset(offset === 0 ? -1 : 0)}
           className="min-h-10 px-3 py-2 text-xs rounded-md border border-[var(--border)] text-[var(--accent-text)] hover:bg-[var(--accent)]/10"
         >

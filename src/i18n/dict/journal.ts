@@ -1,6 +1,6 @@
 // Section dictionary: paper-trading journal export + simple stats (jr.). `en` is typed against `vi`.
 export const vi = {
-  'jr.title': 'Nhật ký giao dịch giả lập',
+  'jr.cardTitle': 'Nhật ký giao dịch giả lập',
   'jr.export': 'Xuất CSV',
   'jr.practice': 'Giao dịch giả lập để luyện tập, không phải kết quả thật và không phải lời khuyên mua/bán.',
   'jr.tooFew': 'Chưa đủ dữ liệu: mới có {n} lệnh đã đóng, cần từ {min} lệnh để xem thống kê.',
@@ -18,7 +18,7 @@ export const vi = {
 };
 
 export const en: Record<keyof typeof vi, string> = {
-  'jr.title': 'Practice trade journal',
+  'jr.cardTitle': 'Practice trade journal',
   'jr.export': 'Export CSV',
   'jr.practice': 'Simulated practice trades, not real results and not buy/sell advice.',
   'jr.tooFew': 'Not enough data yet: {n} closed trades, need {min} to show stats.',

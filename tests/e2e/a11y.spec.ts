@@ -68,3 +68,64 @@ test('(i) InfoTip: Tab reaches it, Enter/Space open, Escape closes and keeps foc
     await expect(tip).toBeFocused();
   }
 });
+
+// ---- J1: UI added later (palette, journal card, update toast) in both themes and at 390px ----------------
+
+const PAPER_KEY = 'paperTrading.v2';
+
+function seededPaper(n: number) {
+  const now = Date.now();
+  const pnl = (i: number) => (i % 2 ? -900_000 : 1_400_000);
+  const trades = Array.from({ length: n }, (_, i) => ({
+    id: `trd_${i}`, sessionId: 'ses_a11y', instrumentId: 'NYMEX:CL', side: 'LONG', contracts: 1, entryPrice: 70, exitPrice: 70.5,
+    stopLoss: 69, takeProfit: null, closeReason: 'MANUAL', grossPnlUsd: 0, feesVnd: 0, pnlUsd: 0, pnlVnd: pnl(i), rMultiple: i % 2 ? -0.8 : 1.2,
+    fxRate: 25_000, journal: '', researchNoteId: '', openedAtMs: now - (i + 2) * 3_600_000, closedAtMs: now - (i + 1) * 3_600_000,
+  }));
+  return JSON.stringify({
+    sessions: [{ id: 'ses_a11y', name: 'Phiên a11y', startingCapitalVnd: 200_000_000, balanceVnd: 200_000_000, settings: { marginPct: 10, feePerContractUsd: 2.5, slippageTicks: 1, marginCallPct: 100, stopOutPct: 50 }, status: 'active', createdAtMs: now - 86_400_000, closedAtMs: null, finalEquityVnd: null }],
+    positions: [],
+    trades,
+  });
+}
+
+for (const theme of ['dark', 'light'] as const) {
+  for (const width of [1440, 390]) {
+    test(`axe: palette, journal card, update toast (${theme}, ${width}px)`, async ({ page }) => {
+      test.skip(!axeSrc, 'axe-core not installed');
+      test.setTimeout(180_000);
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      await page.addInitScript(([th, key, seed]) => {
+        try { localStorage.setItem('ctap.onboardingDone', '1'); localStorage.setItem('ctap.theme', th); localStorage.setItem(key, seed); } catch { /* ignore */ }
+      }, [theme, PAPER_KEY, seededPaper(8)] as const);
+      await page.goto('/');
+      await expect(page.locator('main').first()).toBeVisible();
+      await page.addScriptTag({ content: axeSrc });
+      const bad: string[] = [];
+
+      // 1. Palette with results.
+      await page.getByTestId('palette-open').click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible();
+      await dialog.getByRole('combobox').fill('ky quy');
+      await expect(dialog.getByRole('option').first()).toBeVisible();
+      await scan(page, `${theme}/${width} palette`, bad);
+      await page.keyboard.press('Escape');
+      await expect(dialog).toHaveCount(0);
+
+      // 2. Paper-trading stats tab (JournalCard).
+      if (width < 600) await page.getByRole('button', { name: 'Mở menu điều hướng' }).click();
+      await page.locator(NAV).filter({ hasText: /Của tôi/ }).first().click();
+      await page.getByRole('tab', { name: /Giao dịch thử/ }).first().click();
+      await page.getByRole('tab', { name: /Thống kê/ }).first().click();
+      await expect(page.getByRole('heading', { name: /Nhật ký giao dịch/ }).first()).toBeVisible({ timeout: 30_000 });
+      await scan(page, `${theme}/${width} journal`, bad);
+
+      // 3. Update toast.
+      await page.evaluate(() => window.dispatchEvent(new CustomEvent('ctap:sw-update', { detail: { postMessage() { /* noop */ } } })));
+      await expect(page.getByRole('status').filter({ hasText: /\S/ }).last()).toBeVisible();
+      await scan(page, `${theme}/${width} toast`, bad);
+
+      expect(bad, bad.join('\n')).toEqual([]);
+    });
+  }
+}
