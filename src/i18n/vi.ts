@@ -23,6 +23,7 @@ import * as papertrade from './dict/papertrade';
 import * as simple from './dict/simple';
 import * as drivers from './dict/drivers';
 import * as hedge from './dict/hedge';
+import * as cotpx from './dict/cotpx';
 import * as onboarding from './dict/onboarding';
 import * as onboard2 from './dict/onboard2';
 import * as radar from './dict/radar';
@@ -103,6 +104,7 @@ export const vi = {
   ...simple.vi,
   ...drivers.vi,
   ...hedge.vi,
+  ...cotpx.vi,
   ...onboarding.vi,
   ...onboard2.vi,
   ...radar.vi,

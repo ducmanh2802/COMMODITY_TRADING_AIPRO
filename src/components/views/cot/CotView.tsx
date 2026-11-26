@@ -37,6 +37,7 @@ import {
   MIN_COT_LOOKBACK_WEEKS,
   categoriesFor,
 } from '../../../shared/cot/analytics';
+import { CotPositioningCard } from './CotPositioningCard';
 import { DataStatusBadge } from '../../common/DataStatusBadge';
 import { CHART_COLORS, type ChartLine, TimeSeriesChart } from '../analysis/TimeSeriesChart';
 import { Notice, NumberField, Panel, StatusBlock, inputClass, labelClass } from '../analysis/shared';
@@ -443,6 +444,7 @@ function CotResults({ data }: { data: CotQueryResponse }) {
 
       {showValues && (
         <>
+          <CotPositioningCard data={data} />
           <Panel title={t('cot.chart.net')}>
             <TimeSeriesChart lines={netLines} valueFormatter={intFmt} referenceLines={ZERO} ariaLabel={t('cot.chart.netAria')} />
           </Panel>

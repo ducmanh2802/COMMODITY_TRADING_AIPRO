@@ -23,6 +23,7 @@ import * as papertrade from './dict/papertrade';
 import * as simple from './dict/simple';
 import * as drivers from './dict/drivers';
 import * as hedge from './dict/hedge';
+import * as cotpx from './dict/cotpx';
 import * as onboarding from './dict/onboarding';
 import * as onboard2 from './dict/onboard2';
 import * as radar from './dict/radar';
@@ -104,6 +105,7 @@ export const en: Record<TKey, string> = {
   ...simple.en,
   ...drivers.en,
   ...hedge.en,
+  ...cotpx.en,
   ...onboarding.en,
   ...onboard2.en,
   ...radar.en,
