@@ -40,7 +40,7 @@ cp .env.example .env     # tùy chọn (Windows: copy .env.example .env)
 npm run dev              # http://localhost:3000 (Express + Vite)
 npm test                 # chạy test (tsx --test)
 npm run test:rules       # test firestore.rules bằng emulator (cần Java)
-npm run test:e2e         # Playwright: tests/e2e (smoke, learning, program, keyboard, features13b, discipline, mobile 390px, a11y axe-core tối+sáng); tự build + chạy server cổng 3199, lần đầu vài phút
+npm run test:e2e         # Playwright: tests/e2e (smoke, learning, program, keyboard, features13b, discipline, mobile 390px, a11y axe-core tối+sáng); tự build + chạy server cổng 3199 (đổi bằng biến môi trường `E2E_PORT`, vd `E2E_PORT=3299`, để chạy song song), lần đầu vài phút
 npm run typecheck        # kiểm tra kiểu TypeScript
 npm run build            # build frontend ra dist/
 npm start                # chạy production (build trước), cổng PORT hoặc 3000

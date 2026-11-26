@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 import os from 'node:os';
 import path from 'node:path';
 
-const PORT = 3199;
+const PORT = Number(process.env.E2E_PORT) || 3199;
 const dbPath = path.join(os.tmpdir(), `e2e-market-${process.pid}.db`);
 
 // Smoke test: production build served by the real backend (no external keys, Yahoo off).

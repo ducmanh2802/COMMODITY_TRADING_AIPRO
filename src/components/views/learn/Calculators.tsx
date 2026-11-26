@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { OrderCalculator } from './OrderCalculator';
-import type { Source } from './curriculum/types';
 import type { InstrumentDefinition } from '../../../shared/types/instrument';
 import type { CalculatorId } from './curriculum/types';
 import {
@@ -33,22 +32,6 @@ export function NumField({ label, value, onChange, hint }: { label: string; valu
 
 export function RefusalBox({ r }: { r: Refusal }) {
   return <p className="text-xs text-[var(--warning)] bg-[var(--warning)]/10 border border-[var(--warning)]/30 rounded-md p-2">{r.reason}</p>;
-}
-
-export function SourceLinks({ sources }: { sources: Source[] }) {
-  return (
-    <p className="text-[11px] text-[var(--text)]/50">
-      Nguồn:{' '}
-      {sources.map((s, i) => (
-        <span key={s.url}>
-          {i > 0 && ' · '}
-          <a href={s.url} target="_blank" rel="noreferrer" className="underline hover:text-[var(--text)]">
-            {s.label}
-          </a>
-        </span>
-      ))}
-    </p>
-  );
 }
 
 /** Instrument picker + summary of the verified spec values that the exercise will use. */

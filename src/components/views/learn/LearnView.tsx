@@ -7,22 +7,20 @@ import { SectionHeader } from '../../ui/SectionHeader';
 import { ProgramCard } from '../program/ProgramCard';
 import { computeAcademyStats, extractHighlightedSnippet, filterCurriculum, highlightTextSegments, type AcademyTab, type HighlightSegment, type LessonStatusFilter } from './academyUtils';
 import { AiLessonRecommendations } from './AiLessonRecommendations';
-import { SourceLinks } from './Calculators';
+import { SourceLinks } from './SourceLinks';
 import { ALL_LESSON_META, CURRICULUM_INDEX } from './curriculum/meta';
 import { loadLevel } from './curriculum/loader';
 import type { LessonMeta, LevelMeta } from './curriculum/types';
 import { ExamCard, type ExamTarget } from './exam/ExamView';
 import { EXAM_PASS_PCT, examUnlocked, LEVEL_EXAM_SIZE, loadExams, type ExamStore } from './exam/examLogic';
-import { FlashcardDeck } from './FlashcardDeck';
-import { GLOSSARY } from './glossary';
-import { filterSlang, SLANG, SLANG_TAGS, type SlangTag } from './glossarySlang';
 import { MONEY_WAYS, RISK_WARNINGS, type MoneyWay, type RiskStat } from './learnContent';
 import { LearnGoalCard } from './LearnGoalCard';
 import { loadGoal, type LearnGoal } from './learnPaths';
-import { PracticeSandbox } from './PracticeSandbox';
 import { useAcademyProgress, type LearnProgress, type LessonProgress } from './progress';
 import { ReviewCard } from './ReviewSession';
 
+const GlossarySection = lazy(() => import('./GlossarySection'));
+const PracticeSandbox = lazy(() => import('./PracticeSandbox').then((m) => ({ default: m.PracticeSandbox })));
 const LessonRoute = lazy(() => import('./LessonRoute'));
 const ExamRunner = lazy(() => import('./exam/ExamRunner').then((m) => ({ default: m.ExamRunner })));
 
@@ -30,10 +28,6 @@ type Page = { kind: 'home' } | { kind: 'lesson'; id: string } | { kind: 'exam'; 
 
 const ACADEMY_TABS: readonly AcademyTab[] = ['lessons', 'bookmarks', 'sandbox', 'glossary', 'exams'];
 const STATUS_FILTERS: readonly LessonStatusFilter[] = ['ALL', 'TODO', 'DONE'];
-
-function firstLetter(term: string): string {
-  return term.trim().charAt(0).toLocaleUpperCase('vi').normalize('NFD').charAt(0);
-}
 
 const segBtn = (active: boolean) =>
   `min-h-9 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
@@ -45,162 +39,11 @@ const filterBtn = (active: boolean) =>
     active ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text-strong)]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--text-strong)]'
   }`;
 
-function SlangList() {
-  const [query, setQuery] = useState('');
-  const [tag, setTag] = useState<SlangTag | null>(null);
-  const [letter, setLetter] = useState<string | null>(null);
-  const [open, setOpen] = useState<Set<string>>(new Set());
-  const items = useMemo(() => {
-    const base = filterSlang(SLANG, query, tag);
-    return letter ? base.filter((s) => firstLetter(s.term) === letter) : base;
-  }, [query, tag, letter]);
-  const letters = useMemo(() => Array.from(new Set(SLANG.map((s) => firstLetter(s.term)))).sort((a, b) => a.localeCompare(b, 'vi')), []);
-  const toggle = (id: string) =>
-    setOpen((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
+function TabFallback() {
   return (
-    <div className="space-y-3">
-      <p className="text-xs text-[var(--muted)]">{SLANG.length} từ lóng, giải thích để hiểu. Đây không phải lời khuyên đầu tư.</p>
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Tìm từ lóng..."
-        aria-label="Tìm từ lóng"
-        className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-md px-3 py-2 text-sm"
-      />
-      <div className="flex gap-1.5 flex-wrap" role="group" aria-label="Lọc theo nhóm">
-        <button type="button" aria-pressed={tag === null} onClick={() => setTag(null)} className={filterBtn(tag === null)}>
-          Tất cả
-        </button>
-        {SLANG_TAGS.map((t) => (
-          <button key={t} type="button" aria-pressed={tag === t} onClick={() => setTag(tag === t ? null : t)} className={filterBtn(tag === t)}>
-            {t}
-          </button>
-        ))}
-      </div>
-      <div className="flex gap-1 flex-wrap" role="group" aria-label="Lọc theo chữ cái A đến Z">
-        <button type="button" aria-pressed={letter === null} onClick={() => setLetter(null)} className={filterBtn(letter === null)}>
-          A–Z
-        </button>
-        {letters.map((l) => (
-          <button key={l} type="button" aria-pressed={letter === l} onClick={() => setLetter(letter === l ? null : l)} className={filterBtn(letter === l)}>
-            {l}
-          </button>
-        ))}
-      </div>
-      {items.length === 0 && <p className="text-sm text-[var(--muted)]">Không có từ phù hợp.</p>}
-      <ul className="space-y-2">
-        {items.map((s) => {
-          const isOpen = open.has(s.id);
-          return (
-            <li key={s.id}>
-              <Card className="!p-3">
-                <button type="button" aria-expanded={isOpen} aria-controls={`slang-${s.id}`} onClick={() => toggle(s.id)} className="w-full text-left">
-                  <span className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-strong)]">{s.term}</span>
-                    <span aria-hidden="true" className="text-xs text-[var(--muted)]">
-                      {isOpen ? '−' : '+'}
-                    </span>
-                  </span>
-                  <span className="block text-xs text-[var(--muted)] mt-0.5">{s.meaning}</span>
-                </button>
-                {isOpen && (
-                  <div id={`slang-${s.id}`} className="mt-2 space-y-1.5 text-xs pt-2 border-t border-[var(--border)]/60">
-                    <p>
-                      <span className="font-semibold text-[var(--text-strong)]">Ví dụ đời thường: </span>
-                      {s.example}
-                    </p>
-                    {s.warning && (
-                      <p className="text-[var(--warning)]">
-                        <span className="font-semibold">Lưu ý: </span>
-                        {s.warning}
-                      </p>
-                    )}
-                    <p className="text-[var(--muted)]">
-                      Thuật ngữ chính thức: {s.related} · {s.tags.join(' · ')}
-                    </p>
-                  </div>
-                )}
-              </Card>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-function GlossarySection() {
-  const { t } = useI18n();
-  const [sub, setSub] = useState<'flashcards' | 'formal' | 'slang'>('flashcards');
-  const [query, setQuery] = useState('');
-  const items = useMemo(() => {
-    const n = query.trim().toLowerCase();
-    return GLOSSARY.filter((g) => !n || g.term.toLowerCase().includes(n) || g.def.toLowerCase().includes(n)).sort((a, b) => a.term.localeCompare(b.term, 'vi'));
-  }, [query]);
-
-  return (
-    <div className="space-y-4" data-testid="academy-glossary">
-      <SectionHeader
-        title={t('ac.tab.glossary')}
-        subtitle={
-          sub === 'flashcards'
-            ? `${GLOSSARY.length + SLANG.length} thẻ thuật ngữ & từ lóng để tự kiểm tra trí nhớ.`
-            : sub === 'formal'
-              ? `${GLOSSARY.length} thuật ngữ chuyên ngành hàng hoá.`
-              : `${SLANG.length} từ lóng & thuật ngữ cộng đồng giao dịch hay dùng.`
-        }
-      />
-
-      <div
-        role="tablist"
-        ref={tablistRef}
-        onKeyDown={onTablistKeyDown}
-        className="inline-flex items-center gap-1 p-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] max-w-full overflow-x-auto"
-      >
-        <button type="button" role="tab" aria-selected={sub === 'flashcards'} onClick={() => setSub('flashcards')} className={segBtn(sub === 'flashcards')}>
-          {t('ac.fc.tab')}
-        </button>
-        <button type="button" role="tab" aria-selected={sub === 'formal'} onClick={() => setSub('formal')} className={segBtn(sub === 'formal')}>
-          Thuật ngữ chính thức ({GLOSSARY.length})
-        </button>
-        <button type="button" role="tab" aria-selected={sub === 'slang'} onClick={() => setSub('slang')} className={segBtn(sub === 'slang')}>
-          Từ lóng ({SLANG.length})
-        </button>
-      </div>
-
-      {sub === 'flashcards' ? (
-        <FlashcardDeck />
-      ) : sub === 'slang' ? (
-        <SlangList />
-      ) : (
-        <div className="space-y-3">
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm thuật ngữ..."
-            aria-label="Tìm thuật ngữ"
-            className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-md px-3 py-2 text-sm"
-          />
-          {items.length === 0 && <p className="text-sm text-[var(--muted)]">Không có thuật ngữ phù hợp.</p>}
-          <dl className="grid gap-2 sm:grid-cols-2">
-            {items.map((g) => (
-              <Card key={g.term} className="!p-3">
-                <dt className="text-sm font-semibold text-[var(--text-strong)]">{g.term}</dt>
-                <dd className="text-xs text-[var(--muted)] mt-1 leading-relaxed">{g.def}</dd>
-              </Card>
-            ))}
-          </dl>
-        </div>
-      )}
-    </div>
+    <p role="status" className="text-sm text-[var(--muted)] animate-pulse">
+      Đang tải…
+    </p>
   );
 }
 
@@ -970,9 +813,17 @@ export default function LearnView() {
         </div>
       )}
 
-      {tab === 'sandbox' && <PracticeSandbox onOpenLesson={(id) => go({ kind: 'lesson', id })} />}
+      {tab === 'sandbox' && (
+        <Suspense fallback={<TabFallback />}>
+          <PracticeSandbox onOpenLesson={(id) => go({ kind: 'lesson', id })} />
+        </Suspense>
+      )}
 
-      {tab === 'glossary' && <GlossarySection />}
+      {tab === 'glossary' && (
+        <Suspense fallback={<TabFallback />}>
+          <GlossarySection />
+        </Suspense>
+      )}
 
       {tab === 'exams' && <ExamsAndRiskSection progress={progress} onStartExam={(target) => go({ kind: 'exam', target })} />}
 
