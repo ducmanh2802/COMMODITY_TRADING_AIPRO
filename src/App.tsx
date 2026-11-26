@@ -28,6 +28,10 @@ function TerminalWorkspace() {
   const mainRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    document.title = `${t(`n2.sec.${sectionOf(activeModule)}` as TKey)} · COMMODITY TRADING AI PRO`;
+  }, [activeModule, t]);
+
+  useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
     mainRef.current?.scrollTo({ top: 0, behavior: 'auto' });
   }, [activeModule, selectedSymbol]);

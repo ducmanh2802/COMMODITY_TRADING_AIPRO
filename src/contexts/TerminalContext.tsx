@@ -11,6 +11,7 @@ import {
   hasHealthSnapshotChanged,
   startActiveHealthPoller,
 } from '../shared/utils/healthPolling';
+import { moduleForPath, pathForModule } from '../shared/utils/routes';
 import {
   recordCommoditySearch,
   resolveSearchMatchSymbols,
@@ -121,7 +122,26 @@ interface TerminalContextValue {
 const TerminalContext = createContext<TerminalContextValue | null>(null);
 
 export function TerminalProvider({ children }: { children: React.ReactNode }) {
-  const [activeModule, setActiveModule] = useState<AppModuleId>('today-hub');
+  const [activeModule, setActiveModuleState] = useState<AppModuleId>(() =>
+    typeof window === 'undefined' ? 'today-hub' : moduleForPath(window.location.pathname),
+  );
+  // History-based routing: push a URL per module change; Back/Forward (popstate) restore it.
+  const setActiveModule = useCallback((module: AppModuleId) => {
+    setActiveModuleState(module);
+    try {
+      const path = pathForModule(module);
+      if (window.location.pathname !== path) window.history.pushState(null, '', path + window.location.search);
+    } catch { /* history unavailable */ }
+  }, []);
+  useEffect(() => {
+    try {
+      const path = pathForModule(moduleForPath(window.location.pathname));
+      if (window.location.pathname !== path) window.history.replaceState(null, '', path + window.location.search);
+    } catch { /* history unavailable */ }
+    const onPop = () => setActiveModuleState(moduleForPath(window.location.pathname));
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
   // Focus primarily on Vietnam MXV commodities by default (Cà phê Robusta · ICE:RC / MXV:LRC)
   const [selectedSymbol, setSelectedSymbolState] = useState<string>('RC');
   const selectedSymbolRef = useRef(selectedSymbol);
