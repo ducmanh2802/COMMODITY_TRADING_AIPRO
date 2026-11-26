@@ -1,5 +1,6 @@
 /** Pure logic for the Today "Học tiếp" card: next unfinished lesson + level progress. Uses only the light index. */
 import type { LevelMeta } from '../learn/curriculum/types';
+import { isPendingNew } from '../learn/newLessons';
 
 export type ContinueState =
   | { kind: 'start'; lessonId: string; title: string; levelNumber: number; done: number; total: number }
@@ -14,7 +15,8 @@ export function computeContinue(
   if (flat.length === 0) return null;
   const isDone = (id: string) => lessons[id]?.done === true;
   const anyDone = flat.some((e) => isDone(e.lesson.id));
-  const nxt = flat.find((e) => !isDone(e.lesson.id));
+  // Late-added lessons ("Mới") are optional catch-up: only suggested when nothing else is left.
+  const nxt = flat.find((e) => !isDone(e.lesson.id) && !isPendingNew(e.lesson.id, lessons)) ?? flat.find((e) => !isDone(e.lesson.id));
   if (!nxt) {
     const last = index[index.length - 1];
     return { kind: 'complete', levelNumber: last.number, done: last.lessons.length, total: last.lessons.length };

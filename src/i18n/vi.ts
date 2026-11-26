@@ -76,6 +76,7 @@ import * as seasonwin from './dict/seasonwin';
 import * as carry from './dict/carry';
 import * as honesty from './dict/honesty';
 import * as badges2 from './dict/badges2';
+import * as newlesson from './dict/newlesson';
 
 /** Vietnamese dictionary (default language). Source of truth for translation keys. */
 export const vi = {
@@ -151,6 +152,7 @@ export const vi = {
   ...toppick.vi,
   ...honesty.vi,
   ...badges2.vi,
+  ...newlesson.vi,
   ...hardcoded.vi,
   ...errors2.vi,
   ...margincall.vi,

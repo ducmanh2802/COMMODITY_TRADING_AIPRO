@@ -12,6 +12,7 @@ import { ALL_LESSON_META, CURRICULUM_INDEX } from './curriculum/meta';
 import { loadLevel } from './curriculum/loader';
 import type { LessonMeta, LevelMeta } from './curriculum/types';
 import { ExamCard, type ExamTarget } from './exam/ExamView';
+import { gateCounts, isPendingNew } from './newLessons';
 import { EXAM_PASS_PCT, examUnlocked, LEVEL_EXAM_SIZE, loadExams, type ExamStore } from './exam/examLogic';
 import { MONEY_WAYS, RISK_WARNINGS, type MoneyWay, type RiskStat } from './learnContent';
 import { LearnGoalCard } from './LearnGoalCard';
@@ -50,9 +51,10 @@ function TabFallback() {
 
 type ExamState = 'locked' | 'ready' | 'passed';
 
-function levelExamState(level: LevelMeta, doneCount: number, exams: ExamStore): ExamState {
+function levelExamState(level: LevelMeta, lessons: LearnProgress['lessons'], exams: ExamStore): ExamState {
   if (exams[level.id]?.passed) return 'passed';
-  return examUnlocked(doneCount, level.lessons.length) ? 'ready' : 'locked';
+  const g = gateCounts(level.lessons, lessons);
+  return examUnlocked(g.done, g.total) ? 'ready' : 'locked';
 }
 
 /** Short level name without the "Cấp N —" prefix (the number is shown separately). */
@@ -143,7 +145,7 @@ function LevelStepper({ progress, exams, currentLevelId, onPick }: { progress: L
           const done = lvl.lessons.filter((l) => progress.lessons[l.id]?.done).length;
           const total = lvl.lessons.length;
           const pct = total ? Math.round((done / total) * 100) : 0;
-          const state = levelExamState(lvl, done, exams);
+          const state = levelExamState(lvl, progress.lessons, exams);
           const current = lvl.id === currentLevelId;
           const complete = total > 0 && done === total;
           const StateIcon = EXAM_BADGE[state].Icon;
@@ -178,11 +180,12 @@ function LevelStepper({ progress, exams, currentLevelId, onPick }: { progress: L
 }
 
 /** Compact one-line exam row at the end of an open level (passed levels keep the full card: certificate download). */
-function LevelExamRow({ level, doneCount, exams, onStart }: { level: LevelMeta; doneCount: number; exams: ExamStore; onStart: () => void }) {
+function LevelExamRow({ level, doneCount, lessonMap, exams, onStart }: { level: LevelMeta; doneCount: number; lessonMap: LearnProgress['lessons']; exams: ExamStore; onStart: () => void }) {
   const { t } = useI18n();
-  const state = levelExamState(level, doneCount, exams);
+  const state = levelExamState(level, lessonMap, exams);
+  const gate = gateCounts(level.lessons, lessonMap);
   if (state === 'passed') {
-    return <ExamCard target={{ kind: 'level', levelId: level.id }} doneLessons={doneCount} totalLessons={level.lessons.length} onStart={onStart} />;
+    return <ExamCard target={{ kind: 'level', levelId: level.id }} doneLessons={gate.done} totalLessons={gate.total} onStart={onStart} />;
   }
   const rec = exams[level.id];
   return (
@@ -193,14 +196,14 @@ function LevelExamRow({ level, doneCount, exams, onStart }: { level: LevelMeta; 
           <p
             className="text-xs text-[var(--muted)] flex-1 min-w-0"
             title={t('exam.card.locked', {
-              d: doneCount,
-              t: level.lessons.length,
+              d: gate.done,
+              t: gate.total,
             })}
           >
             {t('acl.examNeed', {
               p: EXAM_PASS_PCT,
-              d: doneCount,
-              t: level.lessons.length,
+              d: gate.done,
+              t: gate.total,
             })}
           </p>
         </>
@@ -311,7 +314,6 @@ function MoneyWayCard({ way }: { way: MoneyWay }) {
 function ExamsAndRiskSection({ progress, onStartExam }: { progress: LearnProgress; onStartExam: (target: ExamTarget) => void }) {
   const { t } = useI18n();
   const allLessons = useMemo(() => CURRICULUM_INDEX.flatMap((l) => l.lessons), []);
-  const doneAll = allLessons.filter((l) => progress.lessons[l.id]?.done).length;
   const exams = useMemo(() => loadExams(), []);
   const [picked, setPicked] = useState<string | null>(null);
   const pickedLevel = CURRICULUM_INDEX.find((l) => l.id === picked);
@@ -325,11 +327,11 @@ function ExamsAndRiskSection({ progress, onStartExam }: { progress: LearnProgres
         <Explain label={t('acl.explain')}>
           <p>{t('ac.examsHub.subtitle')}</p>
         </Explain>
-        <ExamCard target={{ kind: 'final' }} doneLessons={doneAll} totalLessons={allLessons.length} onStart={() => onStartExam({ kind: 'final' })} />
+        <ExamCard target={{ kind: 'final' }} doneLessons={gateCounts(allLessons, progress.lessons).done} totalLessons={gateCounts(allLessons, progress.lessons).total} onStart={() => onStartExam({ kind: 'final' })} />
         <ul aria-label={t('ac.examsHub.gridAria')} className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {CURRICULUM_INDEX.map((lvl) => {
             const done = lvl.lessons.filter((l) => progress.lessons[l.id]?.done).length;
-            const state = levelExamState(lvl, done, exams);
+            const state = levelExamState(lvl, progress.lessons, exams);
             const { Icon, cls, key } = EXAM_BADGE[state];
             const active = picked === lvl.id;
             return (
@@ -377,8 +379,8 @@ function ExamsAndRiskSection({ progress, onStartExam }: { progress: LearnProgres
               <ExamCard
                 key={pickedLevel.id}
                 target={{ kind: 'level', levelId: pickedLevel.id }}
-                doneLessons={pickedLevel.lessons.filter((l) => progress.lessons[l.id]?.done).length}
-                totalLessons={pickedLevel.lessons.length}
+                doneLessons={gateCounts(pickedLevel.lessons, progress.lessons).done}
+                totalLessons={gateCounts(pickedLevel.lessons, progress.lessons).total}
                 onStart={() => onStartExam({ kind: 'level', levelId: pickedLevel.id })}
               />
             </div>
@@ -436,6 +438,7 @@ function renderHighlightedSegments(segs: HighlightSegment[], highlightTestId?: s
 function LessonCard({
   lesson,
   progress,
+  isNew,
   noteText,
   query,
   bookmarked,
@@ -444,6 +447,7 @@ function LessonCard({
 }: {
   lesson: LessonMeta;
   progress?: LessonProgress;
+  isNew?: boolean;
   noteText: string;
   query: string;
   bookmarked: boolean;
@@ -466,6 +470,15 @@ function LessonCard({
       >
         <span className="flex items-start justify-between gap-2">
           <span className="text-sm font-medium text-[var(--text-strong)]">{trimmedQuery ? renderHighlightedSegments(highlightTextSegments(lesson.title, trimmedQuery)) : lesson.title}</span>
+          {isNew && (
+            <span
+              data-testid={`lesson-new-${lesson.id}`}
+              title={t('nl7.badgeHint')}
+              className="inline-flex items-center rounded-full border border-[var(--accent)]/40 bg-[var(--accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--accent-text)] shrink-0 whitespace-nowrap"
+            >
+              {t('nl7.badge')}
+            </span>
+          )}
           {progress?.done && (
             <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--positive)] shrink-0 whitespace-nowrap">
               <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -592,7 +605,7 @@ export default function LearnView() {
   };
 
   // Current level = first level whose lessons are not all done or whose exam is not passed yet.
-  const currentLevelId = CURRICULUM_INDEX.find((lvl) => !(lvl.lessons.every((l) => progress.lessons[l.id]?.done) && exams[lvl.id]?.passed))?.id ?? null;
+  const currentLevelId = CURRICULUM_INDEX.find((lvl) => !(lvl.lessons.every((l) => progress.lessons[l.id]?.done || isPendingNew(l.id, progress.lessons)) && exams[lvl.id]?.passed))?.id ?? null;
   const isLevelOpen = (id: string) => levelOpen[id] ?? id === currentLevelId;
 
   const toggleLevel = (id: string) =>
@@ -649,8 +662,8 @@ export default function LearnView() {
               lvl ? (
                 <ExamCard
                   target={{ kind: 'level', levelId: lvl.id }}
-                  doneLessons={lvl.lessons.filter((l) => progress.lessons[l.id]?.done).length}
-                  totalLessons={lvl.lessons.length}
+                  doneLessons={gateCounts(lvl.lessons, progress.lessons).done}
+                  totalLessons={gateCounts(lvl.lessons, progress.lessons).total}
                   onStart={() =>
                     go({
                       kind: 'exam',
@@ -987,7 +1000,7 @@ export default function LearnView() {
               {filteredLevels.map(({ level, lessons, doneCount }) => {
                 const total = level.lessons.length;
                 const complete = doneCount === total;
-                const examState = levelExamState(level, doneCount, exams);
+                const examState = levelExamState(level, progress.lessons, exams);
                 const isOpen = hasActiveFilters || isLevelOpen(level.id);
                 const goalExpanded = goalOpen.has(level.id);
                 const bodyId = `lvl-body-${level.id}`;
@@ -1058,6 +1071,7 @@ export default function LearnView() {
                               key={l.id}
                               lesson={l}
                               progress={progress.lessons[l.id]}
+                              isNew={isPendingNew(l.id, progress.lessons) && level.lessons.some((x) => progress.lessons[x.id]?.done)}
                               noteText={progress.notes?.[l.id] ?? ''}
                               query={query}
                               bookmarked={bookmarkedSet.has(l.id)}
@@ -1070,6 +1084,7 @@ export default function LearnView() {
                           <LevelExamRow
                             level={level}
                             doneCount={doneCount}
+                            lessonMap={progress.lessons}
                             exams={exams}
                             onStart={() =>
                               go({

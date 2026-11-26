@@ -120,7 +120,7 @@ export function ExamCard({
   const level = isFinal ? undefined : CURRICULUM_INDEX.find((l) => l.id === target.levelId);
   const [store] = useState<ExamStore>(loadExams);
   const rec = store[examId];
-  const unlocked = examUnlocked(doneLessons, totalLessons);
+  const unlocked = examUnlocked(doneLessons, totalLessons) || rec?.passed === true;
   const size = isFinal ? FINAL_EXAM_SIZE : LEVEL_EXAM_SIZE;
   return (
     <Card tone="accent" className="space-y-2">

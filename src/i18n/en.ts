@@ -76,6 +76,7 @@ import * as seasonwin from './dict/seasonwin';
 import * as carry from './dict/carry';
 import * as honesty from './dict/honesty';
 import * as badges2 from './dict/badges2';
+import * as newlesson from './dict/newlesson';
 import type { TKey } from './vi';
 
 /** English dictionary. Typed against the Vietnamese keys so nothing can be missing. */
@@ -152,6 +153,7 @@ export const en: Record<TKey, string> = {
   ...toppick.en,
   ...honesty.en,
   ...badges2.en,
+  ...newlesson.en,
   ...hardcoded.en,
   ...errors2.en,
   ...margincall.en,
