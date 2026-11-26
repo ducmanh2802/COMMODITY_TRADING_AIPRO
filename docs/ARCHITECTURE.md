@@ -139,6 +139,7 @@ hiển thị ở `Sidebar.tsx`, điều phối trang ở `src/App.tsx`, các tab
 | Mã | Hồ sơ / AI | `CommodityProfileView.tsx`, `AiAnalystView.tsx` | `POST /api/ai/analyze` | `services/aiAnalyst.ts` |
 | Học viện | Bài học, máy tính | `learn/LearnView.tsx`, `LessonPage.tsx`, `Calculators.tsx` | - | - |
 | Học viện | Trình dựng bài học | `learn/lesson/*` (`LessonBody`, `KeyPoints`, `LessonQuiz`, `GlossaryTip`, `bodyParse.ts`), `learn/diagrams/groupA-D.tsx` + `Figures.tsx`, `learn/LessonVideos.tsx`, nội dung `learn/curriculum/level1-10.ts` | - | Video: chỉ nhà xuất bản uy tín, kiểm tra oEmbed |
+| Học viện | Mô phỏng margin call | `learn/sim/marginCall.ts`, `MarginCallSim.tsx` (máy tính id `margin-sim` trong `Calculators.tsx`) | - | - |
 | Học viện | Lộ trình 3 tháng | `src/shared/program/threeMonth.ts` (12 tuần, 3 giai đoạn, lưu `ctap.program.v1`) | - | - |
 | Của tôi | Giao dịch giả lập (kỷ luật) | `papertrade/PaperTradingView.tsx`, `coolOff.ts`, `mistakeStats.ts`, `weeklyReview.ts`, `EventRiskBanner.tsx`, `paperFirestore.ts` | `POST /api/paper/weekly-review` | `server/routes/paperReview.ts`, `src/shared/events/eventRisk.ts`, `usMacroCalendar.ts` |
 | Của tôi | Sổ nghiên cứu | `journal/ResearchNotebookView.tsx` | Firestore `researchNotes` | - |
@@ -268,7 +269,11 @@ Mỗi task trong `docs/AUDIT_AND_PLAN.md` nên có:
 | `npm run lint` / `typecheck` | `tsc --noEmit` (hiện hai lệnh giống nhau) |
 | `npm test` | `tsx --test` cho `server/**/*.test.ts`, `src/**/*.test.ts`, `*.test.ts` ở gốc |
 | `npm run test:rules` | Firestore emulator + `tests/rules/*.test.ts` |
-| `npm run test:e2e` | Playwright, bộ test `tests/e2e/`: `smoke`, `learning`, `program`, `keyboard`, `features13b`, `discipline` (cool-off, thẻ lỗi, review tuần, rủi ro sự kiện); cấu hình `playwright.config.ts` |
+| `npm run test:e2e` | Playwright, bộ test `tests/e2e/`: `smoke`, `learning`, `program`, `keyboard`, `features13b`, `discipline` (cool-off, thẻ lỗi, review tuần, rủi ro sự kiện), `routing`, `today`, `margin-sim`, `analysis-tools`, `cot-positioning`; cấu hình `playwright.config.ts` |
+
+Quy ước e2e: spec chỉ seed DB tạm (`MARKET_DB_PATH` trỏ vào thư mục tmp của OS, do `playwright.config.ts` đặt) hoặc dùng mock `page.route`; không bao giờ đọc/ghi `data/market.db`. Mỗi agent chạy song song dùng `E2E_PORT` riêng (mặc định 3199).
+
+Định tuyến URL: `src/shared/utils/routes.ts` ánh xạ hub <-> slug (`MODULE_SLUGS`, `pathForModule`, `moduleForPath`, `DEFAULT_MODULE`), hỗ trợ Back/Forward và đặt `document.title`. Giao dịch giả lập có thêm thẻ khối lượng theo rủi ro (`papertrade/riskSizing.ts`, `RiskSizingCard.tsx`). Phân tích bổ sung: `analysis/CrushCard.tsx` (`shared/analytics/crush.ts`, trong tab Spreads), `analysis/SeasonalWindowCard.tsx` (`shared/analytics/seasonalWindow.ts`), `termstructure/CarryCard.tsx` (`shared/utils/rollYield.ts`), `cot/CotPositioningCard.tsx` (`shared/cot/positioning.ts`). Backtest có thêm quy tắc `TSMOM_12M`, `DONCHIAN_BREAKOUT` (`server/engines/trendRules.ts`; `strategyLookbackBars` trong `strategyEngine.ts` cho số nến tối thiểu).
 
 Hỗ trợ a11y form: `src/components/common/fieldErrors.ts` (`fieldErrorProps` gắn `aria-invalid`/`aria-describedby` theo từng trường). Bố cục test: unit test cạnh code (`foo.ts` + `foo.test.ts`), fixture ở `__fixtures__/`, test rules ở `tests/rules/`,
 `firestore.rules.test.ts` ở gốc, e2e ở `tests/e2e/`.

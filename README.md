@@ -24,6 +24,15 @@ Các mục trong thanh bên và `src/App.tsx`:
 | Sức khỏe dữ liệu (`data-health`) | Trạng thái nguồn dữ liệu (`/api/health`, `/api/providers/health`) |
 | Nhập dữ liệu (`data-import`) | Nhập CSV lịch sử vào SQLite, xem `docs/DATA_IMPORT.md` |
 | Giao dịch giả lập (paper trading, `views/papertrade/`) | Kỷ luật: khóa nghỉ 24h sau 3 lệnh lỗ liên tiếp hoặc lỗ ngày <= -3% vốn (`coolOff.ts`; vẫn được đóng lệnh); thẻ lỗi + thống kê lỗi theo tháng (`mistakeStats.ts`); banner rủi ro sự kiện 24h tới (`src/shared/events/eventRisk.ts`, lịch FOMC/CPI trong `usMacroCalendar.ts`, EIA/USDA/WASDE); review tuần (`weeklyReview.ts`, tóm tắt AI tùy chọn qua `POST /api/paper/weekly-review`, lỗi AI thì giữ nội dung công thức) |
+| Định tuyến URL | Mỗi hub có đường dẫn riêng (slug trong `src/shared/utils/routes.ts`: `MODULE_SLUGS`, `pathForModule`, `moduleForPath`); nút Back/Forward của trình duyệt hoạt động và `document.title` đổi theo hub |
+| Hôm nay > "Học tiếp" | Thẻ gợi ý bài học kế tiếp (`today/ContinueLearningCard.tsx`, logic `continueMath.ts`) |
+| Giao dịch giả lập > Thẻ khối lượng theo rủi ro | `papertrade/riskSizing.ts` + `RiskSizingCard.tsx` |
+| Backtest: quy tắc xu hướng | Thêm `TSMOM_12M` (động lượng 12 tháng) và `DONCHIAN_BREAKOUT` (`server/engines/trendRules.ts`, đăng ký trong `strategyEngine.ts`; số nến cần thiết qua `strategyLookbackBars`) |
+| Cấu trúc kỳ hạn > Carry / roll yield | `termstructure/CarryCard.tsx` + `src/shared/utils/rollYield.ts` |
+| Phân tích > Chênh lệch (Spreads) > Crush | `analysis/CrushCard.tsx` + `src/shared/analytics/crush.ts` (board crush, z-score, mùa vụ) |
+| Phân tích > Mùa vụ > Cửa sổ mùa vụ | `analysis/SeasonalWindowCard.tsx` + `src/shared/analytics/seasonalWindow.ts` (quét cửa sổ, kiểm định nhị thức) |
+| COT > Vị thế | `cot/CotPositioningCard.tsx` + `src/shared/cot/positioning.ts` (phân vị 156 tuần) |
+| Học > Mô phỏng margin call | `learn/sim/marginCall.ts` + `MarginCallSim.tsx`, máy tính id `margin-sim` trong `Calculators.tsx` |
 | Cài đặt (`settings`) | Cài đặt ứng dụng |
 
 Bảo mật: header CSP có `frame-ancestors 'self'`, rate limit toàn `/api` và giới hạn riêng cho endpoint AI (429 `RATE_LIMIT_EXCEEDED`). Test trung thực dữ liệu kiểm tra fail-closed; `quizIntegrity` và `i18nParity` chạy trong `npm test`.
@@ -40,7 +49,7 @@ cp .env.example .env     # tùy chọn (Windows: copy .env.example .env)
 npm run dev              # http://localhost:3000 (Express + Vite)
 npm test                 # chạy test (tsx --test)
 npm run test:rules       # test firestore.rules bằng emulator (cần Java)
-npm run test:e2e         # Playwright: tests/e2e (smoke, learning, program, keyboard, features13b, discipline, mobile 390px, a11y axe-core tối+sáng); tự build + chạy server cổng 3199 (đổi bằng biến môi trường `E2E_PORT`, vd `E2E_PORT=3299`, để chạy song song), lần đầu vài phút
+npm run test:e2e         # Playwright: tests/e2e (smoke, learning, program, keyboard, features13b, discipline, routing, today, margin-sim, analysis-tools, cot-positioning, mobile 390px, a11y axe-core tối+sáng; spec chỉ được seed DB tạm `MARKET_DB_PATH` trong thư mục tmp hoặc dùng `page.route` mock, không bao giờ dùng `data/market.db`); tự build + chạy server cổng 3199 (đổi bằng biến môi trường `E2E_PORT`, vd `E2E_PORT=3299`, để chạy song song), lần đầu vài phút
 npm run typecheck        # kiểm tra kiểu TypeScript
 npm run build            # build frontend ra dist/
 npm start                # chạy production (build trước), cổng PORT hoặc 3000

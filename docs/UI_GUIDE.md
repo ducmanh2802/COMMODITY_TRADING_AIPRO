@@ -38,7 +38,7 @@ Helper dùng chung (không tự viết lại): `views/pulse/tileBits.tsx` + `til
 
 ## 4. Trung thực dữ liệu
 - Mọi con số thị trường phải kèm `DataStatusBadge` (`src/components/common/DataStatusBadge.tsx`). Trạng thái UNAVAILABLE hiện "không có dữ liệu", không điền số.
-- Dữ liệu minh họa/giả định phải gắn nhãn "Ví dụ minh họa" (màu `--warning`), không trình bày như giá thật.
+- Dữ liệu minh họa/giả định phải gắn nhãn "Ví dụ minh họa" (màu `--warning`), không trình bày như giá thật. Bài học (Học viện) cũng vậy: mọi con số tự đặt trong bài phải ghi "Ví dụ minh họa".
 - Fail closed: thiếu nguồn thì báo không khả dụng. Có test cho việc này; không nới lỏng.
 - Không dùng ngôn từ khuyến nghị mua/bán.
 
@@ -53,7 +53,12 @@ Helper dùng chung (không tự viết lại): `views/pulse/tileBits.tsx` + `til
 - Mỗi tính năng một file dict riêng: `src/i18n/dict/<tên>.ts` xuất `{ vi, en }`.
 - Đăng ký bằng 1 dòng import + 1 dòng spread trong `src/i18n/vi.ts` và `src/i18n/en.ts` (`...tên.vi`, `...tên.en`).
 - Mọi chuỗi UI dùng `t('khóa')`; khóa phải có ở cả vi và en. `src/i18n/i18nParity.test.ts` kiểm tra đủ cặp.
+- `src/i18n/dictNoDuplicates.test.ts` kiểm tra khóa không trùng giữa các dict: mỗi tính năng một dict riêng, đặt tiền tố khóa riêng.
 - Bài học: `quizIntegrity.test.ts` kiểm tra tính hợp lệ của quiz.
 
 ## 7. Mobile 390px
 Không được tràn ngang ở rộng 390px (dùng `min-w-0`, `break-words`, `overflow-x-auto` cục bộ cho bảng). `tests/e2e/mobile.spec.ts` kiểm tra viewport 390x844.
+
+## 8. Quy ước e2e
+- Spec chỉ seed DB tạm (`MARKET_DB_PATH` trong thư mục tmp của OS) hoặc dùng mock `page.route`; không bao giờ dùng `data/market.db`.
+- Mỗi agent/tiến trình chạy song song đặt `E2E_PORT` riêng (mặc định 3199).
