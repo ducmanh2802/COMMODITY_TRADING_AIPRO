@@ -255,6 +255,20 @@ export const CURRICULUM_INDEX: readonly LevelMeta[] = [
     "minutes": 5
    },
    {
+    "id": "l4-dxy-fed",
+    "title": "Đồng USD (DXY), lãi suất Fed và lạm phát CPI",
+    "objective": "Hiểu DXY là gì, vì sao hàng hoá định giá USD thường (không phải luôn) đi ngược USD, lãi suất thực tác động tới vàng ra sao và vì sao ngày CPI/FOMC biến động.",
+    "quizCount": 5,
+    "minutes": 6
+   },
+   {
+    "id": "l4-fx-vnd-pnl",
+    "title": "Tỷ giá USD/VND: lãi lỗ và ký quỹ của người giao dịch Việt Nam",
+    "objective": "Hiểu cùng một khoản lãi lỗ bằng USD cho ra số VND khác nhau khi tỷ giá đổi, ký quỹ bằng VND đổi theo thế nào, và vì sao phải kiểm tra quy tắc quy đổi với MXV/công ty môi giới.",
+    "quizCount": 5,
+    "minutes": 4
+   },
+   {
     "id": "l4-technical",
     "title": "Kỹ thuật: MA, RSI, ATR, khối lượng",
     "objective": "Hiểu bốn công cụ phổ biến đo cái gì và không đo cái gì.",

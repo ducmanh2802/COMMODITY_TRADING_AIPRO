@@ -122,6 +122,10 @@ export const SRC = {
   eia: { label: 'EIA – Weekly Petroleum Status Report', url: 'https://www.eia.gov/petroleum/supply/weekly/' },
   nassCrop: { label: 'USDA NASS – Crop Progress', url: 'https://www.nass.usda.gov/Publications/National_Crop_Progress/' },
   eiaGas: { label: 'EIA – Natural Gas Weekly Update', url: 'https://www.eia.gov/naturalgas/weekly/' },
+  fomc: { label: 'Federal Reserve – lịch họp FOMC', url: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm' },
+  blsCpi: { label: 'BLS – lịch công bố CPI', url: 'https://www.bls.gov/schedule/news_release/cpi.htm' },
+  sbvRate: { label: 'Ngân hàng Nhà nước Việt Nam (sbv.gov.vn) – tỷ giá trung tâm', url: 'https://www.sbv.gov.vn' },
+  iceDxy: { label: 'ICE – US Dollar Index Futures (DXY)', url: 'https://www.ice.com/products/194/US-Dollar-Index-Futures' },
 } satisfies Record<string, Source>;
 
 export interface LessonVideo {

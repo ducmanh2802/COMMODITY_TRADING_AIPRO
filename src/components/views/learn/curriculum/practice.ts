@@ -50,6 +50,8 @@ export const PRACTICE: Readonly<Record<string, readonly PracticeTarget[]>> = {
   'l4-fundamental': [m('fundamental')],
   'l4-usda-reports': [m('news'), m('paper')],
   'l4-eia-weekly': [m('news'), m('paper')],
+  'l4-dxy-fed': [m('fundamental'), m('news')],
+  'l4-fx-vnd-pnl': [S, m('risk')],
   'l4-technical': [m('charts')],
   'l4-curve': [m('term-structure')],
   'l4-cot': [m('cot')],
