@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AlertTriangle, Award, Bookmark, BookOpen, Calculator, CheckCircle2, ChevronDown, ChevronRight, FileText, GraduationCap, Info, ListChecks, Lock, Search, ShieldAlert, X } from 'lucide-react';
 import { useI18n, type TKey } from '../../../i18n';
 import { onTablistKeyDown, tablistRef } from '../../../shared/hooks/tablistKeys';
@@ -18,6 +18,7 @@ import { LearnGoalCard } from './LearnGoalCard';
 import { loadGoal, type LearnGoal } from './learnPaths';
 import { useAcademyProgress, type LearnProgress, type LessonProgress } from './progress';
 import { ReviewCard } from './ReviewSession';
+import { ACADEMY_INTENT_EVENT, takeAcademyIntent } from '../../common/palette/paletteBridge';
 
 const GlossarySection = lazy(() => import('./GlossarySection'));
 const PracticeSandbox = lazy(() => import('./PracticeSandbox').then((m) => ({ default: m.PracticeSandbox })));
@@ -520,6 +521,24 @@ export default function LearnView() {
   const { progress, bookmarked, setLessonNote, recordLessonScore, toggleLessonDone, toggleChecklist, toggleBookmark } = useAcademyProgress();
   const [page, setPage] = useState<Page>({ kind: 'home' });
   const [tab, setTab] = useState<AcademyTab>('lessons');
+  // Quick-search hand-off (palette): open a lesson or the glossary tab, on mount and while mounted.
+  useEffect(() => {
+    const apply = () => {
+      const intent = takeAcademyIntent();
+      if (!intent) return;
+      if (intent.lessonId) {
+        const lvl = ALL_LESSON_META.find((e) => e.lesson.id === intent.lessonId)?.level;
+        if (lvl) void loadLevel(lvl.id).catch(() => undefined);
+        setPage({ kind: 'lesson', id: intent.lessonId });
+      } else if (intent.tab) {
+        setPage({ kind: 'home' });
+        setTab(intent.tab);
+      }
+    };
+    apply();
+    window.addEventListener(ACADEMY_INTENT_EVENT, apply);
+    return () => window.removeEventListener(ACADEMY_INTENT_EVENT, apply);
+  }, []);
   const [goal, setGoal] = useState<LearnGoal | null>(() => loadGoal());
   const [query, setQuery] = useState('');
   const [bookmarkQuery, setBookmarkQuery] = useState('');

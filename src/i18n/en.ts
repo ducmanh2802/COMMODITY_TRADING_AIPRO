@@ -17,6 +17,7 @@ import * as scorecard2 from './dict/scorecard2';
 import * as fedpulse from './dict/fedpulse';
 import * as macrovisual from './dict/macrovisual';
 import * as nav2 from './dict/nav2';
+import * as palette from './dict/palette';
 import * as todayvisual from './dict/todayvisual';
 import * as papertrade from './dict/papertrade';
 import * as simple from './dict/simple';
@@ -87,6 +88,7 @@ export const en: Record<TKey, string> = {
   ...fedpulse.en,
   ...macrovisual.en,
   ...nav2.en,
+  ...palette.en,
   ...todayvisual.en,
   ...papertrade.en,
   ...simple.en,

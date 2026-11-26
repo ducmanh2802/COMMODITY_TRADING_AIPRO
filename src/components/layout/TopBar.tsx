@@ -12,6 +12,7 @@ import { TopBarMore } from './TopBarMore';
 import { RadarBell } from '../radar/RadarBell';
 import { WatchlistAlerts } from '../watchlist/WatchlistAlerts';
 import { useT } from '../../i18n';
+import { PaletteHost } from '../common/palette/PaletteHost';
 
 interface TopBarProps {
   onOpenMobileMenu: () => void;
@@ -141,6 +142,7 @@ export function TopBar({ onOpenMobileMenu }: TopBarProps) {
           </span>
         </div>
 
+        <PaletteHost />
         <RadarBell />
         <WatchlistAlerts />
         <div className="hidden xl:flex items-center gap-3">
