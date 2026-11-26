@@ -40,9 +40,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             <p className="text-sm text-[var(--text)]/80 leading-relaxed">
               {tr('error.body')}
             </p>
-            <pre className="text-xs font-mono bg-[var(--bg)] border border-[var(--border)] rounded p-3 overflow-x-auto text-[var(--warning)]">
-              {this.state.message}
-            </pre>
+            <details className="text-xs text-[var(--muted)]">
+              <summary className="cursor-pointer select-none">{tr('err2.details')}</summary>
+              <pre className="mt-2 font-mono bg-[var(--bg)] border border-[var(--border)] rounded p-3 overflow-x-auto text-[var(--warning)]">
+                {this.state.message}
+              </pre>
+            </details>
             <button
               type="button"
               onClick={() => window.location.reload()}

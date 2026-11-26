@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { errorMessage, fetchCandles, fetchDatasets, type CandlesResponse, type DatasetSummary } from '../../../api/contractsApi';
+import { fetchCandles, fetchDatasets, type CandlesResponse, type DatasetSummary } from '../../../api/contractsApi';
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 import { fmtFixed, fmtInt, useT } from '../../../i18n';
 import { computeVolumeProfile, windowStartIso } from './volumeProfile';
 
@@ -13,7 +15,7 @@ export function VolumeProfilePanel({ instrumentId }: { instrumentId: string }) {
   const [codes, setCodes] = useState<string[] | null>(null);
   const [code, setCode] = useState('');
   const [months, setMonths] = useState<number>(6);
-  const [candles, setCandles] = useState<{ s: 'idle' } | { s: 'loading' } | { s: 'ok'; data: CandlesResponse } | { s: 'error'; message: string }>({ s: 'idle' });
+  const [candles, setCandles] = useState<{ s: 'idle' } | { s: 'loading' } | { s: 'ok'; data: CandlesResponse } | { s: 'error'; error: UserError }>({ s: 'idle' });
 
   useEffect(() => {
     const ctl = new AbortController();
@@ -27,7 +29,7 @@ export function VolumeProfilePanel({ instrumentId }: { instrumentId: string }) {
       .catch((err) => {
         if (!ctl.signal.aborted) {
           setCodes([]);
-          setCandles({ s: 'error', message: errorMessage(err) });
+          setCandles({ s: 'error', error: toUserError(err) });
         }
       });
     return () => ctl.abort();
@@ -41,7 +43,7 @@ export function VolumeProfilePanel({ instrumentId }: { instrumentId: string }) {
     fetchCandles({ instrumentId, contractCode: code, timeframe: 'D1', from, limit: 5000 }, ctl.signal)
       .then((data) => setCandles({ s: 'ok', data }))
       .catch((err) => {
-        if (!ctl.signal.aborted) setCandles({ s: 'error', message: errorMessage(err) });
+        if (!ctl.signal.aborted) setCandles({ s: 'error', error: toUserError(err) });
       });
     return () => ctl.abort();
   }, [instrumentId, code]);
@@ -87,7 +89,7 @@ export function VolumeProfilePanel({ instrumentId }: { instrumentId: string }) {
         </div>
       )}
       {candles.s === 'loading' && <p className="text-xs text-[var(--text)]/55">{t('vp.loading')}</p>}
-      {candles.s === 'error' && <p role="alert" className="text-xs font-mono text-[var(--negative)]">{candles.message}</p>}
+      {candles.s === 'error' && <ErrorNote error={candles.error} />}
       {candles.s === 'ok' && !profile && <p className="text-xs text-[var(--text)]/60">{t('vp.noVolume')}</p>}
       {profile && candles.s === 'ok' && (
         <>

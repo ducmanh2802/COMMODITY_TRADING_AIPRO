@@ -3,11 +3,13 @@ import { useFocusTrap } from '../../../shared/hooks/useFocusTrap';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import { formatStoredTimestamp, type DatasetRecord } from '../../../api/dataApi';
 import { fmtInt, useT } from '../../../i18n';
+import { ErrorNote } from '../../common/ErrorNote';
+import type { UserError } from '../../common/friendlyError';
 
 interface DatasetTableProps {
   datasets: DatasetRecord[];
   loading: boolean;
-  error: string | null;
+  error: UserError | null;
   onRefresh: () => void;
   onRequestDelete: (d: DatasetRecord) => void;
 }
@@ -37,7 +39,7 @@ export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDel
           {t('common.refresh')}
         </button>
       </div>
-      {error && <p role="alert" className="px-4 py-2 text-xs text-[var(--warning)] border-b border-[var(--border)]">{error}</p>}
+      {error && <div className="px-4 py-2 border-b border-[var(--border)]"><ErrorNote error={error} /></div>}
       <div className="overflow-x-auto" tabIndex={0}>
         <table className="w-full text-left border-collapse min-w-[1080px]">
           <thead>
@@ -124,7 +126,7 @@ export function DatasetTable({ datasets, loading, error, onRefresh, onRequestDel
 interface ConfirmDeleteDialogProps {
   dataset: DatasetRecord;
   busy: boolean;
-  error: string | null;
+  error: UserError | null;
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -158,7 +160,7 @@ export function ConfirmDeleteDialog({ dataset, busy, error, onCancel, onConfirm 
           {t('data.ds.confirm2', { source: dataset.sourceLabel })}{' '}
           <span className="font-mono text-[var(--text-strong)]">{fmtInt(dataset.insertedCount)}</span> {t('data.ds.confirm3')}
         </p>
-        {error && <p role="alert" className="text-xs text-[var(--warning)]">{error}</p>}
+        {error && <ErrorNote error={error} />}
         <div className="flex justify-end gap-2">
           <button
             ref={cancelRef}

@@ -10,6 +10,7 @@ import { ReadabilitySwitch } from '../common/ReadabilitySwitch';
 import { useUiMode } from '../../contexts/UiModeContext';
 import { BackupCard } from './BackupCard';
 import { friendlyMessage } from '../common/friendlyError';
+import { ErrorNote } from '../common/ErrorNote';
 
 export function SettingsView() {
   const {
@@ -190,7 +191,7 @@ export function SettingsView() {
 
         {authError && (
           <div className="text-xs text-[var(--negative)] bg-[var(--bg)] border border-[var(--negative)]/40 rounded p-3">
-            {authError}
+            <ErrorNote error={authError} className="text-inherit" />
           </div>
         )}
 

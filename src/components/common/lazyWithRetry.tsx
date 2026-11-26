@@ -1,5 +1,6 @@
 import React, { Component, Suspense, lazy, type ComponentType } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { tr } from '../../i18n';
 
 interface ModuleErrorBoundaryProps {
   children: React.ReactNode;
@@ -32,9 +33,12 @@ class ModuleErrorBoundary extends Component<ModuleErrorBoundaryProps, ModuleErro
           <p className="text-xs text-[var(--text)]/70 leading-relaxed">
             Máy chủ phát triển vừa khởi động lại hoặc kết nối tạm gián đoạn khi nạp file giao diện. Bạn có thể thử nạp lại mô-đun hoặc tải lại trang.
           </p>
-          <p className="text-[11px] font-mono text-[var(--text)]/55 bg-[var(--bg)] border border-[var(--border)] rounded p-2.5 break-all">
-            {this.state.error.message}
-          </p>
+          <details className="text-[11px] text-[var(--muted)]">
+            <summary className="cursor-pointer select-none">{tr('err2.details')}</summary>
+            <p className="mt-1 font-mono text-[var(--text)]/55 bg-[var(--bg)] border border-[var(--border)] rounded p-2.5 break-all">
+              {this.state.error.message}
+            </p>
+          </details>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"

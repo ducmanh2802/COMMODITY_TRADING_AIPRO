@@ -17,6 +17,7 @@ import {
   type PaperState,
   type PaperTrade,
 } from './paperModel';
+import { friendlyMessage } from '../../common/friendlyError';
 import { BATCH_MAX, COL, addOpToBatch, cachedLoader } from './paperFirestore';
 
 // Firestore SDK is fetched only when a signed-in, verified user needs cloud sync (never on guest paths).
@@ -102,12 +103,12 @@ export function usePaperStore(): PaperStore {
               else setTrades(snap.docs.map((d) => parseTradeDoc(d.id, d.data())));
               setLoaded((l) => ({ ...l, [k[0]]: true }));
             },
-            (err) => setError(handleFirestoreError(err, OperationType.LIST, COL[k]).userMessage || String(err))
+            (err) => setError(handleFirestoreError(err, OperationType.LIST, COL[k]).userMessage || friendlyMessage(err))
           );
         });
       })
       .catch((err: unknown) => {
-        if (!disposed) setError(handleFirestoreError(err, OperationType.LIST, 'paper*').userMessage || String(err));
+        if (!disposed) setError(handleFirestoreError(err, OperationType.LIST, 'paper*').userMessage || friendlyMessage(err));
       });
     return () => {
       disposed = true;
@@ -141,7 +142,7 @@ export function usePaperStore(): PaperStore {
         }
         return null;
       } catch (err) {
-        const msg = handleFirestoreError(err, OperationType.WRITE, 'paper*').userMessage || String(err);
+        const msg = handleFirestoreError(err, OperationType.WRITE, 'paper*').userMessage || friendlyMessage(err);
         setError(msg);
         return msg;
       }

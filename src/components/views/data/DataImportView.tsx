@@ -25,6 +25,8 @@ import {
 import { fmtInt, tr, useT } from '../../../i18n';
 import { ConfirmDeleteDialog, DatasetTable } from './DatasetTable';
 import { ImportReportPanel } from './ImportReportPanel';
+import { ErrorNote } from '../../common/ErrorNote';
+import { toUserError, type UserError } from '../../common/friendlyError';
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const OTHER_TZ = '__other__';
@@ -94,10 +96,8 @@ interface ReportState {
   signature: string;
 }
 
-function errorText(err: unknown): string {
-  if (err instanceof ApiError) return err.message;
-  if (err instanceof Error) return err.message;
-  return tr('data.err.unexpected');
+function errorText(err: unknown): UserError {
+  return toUserError(err, tr('data.err.unexpected'));
 }
 
 export function DataImportView() {
@@ -108,16 +108,16 @@ export function DataImportView() {
   const [fileError, setFileError] = useState<string | null>(null);
   const [token, setToken] = useState<string>(() => getAdminToken());
   const [busy, setBusy] = useState<'dry' | 'import' | null>(null);
-  const [requestError, setRequestError] = useState<{ message: string; auth: boolean } | null>(null);
+  const [requestError, setRequestError] = useState<{ error: UserError; auth: boolean } | null>(null);
   const [dryRun, setDryRun] = useState<ReportState | null>(null);
   const [importResult, setImportResult] = useState<ReportState | null>(null);
 
   const [datasets, setDatasets] = useState<DatasetRecord[]>([]);
   const [datasetsLoading, setDatasetsLoading] = useState(false);
-  const [datasetsError, setDatasetsError] = useState<string | null>(null);
+  const [datasetsError, setDatasetsError] = useState<UserError | null>(null);
   const [pendingDelete, setPendingDelete] = useState<DatasetRecord | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<UserError | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
@@ -220,7 +220,7 @@ export function DataImportView() {
         }
       }
     } catch (err) {
-      setRequestError({ message: errorText(err), auth: err instanceof ApiError && err.isAuthError });
+      setRequestError({ error: errorText(err), auth: err instanceof ApiError && err.isAuthError });
     } finally {
       setBusy(null);
     }
@@ -579,16 +579,9 @@ export function DataImportView() {
         </div>
 
         {requestError && (
-          <p
-            role="alert"
-            className={`text-xs rounded-md px-3 py-2 border ${
-              requestError.auth
-                ? 'text-[var(--warning)] border-[var(--warning)]/40 bg-[var(--warning)]/10'
-                : 'text-[var(--warning)] border-[var(--warning)]/40 bg-[var(--warning)]/10'
-            }`}
-          >
-            {requestError.message}
-          </p>
+          <div className="rounded-md px-3 py-2 border text-[var(--warning)] border-[var(--warning)]/40 bg-[var(--warning)]/10">
+            <ErrorNote error={requestError.error} className="text-inherit" />
+          </div>
         )}
       </form>
 

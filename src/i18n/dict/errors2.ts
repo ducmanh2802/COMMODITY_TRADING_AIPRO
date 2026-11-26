@@ -12,6 +12,11 @@ export const vi = {
   'err2.unknown': 'Không tải được dữ liệu.',
   'err2.details': 'Chi tiết kỹ thuật',
   'err2.retry': 'Thử lại',
+  'err2.authLoad': 'Không tải được phần đăng nhập. Thử tải lại trang.',
+  'err2.signIn': 'Đăng nhập chưa thành công. Thử lại nhé.',
+  'err2.emailUnverified': 'Cần email đã xác minh để lưu dữ liệu lên đám mây.',
+  'err2.syncProfile': 'Chưa đồng bộ được hồ sơ của bạn. Thử lại sau.',
+  'err2.signOut': 'Đăng xuất chưa thành công. Thử lại nhé.',
 } as const;
 
 export const en: Record<keyof typeof vi, string> = {
@@ -27,4 +32,9 @@ export const en: Record<keyof typeof vi, string> = {
   'err2.unknown': 'Could not load the data.',
   'err2.details': 'Technical details',
   'err2.retry': 'Retry',
+  'err2.authLoad': 'Could not load sign-in. Try reloading the page.',
+  'err2.signIn': 'Sign-in did not complete. Please try again.',
+  'err2.emailUnverified': 'A verified email is required to save data to the cloud.',
+  'err2.syncProfile': 'Could not sync your profile. Try again later.',
+  'err2.signOut': 'Sign-out did not complete. Please try again.',
 };

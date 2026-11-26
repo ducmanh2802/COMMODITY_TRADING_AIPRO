@@ -1,4 +1,5 @@
 import { friendlyMessage } from './friendlyError';
+import { ErrorNote } from './ErrorNote';
 import React, { useState } from 'react';
 import { FileSpreadsheet, Trash2, Upload } from 'lucide-react';
 import { useTerminal } from '../../contexts/TerminalContext';
@@ -28,7 +29,7 @@ export function CsvImportPanel({
   const [csvContent, setCsvContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [clearing, setClearing] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'ok' | 'err'; text: string; detail?: string } | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -74,7 +75,7 @@ export function CsvImportPanel({
       const data = await res.json();
       if (!res.ok) {
         const details = Array.isArray(data.details) ? ` (${data.details.slice(0, 3).join('; ')})` : '';
-        setFeedback({ type: 'err', text: `${data.message ?? t('data.csv.failed')}${details}` });
+        setFeedback({ type: 'err', text: t('data.csv.failed'), detail: `${data.message ?? ''}${details}`.trim() });
         return;
       }
 
@@ -239,7 +240,9 @@ export function CsvImportPanel({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          {feedback ? (
+          {feedback?.type === 'err' ? (
+            <ErrorNote error={{ kind: 'unknown', message: feedback.text, detail: feedback.detail ?? '' }} />
+          ) : feedback ? (
             <p
               className={`text-xs font-mono ${
                 feedback.type === 'ok' ? 'text-[var(--accent-text)]' : 'text-[var(--warning)]'

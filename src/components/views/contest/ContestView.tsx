@@ -3,6 +3,7 @@ import { LogIn, Trophy } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTerminal } from '../../../contexts/TerminalContext';
 import { fmtInt, useT, type TKey } from '../../../i18n';
+import { friendlyMessage } from '../../common/friendlyError';
 import { validateSpec } from '../papertrade/paperMath';
 import { Stat, bigBtn, cardCls, fmtPct, fmtVnd, inputCls, labelCls, pnlColor } from '../papertrade/paperUi';
 
@@ -76,7 +77,11 @@ export function ContestView() {
   }, [eligible, instId]);
 
   const errText = useCallback(
-    (code: string) => (KNOWN_ERRORS.has(code) ? t(`ct.err.${code}` as TKey) : t('ct.err.generic', { code })),
+    (e: unknown) => {
+      const code = e instanceof Error ? e.message : String(e);
+      if (KNOWN_ERRORS.has(code)) return t(`ct.err.${code}` as TKey);
+      return /^[A-Za-z0-9_-]{1,40}$/.test(code) ? t('ct.err.generic', { code }) : friendlyMessage(e, t('ct.err.generic', { code: '?' }));
+    },
     [t],
   );
 
@@ -103,7 +108,7 @@ export function ContestView() {
       if (user) setMe((await api('/me')) as unknown as MeDto);
       else setPublicRows(((await api('/leaderboard')) as { rows: LbRow[] }).rows);
     } catch (e) {
-      setMsg(errText((e as Error).message));
+      setMsg(errText(e));
     }
   }, [api, user, authReady, errText]);
 
@@ -120,7 +125,7 @@ export function ContestView() {
       setMsg(await fn());
       await load();
     } catch (e) {
-      setMsg(errText((e as Error).message));
+      setMsg(errText(e));
     } finally {
       setBusy(false);
     }

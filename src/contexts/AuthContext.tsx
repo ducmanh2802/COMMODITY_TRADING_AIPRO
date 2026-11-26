@@ -9,6 +9,8 @@ import {
   testFirestoreConnection,
   type FirestoreConnectionState,
 } from '../firebase';
+import { toUserError, type UserError } from '../components/common/friendlyError';
+import { tr } from '../i18n/translate';
 import type { Timeframe, TradingStyle } from '../shared/types/instrument';
 import type { AccountCurrency, DisplayTimezone, UserRiskSettings } from '../shared/types/risk';
 
@@ -51,7 +53,7 @@ interface AuthContextValue {
   firestoreStatus: FirestoreConnectionState;
   settings: UserRiskSettings;
   settingsLoaded: boolean;
-  authError: string | null;
+  authError: UserError | null;
   settingsError: string | null;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
@@ -69,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ...DEFAULT_USER_SETTINGS,
   });
   const [settingsLoaded, setSettingsLoaded] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<UserError | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   // uid of the verified user whose profile/settings bootstrap has finished (success or failure).
   // The settings listener is attached only after this, avoiding a race with doc creation.
@@ -121,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
         .catch((err) => {
           if (disposed) return;
-          setAuthError(err instanceof Error ? err.message : 'Could not load sign-in.');
+          setAuthError(toUserError(err, tr('err2.authLoad')));
           setAuthReady(true);
           setSettingsLoaded(true);
         });
@@ -149,7 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (!nextUser.emailVerified || !nextUser.email) {
-        setAuthError('Verified email required for Cloud Firestore persistence.');
+        setAuthError({ kind: 'auth', message: tr('err2.emailUnverified'), detail: '' });
         setSettingsLoaded(true);
         return;
       }
@@ -170,7 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         const info = handleFirestoreError(err, OperationType.WRITE, userPath);
         if (isCurrent()) {
-          setAuthError(`Could not sync user profile: ${info.userMessage}`);
+          setAuthError({ kind: 'unknown', message: tr('err2.syncProfile'), detail: info.userMessage });
           setSettingsError(`Could not initialize settings: ${info.userMessage}`);
           setBootstrappedUid(nextUser.uid);
         }
@@ -200,7 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         const info = handleFirestoreError(err, OperationType.WRITE, userPath);
-        if (isCurrent()) setAuthError(`Could not sync user profile: ${info.userMessage}`);
+        if (isCurrent()) setAuthError({ kind: 'unknown', message: tr('err2.syncProfile'), detail: info.userMessage });
       }
 
       const settingsPath = `userSettings/${nextUser.uid}`;
@@ -313,8 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const m = getLoadedAuthModules() ?? (await getAuthModules());
       await m.signInWithPopup(m.auth, m.googleProvider);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Google Sign-In failed.';
-      setAuthError(msg);
+      setAuthError(toUserError(err, tr('err2.signIn')));
     }
   }, []);
 
@@ -324,7 +325,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const m = getLoadedAuthModules() ?? (await getAuthModules());
       await m.signOut(m.auth);
     } catch (err) {
-      setAuthError(err instanceof Error ? err.message : 'Sign out failed.');
+      setAuthError(toUserError(err, tr('err2.signOut')));
     }
   }, []);
 
