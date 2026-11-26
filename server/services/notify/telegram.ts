@@ -30,6 +30,23 @@ export function clampText(s: string, max = TELEGRAM_MAX_LENGTH): string {
   return s.length <= max ? s : `${s.slice(0, Math.max(0, max - 1))}…`;
 }
 
+/**
+ * Escapes first, then truncates so the *escaped* text (what Telegram counts) stays within `max`.
+ * Clamping before escaping let "&" (5 chars once escaped) blow past the 4096 hard limit; cutting at
+ * character boundaries of the escaped form also never splits an entity such as "&amp;".
+ */
+export function escapeAndClamp(s: string, max = TELEGRAM_MAX_LENGTH): string {
+  const full = escapeHtml(s);
+  if (full.length <= max) return full;
+  let out = '';
+  for (const ch of s) {
+    const e = escapeHtml(ch);
+    if (out.length + e.length > max - 1) break;
+    out += e;
+  }
+  return `${out}…`;
+}
+
 /** Per-chat limiter: reserves send slots 1s apart and refuses beyond 20 per rolling minute. Pure (clock passed in). */
 export class ChatRateLimiter {
   private readonly slots = new Map<string, number[]>();
@@ -113,7 +130,7 @@ export class TelegramClient implements Messenger {
     const wait = this.limiter.reserve(chatId, this.now());
     if (wait === null) return { ok: false, reason: 'rate_limited' };
     if (wait > 0) await this.sleep(wait);
-    const payload = { chat_id: chatId, text: escapeHtml(clampText(text)), parse_mode: 'HTML', disable_web_page_preview: true };
+    const payload = { chat_id: chatId, text: escapeAndClamp(text), parse_mode: 'HTML', disable_web_page_preview: true };
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       let r: { status: number; data: ApiReply | null };
       try {
