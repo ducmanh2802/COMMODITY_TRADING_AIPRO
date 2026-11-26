@@ -241,6 +241,20 @@ export const CURRICULUM_INDEX: readonly LevelMeta[] = [
     "minutes": 3
    },
    {
+    "id": "l4-usda-reports",
+    "title": "Đọc báo cáo USDA: WASDE và Crop Progress",
+    "objective": "Biết đọc dòng tồn kho cuối vụ và tỷ lệ tồn kho/sử dụng trong WASDE, hiểu vì sao \"so với kỳ vọng\" quan trọng hơn con số, và dùng Crop Progress hằng tuần.",
+    "quizCount": 5,
+    "minutes": 6
+   },
+   {
+    "id": "l4-eia-weekly",
+    "title": "Đọc báo cáo dầu hằng tuần của EIA và API",
+    "objective": "Biết đọc tồn kho dầu thô, xăng, dầu chưng cất và Cushing trong báo cáo EIA, vai trò của API và rủi ro ngày công bố.",
+    "quizCount": 5,
+    "minutes": 5
+   },
+   {
     "id": "l4-technical",
     "title": "Kỹ thuật: MA, RSI, ATR, khối lượng",
     "objective": "Hiểu bốn công cụ phổ biến đo cái gì và không đo cái gì.",

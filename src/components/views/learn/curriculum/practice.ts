@@ -8,6 +8,7 @@ export type PracticeTarget = { to: AppModuleId } | { to: 'sandbox' };
 export const PRACTICE_LABEL: Record<string, TKey> = {
   sandbox: 'prac.t.sandbox',
   paper: 'prac.t.paper',
+  news: 'n2.nw.news',
   risk: 'n2.me.risk',
   journal: 'n2.me.journal',
   hedge: 'hd.tab',
@@ -47,6 +48,8 @@ export const PRACTICE: Readonly<Record<string, readonly PracticeTarget[]>> = {
   'l3-oil': [m('commodity-profile')],
   'l3-gas': [m('commodity-profile')],
   'l4-fundamental': [m('fundamental')],
+  'l4-usda-reports': [m('news'), m('paper')],
+  'l4-eia-weekly': [m('news'), m('paper')],
   'l4-technical': [m('charts')],
   'l4-curve': [m('term-structure')],
   'l4-cot': [m('cot')],

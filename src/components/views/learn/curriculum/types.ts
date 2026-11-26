@@ -120,6 +120,7 @@ export const SRC = {
   wasde: { label: 'USDA – WASDE', url: 'https://www.usda.gov/oce/commodity/wasde' },
   usda: { label: 'USDA', url: 'https://www.usda.gov' },
   eia: { label: 'EIA – Weekly Petroleum Status Report', url: 'https://www.eia.gov/petroleum/supply/weekly/' },
+  nassCrop: { label: 'USDA NASS – Crop Progress', url: 'https://www.nass.usda.gov/Publications/National_Crop_Progress/' },
   eiaGas: { label: 'EIA – Natural Gas Weekly Update', url: 'https://www.eia.gov/naturalgas/weekly/' },
 } satisfies Record<string, Source>;
 
