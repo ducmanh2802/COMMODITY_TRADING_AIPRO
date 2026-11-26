@@ -71,6 +71,7 @@ import * as hardcoded from './dict/hardcoded';
 import * as errors2 from './dict/errors2';
 import * as margincall from './dict/margincall';
 import * as crushcard from './dict/crushcard';
+import * as seasonwin from './dict/seasonwin';
 import * as carry from './dict/carry';
 import * as honesty from './dict/honesty';
 import * as badges2 from './dict/badges2';
@@ -153,5 +154,6 @@ export const en: Record<TKey, string> = {
   ...errors2.en,
   ...margincall.en,
   ...crushcard.en,
+  ...seasonwin.en,
   ...carry.en,
 };

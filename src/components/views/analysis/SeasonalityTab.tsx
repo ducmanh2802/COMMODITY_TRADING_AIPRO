@@ -22,6 +22,7 @@ import {
   useOptionMap,
 } from './shared';
 import { fmtFixed, fmtInt, useT } from '../../../i18n';
+import { SeasonalWindowCard } from './SeasonalWindowCard';
 import { ChartTooltip, useChartTooltip } from '../../ui/viz/ChartTooltip';
 
 const MONTH_NUMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
@@ -132,6 +133,8 @@ export function SeasonalityTab({ options }: { options: SeriesOption[] }) {
         {error && <Notice tone="error"><ErrorNote error={error} className="text-inherit" /></Notice>}
         {s && <SeriesIntegrity s={s} />}
       </Panel>
+
+      {s && option?.timeframe === 'D1' && <SeasonalWindowCard closes={s.closes} />}
 
       {res && (
         <>

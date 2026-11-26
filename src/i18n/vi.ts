@@ -71,6 +71,7 @@ import * as hardcoded from './dict/hardcoded';
 import * as errors2 from './dict/errors2';
 import * as margincall from './dict/margincall';
 import * as crushcard from './dict/crushcard';
+import * as seasonwin from './dict/seasonwin';
 import * as carry from './dict/carry';
 import * as honesty from './dict/honesty';
 import * as badges2 from './dict/badges2';
@@ -152,6 +153,7 @@ export const vi = {
   ...errors2.vi,
   ...margincall.vi,
   ...crushcard.vi,
+  ...seasonwin.vi,
   ...carry.vi,
 };
 

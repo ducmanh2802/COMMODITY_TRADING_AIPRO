@@ -5,4 +5,5 @@ export * from './returns';
 export * from './volatility';
 export * from './correlation';
 export * from './seasonality';
+export * from './seasonalWindow';
 export * from './spreads';
