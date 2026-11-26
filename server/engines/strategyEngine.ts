@@ -3,6 +3,7 @@ import type { Timeframe } from '../../src/shared/types/instrument.ts';
 import type { DataQualityStatus, MarketCandle } from '../../src/shared/types/market.ts';
 import type { TechnicalSnapshot } from './technicalEngine.ts';
 import { defaultParams, type StrategyParams } from './strategyParams.ts';
+import { donchianSignal, tsmomSignal } from './trendRules.ts';
 
 export interface DeterministicSignal {
   strategyId: StrategyId;
@@ -130,7 +131,41 @@ export const STRATEGY_CATALOG: Array<
     minCandlesRequired: 30,
     minRiskReward: 1.5,
   },
+  {
+    id: 'TSMOM_12M',
+    name: 'Time-Series Momentum 12 tháng (TSMOM)',
+    applicableTimeframes: ['D1', 'W1'],
+    requiredIndicators: ['Lợi suất 12 tháng (~252 phiên)', 'ATR 14'],
+    entryConditions: 'Lợi suất đóng cửa trong N phiên gần nhất > 0 thì LONG, < 0 thì SHORT (tính trên nến đã đóng).',
+    exitConditions: 'Chạm cắt lỗ ATR hoặc mục tiêu R (xấp xỉ tái cân bằng hằng tháng trên nến ngày).',
+    stopLossLogic: '2.0 x ATR14 từ giá vào.',
+    takeProfitLogic: 'TP1 = 3R.',
+    invalidationConditions: 'Dấu lợi suất N phiên đổi chiều.',
+    minCandlesRequired: 253,
+    minRiskReward: 1.5,
+  },
+  {
+    id: 'DONCHIAN_BREAKOUT',
+    name: 'Donchian Breakout (kiểu Turtle)',
+    applicableTimeframes: ['D1', 'W1', 'H4'],
+    requiredIndicators: ['Kênh Donchian N vào / M thoát', 'ATR 14'],
+    entryConditions: 'Đóng cửa trên đỉnh cao nhất N phiên trước (LONG) hoặc dưới đáy thấp nhất N phiên trước (SHORT).',
+    exitConditions: 'Cắt lỗ tại kênh thoát M phiên hoặc mục tiêu R.',
+    stopLossLogic: 'Đáy (LONG) / đỉnh (SHORT) của M phiên gần nhất.',
+    takeProfitLogic: 'TP1 = 3R.',
+    invalidationConditions: 'Giá đóng cửa xuyên kênh thoát.',
+    minCandlesRequired: 56,
+    minRiskReward: 1.5,
+  },
 ];
+
+/** Bars of history evaluateStrategy needs ending at the signal bar (2 for the classic strategies). */
+export function strategyLookbackBars(strategyId: StrategyId, params?: StrategyParams): number {
+  const P = { ...defaultParams(strategyId), ...(params ?? {}) };
+  if (strategyId === 'TSMOM_12M') return Math.max(2, Math.trunc(P.lookback) + 1);
+  if (strategyId === 'DONCHIAN_BREAKOUT') return Math.max(2, Math.trunc(Math.max(P.entryN, P.exitN)) + 1);
+  return 2;
+}
 
 function buildTradeLevels(
   entry: number,
@@ -357,6 +392,45 @@ export function evaluateStrategy(
     }
   }
 
+  // Trend-following rules need a longer window than the last two bars; they use bars up to the last one only.
+  let customLevels: ReturnType<typeof buildTradeLevels> | null = null;
+  if (strategyId === 'TSMOM_12M' || strategyId === 'DONCHIAN_BREAKOUT') {
+    const bars = candles.filter((c) => c.isComplete);
+    const t = bars.length - 1;
+    if (strategyId === 'TSMOM_12M') {
+      const side = tsmomSignal(bars.map((c) => c.close), t, Math.trunc(P.lookback));
+      if (side !== 'NONE') {
+        direction = side;
+        score = 70;
+        breakdown.push(`Lợi suất ${Math.trunc(P.lookback)} phiên ${side === 'LONG' ? '> 0' : '< 0'}`);
+      }
+    } else {
+      const d = donchianSignal(
+        bars.map((c) => c.high),
+        bars.map((c) => c.low),
+        bars.map((c) => c.close),
+        t,
+        Math.trunc(P.entryN),
+        Math.trunc(P.exitN)
+      );
+      const stop = d.side === 'LONG' ? d.exitLow : d.side === 'SHORT' ? d.exitHigh : null;
+      if (d.side !== 'NONE' && stop !== null && Math.abs(price - stop) > 0) {
+        direction = d.side;
+        score = 72;
+        const dist = Math.abs(price - stop);
+        const sign = d.side === 'LONG' ? 1 : -1;
+        const tp1 = P.tp1R ?? 3;
+        customLevels = {
+          entryZone: [price - atr * 0.15, price + atr * 0.15],
+          stopLoss: stop,
+          takeProfits: [price + sign * dist * tp1, price + sign * dist * (tp1 + 1)],
+          riskReward: tp1,
+        };
+        breakdown.push(`Đóng cửa ${d.side === 'LONG' ? 'trên đỉnh' : 'dưới đáy'} kênh ${Math.trunc(P.entryN)} phiên`);
+      }
+    }
+  }
+
   if (direction === 'NONE') {
     return {
       strategyId,
@@ -375,7 +449,7 @@ export function evaluateStrategy(
     };
   }
 
-  const levels = buildTradeLevels(price, atr, direction, slMult, P.tp1R ?? 1.5);
+  const levels = customLevels ?? buildTradeLevels(price, atr, direction, slMult, P.tp1R ?? 1.5);
   return {
     strategyId,
     strategyName: meta.name,

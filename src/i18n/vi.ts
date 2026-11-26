@@ -52,6 +52,7 @@ import * as pwaUpdate from './dict/pwaUpdate';
 import * as replay from './dict/replay';
 import * as uipolish from './dict/uipolish';
 import * as sweep from './dict/sweep';
+import * as trendrules from './dict/trendrules';
 import * as learngoal from './dict/learngoal';
 import * as review from './dict/review';
 import * as exam from './dict/exam';
@@ -127,6 +128,7 @@ export const vi = {
   ...replay.vi,
   ...uipolish.vi,
   ...sweep.vi,
+  ...trendrules.vi,
   ...learngoal.vi,
   ...review.vi,
   ...exam.vi,

@@ -231,7 +231,7 @@ export function BacktestView() {
               : ([{ id: 'TREND_FOLLOWING', name: 'Trend Following' }] as StrategyDefinition[])
             ).map((s) => (
               <option key={s.id} value={s.id}>
-                {s.name}
+                {hasKey(`trf2.label.${s.id}`) ? t(`trf2.label.${s.id}` as TKey) : s.name}
               </option>
             ))}
           </select>
@@ -369,6 +369,23 @@ export function BacktestView() {
           <span>{loading ? t('bt.simulating') : t('bt.run')}</span>
         </button>
       </form>
+
+      <details className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3 text-xs text-[var(--text)]/80" data-testid="bt-trend-explainer">
+        <summary className="cursor-pointer font-medium text-[var(--text-strong)]">{t('trf2.summary')}</summary>
+        <div className="mt-2 space-y-2 leading-relaxed">
+          <p>{t('trf2.intro')}</p>
+          {(['ema', 'tsmom', 'donchian'] as const).map((k) => (
+            <p key={k}>
+              <span className="font-semibold text-[var(--text-strong)]">{t(`trf2.${k}.title` as TKey)}. </span>
+              {t(`trf2.${k}.body` as TKey)}
+            </p>
+          ))}
+          <p className="rounded-md border border-[var(--warning)]/40 bg-[var(--surface-2)] p-2">
+            <span className="font-semibold text-[var(--warning)]">{t('trf2.caveat.title')}. </span>
+            {t('trf2.caveat.body')}
+          </p>
+        </div>
+      </details>
 
       {error && (
         <div className="bg-[var(--surface)] border border-[var(--negative)]/40 rounded-lg p-4 text-xs font-mono text-[var(--negative)]">

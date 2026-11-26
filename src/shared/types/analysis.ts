@@ -11,7 +11,9 @@ export type StrategyId =
   | 'SR_REVERSAL'
   | 'RSI_REVERSAL'
   | 'MACD_MOMENTUM'
-  | 'ATR_VOLATILITY_BREAKOUT';
+  | 'ATR_VOLATILITY_BREAKOUT'
+  | 'TSMOM_12M'
+  | 'DONCHIAN_BREAKOUT';
 
 export interface StrategyDefinition {
   id: StrategyId;

@@ -31,7 +31,7 @@ function makeUptrendCandles(count: number): MarketCandle[] {
 test('Strategy Engine fails closed when market data is UNAVAILABLE', () => {
   const snap = analyzeTechnicalSnapshot([], 'GC', 'COMEX', 'H4');
   const signals = evaluateAllStrategies(snap, [], 'H4');
-  assert.equal(signals.length, 8);
+  assert.equal(signals.length, 10);
   for (const sig of signals) {
     assert.equal(sig.confirmationStatus, 'UNAVAILABLE');
     assert.equal(sig.direction, 'NONE');
@@ -51,4 +51,16 @@ test('TREND_FOLLOWING and MACD_MOMENTUM confirm LONG on validated strong uptrend
   const macdSig = evaluateStrategy('MACD_MOMENTUM', snap, candles);
   assert.equal(macdSig.confirmationStatus, 'CONFIRMED');
   assert.equal(macdSig.direction, 'LONG');
+});
+
+test('TSMOM_12M and DONCHIAN_BREAKOUT confirm LONG on strong uptrend with levels below price', () => {
+  const candles = makeUptrendCandles(300);
+  const snap = analyzeTechnicalSnapshot(candles, 'GC', 'COMEX', 'D1');
+  for (const id of ['TSMOM_12M', 'DONCHIAN_BREAKOUT'] as const) {
+    const sig = evaluateStrategy(id, snap, candles);
+    assert.equal(sig.confirmationStatus, 'CONFIRMED', id);
+    assert.equal(sig.direction, 'LONG', id);
+    assert.ok(sig.stopLoss !== null && sig.stopLoss < snap.lastClose!, id);
+    assert.ok(sig.takeProfits[0] > snap.lastClose!, id);
+  }
 });

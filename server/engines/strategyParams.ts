@@ -74,6 +74,16 @@ export const STRATEGY_PARAM_SCHEMAS: Record<StrategyId, StrategyParamDef[]> = {
     slAtrMult(1.5),
     tp1R,
   ],
+  TSMOM_12M: [
+    { key: 'lookback', label: 'Số phiên nhìn lại', hint: 'Lợi suất quá khứ đo trên bấy nhiêu phiên (252 phiên ngày ~ 12 tháng).', min: 20, max: 252, step: 1, default: 252 },
+    slAtrMult(2),
+    { ...tp1R, default: 3 },
+  ],
+  DONCHIAN_BREAKOUT: [
+    { key: 'entryN', label: 'Kênh vào lệnh (N phiên)', hint: 'Vào lệnh khi giá đóng cửa vượt đỉnh/đáy của N phiên trước đó.', min: 5, max: 55, step: 1, default: 20 },
+    { key: 'exitN', label: 'Kênh thoát (N phiên)', hint: 'Mức cắt lỗ đặt tại đáy/đỉnh của N phiên gần nhất (kênh thoát).', min: 3, max: 50, step: 1, default: 10 },
+    { ...tp1R, default: 3 },
+  ],
 };
 
 export function getParamSchema(strategyId: StrategyId): StrategyParamDef[] {

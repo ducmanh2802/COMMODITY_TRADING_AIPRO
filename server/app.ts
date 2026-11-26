@@ -94,6 +94,8 @@ const StrategyIdEnum = z.enum([
   'RSI_REVERSAL',
   'MACD_MOMENTUM',
   'ATR_VOLATILITY_BREAKOUT',
+  'TSMOM_12M',
+  'DONCHIAN_BREAKOUT',
 ]);
 
 const InstrumentsQuerySchema = z.object({

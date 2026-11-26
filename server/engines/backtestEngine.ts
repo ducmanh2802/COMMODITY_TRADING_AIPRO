@@ -20,7 +20,7 @@ import type { MarketCandle } from '../../src/shared/types/market.ts';
 import { validateCandleSeries } from '../../src/shared/utils/validation.ts';
 import { utcDateOfTimestamp } from '../../src/shared/contracts/dates.ts';
 import { analyzeTechnicalSnapshot, type TechnicalSnapshot } from './technicalEngine.ts';
-import { evaluateStrategy, STRATEGY_CATALOG } from './strategyEngine.ts';
+import { evaluateStrategy, STRATEGY_CATALOG, strategyLookbackBars } from './strategyEngine.ts';
 import { validateStrategyParams, type StrategyParams } from './strategyParams.ts';
 import { computeRollSchedule } from './rollSchedule.ts';
 
@@ -374,6 +374,7 @@ export function simulateRange(
     return realized + diff * pointValue * qty;
   };
 
+  const lookbackBars = strategyLookbackBars(config.strategyId, params);
   const from = Math.max(ctx.warmup, startIndex);
   const lastIndex = Math.min(candles.length - 1, endIndex);
 
@@ -493,7 +494,7 @@ export function simulateRange(
     // 4. Signal on this CLOSED bar using bars [0..i] only; filled next bar (none on the window's last bar).
     if (!openPos && !closedThisBar && i < lastIndex) {
       const snapshot = ctx.snapshotAt(i);
-      const evalRes = evaluateStrategy(config.strategyId, snapshot, candles.slice(Math.max(0, i - 1), i + 1), params);
+      const evalRes = evaluateStrategy(config.strategyId, snapshot, candles.slice(Math.max(0, i + 1 - lookbackBars), i + 1), params);
       if (
         evalRes.confirmationStatus === 'CONFIRMED' &&
         (evalRes.direction === 'LONG' || evalRes.direction === 'SHORT') &&
