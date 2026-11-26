@@ -16,6 +16,7 @@ import { figuresByParagraph } from './lesson/bodyParse';
 import { KeyPoints } from './lesson/KeyPoints';
 import { LessonBody } from './lesson/LessonBody';
 import { LessonQuiz } from './lesson/LessonQuiz';
+import { PracticeCard } from './lesson/PracticeCard';
 import { contractValue, marginCallDistance, marginLeverage, positionSize, rMultiple, rollCost, swingPlan, tickPnl } from './learnMath';
 import type { LessonProgress } from './progress';
 
@@ -311,6 +312,7 @@ export function LessonPage({
         <p className="text-sm font-semibold mb-3">Câu hỏi trắc nghiệm</p>
         <LessonQuiz lessonId={lesson.id} questions={lesson.quiz} best={progress?.best} onScore={onScore} />
       </Card>
+      <PracticeCard lessonId={lesson.id} />
       {onChangeNote && (
         <Card className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">

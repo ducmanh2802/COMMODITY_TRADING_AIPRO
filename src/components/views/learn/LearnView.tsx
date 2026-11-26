@@ -533,7 +533,7 @@ export default function LearnView() {
         setPage({ kind: 'lesson', id: intent.lessonId });
       } else if (intent.tab || intent.term) {
         setPage({ kind: 'home' });
-        setTab('glossary');
+        setTab(intent.tab ?? 'glossary');
         if (intent.term) setFocusTerm({ term: intent.term });
       }
     };
